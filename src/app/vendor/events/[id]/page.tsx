@@ -40,7 +40,7 @@ export default async function VendorEventStallsPage({ params }: { params: Promis
       </header>
 
       {mapStalls.length === 0 ? (
-        <p className="text-sm text-muted-foreground">The floor plan for this market isn&apos;t ready yet — check back soon.</p>
+        <p className="text-sm text-muted-foreground">The event layout for this market isn&apos;t ready yet — check back soon.</p>
       ) : (
         <VendorStallPay stalls={mapStalls} payAction={createStallOrderAction} />
       )}

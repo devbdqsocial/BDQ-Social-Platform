@@ -124,7 +124,7 @@ export function DesignerToolbar(props: Props) {
       <span className="mx-1 h-6 w-px bg-border" />
 
       <Button variant="ghost" size="sm" onClick={props.onLoadTemplate}>
-        Load Aarush Lawn
+        Load sample layout
       </Button>
       <Button variant="ghost" size="sm" onClick={props.onClear}>
         Clear

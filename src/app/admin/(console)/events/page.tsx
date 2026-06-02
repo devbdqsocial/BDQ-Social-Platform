@@ -36,7 +36,7 @@ export default async function AdminEventsPage() {
               <Textarea name="description" rows={2} placeholder="A line about the event for the public page." />
             </Field>
             <Field label="Location">
-              <Input name="location" placeholder="Aarush Lawn, Vadodara" />
+              <Input name="location" placeholder="Venue name, City" />
             </Field>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Starts">

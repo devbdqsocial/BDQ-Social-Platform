@@ -18,7 +18,7 @@ export default async function VendorEventsPage() {
     <div className="max-w-2xl space-y-4">
       <div>
         <h1 className="font-display text-2xl font-semibold">Pick a market</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Choose an upcoming event to see the floor plan and grab your stall.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Choose an upcoming event to see the event layout and grab your stall.</p>
       </div>
       {events.length === 0 ? (
         <EmptyState icon={CalendarDays} title="No markets open yet" description="New dates are added regularly — check back soon to book your spot." />

@@ -99,7 +99,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
 
         {mapStalls.length > 0 && (
           <section className="mt-12">
-            <h2 className="font-display text-2xl font-semibold">Floor plan</h2>
+            <h2 className="font-display text-2xl font-semibold">Event layout</h2>
             <p className="mt-1 mb-4 text-sm text-muted-foreground">
               Selling at the market? Browse live availability and tap an open stall to hold it.
             </p>

@@ -1,10 +1,12 @@
 import { PublicHeader } from "@/components/nav/PublicHeader";
 import { CustomerTabBar } from "@/components/nav/CustomerTabBar";
+import { getSession } from "@/server/auth/guard";
 
-export default function CustomerLayout({ children }: { children: React.ReactNode }) {
+export default async function CustomerLayout({ children }: { children: React.ReactNode }) {
+  const session = await getSession();
   return (
     <div className="flex min-h-dvh flex-col">
-      <PublicHeader />
+      <PublicHeader signedIn={!!session} />
       <div id="main" className="flex-1 pb-16 sm:pb-0">{children}</div>
       <CustomerTabBar />
     </div>

@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { PublicHeader } from "@/components/nav/PublicHeader";
 import { CustomerTabBar } from "@/components/nav/CustomerTabBar";
+import { getSession } from "@/server/auth/guard";
 
-export default function PublicLayout({ children }: { children: React.ReactNode }) {
+export default async function PublicLayout({ children }: { children: React.ReactNode }) {
+  const session = await getSession();
   return (
     <div className="flex min-h-dvh flex-col">
-      <PublicHeader />
+      <PublicHeader signedIn={!!session} />
 
       {/* pb gives room for the mobile tab bar */}
       <div id="main" className="flex-1 pb-16 sm:pb-0">{children}</div>
@@ -25,7 +27,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             <p className="font-medium text-foreground">Explore</p>
             <Link href="/events" className="hover:text-foreground">Events &amp; tickets</Link>
             <Link href="/vendors" className="hover:text-foreground">Meet the brands</Link>
-            <Link href="/map" className="hover:text-foreground">Floor plan</Link>
+            <Link href="/map" className="hover:text-foreground">Event layout</Link>
           </nav>
           <nav className="flex flex-col gap-2 text-sm text-muted-foreground">
             <p className="font-medium text-foreground">For partners</p>

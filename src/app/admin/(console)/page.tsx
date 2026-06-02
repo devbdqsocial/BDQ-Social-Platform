@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/ui/page-header";
 
 const TILES: { href: string; section: ConsoleSection; icon: typeof CalendarDays; title: string; desc: string }[] = [
   { href: "/admin/events", section: "events", icon: CalendarDays, title: "Events", desc: "Create events, set ticket prices, and publish them to the public site." },
-  { href: "/admin/map", section: "map", icon: LayoutGrid, title: "Floor plan", desc: "Lay out stalls, stages, and zones — the live market map." },
+  { href: "/admin/map", section: "map", icon: LayoutGrid, title: "Event layout", desc: "Lay out stalls, stages, and zones — the live venue map." },
   { href: "/admin/vendors", section: "vendors", icon: Store, title: "Vendors", desc: "Review brand applications and confirm their stalls." },
   { href: "/admin/sponsors", section: "sponsors", icon: Handshake, title: "Sponsors", desc: "Add partners and their logos to the event." },
   { href: "/admin/checkin", section: "checkin", icon: QrCode, title: "Check-in", desc: "Scan tickets at the gate on event day." },

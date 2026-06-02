@@ -35,7 +35,7 @@ export default async function LandingPage() {
       <section className="bg-hero text-[#EDE6DA]">
         <Container className="flex flex-col items-center gap-6 py-24 text-center sm:py-32">
           <span className="rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.15em] text-gold-300">
-            Aarush Lawns · Vadodara · Pre-Diwali
+            {event?.location ?? "Vadodara"} · Curated night market
           </span>
           <h1 className="max-w-3xl font-display text-5xl font-semibold leading-[1.05] text-balance sm:text-7xl">
             The city&apos;s most <span className="text-gold-300">curated</span> night market

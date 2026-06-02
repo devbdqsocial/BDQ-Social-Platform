@@ -9,7 +9,7 @@ import { env } from "@/lib/env";
 const NAV: { href: string; label: string; section: ConsoleSection }[] = [
   { href: "/admin", label: "Overview", section: "overview" },
   { href: "/admin/events", label: "Events", section: "events" },
-  { href: "/admin/map", label: "Floor plan", section: "map" },
+  { href: "/admin/map", label: "Event layout", section: "map" },
   { href: "/admin/vendors", label: "Vendors", section: "vendors" },
   { href: "/admin/sponsors", label: "Sponsors", section: "sponsors" },
   { href: "/admin/checkin", label: "Check-in", section: "checkin" },
@@ -37,7 +37,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const items = NAV.filter((n) => canAccessSection(effective, n.section)).map(({ href, label }) => ({ href, label }));
 
   return (
-    <div className="dark flex min-h-dvh flex-col bg-background text-foreground sm:flex-row">
+    <div className="flex min-h-dvh flex-col bg-background text-foreground sm:flex-row">
       <ZoneSidebar variant="admin" brand="Admin" items={items} />
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="hidden h-14 items-center justify-between border-b border-border px-6 sm:flex">

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Input, Select } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/page-header";
 import { saveStaffAction, removeStaffAction } from "./actions";
@@ -41,7 +42,7 @@ export default async function AdminStaffPage() {
               </Select>
             </Field>
             <Field label="Password" hint="Sets/Resets their sign-in password." className="sm:col-span-2">
-              <Input name="password" type="password" autoComplete="new-password" placeholder="At least 8 characters" />
+              <PasswordInput name="password" autoComplete="new-password" placeholder="At least 8 characters" />
             </Field>
             <Button type="submit" className="w-fit sm:col-span-2">Save teammate</Button>
           </CardContent>

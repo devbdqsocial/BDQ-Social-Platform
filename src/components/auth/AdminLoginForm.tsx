@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 
 export function AdminLoginForm() {
   const router = useRouter();
@@ -45,7 +46,7 @@ export function AdminLoginForm() {
         <Input name="email" type="email" autoComplete="username" required autoFocus />
       </Field>
       <Field label="Password">
-        <Input name="password" type="password" autoComplete="current-password" required />
+        <PasswordInput name="password" autoComplete="current-password" required />
       </Field>
       <Field label="Authenticator code" hint="The 6-digit code from your authenticator app.">
         <Input name="code" inputMode="numeric" autoComplete="one-time-code" placeholder="123456" />

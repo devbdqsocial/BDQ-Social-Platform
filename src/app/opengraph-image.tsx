@@ -21,7 +21,7 @@ export default function OpengraphImage() {
         }}
       >
         <div style={{ fontSize: 30, letterSpacing: 6, color: "#EFC65A", textTransform: "uppercase" }}>
-          Aarush Lawns · Vadodara
+          Vadodara · Curated night market
         </div>
         <div style={{ display: "flex", gap: 20, fontSize: 92, fontWeight: 700, marginTop: 24, lineHeight: 1.05 }}>
           <span>BDQ</span>

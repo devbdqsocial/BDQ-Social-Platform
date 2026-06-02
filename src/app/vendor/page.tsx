@@ -85,7 +85,7 @@ export default async function VendorDashboard() {
       <Card>
         <CardHeader>
           <CardTitle>Book your stall</CardTitle>
-          <CardDescription>Browse upcoming markets and pick your spot right on the floor plan.</CardDescription>
+          <CardDescription>Browse upcoming markets and pick your spot right on the event layout.</CardDescription>
         </CardHeader>
         <CardContent>
           <Button asChild>

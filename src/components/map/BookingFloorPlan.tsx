@@ -12,7 +12,7 @@ const MapCanvas = dynamic(() => import("./MapCanvas"), {
   ssr: false,
   loading: () => (
     <div className="grid h-96 place-items-center rounded-xl border border-border bg-card text-sm text-muted-foreground">
-      Loading floor plan…
+      Loading event layout…
     </div>
   ),
 });
