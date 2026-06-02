@@ -1,0 +1,225 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+  BDQ Social design tokens — see Docs/design.md.
+  Brand: clay (primary) / pine (secondary) / gold (accent). Warm neutrals. No purple/violet.
+  Components consume the SEMANTIC vars below (shadcn-compatible names), so light/dark + white-label
+  is a single swap. Money/UI never hardcodes raw hex.
+*/
+
+@theme inline {
+  /* semantic → CSS vars */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* brand ramps (direct use, e.g. bg-clay-500) */
+  --color-clay-50: #FBF3EF;  --color-clay-100: #F6E1D7; --color-clay-300: #E0A083;
+  --color-clay-500: #C2603B; --color-clay-600: #A44C2D; --color-clay-700: #833B24;
+  --color-pine-100: #D8E7DF; --color-pine-400: #4F9379; --color-pine-500: #2F755C;
+  --color-pine-600: #245C49; --color-pine-700: #1C4739;
+  --color-gold-100: #FAEDC8; --color-gold-300: #EFC65A; --color-gold-400: #E8B23A;
+  --color-gold-500: #D69A22; --color-gold-700: #8A5F13;
+  --color-sand-50: #F6F1E7;  --color-sand-100: #ECE4D6; --color-sand-200: #D9CDB8;
+  --color-sand-500: #6F6552; --color-sand-700: #352F26; --color-sand-900: #15120E;
+  --color-espresso: #120E09;
+
+  /* map stall status (Docs/design.md §3.6) */
+  --color-stall-available: #3FA66A;
+  --color-stall-held: #E8B23A;
+  --color-stall-pending: #E07B2C;
+  --color-stall-booked: #8C8576;
+  --color-stall-blocked: #4E4639;
+
+  /* fonts */
+  --font-sans: var(--font-jakarta);
+  --font-display: var(--font-fraunces);
+
+  /* radius */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  /* shadows (warm) + fairy-light glow */
+  --shadow-sm: 0 1px 2px rgba(21, 18, 14, 0.06);
+  --shadow-md: 0 6px 20px rgba(21, 18, 14, 0.10);
+  --shadow-lg: 0 18px 48px rgba(21, 18, 14, 0.16);
+  --shadow-glow: 0 0 28px rgba(214, 154, 34, 0.35);
+}
+
+/* LIGHT (default) — warm paper */
+:root {
+  --background: #FBF7F0;
+  --foreground: #352F26;
+  --card: #F6F1E7;
+  --card-foreground: #352F26;
+  --popover: #FBF7F0;
+  --popover-foreground: #352F26;
+  --primary: #C2603B;
+  --primary-foreground: #FFFFFF;
+  --secondary: #2F755C;
+  --secondary-foreground: #FFFFFF;
+  --muted: #ECE4D6;
+  --muted-foreground: #6F6552;
+  --accent: #D69A22;
+  --accent-foreground: #15120E;
+  --destructive: #C0392B;
+  --destructive-foreground: #FFFFFF;
+  --success: #2F8F5B;
+  --warning: #E0A106;
+  --info: #2C7A8C;
+  --border: #ECE4D6;
+  --input: #D9CDB8;
+  --ring: #D69A22;
+  --radius: 12px;
+
+  --sidebar: #F6F1E7;
+  --sidebar-foreground: #352F26;
+  --sidebar-primary: #C2603B;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #ECE4D6;
+  --sidebar-accent-foreground: #352F26;
+  --sidebar-border: #ECE4D6;
+  --sidebar-ring: #D69A22;
+}
+
+/* DARK (night) — espresso */
+.dark {
+  --background: #120E09;
+  --foreground: #EDE6DA;
+  --card: #1C1710;
+  --card-foreground: #EDE6DA;
+  --popover: #1C1710;
+  --popover-foreground: #EDE6DA;
+  --primary: #D17E5A;
+  --primary-foreground: #1A130D;
+  --secondary: #245C49;
+  --secondary-foreground: #EDE6DA;
+  --muted: #271F16;
+  --muted-foreground: #B7AB97;
+  --accent: #EFC65A;
+  --accent-foreground: #15120E;
+  --destructive: #E25A4A;
+  --destructive-foreground: #1A130D;
+  --success: #46B377;
+  --warning: #F0B92E;
+  --info: #4FA7B8;
+  --border: #322920;
+  --input: #3A3024;
+  --ring: #EFC65A;
+
+  --sidebar: #1C1710;
+  --sidebar-foreground: #EDE6DA;
+  --sidebar-primary: #D17E5A;
+  --sidebar-primary-foreground: #1A130D;
+  --sidebar-accent: #271F16;
+  --sidebar-accent-foreground: #EDE6DA;
+  --sidebar-border: #322920;
+  --sidebar-ring: #EFC65A;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  }
+  h1, h2, h3, .font-display {
+    font-family: var(--font-display), ui-serif, Georgia, serif;
+    letter-spacing: -0.018em;
+  }
+}
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+  .text-pretty { text-wrap: pretty; }
+
+  /* Warm dusk hero backdrop: espresso base + a soft gold glow pooling top-centre. */
+  .bg-hero {
+    background-color: var(--color-espresso);
+    background-image:
+      radial-gradient(120% 80% at 50% -10%, rgba(214, 154, 34, 0.22), transparent 60%),
+      radial-gradient(90% 60% at 85% 110%, rgba(194, 96, 59, 0.18), transparent 55%);
+  }
+
+  /* Subtle lift on interactive cards. */
+  .card-hover {
+    transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+  }
+  .card-hover:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+  }
+
+  /* Skip link: visually hidden until focused. */
+  .skip-link {
+    position: absolute;
+    left: 0.5rem;
+    top: -3rem;
+    z-index: 100;
+    border-radius: var(--radius-md);
+    background: var(--primary);
+    color: var(--primary-foreground);
+    padding: 0.5rem 0.875rem;
+    font-size: 0.875rem;
+    transition: top 0.15s ease;
+  }
+  .skip-link:focus {
+    top: 0.5rem;
+  }
+}
+
+/* A11y: visible focus + reduced motion. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .card-hover:hover {
+    transform: none;
+  }
+}

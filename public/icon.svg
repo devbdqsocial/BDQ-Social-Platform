@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="BDQ Social">
+  <rect width="512" height="512" rx="96" fill="#120E09"/>
+  <text x="50%" y="52%" dominant-baseline="middle" text-anchor="middle"
+        font-family="Georgia, 'Times New Roman', serif" font-weight="700" font-size="248" fill="#C2603B">B</text>
+  <circle cx="368" cy="150" r="34" fill="#D69A22"/>
+</svg>

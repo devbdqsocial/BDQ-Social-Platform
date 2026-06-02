@@ -1,0 +1,545 @@
+// BDQ Social — canonical schema. See Docs/SCHEMA.md for rationale.
+// Money is integer paise. IDs are cuid(). Pricing is dynamic (admin-entered per event).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")          // pooled (runtime)
+  directUrl = env("DATABASE_URL_DIRECT")   // direct (migrations)
+}
+
+// ──────────────────────────── ENUMS ────────────────────────────
+enum Role {
+  CUSTOMER
+  VENDOR
+  STAFF
+  SUPER_ADMIN
+}
+
+enum Permission {
+  CHECKIN
+  VENDOR_MANAGE
+  VENDOR_VIEW
+  EVENT_VIEW
+  CUSTOMER_VIEW
+  PAYMENT_VIEW
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  LIVE
+  ENDED
+  ARCHIVED
+}
+
+enum TicketStatus {
+  VALID
+  CHECKED_IN
+  CANCELLED
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FAILED
+  EXPIRED
+}
+
+enum PaymentGateway {
+  RAZORPAY
+  OFFLINE
+}
+
+enum PaymentMode {
+  ONLINE
+  OFFLINE
+}
+
+enum PaymentStatus {
+  CREATED
+  CAPTURED
+  FAILED
+}
+
+enum CouponType {
+  FLAT
+  PERCENT
+}
+
+enum DiscountSource {
+  NONE
+  EARLY_BIRD
+  BULK
+  COUPON
+}
+
+enum StallStatus {
+  AVAILABLE
+  HELD
+  PENDING
+  BOOKED
+  BLOCKED
+}
+
+enum StallKind {
+  STALL
+  INFRA
+}
+
+enum VendorApproval {
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum BookingStatus {
+  HELD
+  PENDING
+  BOOKED
+  REJECTED
+  CANCELLED
+}
+
+enum BookingSource {
+  VENDOR
+  ADMIN
+}
+
+enum AssetKind {
+  LOGO
+  BANNER
+  PRODUCT
+  KYC_DOC
+}
+
+enum ContractStatus {
+  SENT
+  SIGNED
+}
+
+enum SponsorTier {
+  TITLE
+  POWERED_BY
+  ZONE
+  STALL
+  ASSOCIATE
+}
+
+enum WaitlistType {
+  TICKET
+  STALL
+}
+
+enum CheckInDirection {
+  IN
+  OUT
+}
+
+enum NotifChannel {
+  WHATSAPP
+  EMAIL
+  SMS
+  PUSH
+}
+
+enum NotifStatus {
+  QUEUED
+  SENT
+  FAILED
+}
+
+// ──────────────────────────── IDENTITY ─────────────────────────
+model User {
+  id          String       @id @default(cuid())
+  role        Role         @default(CUSTOMER)
+  phone       String?      @unique
+  email       String?      @unique
+  name        String?
+  firebaseUid  String?      @unique
+  permissions  Permission[] @default([])
+  passwordHash String?
+  totpSecret   String?
+  totpEnabled  Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  orders        Order[]
+  vendorProfile VendorProfile?
+  checkIns      CheckIn[]      @relation("ScannedBy")
+  auditLogs     AuditLog[]
+  waitlist      Waitlist[]
+
+  @@index([role])
+}
+
+// ──────────────────────────── EVENT CORE ───────────────────────
+model Event {
+  id          String      @id @default(cuid())
+  name        String
+  slug        String      @unique
+  description String?
+  location    String?
+  mapLink     String?
+  startsAt    DateTime
+  endsAt      DateTime
+  status      EventStatus @default(DRAFT)
+  theme       Json?
+  bulkTiers   Json?
+  earlyBird   Json?
+  capacity    Int?
+  createdById String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  ticketTypes TicketType[]
+  schedule    ScheduleItem[]
+  stallTypes  StallTypeDef[]
+  stalls      Stall[]
+  mapLayout   MapLayout?
+  orders      Order[]
+  coupons     Coupon[]
+  bookings    Booking[]
+  sponsors    Sponsor[]
+  waitlist    Waitlist[]
+  leads       Lead[]
+
+  @@index([status])
+}
+
+model TicketType {
+  id              String   @id @default(cuid())
+  eventId         String
+  event           Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name            String
+  priceInPaise    Int
+  earlyPricePaise Int?
+  totalQty        Int
+  soldQty         Int      @default(0)
+  attendeesPer    Int      @default(1)
+  tickets         Ticket[]
+
+  @@index([eventId])
+}
+
+model ScheduleItem {
+  id          String    @id @default(cuid())
+  eventId     String
+  event       Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  startsAt    DateTime
+  endsAt      DateTime?
+  title       String
+  stageOrZone String?
+  performer   String?
+  sortOrder   Int       @default(0)
+
+  @@index([eventId, startsAt])
+}
+
+// ──────────────────────────── MAP / STALLS ─────────────────────
+model StallTypeDef {
+  id           String  @id @default(cuid())
+  eventId      String
+  event        Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name         String
+  widthFt      Float
+  heightFt     Float
+  priceInPaise Int
+  color        String
+  sellable     Boolean @default(true)
+  stalls       Stall[]
+
+  @@unique([eventId, name])
+}
+
+model MapLayout {
+  id           String   @id @default(cuid())
+  eventId      String   @unique
+  event        Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  layoutJson   Json
+  opsLayerJson Json?
+  version      Int      @default(1)
+  updatedAt    DateTime @updatedAt
+}
+
+model Stall {
+  id           String        @id @default(cuid())
+  eventId      String
+  event        Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  kind         StallKind     @default(STALL)
+  stallTypeId  String?
+  stallType    StallTypeDef? @relation(fields: [stallTypeId], references: [id])
+  label        String
+  xFt          Float
+  yFt          Float
+  widthFt      Float
+  heightFt     Float
+  rotation     Float         @default(0)
+  priceInPaise Int?
+  status       StallStatus   @default(AVAILABLE)
+  holdUntil    DateTime?
+  bookings     Booking[]
+
+  @@unique([eventId, label])
+  @@index([eventId, status])
+}
+
+// ──────────────────────────── ORDERS / TICKETS ─────────────────
+model Order {
+  id             String         @id @default(cuid())
+  userId         String
+  user           User           @relation(fields: [userId], references: [id])
+  eventId        String
+  event          Event          @relation(fields: [eventId], references: [id])
+  status         OrderStatus    @default(PENDING)
+  subtotal       Int
+  discount       Int            @default(0)
+  total          Int
+  discountSource DiscountSource @default(NONE)
+  couponId       String?
+  coupon         Coupon?        @relation(fields: [couponId], references: [id])
+  gatewayOrderId String?        @unique
+  items          Json?
+  utm            Json?
+  expiresAt      DateTime?
+  createdAt      DateTime       @default(now())
+
+  tickets  Ticket[]
+  payments Payment[]
+
+  @@index([userId, status])
+  @@index([eventId, status])
+}
+
+model Ticket {
+  id           String       @id @default(cuid())
+  orderId      String
+  order        Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  ticketTypeId String
+  ticketType   TicketType   @relation(fields: [ticketTypeId], references: [id])
+  holderName   String?
+  holderPhone  String?
+  holderEmail  String?
+  qrToken      String       @unique
+  status       TicketStatus @default(VALID)
+  isComp       Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+
+  checkIns CheckIn[]
+
+  @@index([orderId])
+}
+
+model Payment {
+  id           String         @id @default(cuid())
+  orderId      String?
+  order        Order?         @relation(fields: [orderId], references: [id])
+  bookingId    String?        @unique
+  booking      Booking?       @relation(fields: [bookingId], references: [id])
+  gateway      PaymentGateway
+  mode         PaymentMode
+  gatewayRef   String?        @unique
+  amount       Int
+  status       PaymentStatus  @default(CREATED)
+  recordedById String?
+  meta         Json?
+  createdAt    DateTime       @default(now())
+
+  @@index([orderId])
+}
+
+model Coupon {
+  id           String     @id @default(cuid())
+  eventId      String?
+  event        Event?     @relation(fields: [eventId], references: [id])
+  code         String     @unique
+  type         CouponType
+  value        Int
+  maxUses      Int?
+  usedCount    Int        @default(0)
+  perUserLimit Int        @default(1)
+  minOrder     Int?
+  scope        Json?
+  startsAt     DateTime?
+  endsAt       DateTime?
+  active       Boolean    @default(true)
+  orders       Order[]
+}
+
+// ──────────────────────────── VENDORS ──────────────────────────
+model VendorProfile {
+  id               String         @id @default(cuid())
+  userId           String         @unique
+  user             User           @relation(fields: [userId], references: [id])
+  brandName        String
+  category         String?
+  description      String?
+  website          String?
+  socials          Json?
+  approvalStatus   VendorApproval @default(SUBMITTED)
+  verifiedCallById String?
+  verifiedAt       DateTime?
+  createdAt        DateTime       @default(now())
+
+  kyc      VendorKyc?
+  assets   VendorAsset[]
+  contract VendorContract?
+  bookings Booking[]
+  leads    Lead[]
+}
+
+model VendorKyc {
+  id              String        @id @default(cuid())
+  vendorProfileId String        @unique
+  vendorProfile   VendorProfile @relation(fields: [vendorProfileId], references: [id], onDelete: Cascade)
+  pan             String?
+  fssai           String?
+  gstin           String?
+  docUrls         Json?
+}
+
+model VendorAsset {
+  id              String        @id @default(cuid())
+  vendorProfileId String
+  vendorProfile   VendorProfile @relation(fields: [vendorProfileId], references: [id], onDelete: Cascade)
+  kind            AssetKind
+  url             String
+  publicId        String
+  createdAt       DateTime      @default(now())
+
+  @@index([vendorProfileId])
+}
+
+model VendorContract {
+  id              String         @id @default(cuid())
+  vendorProfileId String         @unique
+  vendorProfile   VendorProfile  @relation(fields: [vendorProfileId], references: [id], onDelete: Cascade)
+  status          ContractStatus @default(SENT)
+  url             String?
+  signedAt        DateTime?
+}
+
+model Booking {
+  id              String         @id @default(cuid())
+  eventId         String
+  event           Event          @relation(fields: [eventId], references: [id])
+  stallId         String
+  stall           Stall          @relation(fields: [stallId], references: [id])
+  vendorProfileId String?
+  vendorProfile   VendorProfile? @relation(fields: [vendorProfileId], references: [id])
+  source          BookingSource  @default(VENDOR)
+  adminDetails    Json?
+  status          BookingStatus  @default(HELD)
+  gatewayOrderId  String?        @unique
+  payment         Payment?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([stallId, status])
+  @@index([eventId, status])
+  // "one active booking per stall" is enforced by a partial unique index (raw SQL migration,
+  // see Docs/SCHEMA.md §4).
+}
+
+// ──────────────────────────── OPS / GROWTH ─────────────────────
+model CheckIn {
+  id          String           @id @default(cuid())
+  ticketId    String
+  ticket      Ticket           @relation(fields: [ticketId], references: [id])
+  scannedById String
+  scannedBy   User             @relation("ScannedBy", fields: [scannedById], references: [id])
+  gate         String?
+  direction    CheckInDirection @default(IN)
+  clientScanId String?          @unique
+  scannedAt    DateTime         @default(now())
+
+  @@index([ticketId])
+}
+
+model Sponsor {
+  id         String      @id @default(cuid())
+  eventId    String
+  event      Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name       String
+  tier       SponsorTier
+  logoUrl    String?
+  placements Json?
+  leadAccess Boolean     @default(false)
+
+  @@index([eventId])
+}
+
+model Waitlist {
+  id         String       @id @default(cuid())
+  eventId    String
+  event      Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  type       WaitlistType
+  userId     String?
+  user       User?        @relation(fields: [userId], references: [id])
+  contact    String?
+  meta       Json?
+  notifiedAt DateTime?
+  createdAt  DateTime     @default(now())
+
+  @@index([eventId, type])
+}
+
+model Lead {
+  id              String        @id @default(cuid())
+  eventId         String
+  event           Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  vendorProfileId String
+  vendorProfile   VendorProfile @relation(fields: [vendorProfileId], references: [id], onDelete: Cascade)
+  name            String?
+  phone           String?
+  email           String?
+  consent         Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+
+  @@index([vendorProfileId])
+}
+
+// ──────────────────────────── DELIVERY / AUDIT ─────────────────
+model Outbox {
+  id        String       @id @default(cuid())
+  channel   NotifChannel
+  toAddress String
+  template  String
+  payload   Json
+  status    NotifStatus  @default(QUEUED)
+  attempts  Int          @default(0)
+  lastError String?
+  dedupeKey String       @unique
+  createdAt DateTime     @default(now())
+  sentAt    DateTime?
+
+  @@index([status])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  actor     User?    @relation(fields: [actorId], references: [id])
+  role      Role?
+  action    String
+  entity    String
+  entityId  String?
+  before    Json?
+  after     Json?
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId, createdAt])
+  @@index([actorId, createdAt])
+}
+
+model RateLimit {
+  key     String   @id
+  count   Int      @default(0)
+  resetAt DateTime
+}
