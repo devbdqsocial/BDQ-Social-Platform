@@ -1,0 +1,31 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { requirePermission } from "@/server/auth/guard";
+import { createVendorByAdmin, VendorExistsError } from "@/server/vendors/admin-service";
+import { adminCreateVendorSchema } from "@/server/schemas";
+
+export async function createVendorAction(formData: FormData): Promise<void> {
+  const session = await requirePermission("VENDOR_MANAGE");
+  const parsed = adminCreateVendorSchema.safeParse({
+    phone: formData.get("phone"),
+    name: formData.get("name") || undefined,
+    brandName: formData.get("brandName"),
+    category: formData.get("category") || undefined,
+    description: formData.get("description") || undefined,
+    website: formData.get("website") || undefined,
+    instagram: formData.get("instagram") || undefined,
+  });
+  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Invalid input");
+  let id: string;
+  try {
+    const profile = await createVendorByAdmin(session, parsed.data);
+    id = profile.id;
+  } catch (e) {
+    if (e instanceof VendorExistsError) throw new Error("A vendor with that phone number already exists.");
+    throw e;
+  }
+  revalidatePath("/admin/vendors");
+  redirect(`/admin/vendors/${id}`);
+}

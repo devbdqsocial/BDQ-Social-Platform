@@ -116,6 +116,26 @@ export const vendorProfileSchema = z.object({
   instagram: z.string().optional(),
 });
 
+/** Normalise to E.164 (+91…) to match the format Firebase returns on phone login. */
+export function normalizePhone(raw: string): string {
+  const t = raw.trim();
+  const digits = t.replace(/\D/g, "");
+  if (t.startsWith("+")) return `+${digits}`;
+  if (digits.length === 10) return `+91${digits}`;
+  if (digits.length === 12 && digits.startsWith("91")) return `+${digits}`;
+  return `+${digits}`;
+}
+
+export const adminCreateVendorSchema = z.object({
+  phone: z.string().transform(normalizePhone).pipe(z.string().regex(/^\+\d{10,15}$/, "Enter a valid phone number")),
+  name: z.string().trim().max(120).optional(),
+  brandName: z.string().min(2),
+  category: z.string().optional(),
+  description: z.string().optional(),
+  website: z.string().optional(),
+  instagram: z.string().optional(),
+});
+
 /** KYC is verify-only (no GST billing) — BUSINESS-RULES §2.5. */
 export const vendorKycSchema = z.object({
   pan: z.string().trim().min(10).max(10).optional(),

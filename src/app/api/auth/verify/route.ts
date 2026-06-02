@@ -33,11 +33,19 @@ export async function POST(req: Request) {
   // Prefer the login page's declared zone (works on the preview domain with no subdomains); else host.
   const role: Role = body.zone ? (body.zone === "vendor" ? "VENDOR" : "CUSTOMER") : host.startsWith("vendors.") ? "VENDOR" : "CUSTOMER";
 
-  const user = await db.user.upsert({
-    where: { firebaseUid: verified.uid },
-    update: { phone: verified.phone, email: verified.email },
-    create: { firebaseUid: verified.uid, phone: verified.phone, email: verified.email, role },
-  });
+  // Match by firebaseUid first; else link to a pre-created account by phone (admin-provisioned
+  // vendors have a phone but no uid). Linking keeps the existing role — never downgrade a VENDOR.
+  let user = await db.user.findUnique({ where: { firebaseUid: verified.uid } });
+  if (user) {
+    user = await db.user.update({ where: { id: user.id }, data: { phone: verified.phone, email: verified.email } });
+  } else if (verified.phone && (user = await db.user.findUnique({ where: { phone: verified.phone } }))) {
+    user = await db.user.update({
+      where: { id: user.id },
+      data: { firebaseUid: verified.uid, email: user.email ?? verified.email },
+    });
+  } else {
+    user = await db.user.create({ data: { firebaseUid: verified.uid, phone: verified.phone, email: verified.email, role } });
+  }
 
   await createSession({ userId: user.id, role: user.role, permissions: user.permissions });
   return NextResponse.json({ ok: true, data: { userId: user.id, role: user.role } });

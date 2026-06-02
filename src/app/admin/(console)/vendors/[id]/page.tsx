@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Select } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { approveAction, rejectAction, underReviewAction } from "./actions";
+import { approveAction, assignStallAction, rejectAction, underReviewAction } from "./actions";
 
 export const metadata: Metadata = { title: "Vendor" };
 
@@ -113,6 +113,34 @@ export default async function AdminVendorDetail({ params }: { params: Promise<{ 
               <input type="hidden" name="id" value={v.id} />
               <Button type="submit" variant="ghost" size="sm">Decline application</Button>
             </form>
+          </CardContent>
+        </Card>
+      )}
+
+      {v.approvalStatus === "APPROVED" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Assign a stall</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {stalls.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No stalls available yet — build the event layout first under Events → Event layout.
+              </p>
+            ) : (
+              <form action={assignStallAction} className="flex flex-wrap items-end gap-3">
+                <input type="hidden" name="id" value={v.id} />
+                <Field label="Stall" className="min-w-56 flex-1">
+                  <Select name="stallId" required>
+                    <option value="">Choose a stall…</option>
+                    {stalls.map((s) => (
+                      <option key={s.id} value={s.id}>{s.event.name} · {s.label} ({s.status})</option>
+                    ))}
+                  </Select>
+                </Field>
+                <Button type="submit">Assign stall</Button>
+              </form>
+            )}
           </CardContent>
         </Card>
       )}

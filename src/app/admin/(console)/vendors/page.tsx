@@ -3,6 +3,7 @@ import Link from "next/link";
 import { requirePermission } from "@/server/auth/guard";
 import { listVendors } from "@/server/vendors/admin-service";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 
 export const metadata: Metadata = { title: "Vendors" };
@@ -20,7 +21,10 @@ export default async function AdminVendorsPage() {
 
   return (
     <div className="max-w-3xl space-y-4">
-      <PageHeader title="Vendors" description="Review brands, give them a verification call, then approve and assign a stall." />
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <PageHeader title="Vendors" description="Review brands, give them a verification call, then approve and assign a stall." />
+        <Button asChild size="sm"><Link href="/admin/vendors/new">Add vendor</Link></Button>
+      </div>
       {vendors.length === 0 ? (
         <p className="text-sm text-muted-foreground">No brand applications yet.</p>
       ) : (
