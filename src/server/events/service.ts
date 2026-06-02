@@ -198,6 +198,71 @@ export function createEvent(session: Session, input: CreateEventInput) {
   }));
 }
 
+export interface UpdateEventInput {
+  name: string;
+  description?: string;
+  location?: string;
+  startsAt: Date;
+  endsAt: Date;
+  capacity?: number;
+}
+
+export function updateEvent(session: Session, id: string, input: UpdateEventInput) {
+  return withAudit(session, { action: "UPDATE", entity: "Event", entityId: id }, async () => {
+    const before = await db.event.findUnique({
+      where: { id },
+      select: { name: true, description: true, location: true, startsAt: true, endsAt: true, capacity: true },
+    });
+    return {
+      before,
+      run: async () => {
+        // Slug stays stable on rename to preserve the public URL.
+        const event = await db.event.update({
+          where: { id },
+          data: {
+            name: input.name,
+            description: input.description ?? null,
+            location: input.location ?? null,
+            startsAt: input.startsAt,
+            endsAt: input.endsAt,
+            capacity: input.capacity ?? null,
+          },
+        });
+        return { result: event, after: event };
+      },
+    };
+  });
+}
+
+/** Force-delete: wipes the event and all dependents (orders/bookings/payments/tickets). Irreversible. */
+export function deleteEvent(session: Session, id: string) {
+  return withAudit(session, { action: "DELETE", entity: "Event", entityId: id }, async () => {
+    const before = await db.event.findUnique({
+      where: { id },
+      include: { _count: { select: { orders: true, bookings: true } } },
+    });
+    return {
+      before,
+      run: async () => {
+        await db.$transaction(async (tx) => {
+          const orders = await tx.order.findMany({ where: { eventId: id }, select: { id: true } });
+          const orderIds = orders.map((o) => o.id);
+          const tickets = await tx.ticket.findMany({ where: { orderId: { in: orderIds } }, select: { id: true } });
+          const ticketIds = tickets.map((t) => t.id);
+          await tx.checkIn.deleteMany({ where: { ticketId: { in: ticketIds } } });
+          await tx.payment.deleteMany({ where: { OR: [{ orderId: { in: orderIds } }, { booking: { eventId: id } }] } });
+          await tx.ticket.deleteMany({ where: { orderId: { in: orderIds } } });
+          await tx.order.deleteMany({ where: { eventId: id } });
+          await tx.booking.deleteMany({ where: { eventId: id } });
+          await tx.coupon.deleteMany({ where: { eventId: id } });
+          await tx.event.delete({ where: { id } });
+        });
+        return { result: { id }, after: null };
+      },
+    };
+  });
+}
+
 export function setEventTheme(session: Session, id: string, theme: { primary?: string; accent?: string }) {
   return withAudit(session, { action: "UPDATE", entity: "Event", entityId: id }, async () => {
     const before = await db.event.findUnique({ where: { id }, select: { theme: true } });

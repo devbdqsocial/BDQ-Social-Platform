@@ -7,16 +7,20 @@ import { formatPaise } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { Input, Textarea } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { publishEventAction } from "../actions";
-import { addTicketTypeAction, deleteTicketTypeAction, addScheduleItemAction, deleteScheduleItemAction, setEventThemeAction } from "./actions";
+import { addTicketTypeAction, deleteTicketTypeAction, addScheduleItemAction, deleteScheduleItemAction, setEventThemeAction, updateEventAction } from "./actions";
+import { DeleteEventButton } from "./DeleteEventButton";
 
 export const metadata: Metadata = { title: "Edit event" };
 
 const isLive = (s: string) => s === "PUBLISHED" || s === "LIVE";
-const fmtTime = (d: Date) =>
-  new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(d);
+const dayKey = (d: Date) =>
+  new Intl.DateTimeFormat("en-CA", { dateStyle: "full", timeZone: "Asia/Kolkata" }).format(d);
+const timeOnly = (d: Date) =>
+  new Intl.DateTimeFormat("en-IN", { timeStyle: "short", timeZone: "Asia/Kolkata" }).format(d);
 
 export default async function AdminEventEditor({ params }: { params: Promise<{ id: string }> }) {
   await requireSuperAdmin();
@@ -45,6 +49,46 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
           )}
         </div>
       </div>
+
+      <p className="text-sm text-muted-foreground">
+        Public page:{" "}
+        <Link href={`/events/${event.slug}`} className="font-medium text-primary hover:underline">
+          /events/{event.slug}
+        </Link>
+      </p>
+
+      <Card asChild>
+        <form action={updateEventAction}>
+          <input type="hidden" name="eventId" value={event.id} />
+          <CardHeader>
+            <CardTitle className="text-base">Event details</CardTitle>
+            <CardDescription>Edit the basics. The public URL stays the same when you rename.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <Field label="Event name">
+              <Input name="name" required defaultValue={event.name} />
+            </Field>
+            <Field label="Short description">
+              <Textarea name="description" rows={2} defaultValue={event.description ?? ""} placeholder="A line about the event for the public page." />
+            </Field>
+            <Field label="Location">
+              <Input name="location" defaultValue={event.location ?? ""} placeholder="Venue name, City" />
+            </Field>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Starts">
+                <DateTimePicker name="startsAt" required defaultValue={event.startsAt} />
+              </Field>
+              <Field label="Ends">
+                <DateTimePicker name="endsAt" required defaultValue={event.endsAt} />
+              </Field>
+            </div>
+            <Field label="Capacity" hint="Optional — leave blank for no limit.">
+              <Input type="number" name="capacity" min={1} defaultValue={event.capacity ?? ""} />
+            </Field>
+            <Button type="submit" className="w-fit">Save details</Button>
+          </CardContent>
+        </form>
+      </Card>
 
       <section>
         <h2 className="font-display text-lg font-semibold">Tickets ({event.ticketTypes.length})</h2>
@@ -105,25 +149,37 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
         {event.schedule.length === 0 ? (
           <p className="mt-2 text-sm text-muted-foreground">No schedule yet — add what&apos;s happening below.</p>
         ) : (
-          <ul className="mt-3 divide-y divide-border overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-            {event.schedule.map((s) => (
-              <li key={s.id} className="flex items-center justify-between gap-3 p-4">
-                <div>
-                  <p className="font-medium">{s.title}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {fmtTime(s.startsAt)}
-                    {s.stageOrZone ? ` · ${s.stageOrZone}` : ""}
-                    {s.performer ? ` · ${s.performer}` : ""}
-                  </p>
-                </div>
-                <form action={deleteScheduleItemAction}>
-                  <input type="hidden" name="id" value={s.id} />
-                  <input type="hidden" name="eventId" value={event.id} />
-                  <Button type="submit" variant="ghost" size="sm">Remove</Button>
-                </form>
-              </li>
+          <div className="mt-3 space-y-4">
+            {Object.entries(
+              event.schedule.reduce<Record<string, typeof event.schedule>>((acc, s) => {
+                (acc[dayKey(s.startsAt)] ??= []).push(s);
+                return acc;
+              }, {}),
+            ).map(([day, items]) => (
+              <div key={day}>
+                <h3 className="mb-1.5 text-sm font-semibold text-muted-foreground">{day}</h3>
+                <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+                  {items.map((s) => (
+                    <li key={s.id} className="flex items-center justify-between gap-3 p-4">
+                      <div>
+                        <p className="font-medium">{s.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {timeOnly(s.startsAt)}{s.endsAt ? `–${timeOnly(s.endsAt)}` : ""}
+                          {s.stageOrZone ? ` · ${s.stageOrZone}` : ""}
+                          {s.performer ? ` · ${s.performer}` : ""}
+                        </p>
+                      </div>
+                      <form action={deleteScheduleItemAction}>
+                        <input type="hidden" name="id" value={s.id} />
+                        <input type="hidden" name="eventId" value={event.id} />
+                        <Button type="submit" variant="ghost" size="sm">Remove</Button>
+                      </form>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
 
         <Card asChild className="mt-4">
@@ -138,10 +194,10 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
                 <Input name="title" required placeholder="Headline set, food court opens…" />
               </Field>
               <Field label="Starts">
-                <Input type="datetime-local" name="startsAt" required />
+                <DateTimePicker name="startsAt" required />
               </Field>
               <Field label="Ends" hint="Optional">
-                <Input type="datetime-local" name="endsAt" />
+                <DateTimePicker name="endsAt" />
               </Field>
               <Field label="Stage / zone" hint="Optional">
                 <Input name="stageOrZone" placeholder="Main Stage" />
@@ -174,6 +230,19 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
               <Button type="submit" className="w-fit sm:col-span-2">Save theme</Button>
             </CardContent>
           </form>
+        </Card>
+      </section>
+
+      <section>
+        <h2 className="font-display text-lg font-semibold text-destructive">Danger zone</h2>
+        <Card className="mt-3 border-destructive/30">
+          <CardHeader>
+            <CardTitle className="text-base">Delete this event</CardTitle>
+            <CardDescription>Removes the event and everything attached to it. This cannot be undone.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <DeleteEventButton eventId={event.id} eventName={event.name} />
+          </CardContent>
         </Card>
       </section>
     </div>

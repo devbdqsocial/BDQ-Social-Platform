@@ -1,9 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { requireSuperAdmin } from "@/server/auth/guard";
-import { addScheduleItem, addTicketType, deleteScheduleItem, deleteTicketType, setEventTheme } from "@/server/events/service";
-import { eventThemeSchema, scheduleItemSchema, ticketTypeSchema } from "@/server/schemas";
+import { addScheduleItem, addTicketType, deleteEvent, deleteScheduleItem, deleteTicketType, setEventTheme, updateEvent } from "@/server/events/service";
+import { createEventSchema, eventThemeSchema, scheduleItemSchema, ticketTypeSchema } from "@/server/schemas";
 
 export async function addTicketTypeAction(formData: FormData): Promise<void> {
   const session = await requireSuperAdmin();
@@ -54,6 +55,32 @@ export async function deleteScheduleItemAction(formData: FormData): Promise<void
   const session = await requireSuperAdmin();
   await deleteScheduleItem(session, String(formData.get("id")));
   revalidateEvent(String(formData.get("eventId")));
+}
+
+export async function updateEventAction(formData: FormData): Promise<void> {
+  const session = await requireSuperAdmin();
+  const eventId = String(formData.get("eventId"));
+  const parsed = createEventSchema.safeParse({
+    name: formData.get("name"),
+    description: formData.get("description") || undefined,
+    location: formData.get("location") || undefined,
+    startsAt: formData.get("startsAt"),
+    endsAt: formData.get("endsAt"),
+    capacity: formData.get("capacity") ? Number(formData.get("capacity")) : undefined,
+  });
+  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Invalid input");
+  await updateEvent(session, eventId, parsed.data);
+  revalidateEvent(eventId);
+}
+
+export async function deleteEventAction(formData: FormData): Promise<void> {
+  const session = await requireSuperAdmin();
+  const eventId = String(formData.get("eventId"));
+  await deleteEvent(session, eventId);
+  revalidatePath("/admin/events");
+  revalidatePath("/admin/events/past");
+  revalidatePath("/events");
+  redirect("/admin/events");
 }
 
 export async function setEventThemeAction(formData: FormData): Promise<void> {

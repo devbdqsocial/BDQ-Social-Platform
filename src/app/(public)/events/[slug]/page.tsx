@@ -14,6 +14,8 @@ const fmt = (d: Date) =>
   new Intl.DateTimeFormat("en-IN", { dateStyle: "full", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(d);
 const time = (d: Date) =>
   new Intl.DateTimeFormat("en-IN", { timeStyle: "short", timeZone: "Asia/Kolkata" }).format(d);
+const dayLabel = (d: Date) =>
+  new Intl.DateTimeFormat("en-IN", { weekday: "long", day: "numeric", month: "long", timeZone: "Asia/Kolkata" }).format(d);
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -81,19 +83,32 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
         {event.schedule.length > 0 && (
           <section className="mt-12">
             <h2 className="font-display text-2xl font-semibold">What&apos;s happening</h2>
-            <ul className="mt-4 space-y-2.5">
-              {event.schedule.map((s) => (
-                <li key={s.id} className="flex items-start gap-4 rounded-xl border border-border bg-card p-4 shadow-sm">
-                  <span className="flex shrink-0 items-center gap-1.5 text-sm font-medium text-primary">
-                    <Clock className="size-4" /> {time(s.startsAt)}
-                  </span>
-                  <span className="text-sm">
-                    {s.title}
-                    {s.stageOrZone ? <span className="text-muted-foreground"> · {s.stageOrZone}</span> : ""}
-                  </span>
-                </li>
+            <div className="mt-4 space-y-6">
+              {Object.entries(
+                event.schedule.reduce<Record<string, typeof event.schedule>>((acc, s) => {
+                  (acc[dayLabel(s.startsAt)] ??= []).push(s);
+                  return acc;
+                }, {}),
+              ).map(([day, items]) => (
+                <div key={day}>
+                  <h3 className="mb-2.5 text-sm font-semibold uppercase tracking-wide text-muted-foreground">{day}</h3>
+                  <ul className="space-y-2.5">
+                    {items.map((s) => (
+                      <li key={s.id} className="flex items-start gap-4 rounded-xl border border-border bg-card p-4 shadow-sm">
+                        <span className="flex shrink-0 items-center gap-1.5 text-sm font-medium text-primary">
+                          <Clock className="size-4" /> {time(s.startsAt)}{s.endsAt ? `–${time(s.endsAt)}` : ""}
+                        </span>
+                        <span className="text-sm">
+                          {s.title}
+                          {s.stageOrZone ? <span className="text-muted-foreground"> · {s.stageOrZone}</span> : ""}
+                          {s.performer ? <span className="text-muted-foreground"> · {s.performer}</span> : ""}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               ))}
-            </ul>
+            </div>
           </section>
         )}
 
