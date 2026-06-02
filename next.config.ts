@@ -5,12 +5,12 @@ import type { NextConfig } from "next";
 const isProd = process.env.NODE_ENV === "production";
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://apis.google.com https://www.gstatic.com",
+  "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://apis.google.com https://www.gstatic.com https://www.google.com",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://res.cloudinary.com",
   "font-src 'self' data:",
-  "connect-src 'self' https://api.razorpay.com https://lumberjack.razorpay.com https://*.googleapis.com https://*.firebaseapp.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com",
-  "frame-src https://api.razorpay.com https://checkout.razorpay.com https://*.firebaseapp.com",
+  "connect-src 'self' https://api.razorpay.com https://lumberjack.razorpay.com https://*.googleapis.com https://*.firebaseapp.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://www.google.com",
+  "frame-src https://api.razorpay.com https://checkout.razorpay.com https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
