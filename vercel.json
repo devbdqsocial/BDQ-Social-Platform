@@ -1,8 +1,1 @@
-{
-  "crons": [
-    { "path": "/api/cron/release-holds", "schedule": "* * * * *" },
-    { "path": "/api/cron/notify-retry", "schedule": "* * * * *" },
-    { "path": "/api/cron/reconcile", "schedule": "*/5 * * * *" },
-    { "path": "/api/cron/reminders", "schedule": "0 * * * *" }
-  ]
-}
+{}
