@@ -23,6 +23,8 @@ const schema = z.object({
   // Auth / app secrets
   SESSION_SECRET: z.string().optional(),
   CRON_SECRET: z.string().optional(),
+  // TESTING ONLY: comma-list of admin emails allowed to sign in without TOTP. Empty in real prod.
+  ADMIN_NO_2FA_EMAILS: z.string().optional(),
   NEXT_PUBLIC_FIREBASE_PROJECT_ID: z.string().optional(),
 
   // Payments / messaging / storage

@@ -8,29 +8,30 @@ import type { Role } from "@/server/auth/guard";
 
 export const runtime = "nodejs";
 
-const bodySchema = z.object({ idToken: z.string().min(10) });
+const bodySchema = z.object({ idToken: z.string().min(10), zone: z.enum(["vendor", "customer"]).optional() });
 
-/** Exchange a Firebase ID token for an app session. Role is derived from the hostname/zone. */
+/** Exchange a Firebase ID token for an app session. Role from the explicit zone, else the hostname. */
 export async function POST(req: Request) {
   const limited = await enforceRateLimit(req, "auth", 30, 10 * 60 * 1000);
   if (limited) return limited;
 
-  let idToken: string;
+  let body;
   try {
-    idToken = bodySchema.parse(await req.json()).idToken;
+    body = bodySchema.parse(await req.json());
   } catch {
     return NextResponse.json({ ok: false, error: { code: "VALIDATION" } }, { status: 422 });
   }
 
   let verified;
   try {
-    verified = await verifyFirebaseIdToken(idToken);
+    verified = await verifyFirebaseIdToken(body.idToken);
   } catch {
     return NextResponse.json({ ok: false, error: { code: "UNAUTHENTICATED" } }, { status: 401 });
   }
 
   const host = (req.headers.get("host") ?? "").toLowerCase();
-  const role: Role = host.startsWith("vendors.") ? "VENDOR" : "CUSTOMER";
+  // Prefer the login page's declared zone (works on the preview domain with no subdomains); else host.
+  const role: Role = body.zone ? (body.zone === "vendor" ? "VENDOR" : "CUSTOMER") : host.startsWith("vendors.") ? "VENDOR" : "CUSTOMER";
 
   const user = await db.user.upsert({
     where: { firebaseUid: verified.uid },

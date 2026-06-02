@@ -13,7 +13,7 @@ export default function VendorLoginPage() {
           <CardDescription>Sign in with your phone number to set up your brand and book a stall.</CardDescription>
         </CardHeader>
         <CardContent>
-          <PhoneLogin redirectTo="/vendor" />
+          <PhoneLogin redirectTo="/vendor" zone="vendor" />
         </CardContent>
       </Card>
     </main>

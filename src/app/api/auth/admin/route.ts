@@ -28,15 +28,26 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: { code: "VALIDATION" } }, { status: 422 });
   }
 
-  const user = await db.user.findUnique({ where: { email: body.email.toLowerCase() } });
+  const email = body.email.toLowerCase();
+  const user = await db.user.findUnique({ where: { email } });
   if (!user || !user.passwordHash) return FAIL;
   if (user.role !== "SUPER_ADMIN" && user.role !== "STAFF") return FAIL;
   if (!(await verifyPassword(body.password, user.passwordHash))) return FAIL;
 
-  // SUPER_ADMIN must have 2FA; any user with it enabled must pass it.
-  if (user.role === "SUPER_ADMIN" && !user.totpEnabled) return FAIL;
-  if (user.totpEnabled) {
-    if (!body.code || !user.totpSecret || !verifyCode(body.code, user.totpSecret)) return FAIL;
+  // TESTING EXCEPTION: emails in ADMIN_NO_2FA_EMAILS sign in with password only (no TOTP).
+  // Keep this list empty / remove the account before public launch.
+  const exempt = (process.env.ADMIN_NO_2FA_EMAILS ?? "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean)
+    .includes(email);
+
+  if (!exempt) {
+    // SUPER_ADMIN must have 2FA; any user with it enabled must pass it.
+    if (user.role === "SUPER_ADMIN" && !user.totpEnabled) return FAIL;
+    if (user.totpEnabled) {
+      if (!body.code || !user.totpSecret || !verifyCode(body.code, user.totpSecret)) return FAIL;
+    }
   }
 
   await createSession({ userId: user.id, role: user.role, permissions: user.permissions });

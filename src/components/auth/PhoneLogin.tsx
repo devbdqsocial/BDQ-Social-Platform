@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 
 const msg = (e: unknown) => (e instanceof Error ? e.message : "Something went wrong");
 
-export function PhoneLogin({ redirectTo = "/events" }: { redirectTo?: string }) {
+export function PhoneLogin({ redirectTo = "/events", zone }: { redirectTo?: string; zone?: "vendor" | "customer" }) {
   const router = useRouter();
   const verifierRef = useRef<RecaptchaVerifier | null>(null);
   const [phone, setPhone] = useState("+91");
@@ -50,7 +50,7 @@ export function PhoneLogin({ redirectTo = "/events" }: { redirectTo?: string }) 
       const res = await fetch("/api/auth/verify", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ idToken }),
+        body: JSON.stringify({ idToken, zone }),
       });
       if (!res.ok) throw new Error("Sign-in failed");
       router.push(redirectTo);
