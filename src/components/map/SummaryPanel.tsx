@@ -1,0 +1,39 @@
+"use client";
+
+import { useMemo } from "react";
+import type { EditorElement, PaletteStallType } from "@/lib/map/designer-ops";
+import { formatPaise } from "@/lib/utils";
+
+export function SummaryPanel({ elements, stallTypes }: { elements: EditorElement[]; stallTypes: PaletteStallType[] }) {
+  const summary = useMemo(() => {
+    const nameById = Object.fromEntries(stallTypes.map((t) => [t.id, t.name]));
+    const stalls = elements.filter((e) => e.kind === "stall");
+    const blocked = stalls.filter((s) => s.status === "BLOCKED").length;
+    const sellable = stalls.length - blocked;
+    const totalPaise = stalls.reduce((sum, s) => sum + (s.status === "BLOCKED" ? 0 : s.priceInPaise ?? 0), 0);
+    const byType = new Map<string, number>();
+    for (const s of stalls) {
+      const key = s.stallTypeId ? nameById[s.stallTypeId] ?? "Other" : "Untyped";
+      byType.set(key, (byType.get(key) ?? 0) + 1);
+    }
+    return { total: stalls.length, infra: elements.length - stalls.length, blocked, sellable, totalPaise, byType: [...byType] };
+  }, [elements, stallTypes]);
+
+  return (
+    <aside className="space-y-2 rounded-xl border border-border bg-card p-4 text-sm">
+      <h2 className="font-display text-base font-semibold">Summary</h2>
+      <div className="flex justify-between"><span className="text-muted-foreground">Stalls</span><span className="font-medium">{summary.total}</span></div>
+      <div className="flex justify-between"><span className="text-muted-foreground">Sellable</span><span className="font-medium">{summary.sellable}</span></div>
+      {summary.blocked > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Blocked</span><span className="font-medium">{summary.blocked}</span></div>}
+      <div className="flex justify-between"><span className="text-muted-foreground">Infra / zones</span><span className="font-medium">{summary.infra}</span></div>
+      <div className="flex justify-between border-t border-border pt-2"><span className="text-muted-foreground">Potential value</span><span className="font-semibold">{formatPaise(summary.totalPaise)}</span></div>
+      {summary.byType.length > 0 && (
+        <ul className="border-t border-border pt-2 text-xs text-muted-foreground">
+          {summary.byType.map(([name, n]) => (
+            <li key={name} className="flex justify-between"><span>{name}</span><span>{n}</span></li>
+          ))}
+        </ul>
+      )}
+    </aside>
+  );
+}
