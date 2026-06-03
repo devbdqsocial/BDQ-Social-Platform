@@ -266,6 +266,15 @@ model MapLayout {
   updatedAt    DateTime @updatedAt
 }
 
+// Reusable, event-independent layout (canvas + elements + stall types). Cloned onto an event.
+model LayoutTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  layoutJson  Json
+  createdById String?
+  createdAt   DateTime @default(now())
+}
+
 model Stall {
   id           String        @id @default(cuid())
   eventId      String

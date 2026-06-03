@@ -4,9 +4,11 @@ import { notFound } from "next/navigation";
 import { requireSuperAdmin } from "@/server/auth/guard";
 import { getByIdForAdmin } from "@/server/events/service";
 import { ensureStallTypes } from "@/server/map/stall-types";
+import { listTemplates } from "@/server/map/templates";
 import { DEFAULT_CANVAS, type CanvasMeta, type EditorElement, type PaletteStallType } from "@/lib/map/designer-ops";
 import { MapDesignerLoader } from "@/components/map/MapDesignerLoader";
 import { StallTypesManager } from "./StallTypesManager";
+import { TemplatesBar } from "./TemplatesBar";
 import { saveMapAction, getMapUploadSignatureAction } from "./actions";
 
 export const metadata: Metadata = { title: "Event layout" };
@@ -17,7 +19,7 @@ export default async function EventMapPage({ params }: { params: Promise<{ id: s
   const event = await getByIdForAdmin(id);
   if (!event) notFound();
 
-  const types = await ensureStallTypes(event.id);
+  const [types, templates] = await Promise.all([ensureStallTypes(event.id), listTemplates()]);
   const palette: PaletteStallType[] = types.map((t) => ({
     id: t.id,
     name: t.name,
@@ -45,6 +47,8 @@ export default async function EventMapPage({ params }: { params: Promise<{ id: s
           ← Back to event
         </Link>
       </header>
+
+      <TemplatesBar eventId={event.id} templates={templates} />
 
       <StallTypesManager eventId={event.id} types={types} />
 

@@ -5,6 +5,7 @@ import { Prisma } from "@prisma/client";
 import { requireSuperAdmin } from "@/server/auth/guard";
 import { saveEventMap } from "@/server/events/service";
 import { saveStallType, deleteStallType } from "@/server/map/stall-types";
+import { saveAsTemplate, applyTemplate } from "@/server/map/templates";
 import { stallTypeSchema } from "@/server/schemas";
 import { validateLayout } from "@/lib/map/designer-ops";
 import { signUpload, type UploadSignature } from "@/lib/cloudinary";
@@ -52,4 +53,19 @@ export async function deleteStallTypeAction(formData: FormData): Promise<void> {
   const eventId = String(formData.get("eventId"));
   await deleteStallType(session, String(formData.get("id")));
   revalidatePath(`/admin/events/${eventId}/map`);
+}
+
+export async function saveTemplateAction(eventId: string, name: string): Promise<void> {
+  const session = await requireSuperAdmin();
+  if (name.trim().length < 2) throw new Error("Name the template");
+  await saveAsTemplate(session, eventId, name.trim());
+  revalidatePath(`/admin/events/${eventId}/map`);
+}
+
+export async function applyTemplateAction(eventId: string, templateId: string): Promise<void> {
+  const session = await requireSuperAdmin();
+  if (!templateId) throw new Error("Choose a template");
+  await applyTemplate(session, eventId, templateId);
+  revalidatePath(`/admin/events/${eventId}/map`);
+  revalidatePath("/events");
 }
