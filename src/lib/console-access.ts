@@ -4,7 +4,8 @@ import type { Permission, Role } from "@/server/auth/guard";
 
 export type ConsoleSection =
   | "overview" | "events" | "map" | "vendors" | "checkin" | "staff" | "audit"
-  | "analytics" | "coupons" | "comps" | "sponsors" | "waitlist" | "ops";
+  | "analytics" | "coupons" | "comps" | "sponsors" | "waitlist" | "ops"
+  | "tickets" | "finance" | "growth";
 
 const REQUIRES: Record<ConsoleSection, { superAdminOnly?: boolean; perm?: Permission }> = {
   overview: {},
@@ -16,9 +17,12 @@ const REQUIRES: Record<ConsoleSection, { superAdminOnly?: boolean; perm?: Permis
   comps: { superAdminOnly: true },
   sponsors: { superAdminOnly: true },
   ops: { superAdminOnly: true },
+  finance: { superAdminOnly: true },
   analytics: { perm: "PAYMENT_VIEW" },
+  tickets: { perm: "PAYMENT_VIEW" },
   waitlist: { perm: "CUSTOMER_VIEW" },
   vendors: { perm: "VENDOR_VIEW" },
+  growth: { perm: "VENDOR_VIEW" },
   checkin: { perm: "CHECKIN" },
 };
 

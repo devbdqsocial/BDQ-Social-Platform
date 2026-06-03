@@ -1,0 +1,51 @@
+import {
+  LayoutDashboard, Calendar, Map, Ticket, Store, Zap, IndianRupee, TrendingUp, BarChart3, Settings,
+  type LucideIcon,
+} from "lucide-react";
+import type { ConsoleSection } from "@/lib/console-access";
+
+/**
+ * Grouped admin navigation. Hrefs point to the CURRENTLY-LIVE routes; as modules migrate to the new
+ * IA (P3+), leaves are repointed to the new paths + old paths redirected. Each leaf carries the
+ * ConsoleSection used to gate visibility (canAccessSection).
+ */
+
+export interface NavLeaf { label: string; href: string; section: ConsoleSection }
+export interface NavGroup { label: string; icon: LucideIcon; items: NavLeaf[] }
+
+export const NAV_DASHBOARD: NavLeaf = { label: "Dashboard", href: "/admin", section: "overview" };
+
+export const NAV_GROUPS: NavGroup[] = [
+  { label: "Events", icon: Calendar, items: [
+    { label: "All Events", href: "/admin/events", section: "events" },
+    { label: "Create Event", href: "/admin/events/new", section: "events" },
+  ]},
+  { label: "Venue", icon: Map, items: [
+    { label: "Map Builder", href: "/admin/map", section: "map" },
+  ]},
+  { label: "Ticketing", icon: Ticket, items: [
+    { label: "Comp Tickets", href: "/admin/comps", section: "comps" },
+    { label: "Coupons & Promos", href: "/admin/coupons", section: "coupons" },
+  ]},
+  { label: "Vendors", icon: Store, items: [
+    { label: "Applications", href: "/admin/vendors", section: "vendors" },
+  ]},
+  { label: "Operations", icon: Zap, items: [
+    { label: "Check-in Scanner", href: "/admin/checkin", section: "checkin" },
+    { label: "Staff Management", href: "/admin/staff", section: "staff" },
+    { label: "System Monitor", href: "/admin/ops", section: "ops" },
+  ]},
+  { label: "Growth", icon: TrendingUp, items: [
+    { label: "Sponsors", href: "/admin/sponsors", section: "sponsors" },
+    { label: "Waitlists", href: "/admin/waitlist", section: "waitlist" },
+  ]},
+  { label: "Analytics", icon: BarChart3, items: [
+    { label: "Overview", href: "/admin/analytics", section: "analytics" },
+  ]},
+  { label: "System", icon: Settings, items: [
+    { label: "Audit Logs", href: "/admin/audit", section: "audit" },
+  ]},
+];
+
+export const DASHBOARD_ICON = LayoutDashboard;
+export const FINANCE_ICON = IndianRupee; // reserved for the Finance group (P4)

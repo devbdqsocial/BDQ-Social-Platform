@@ -1,26 +1,16 @@
 import { redirect } from "next/navigation";
-import { ZoneSidebar } from "@/components/nav/ZoneSidebar";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { LogoutButton } from "@/components/auth/LogoutButton";
 import { getSession, type Permission, type Role } from "@/server/auth/guard";
-import { canAccessSection, type ConsoleSection } from "@/lib/console-access";
+import { canAccessSection } from "@/lib/console-access";
+import { getActiveEvent } from "@/server/admin/event-context";
 import { env } from "@/lib/env";
-
-const NAV: { href: string; label: string; section: ConsoleSection }[] = [
-  { href: "/admin", label: "Overview", section: "overview" },
-  { href: "/admin/events", label: "Events", section: "events" },
-  { href: "/admin/map", label: "Event layout", section: "map" },
-  { href: "/admin/vendors", label: "Vendors", section: "vendors" },
-  { href: "/admin/sponsors", label: "Sponsors", section: "sponsors" },
-  { href: "/admin/checkin", label: "Check-in", section: "checkin" },
-  { href: "/admin/comps", label: "Comp tickets", section: "comps" },
-  { href: "/admin/waitlist", label: "Waitlist", section: "waitlist" },
-  { href: "/admin/analytics", label: "Analytics", section: "analytics" },
-  { href: "/admin/coupons", label: "Coupons", section: "coupons" },
-  { href: "/admin/staff", label: "Staff", section: "staff" },
-  { href: "/admin/audit", label: "Audit log", section: "audit" },
-  { href: "/admin/ops", label: "System", section: "ops" },
-];
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/sonner";
+import { AppSidebar } from "@/components/admin/app-sidebar";
+import { AdminHeader } from "@/components/admin/admin-header";
+import { AdminThemeClass } from "@/components/admin/admin-theme-class";
+import { NAV_DASHBOARD, NAV_GROUPS } from "@/components/admin/nav-config";
+import type { ConsoleSection } from "@/lib/console-access";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
@@ -34,21 +24,27 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         : null;
   if (!effective) redirect("/admin/login");
 
-  const items = NAV.filter((n) => canAccessSection(effective, n.section)).map(({ href, label }) => ({ href, label }));
+  // Pass only serializable section keys to the client chrome (icons live client-side in nav-config).
+  const candidates: ConsoleSection[] = [NAV_DASHBOARD.section, ...NAV_GROUPS.flatMap((g) => g.items.map((i) => i.section))];
+  const allowed = [...new Set(candidates)].filter((s) => canAccessSection(effective, s));
+
+  const { active, events } = await getActiveEvent();
+  const evLite = events.map((e) => ({ id: e.id, name: e.name, status: e.status }));
+  const activeLite = active ? { id: active.id, name: active.name, status: active.status } : null;
 
   return (
-    <div className="flex min-h-dvh flex-col bg-background text-foreground sm:flex-row">
-      <ZoneSidebar variant="admin" brand="Admin" items={items} />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="hidden h-14 items-center justify-between border-b border-border px-6 sm:flex">
-          <span className="text-sm text-muted-foreground">Admin workspace</span>
-          <div className="flex items-center gap-1">
-            <ThemeToggle />
-            <LogoutButton />
-          </div>
-        </header>
-        <main id="main" className="p-4 sm:p-6">{children}</main>
-      </div>
+    <div className="admin">
+      <AdminThemeClass />
+      <TooltipProvider delayDuration={300}>
+        <SidebarProvider>
+          <AppSidebar allowed={allowed} />
+          <SidebarInset>
+            <AdminHeader active={activeLite} events={evLite} allowed={allowed} />
+            <main id="main" className="min-w-0 flex-1 p-4 sm:p-6">{children}</main>
+          </SidebarInset>
+        </SidebarProvider>
+      </TooltipProvider>
+      <Toaster position="top-right" richColors />
     </div>
   );
 }

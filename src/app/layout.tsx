@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
+import { Fraunces, Geist, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 
 const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-jakarta", display: "swap" });
 const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces", display: "swap" });
+const geist = Geist({ subsets: ["latin"], variable: "--font-geist", display: "swap" });
 
 const domain = process.env.APP_BASE_DOMAIN;
 const siteUrl = domain && !domain.includes("localhost") ? `https://${domain}` : "http://localhost:3000";
@@ -31,7 +32,7 @@ export const viewport: Viewport = { themeColor: "#120E09" };
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${jakarta.variable} ${fraunces.variable} antialiased`}>
+      <body className={`${jakarta.variable} ${fraunces.variable} ${geist.variable} antialiased`}>
         <a href="#main" className="skip-link">Skip to content</a>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           {children}
