@@ -35,8 +35,10 @@ export const NAV_GROUPS: NavGroup[] = [
   ]},
   { label: "Operations", icon: Zap, items: [
     { label: "Check-in Scanner", href: "/admin/checkin", section: "checkin" },
+    { label: "Live Monitor", href: "/admin/ops/monitor", section: "ops" },
+    { label: "Task Center", href: "/admin/ops/tasks", section: "ops" },
     { label: "Staff Management", href: "/admin/staff", section: "staff" },
-    { label: "System Monitor", href: "/admin/ops", section: "ops" },
+    { label: "System Health", href: "/admin/ops", section: "ops" },
   ]},
   { label: "Finance", icon: IndianRupee, items: [
     { label: "Revenue", href: "/admin/finance/revenue", section: "finance" },
