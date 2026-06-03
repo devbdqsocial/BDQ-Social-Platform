@@ -8,12 +8,13 @@ import { Select } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/page-header";
+import { ChartCard } from "@/components/charts/chart-card";
+import { RevenueAreaChart, StallOccupancyDonut } from "@/components/charts/dashboard-charts";
 
 export const metadata: Metadata = { title: "Analytics" };
 export const dynamic = "force-dynamic";
 
 const pct = (n: number) => `${Math.round(n * 100)}%`;
-const day = (d: string) => d.slice(5); // MM-DD
 const fmtTime = (d: Date) =>
   new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(d);
 
@@ -42,7 +43,6 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
   const { eventId } = await searchParams;
   const [a, events] = await Promise.all([getAnalytics(eventId || undefined), listAllForAdmin()]);
 
-  const maxRev = Math.max(1, ...a.trend.map((t) => t.revenue));
   const peak = a.trend.reduce((m, t) => (t.revenue > m.revenue ? t : m), a.trend[0]);
 
   return (
@@ -83,21 +83,9 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
       </div>
 
       {/* Sales trend */}
-      <section>
-        <h2 className="font-display text-lg font-semibold">Revenue · last 30 days</h2>
-        <p className="text-xs text-muted-foreground">Peak {formatPaise(peak.revenue)} on {peak.day}</p>
-        <div className="mt-4 flex h-36 items-end gap-0.5">
-          {a.trend.map((t) => (
-            <div key={t.day} className="group relative flex-1" title={`${t.day}: ${formatPaise(t.revenue)} (${t.orders} orders)`}>
-              <div className="w-full rounded-t bg-primary/70 transition-colors group-hover:bg-primary" style={{ height: `${Math.round((t.revenue / maxRev) * 100)}%`, minHeight: t.revenue > 0 ? 2 : 0 }} />
-            </div>
-          ))}
-        </div>
-        <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
-          <span>{day(a.trend[0].day)}</span>
-          <span>{day(a.trend[a.trend.length - 1].day)}</span>
-        </div>
-      </section>
+      <ChartCard title="Revenue · last 30 days" description={`Peak ${formatPaise(peak.revenue)} on ${peak.day}`}>
+        <RevenueAreaChart data={a.trend} />
+      </ChartCard>
 
       {/* Funnel + ticket types */}
       <div className="grid gap-6 lg:grid-cols-2">
@@ -144,7 +132,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
             ) : (
               a.discounts.map((d) => (
                 <div key={d.source} className="flex items-center justify-between text-sm">
-                  <Badge variant="gold">{d.source.toLowerCase().replace(/_/g, " ")}</Badge>
+                  <Badge variant="warning">{d.source.toLowerCase().replace(/_/g, " ")}</Badge>
                   <span className="text-muted-foreground">{d.count} orders · {formatPaise(d.total)}</span>
                 </div>
               ))
@@ -172,12 +160,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
               <span className="text-muted-foreground">Booked</span>
               <span className="font-medium">{a.stalls.booked}/{a.stalls.total} ({pct(a.stalls.pct)})</span>
             </div>
-            <PctBar value={a.stalls.pct} />
-            <div className="flex flex-wrap gap-2 pt-1">
-              {Object.entries(a.stalls.counts).map(([s, n]) => (
-                <Badge key={s} variant="neutral">{s.toLowerCase()}: {n}</Badge>
-              ))}
-            </div>
+            <StallOccupancyDonut counts={a.stalls.counts} />
             {a.utm.length > 0 && (
               <div className="border-t border-border pt-2">
                 <p className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">Top sources</p>
