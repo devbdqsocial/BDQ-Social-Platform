@@ -7,6 +7,12 @@ import { saveEventMap } from "@/server/events/service";
 import { saveStallType, deleteStallType } from "@/server/map/stall-types";
 import { stallTypeSchema } from "@/server/schemas";
 import { validateLayout } from "@/lib/map/designer-ops";
+import { signUpload, type UploadSignature } from "@/lib/cloudinary";
+
+export async function getMapUploadSignatureAction(): Promise<UploadSignature> {
+  await requireSuperAdmin();
+  return signUpload("bdq/maps");
+}
 
 export async function saveMapAction(eventId: string, layout: unknown): Promise<void> {
   const session = await requireSuperAdmin();

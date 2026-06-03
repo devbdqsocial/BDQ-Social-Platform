@@ -7,7 +7,7 @@ import { ensureStallTypes } from "@/server/map/stall-types";
 import { DEFAULT_CANVAS, type CanvasMeta, type EditorElement, type PaletteStallType } from "@/lib/map/designer-ops";
 import { MapDesignerLoader } from "@/components/map/MapDesignerLoader";
 import { StallTypesManager } from "./StallTypesManager";
-import { saveMapAction } from "./actions";
+import { saveMapAction, getMapUploadSignatureAction } from "./actions";
 
 export const metadata: Metadata = { title: "Event layout" };
 
@@ -54,6 +54,7 @@ export default async function EventMapPage({ params }: { params: Promise<{ id: s
         initialCanvas={initialCanvas}
         stallTypes={palette}
         saveAction={saveMapAction}
+        uploadAction={getMapUploadSignatureAction}
       />
     </div>
   );

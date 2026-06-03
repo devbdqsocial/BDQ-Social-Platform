@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type Konva from "konva";
-import { Layer, Line, Rect, Stage, Text, Transformer } from "react-konva";
+import { Image as KonvaImage, Layer, Line, Rect, Stage, Text, Transformer } from "react-konva";
 import {
   ZoomIn, ZoomOut, Maximize, Undo2, Redo2, Hand, MousePointer2,
   AlignHorizontalJustifyStart, AlignHorizontalJustifyCenter, AlignHorizontalJustifyEnd,
@@ -18,6 +18,7 @@ import {
 } from "@/lib/map/designer-actions";
 import { INFRA_COLOR, STALL_STATUS_COLORS } from "@/lib/stall-colors";
 import type { SeedInfraType } from "@/server/map/seed-aarush-lawn";
+import type { UploadSignature } from "@/lib/cloudinary";
 import { Button } from "@/components/ui/button";
 import { DesignerToolbar } from "./DesignerToolbar";
 import { DesignerInspector } from "./DesignerInspector";
@@ -31,16 +32,18 @@ export interface MapDesignerProps {
   initialCanvas?: CanvasMeta;
   stallTypes?: PaletteStallType[];
   saveAction?: (eventId: string, layout: DesignerLayout) => Promise<void>;
+  uploadAction?: () => Promise<UploadSignature>;
 }
 
 const STORAGE_KEY = "bdq:designer:layout:v1";
 const fmtInt = (n: number) => new Intl.NumberFormat("en-IN").format(Math.round(n));
 
-export default function MapDesigner({ eventId, initialElements, initialCanvas, stallTypes = [], saveAction }: MapDesignerProps = {}) {
+export default function MapDesigner({ eventId, initialElements, initialCanvas, stallTypes = [], saveAction, uploadAction }: MapDesignerProps = {}) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
   const trRef = useRef<Konva.Transformer>(null);
   const clipboard = useRef<EditorElement[]>([]);
+  const bgFileRef = useRef<HTMLInputElement>(null);
 
   const eventMode = !!(eventId && saveAction);
 
@@ -67,6 +70,38 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, s
   const [bulkOpen, setBulkOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
+  const [bgImg, setBgImg] = useState<HTMLImageElement | null>(null);
+
+  // load the background reference image (CORS-anon so PNG export isn't tainted)
+  useEffect(() => {
+    const url = canvas.bgImage?.url;
+    if (!url) { setBgImg(null); return; }
+    const img = new window.Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => setBgImg(img);
+    img.src = url;
+  }, [canvas.bgImage?.url]);
+
+  const onUploadBg = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !uploadAction) return;
+    try {
+      const sig = await uploadAction();
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("api_key", sig.apiKey);
+      fd.append("timestamp", String(sig.timestamp));
+      fd.append("signature", sig.signature);
+      fd.append("folder", sig.folder);
+      const res = await fetch(sig.uploadUrl, { method: "POST", body: fd });
+      if (!res.ok) throw new Error("Upload failed");
+      const json = (await res.json()) as { secure_url: string };
+      setCanvas((c) => ({ ...c, bgImage: { url: json.secure_url, opacity: c.bgImage?.opacity ?? 0.5 } }));
+    } catch {
+      setSaveStatus("Image upload failed.");
+    }
+  };
 
   const colorById = useMemo(() => Object.fromEntries(stallTypes.map((t) => [t.id, t.color])), [stallTypes]);
   const fillFor = useCallback(
@@ -256,6 +291,24 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, s
             <input type="number" min={10} value={canvas.heightFt} onChange={(e) => setCanvasDim("heightFt", Number(e.target.value))} className="h-9 w-24 rounded-md border border-border bg-background px-2 text-sm" />
           </label>
           <p className="pb-1.5 text-sm"><span className="text-muted-foreground">Area:</span> <span className="font-medium">{fmtInt(canvas.widthFt * canvas.heightFt)} sq ft</span></p>
+          {uploadAction && (
+            <div className="flex items-end gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => bgFileRef.current?.click()}>
+                <ImageIcon className="size-4" /> {canvas.bgImage ? "Change ground plan" : "Add ground plan"}
+              </Button>
+              <input ref={bgFileRef} type="file" accept="image/*" className="hidden" onChange={onUploadBg} />
+              {canvas.bgImage && (
+                <>
+                  <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+                    Opacity
+                    <input type="range" min={0} max={1} step={0.1} value={canvas.bgImage.opacity}
+                      onChange={(e) => setCanvas((c) => (c.bgImage ? { ...c, bgImage: { ...c.bgImage, opacity: Number(e.target.value) } } : c))} />
+                  </label>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setCanvas((c) => ({ ...c, bgImage: undefined }))}>Remove</Button>
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         <DesignerToolbar
@@ -316,6 +369,7 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, s
           >
             <Layer listening={false}>
               <Rect x={0} y={0} width={width} height={height} fill="#FBF7F0" />
+              {bgImg && <KonvaImage image={bgImg} x={0} y={0} width={width} height={height} opacity={canvas.bgImage?.opacity ?? 0.5} />}
               {gridLines.map((l, i) => <Line key={i} points={l.points} stroke="#E3DAC9" strokeWidth={1} />)}
             </Layer>
             <Layer>
