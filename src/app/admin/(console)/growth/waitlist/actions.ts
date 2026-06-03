@@ -7,5 +7,5 @@ import { notifyWaitlist } from "@/server/waitlist/service";
 export async function notifyWaitlistAction(formData: FormData): Promise<void> {
   const session = await requirePermission("CUSTOMER_VIEW");
   await notifyWaitlist(session, String(formData.get("eventId")));
-  revalidatePath("/admin/waitlist");
+  revalidatePath("/admin/growth/waitlist");
 }

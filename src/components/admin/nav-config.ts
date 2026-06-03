@@ -21,23 +21,23 @@ export const NAV_GROUPS: NavGroup[] = [
     { label: "Create Event", href: "/admin/events/new", section: "events" },
   ]},
   { label: "Venue", icon: Map, items: [
-    { label: "Map Builder", href: "/admin/map", section: "map" },
+    { label: "Map Builder", href: "/admin/venue/map", section: "map" },
     { label: "Stall Inventory", href: "/admin/venue/stalls", section: "map" },
   ]},
   { label: "Ticketing", icon: Ticket, items: [
     { label: "Orders", href: "/admin/tickets/orders", section: "tickets" },
     { label: "Attendees", href: "/admin/tickets/attendees", section: "tickets" },
-    { label: "Comp Tickets", href: "/admin/comps", section: "comps" },
-    { label: "Coupons & Promos", href: "/admin/coupons", section: "coupons" },
+    { label: "Comp Tickets", href: "/admin/tickets/comps", section: "comps" },
+    { label: "Coupons & Promos", href: "/admin/tickets/coupons", section: "coupons" },
   ]},
   { label: "Vendors", icon: Store, items: [
     { label: "Applications", href: "/admin/vendors", section: "vendors" },
   ]},
   { label: "Operations", icon: Zap, items: [
-    { label: "Check-in Scanner", href: "/admin/checkin", section: "checkin" },
+    { label: "Check-in Scanner", href: "/admin/ops/checkin", section: "checkin" },
     { label: "Live Monitor", href: "/admin/ops/monitor", section: "ops" },
     { label: "Task Center", href: "/admin/ops/tasks", section: "ops" },
-    { label: "Staff Management", href: "/admin/staff", section: "staff" },
+    { label: "Staff Management", href: "/admin/ops/staff", section: "staff" },
     { label: "System Health", href: "/admin/ops", section: "ops" },
   ]},
   { label: "Finance", icon: IndianRupee, items: [
@@ -45,15 +45,15 @@ export const NAV_GROUPS: NavGroup[] = [
     { label: "Payments", href: "/admin/finance/payments", section: "finance" },
   ]},
   { label: "Growth", icon: TrendingUp, items: [
-    { label: "Sponsors", href: "/admin/sponsors", section: "sponsors" },
-    { label: "Waitlists", href: "/admin/waitlist", section: "waitlist" },
+    { label: "Sponsors", href: "/admin/growth/sponsors", section: "sponsors" },
+    { label: "Waitlists", href: "/admin/growth/waitlist", section: "waitlist" },
     { label: "Campaigns", href: "/admin/growth/campaigns", section: "growth" },
   ]},
   { label: "Analytics", icon: BarChart3, items: [
     { label: "Overview", href: "/admin/analytics", section: "analytics" },
   ]},
   { label: "System", icon: Settings, items: [
-    { label: "Audit Logs", href: "/admin/audit", section: "audit" },
+    { label: "Audit Logs", href: "/admin/system/audit", section: "audit" },
     { label: "Roles & Permissions", href: "/admin/system/roles", section: "staff" },
     { label: "Notifications", href: "/admin/system/notifications", section: "overview" },
   ]},

@@ -18,5 +18,5 @@ export async function generateCompsAction(formData: FormData): Promise<void> {
     holderEmail: String(formData.get("holderEmail") || "").trim() || undefined,
   });
 
-  redirect(`/admin/comps/${orderId}`);
+  redirect(`/admin/tickets/comps/${orderId}`);
 }

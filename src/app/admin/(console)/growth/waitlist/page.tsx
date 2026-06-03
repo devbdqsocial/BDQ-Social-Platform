@@ -28,7 +28,7 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
         title="Waitlist"
         description="People who asked to be notified when tickets open up."
         actions={
-          <form method="get" action="/admin/waitlist" className="flex items-end gap-2">
+          <form method="get" action="/admin/growth/waitlist" className="flex items-end gap-2">
             <Select name="eventId" defaultValue={activeId} className="w-56">
               {events.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
             </Select>

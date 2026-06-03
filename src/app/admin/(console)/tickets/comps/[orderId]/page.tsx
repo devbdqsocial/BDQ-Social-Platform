@@ -29,7 +29,7 @@ export default async function CompSheetPage({ params }: { params: Promise<{ orde
           <h1 className="font-display text-2xl font-semibold">{tickets.length} comp ticket{tickets.length === 1 ? "" : "s"}</h1>
           <p className="text-sm text-muted-foreground">{order.event.name} · {fmt(order.event.startsAt)}</p>
         </div>
-        <Button asChild variant="ghost" size="sm"><Link href="/admin/comps">← Back</Link></Button>
+        <Button asChild variant="ghost" size="sm"><Link href="/admin/tickets/comps">← Back</Link></Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">

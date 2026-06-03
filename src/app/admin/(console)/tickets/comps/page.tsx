@@ -70,7 +70,7 @@ export default async function CompsPage() {
                   <p className="truncate font-medium">{b._count.tickets} × {b.tickets[0]?.ticketType.name ?? "ticket"} · {b.event.name}</p>
                   <p className="text-xs text-muted-foreground">{b.tickets[0]?.holderName ?? "—"} · {fmt(b.createdAt)}</p>
                 </div>
-                <Button asChild variant="outline" size="sm"><Link href={`/admin/comps/${b.id}`}>View QR</Link></Button>
+                <Button asChild variant="outline" size="sm"><Link href={`/admin/tickets/comps/${b.id}`}>View QR</Link></Button>
               </li>
             ))}
           </ul>

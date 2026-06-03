@@ -32,11 +32,11 @@ export async function saveCouponAction(formData: FormData): Promise<void> {
     if (e instanceof CouponCodeTakenError) throw new Error("That code already exists.");
     throw e;
   }
-  revalidatePath("/admin/coupons");
+  revalidatePath("/admin/tickets/coupons");
 }
 
 export async function toggleCouponAction(formData: FormData): Promise<void> {
   const session = await requireSuperAdmin();
   await setCouponActive(session, String(formData.get("id")), formData.get("active") === "true");
-  revalidatePath("/admin/coupons");
+  revalidatePath("/admin/tickets/coupons");
 }

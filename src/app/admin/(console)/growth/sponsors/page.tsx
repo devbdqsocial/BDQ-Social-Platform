@@ -29,7 +29,7 @@ export default async function SponsorsPage({ searchParams }: { searchParams: Pro
         title="Sponsors"
         description="Add partners and their logos — they appear on the landing page and the event page."
         actions={
-          <form method="get" action="/admin/sponsors" className="flex items-end gap-2">
+          <form method="get" action="/admin/growth/sponsors" className="flex items-end gap-2">
             <Select name="eventId" defaultValue={activeId} className="w-56">
               {events.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
             </Select>

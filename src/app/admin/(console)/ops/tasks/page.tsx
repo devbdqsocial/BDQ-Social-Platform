@@ -20,7 +20,7 @@ export default async function TaskCenterPage() {
     { n: pending.expiringHolds, label: "stall hold(s) expiring within the hour", href: "/admin/venue/stalls", icon: Clock },
     { n: pending.failedPayments, label: "failed payment(s) in the last 7 days", href: "/admin/finance/payments", icon: XCircle },
     { n: pending.soldOutTypes, label: "ticket type(s) sold out", href: "/admin/tickets/orders", icon: TicketIcon },
-    { n: pending.waitlist, label: "people on the waitlist", href: "/admin/waitlist", icon: BellRing },
+    { n: pending.waitlist, label: "people on the waitlist", href: "/admin/growth/waitlist", icon: BellRing },
   ].filter((t) => t.n > 0);
 
   return (

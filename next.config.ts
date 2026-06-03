@@ -27,9 +27,27 @@ const securityHeaders = [
   { key: isProd ? "Content-Security-Policy" : "Content-Security-Policy-Report-Only", value: csp },
 ];
 
+// Admin IA route moves (old → new). Keep base + wildcard so dynamic sub-routes (e.g. comps/[id]) follow.
+const adminRedirects = [
+  ["/admin/map", "/admin/venue/map"],
+  ["/admin/coupons", "/admin/tickets/coupons"],
+  ["/admin/comps", "/admin/tickets/comps"],
+  ["/admin/checkin", "/admin/ops/checkin"],
+  ["/admin/staff", "/admin/ops/staff"],
+  ["/admin/sponsors", "/admin/growth/sponsors"],
+  ["/admin/waitlist", "/admin/growth/waitlist"],
+  ["/admin/audit", "/admin/system/audit"],
+];
+
 const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
+  },
+  async redirects() {
+    return adminRedirects.flatMap(([from, to]) => [
+      { source: from, destination: to, permanent: false },
+      { source: `${from}/:path*`, destination: `${to}/:path*`, permanent: false },
+    ]);
   },
 };
 

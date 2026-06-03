@@ -18,7 +18,7 @@ export default async function StallInventoryPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <PageHeader title="Stall inventory" description={active ? `Every stall in ${active.name} and who has it.` : "Select an event from the switcher."} />
-        <Button asChild size="sm" variant="outline"><Link href="/admin/map">Open map builder</Link></Button>
+        <Button asChild size="sm" variant="outline"><Link href="/admin/venue/map">Open map builder</Link></Button>
       </div>
       <StallsTable stalls={stalls} />
     </div>

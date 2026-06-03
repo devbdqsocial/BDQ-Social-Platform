@@ -38,7 +38,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
   const pageHref = (p: number) => {
     const u = new URLSearchParams(filterQs());
     u.set("page", String(p));
-    return `/admin/audit?${u.toString()}`;
+    return `/admin/system/audit?${u.toString()}`;
   };
 
   return (
@@ -54,7 +54,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
       />
 
       <Card asChild>
-        <form method="get" action="/admin/audit">
+        <form method="get" action="/admin/system/audit">
           <CardContent className="grid items-end gap-3 pt-6 sm:grid-cols-5">
             <Field label="Area">
               <Select name="entity" defaultValue={sp.entity ?? ""}>
@@ -76,7 +76,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
             </Field>
             <div className="flex gap-2">
               <Button type="submit">Apply</Button>
-              <Button asChild variant="ghost"><Link href="/admin/audit">Clear</Link></Button>
+              <Button asChild variant="ghost"><Link href="/admin/system/audit">Clear</Link></Button>
             </div>
           </CardContent>
         </form>

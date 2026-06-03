@@ -15,13 +15,13 @@ export async function createSponsorAction(formData: FormData): Promise<void> {
   });
   if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Invalid sponsor");
   await createSponsor(session, parsed.data);
-  revalidatePath("/admin/sponsors");
+  revalidatePath("/admin/growth/sponsors");
   revalidatePath("/");
 }
 
 export async function deleteSponsorAction(formData: FormData): Promise<void> {
   const session = await requireSuperAdmin();
   await deleteSponsor(session, String(formData.get("id")));
-  revalidatePath("/admin/sponsors");
+  revalidatePath("/admin/growth/sponsors");
   revalidatePath("/");
 }

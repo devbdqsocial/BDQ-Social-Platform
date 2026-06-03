@@ -18,11 +18,11 @@ export async function saveStaffAction(formData: FormData): Promise<void> {
     if (e instanceof StaffEmailTakenError) throw new Error("That email already belongs to another account.");
     throw e;
   }
-  revalidatePath("/admin/staff");
+  revalidatePath("/admin/ops/staff");
 }
 
 export async function removeStaffAction(formData: FormData): Promise<void> {
   const session = await requireSuperAdmin();
   await removeStaffAccess(session, String(formData.get("id")));
-  revalidatePath("/admin/staff");
+  revalidatePath("/admin/ops/staff");
 }

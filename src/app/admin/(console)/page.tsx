@@ -33,7 +33,7 @@ export default async function AdminDashboard() {
 
   const tasks = [
     { n: d.pending.approvals, label: "vendor application(s) awaiting review", href: "/admin/vendors", icon: UserCheck },
-    { n: d.pending.expiringHolds, label: "stall hold(s) expiring within the hour", href: "/admin/map", icon: Clock },
+    { n: d.pending.expiringHolds, label: "stall hold(s) expiring within the hour", href: "/admin/venue/stalls", icon: Clock },
     { n: d.pending.failedPayments, label: "failed payment(s) in the last 30 days", href: "/admin/analytics", icon: XCircle },
     { n: d.pending.soldOutTypes, label: "ticket type(s) sold out", href: "/admin/analytics", icon: TicketIcon },
   ].filter((t) => t.n > 0);

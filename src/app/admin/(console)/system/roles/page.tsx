@@ -49,7 +49,7 @@ export default async function RolesPage() {
       <div className="space-y-3">
         <h2 className="font-display text-lg font-semibold">Per-teammate permissions</h2>
         {staff.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No active staff — add teammates on the <Link href="/admin/staff" className="text-primary hover:underline">Staff</Link> page.</p>
+          <p className="text-sm text-muted-foreground">No active staff — add teammates on the <Link href="/admin/ops/staff" className="text-primary hover:underline">Staff</Link> page.</p>
         ) : (
           staff.map((s) => (
             <Card key={s.id} asChild>

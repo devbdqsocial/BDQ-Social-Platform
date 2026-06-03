@@ -23,7 +23,7 @@ export default async function CheckinPage({ searchParams }: { searchParams: Prom
       </div>
 
       {events.length > 0 && (
-        <form method="get" action="/admin/checkin" className="flex items-end gap-2">
+        <form method="get" action="/admin/ops/checkin" className="flex items-end gap-2">
           <Select name="eventId" defaultValue={activeId} className="flex-1">
             {events.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
           </Select>
