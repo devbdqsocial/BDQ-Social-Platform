@@ -7,9 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Field } from "@/components/ui/field";
 import { Input, Select } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
-import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/page-header";
-import { saveStaffAction, removeStaffAction } from "./actions";
+import { saveStaffAction } from "./actions";
+import { StaffTable } from "./StaffTable";
 
 export const metadata: Metadata = { title: "Staff" };
 
@@ -51,36 +51,7 @@ export default async function AdminStaffPage() {
 
       <div className="space-y-3">
         <h2 className="font-display text-lg font-semibold">Team ({staff.length})</h2>
-        {staff.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No teammates yet — add your first one above.</p>
-        ) : (
-          <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-            {staff.map((s) => (
-              <li key={s.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
-                <div className="min-w-0">
-                  <p className="flex items-center gap-2 font-medium">
-                    <span className="truncate">{s.name ?? s.email}</span>
-                    {!s.active && <Badge variant="neutral">No access</Badge>}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">{s.email}</p>
-                  <div className="mt-1.5 flex flex-wrap gap-1">
-                    {s.permissions.length === 0 ? (
-                      <span className="text-xs text-muted-foreground">—</span>
-                    ) : (
-                      s.permissions.map((p) => <Badge key={p} variant="primary">{p.toLowerCase().replace(/_/g, " ")}</Badge>)
-                    )}
-                  </div>
-                </div>
-                {s.active && (
-                  <form action={removeStaffAction}>
-                    <input type="hidden" name="id" value={s.id} />
-                    <Button type="submit" variant="ghost" size="sm">Remove access</Button>
-                  </form>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
+        <StaffTable staff={staff} />
       </div>
     </div>
   );

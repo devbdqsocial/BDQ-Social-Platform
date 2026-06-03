@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Input, Select } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/page-header";
-import { createSponsorAction, deleteSponsorAction } from "./actions";
+import { createSponsorAction } from "./actions";
+import { SponsorsTable } from "./SponsorsTable";
 
 export const metadata: Metadata = { title: "Sponsors" };
 export const dynamic = "force-dynamic";
@@ -66,28 +66,7 @@ export default async function SponsorsPage({ searchParams }: { searchParams: Pro
 
       <div className="space-y-3">
         <h2 className="font-display text-lg font-semibold">Sponsors ({sponsors.length})</h2>
-        {sponsors.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No sponsors for this event yet.</p>
-        ) : (
-          <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-            {sponsors.map((s) => (
-              <li key={s.id} className="flex items-center justify-between gap-3 p-4">
-                <div className="flex items-center gap-3">
-                  {s.logoUrl && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={s.logoUrl} alt="" className="h-8 w-auto rounded object-contain" />
-                  )}
-                  <span className="font-medium">{s.name}</span>
-                  <Badge variant="gold">{tierLabel(s.tier)}</Badge>
-                </div>
-                <form action={deleteSponsorAction}>
-                  <input type="hidden" name="id" value={s.id} />
-                  <Button type="submit" variant="ghost" size="sm">Remove</Button>
-                </form>
-              </li>
-            ))}
-          </ul>
-        )}
+        <SponsorsTable sponsors={sponsors} />
       </div>
     </div>
   );
