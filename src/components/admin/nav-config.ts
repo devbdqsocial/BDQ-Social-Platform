@@ -38,6 +38,10 @@ export const NAV_GROUPS: NavGroup[] = [
     { label: "Staff Management", href: "/admin/staff", section: "staff" },
     { label: "System Monitor", href: "/admin/ops", section: "ops" },
   ]},
+  { label: "Finance", icon: IndianRupee, items: [
+    { label: "Revenue", href: "/admin/finance/revenue", section: "finance" },
+    { label: "Payments", href: "/admin/finance/payments", section: "finance" },
+  ]},
   { label: "Growth", icon: TrendingUp, items: [
     { label: "Sponsors", href: "/admin/sponsors", section: "sponsors" },
     { label: "Waitlists", href: "/admin/waitlist", section: "waitlist" },
@@ -51,4 +55,3 @@ export const NAV_GROUPS: NavGroup[] = [
 ];
 
 export const DASHBOARD_ICON = LayoutDashboard;
-export const FINANCE_ICON = IndianRupee; // reserved for the Finance group (P4)
