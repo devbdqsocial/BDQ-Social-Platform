@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { KpiCard } from "@/components/charts/kpi-card";
 import { ChartCard } from "@/components/charts/chart-card";
+import { DashboardFilter } from "@/components/admin/dashboard-filter";
 import {
   RevenueAreaChart, TicketTypeBar, VendorPipelineBar, StallOccupancyDonut,
 } from "@/components/charts/dashboard-charts";
@@ -15,11 +16,17 @@ import {
 const fmtDate = (d: Date) =>
   new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata" }).format(d);
 
-export default async function AdminDashboard() {
+const RANGE_DAYS: Record<string, number | null> = { today: 1, "7d": 7, "30d": 30, all: null };
+const RANGE_LABEL: Record<string, string> = { today: "today", "7d": "last 7 days", "30d": "last 30 days", all: "all time" };
+
+export default async function AdminDashboard({ searchParams }: { searchParams: Promise<{ range?: string }> }) {
   await requireAdmin();
+  const { range } = await searchParams;
+  const rangeKey = range && range in RANGE_DAYS ? range : "30d";
   const { active } = await getActiveEvent();
-  const d = await getDashboard(active?.id);
+  const d = await getDashboard(active?.id, RANGE_DAYS[rangeKey]);
   const k = d.kpis;
+  const win = RANGE_LABEL[rangeKey];
   const occ = d.stalls;
   const vp = d.vendorPipeline;
   const trendSpark = d.trend.map((b) => b.revenue);
@@ -43,13 +50,14 @@ export default async function AdminDashboard() {
       <PageHeader
         title="Dashboard"
         description={active ? `Command center for ${active.name}.` : "Create an event to see live numbers."}
+        actions={<DashboardFilter current={rangeKey} />}
       />
 
-      {/* KPI strip */}
+      {/* KPI strip — windowed to the selected range */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <KpiCard label="Revenue (30d)" value={formatPaise(d.revenue30d)} deltaPct={d.revenueDeltaPct ?? undefined} trend={trendSpark} sub="vs previous 30 days" />
-        <KpiCard label="Tickets sold" value={k.ticketsSold} sub={`${k.paidOrders} paid orders`} />
-        <KpiCard label="Footfall today" value={d.footfallToday} sub="checked in (live)" />
+        <KpiCard label="Revenue" value={formatPaise(d.range.revenue)} deltaPct={rangeKey === "30d" ? d.revenueDeltaPct ?? undefined : undefined} trend={trendSpark} sub={`${d.range.orders} orders · ${win}`} />
+        <KpiCard label="Tickets sold" value={d.range.tickets} sub={win} />
+        <KpiCard label="Footfall" value={d.range.footfall} sub={`checked in · ${win}`} />
         <KpiCard label="Vendor occupancy" value={`${occ.booked}/${occ.total}`} sub={`${Math.round(occ.pct * 100)}% of stalls booked`} />
         <KpiCard label="Pending approvals" value={d.pending.approvals} sub="vendors awaiting review" />
       </div>

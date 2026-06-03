@@ -2,25 +2,31 @@ import "server-only";
 import { db } from "@/server/db";
 import { getAnalytics } from "./service";
 
-/** Command-center dashboard = the analytics aggregate + a few dashboard-only extras. Event-scoped. */
+/** Command-center dashboard = the analytics aggregate + dashboard-only extras + a windowed KPI strip. */
 
-export async function getDashboard(eventId?: string) {
+export async function getDashboard(eventId?: string, rangeDays: number | null = 30) {
+  const nowMs = Date.now();
+  const rangeSince = rangeDays != null ? new Date(nowMs - rangeDays * 86400000) : null;
   const since = new Date(); since.setDate(since.getDate() - 29);
   const prevSince = new Date(); prevSince.setDate(prevSince.getDate() - 59);
   const startToday = new Date(); startToday.setHours(0, 0, 0, 0);
-  const soon = new Date(Date.now() + 60 * 60 * 1000);
+  const soon = new Date(nowMs + 60 * 60 * 1000);
 
-  const paidWhere = { ...(eventId ? { eventId } : {}), status: "PAID" as const };
+  const ev = eventId ? { eventId } : {};
+  const checkInEv = eventId ? { ticket: { order: { eventId } } } : {};
+  const ticketEv = eventId ? { order: { eventId } } : {};
+  const rangePaid = { ...ev, status: "PAID" as const, ...(rangeSince ? { createdAt: { gte: rangeSince } } : {}) };
 
-  const [analytics, vendorGroups, footfallToday, prevRevenueAgg, expiringHolds, failedPayments] = await Promise.all([
+  const [analytics, vendorGroups, footfallToday, prevRevenueAgg, expiringHolds, failedPayments, rangeRevenueAgg, rangeTickets, rangeFootfall] = await Promise.all([
     getAnalytics(eventId),
     db.vendorProfile.groupBy({ by: ["approvalStatus"], _count: { _all: true } }),
-    db.checkIn.count({
-      where: { direction: "IN", scannedAt: { gte: startToday }, ...(eventId ? { ticket: { order: { eventId } } } : {}) },
-    }),
-    db.order.aggregate({ where: { ...paidWhere, createdAt: { gte: prevSince, lt: since } }, _sum: { total: true } }),
-    db.stall.count({ where: { status: "HELD", holdUntil: { lte: soon }, ...(eventId ? { eventId } : {}) } }),
-    db.order.count({ where: { ...(eventId ? { eventId } : {}), status: "FAILED", createdAt: { gte: since } } }),
+    db.checkIn.count({ where: { direction: "IN", scannedAt: { gte: startToday }, ...checkInEv } }),
+    db.order.aggregate({ where: { ...ev, status: "PAID", createdAt: { gte: prevSince, lt: since } }, _sum: { total: true } }),
+    db.stall.count({ where: { status: "HELD", holdUntil: { lte: soon }, ...ev } }),
+    db.order.count({ where: { ...ev, status: "FAILED", createdAt: { gte: since } } }),
+    db.order.aggregate({ where: rangePaid, _sum: { total: true }, _count: { _all: true } }),
+    db.ticket.count({ where: { ...ticketEv, ...(rangeSince ? { createdAt: { gte: rangeSince } } : {}) } }),
+    db.checkIn.count({ where: { direction: "IN", ...checkInEv, ...(rangeSince ? { scannedAt: { gte: rangeSince } } : {}) } }),
   ]);
 
   const vendorPipeline = { SUBMITTED: 0, UNDER_REVIEW: 0, APPROVED: 0, REJECTED: 0 } as Record<string, number>;
@@ -29,7 +35,6 @@ export async function getDashboard(eventId?: string) {
   const revenue30d = analytics.trend.reduce((s, b) => s + b.revenue, 0);
   const prevRevenue = prevRevenueAgg._sum.total ?? 0;
   const revenueDeltaPct = prevRevenue > 0 ? ((revenue30d - prevRevenue) / prevRevenue) * 100 : null;
-
   const soldOutTypes = analytics.ticketTypes.filter((t) => t.total > 0 && t.sold >= t.total).length;
 
   return {
@@ -38,6 +43,12 @@ export async function getDashboard(eventId?: string) {
     footfallToday,
     revenue30d,
     revenueDeltaPct,
+    range: {
+      revenue: rangeRevenueAgg._sum.total ?? 0,
+      orders: rangeRevenueAgg._count._all,
+      tickets: rangeTickets,
+      footfall: rangeFootfall,
+    },
     pending: {
       approvals: vendorPipeline.SUBMITTED + vendorPipeline.UNDER_REVIEW,
       expiringHolds,

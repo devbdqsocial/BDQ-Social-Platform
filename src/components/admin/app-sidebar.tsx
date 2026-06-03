@@ -44,8 +44,8 @@ export function AppSidebar({ allowed, user }: { allowed: string[]; user: { name:
       <SidebarSeparator className="mx-0" />
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarMenu className="gap-1">
+        <SidebarGroup className="px-2 py-1.5">
+          <SidebarMenu className="gap-1.5">
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={isActive(dashboard.href)} tooltip={dashboard.label}>
                 <Link href={dashboard.href}><DASHBOARD_ICON /> <span>{dashboard.label}</span></Link>
