@@ -29,7 +29,8 @@ const securityHeaders = [
 
 // Admin IA route moves (old → new). Keep base + wildcard so dynamic sub-routes (e.g. comps/[id]) follow.
 const adminRedirects = [
-  ["/admin/map", "/admin/venue/map"],
+  ["/admin/map", "/admin/venue/maps"],
+  ["/admin/venue/map", "/admin/venue/maps"],
   ["/admin/coupons", "/admin/tickets/coupons"],
   ["/admin/comps", "/admin/tickets/comps"],
   ["/admin/checkin", "/admin/ops/checkin"],

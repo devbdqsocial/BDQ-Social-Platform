@@ -68,6 +68,15 @@ export const scheduleItemSchema = z.object({
   performer: z.string().optional(),
 });
 
+export const mapElementSchema = z.object({
+  name: z.string().min(1),
+  kind: z.enum(["STALL", "INFRA"]),
+  widthFt: ft,
+  heightFt: ft,
+  color: z.string().min(1),
+  sellable: z.boolean().default(true),
+});
+
 export const campaignSchema = z.object({
   name: z.string().min(2),
   channel: z.enum(["EMAIL", "WHATSAPP"]),

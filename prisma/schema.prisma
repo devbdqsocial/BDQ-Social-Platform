@@ -207,6 +207,7 @@ model Event {
   sponsors    Sponsor[]
   waitlist    Waitlist[]
   leads       Lead[]
+  mapId       String?
 
   @@index([status])
 }
@@ -273,6 +274,35 @@ model LayoutTemplate {
   layoutJson  Json
   createdById String?
   createdAt   DateTime @default(now())
+}
+
+// Global, reusable map-element catalog (stall sizes + infra). Dropped onto any map.
+model MapElement {
+  id        String   @id @default(cuid())
+  name      String
+  kind      String   @default("STALL") // STALL | INFRA
+  widthFt   Float
+  heightFt  Float
+  color     String
+  sellable  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+// A named, reusable map (venue size + layout). Attach to any event. Geometry stored in feet.
+model EventMap {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  locationName String?
+  unit         String   @default("FT") // FT | M (display only; stored in feet)
+  widthFt      Float
+  heightFt     Float
+  gridFt       Float    @default(5)
+  layoutJson   Json
+  createdById  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model Stall {

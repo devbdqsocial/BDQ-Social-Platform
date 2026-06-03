@@ -3,7 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireSuperAdmin } from "@/server/auth/guard";
 import { getByIdForAdmin } from "@/server/events/service";
+import { listMaps } from "@/server/map/maps";
 import { formatPaise } from "@/lib/utils";
+import { MapAttach } from "./MapAttach";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
@@ -24,7 +26,7 @@ const timeOnly = (d: Date) => new Intl.DateTimeFormat("en-IN", { timeStyle: "sho
 export default async function AdminEventEditor({ params }: { params: Promise<{ id: string }> }) {
   await requireSuperAdmin();
   const { id } = await params;
-  const event = await getByIdForAdmin(id);
+  const [event, maps] = await Promise.all([getByIdForAdmin(id), listMaps()]);
   if (!event) notFound();
   const theme = (event.theme as { primary?: string; accent?: string } | null) ?? null;
 
@@ -58,6 +60,7 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
           <TabsTrigger value="details">Details</TabsTrigger>
           <TabsTrigger value="tickets">Tickets ({event.ticketTypes.length})</TabsTrigger>
           <TabsTrigger value="schedule">Schedule ({event.schedule.length})</TabsTrigger>
+          <TabsTrigger value="map">Map</TabsTrigger>
           <TabsTrigger value="theme">Theme</TabsTrigger>
           <TabsTrigger value="danger">Danger</TabsTrigger>
         </TabsList>
@@ -182,6 +185,19 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
                 <Button type="submit" className="w-fit sm:col-span-2">Add to schedule</Button>
               </CardContent>
             </form>
+          </Card>
+        </TabsContent>
+
+        {/* MAP */}
+        <TabsContent value="map">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Event layout</CardTitle>
+              <CardDescription>Attach a reusable map, or open the layout editor for this event.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <MapAttach eventId={event.id} maps={maps.map((m) => ({ id: m.id, name: m.name }))} currentMapId={event.mapId} />
+            </CardContent>
           </Card>
         </TabsContent>
 

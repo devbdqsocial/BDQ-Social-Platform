@@ -275,7 +275,7 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, s
       <div className="space-y-3">
         {eventMode && (
           <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-3">
-            <Button size="sm" onClick={handleSave} disabled={saving}>{saving ? "Saving…" : "Save to event"}</Button>
+            <Button size="sm" onClick={handleSave} disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
             {saveStatus && <span className="text-sm text-muted-foreground">{saveStatus}</span>}
           </div>
         )}
@@ -368,9 +368,11 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, s
             onMouseUp={onStageMouseUp}
           >
             <Layer listening={false}>
-              <Rect x={0} y={0} width={width} height={height} fill="#FBF7F0" />
+              <Rect x={0} y={0} width={width} height={height} fill="#FAFAFA" />
               {bgImg && <KonvaImage image={bgImg} x={0} y={0} width={width} height={height} opacity={canvas.bgImage?.opacity ?? 0.5} />}
-              {gridLines.map((l, i) => <Line key={i} points={l.points} stroke="#E3DAC9" strokeWidth={1} />)}
+              {gridLines.map((l, i) => <Line key={i} points={l.points} stroke="#E5E7EB" strokeWidth={1} />)}
+              {/* venue boundary box (the area to design inside) */}
+              <Rect x={0} y={0} width={width} height={height} stroke="#94A3B8" strokeWidth={2} dash={[6, 4]} />
             </Layer>
             <Layer>
               {elements.map((el) => {
