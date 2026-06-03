@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronRight, Plus, ShieldCheck } from "lucide-react";
@@ -23,6 +24,8 @@ export function AppSidebar({ allowed, user }: { allowed: string[]; user: { name:
   const isActive = (href: string) =>
     href === "/admin" ? pathname === "/admin" : pathname === href || pathname.startsWith(`${href}/`);
   const groupActive = (g: NavGroup) => g.items.some((i) => isActive(i.href));
+  // Single-open accordion: opening one group collapses the others. Defaults to the active route's group.
+  const [openGroup, setOpenGroup] = useState<string | null>(() => groups.find(groupActive)?.label ?? null);
 
   return (
     <Sidebar collapsible="icon">
@@ -53,10 +56,16 @@ export function AppSidebar({ allowed, user }: { allowed: string[]; user: { name:
             </SidebarMenuItem>
 
             {groups.map((g) => (
-              <Collapsible key={g.label} asChild defaultOpen={groupActive(g)} className="group/collapsible">
+              <Collapsible
+                key={g.label}
+                asChild
+                open={openGroup === g.label}
+                onOpenChange={(o) => setOpenGroup(o ? g.label : null)}
+                className="group/collapsible"
+              >
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
-                    <SidebarMenuButton tooltip={g.label} isActive={groupActive(g)}>
+                    <SidebarMenuButton tooltip={g.label}>
                       <g.icon /> <span>{g.label}</span>
                       <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
                     </SidebarMenuButton>

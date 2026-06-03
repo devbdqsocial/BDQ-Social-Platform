@@ -6,7 +6,6 @@ import { Field } from "@/components/ui/field";
 import { Input, Textarea } from "@/components/ui/input";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { PageHeader } from "@/components/ui/page-header";
-import { EventsNav } from "../_components";
 import { createEventAction } from "../actions";
 
 export const metadata: Metadata = { title: "Create event" };
@@ -17,7 +16,6 @@ export default async function NewEventPage() {
   return (
     <div className="max-w-3xl space-y-6">
       <PageHeader title="Create event" description="Add the basics now — tickets, schedule, and the event layout come next." />
-      <EventsNav active="all" />
 
       <Card asChild>
         <form action={createEventAction}>
