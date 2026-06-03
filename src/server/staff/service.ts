@@ -3,7 +3,7 @@ import { db } from "@/server/db";
 import { withAudit } from "@/server/audit";
 import { hashPassword } from "@/lib/password";
 import { permissionsForPreset, type StaffPreset } from "@/lib/staff-presets";
-import type { Session } from "@/server/auth/guard";
+import type { Permission, Session } from "@/server/auth/guard";
 
 /** SUPER_ADMIN-managed staff accounts (P3.1). Staff sign in via /api/auth/admin (password, optional TOTP). */
 
@@ -54,6 +54,20 @@ export function upsertStaff(
           create: { email, name: input.name, role: "STAFF", permissions, passwordHash },
         });
         return { result: user, after: { role: user.role, permissions: user.permissions } };
+      },
+    };
+  });
+}
+
+/** Fine-grained: set a staff member's exact permission set (Roles & Permissions editor). */
+export function setStaffPermissions(session: Session, id: string, permissions: Permission[]) {
+  return withAudit(session, { action: "UPDATE", entity: "User", entityId: id }, async () => {
+    const before = await db.user.findUnique({ where: { id }, select: { permissions: true } });
+    return {
+      before,
+      run: async () => {
+        const u = await db.user.update({ where: { id }, data: { permissions } });
+        return { result: u, after: { permissions: u.permissions } };
       },
     };
   });

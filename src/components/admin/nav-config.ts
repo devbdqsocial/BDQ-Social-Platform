@@ -53,6 +53,7 @@ export const NAV_GROUPS: NavGroup[] = [
   ]},
   { label: "System", icon: Settings, items: [
     { label: "Audit Logs", href: "/admin/audit", section: "audit" },
+    { label: "Roles & Permissions", href: "/admin/system/roles", section: "staff" },
   ]},
 ];
 
