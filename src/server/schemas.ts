@@ -68,6 +68,14 @@ export const scheduleItemSchema = z.object({
   performer: z.string().optional(),
 });
 
+export const campaignSchema = z.object({
+  name: z.string().min(2),
+  channel: z.enum(["EMAIL", "WHATSAPP"]),
+  audience: z.enum(["ALL", "BUYERS"]),
+  subject: z.string().optional(),
+  body: z.string().optional(),
+});
+
 export const sponsorSchema = z.object({
   eventId: id,
   name: z.string().min(1),

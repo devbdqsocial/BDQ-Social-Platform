@@ -552,3 +552,36 @@ model RateLimit {
   count   Int      @default(0)
   resetAt DateTime
 }
+
+// In-app admin notifications (alerts feed + header bell). Additive.
+model Notification {
+  id        String    @id @default(cuid())
+  type      String
+  title     String
+  body      String?
+  href      String?
+  eventId   String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([readAt, createdAt])
+  @@index([eventId])
+}
+
+// Marketing campaigns (WhatsApp / email). Additive.
+model Campaign {
+  id          String    @id @default(cuid())
+  name        String
+  channel     String    @default("EMAIL")
+  eventId     String?
+  audience    String    @default("ALL")
+  subject     String?
+  body        String?
+  status      String    @default("DRAFT")
+  sentCount   Int       @default(0)
+  sentAt      DateTime?
+  createdById String?
+  createdAt   DateTime  @default(now())
+
+  @@index([createdAt])
+}

@@ -149,6 +149,20 @@ export async function fulfillOrder(gatewayOrderId: string, paymentId: string): P
     console.error("notify", e);
   }
 
+  // best-effort admin alert (in-app bell)
+  try {
+    const { notify } = await import("@/server/notifications/admin");
+    await notify({
+      type: "PAYMENT_CAPTURED",
+      title: "Payment received",
+      body: `₹${(order.total / 100).toLocaleString("en-IN")} · order ${order.id.slice(0, 8)}`,
+      href: `/admin/tickets/orders/${order.id}`,
+      eventId: order.eventId,
+    });
+  } catch (e) {
+    console.error("admin notify", e);
+  }
+
   const after = await db.ticket.count({ where: { orderId: order.id } });
   return { issued: after };
 }

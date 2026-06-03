@@ -47,6 +47,7 @@ export const NAV_GROUPS: NavGroup[] = [
   { label: "Growth", icon: TrendingUp, items: [
     { label: "Sponsors", href: "/admin/sponsors", section: "sponsors" },
     { label: "Waitlists", href: "/admin/waitlist", section: "waitlist" },
+    { label: "Campaigns", href: "/admin/growth/campaigns", section: "growth" },
   ]},
   { label: "Analytics", icon: BarChart3, items: [
     { label: "Overview", href: "/admin/analytics", section: "analytics" },
@@ -54,6 +55,7 @@ export const NAV_GROUPS: NavGroup[] = [
   { label: "System", icon: Settings, items: [
     { label: "Audit Logs", href: "/admin/audit", section: "audit" },
     { label: "Roles & Permissions", href: "/admin/system/roles", section: "staff" },
+    { label: "Notifications", href: "/admin/system/notifications", section: "overview" },
   ]},
 ];
 

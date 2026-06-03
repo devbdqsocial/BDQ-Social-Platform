@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession, type Permission, type Role } from "@/server/auth/guard";
 import { canAccessSection } from "@/lib/console-access";
 import { getActiveEvent } from "@/server/admin/event-context";
+import { listNotifications, unreadCount } from "@/server/notifications/admin";
 import { env } from "@/lib/env";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -28,7 +29,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const candidates: ConsoleSection[] = [NAV_DASHBOARD.section, ...NAV_GROUPS.flatMap((g) => g.items.map((i) => i.section))];
   const allowed = [...new Set(candidates)].filter((s) => canAccessSection(effective, s));
 
-  const { active, events } = await getActiveEvent();
+  const [{ active, events }, notifCount, notifItems] = await Promise.all([
+    getActiveEvent(),
+    unreadCount(),
+    listNotifications(10),
+  ]);
   const evLite = events.map((e) => ({ id: e.id, name: e.name, status: e.status }));
   const activeLite = active ? { id: active.id, name: active.name, status: active.status } : null;
 
@@ -39,7 +44,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <SidebarProvider>
           <AppSidebar allowed={allowed} />
           <SidebarInset>
-            <AdminHeader active={activeLite} events={evLite} allowed={allowed} />
+            <AdminHeader active={activeLite} events={evLite} allowed={allowed} notifCount={notifCount} notifItems={notifItems} />
             <main id="main" className="min-w-0 flex-1 p-4 sm:p-6">{children}</main>
           </SidebarInset>
         </SidebarProvider>
