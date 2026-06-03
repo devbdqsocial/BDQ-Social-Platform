@@ -7,18 +7,18 @@ import {
   validateLayout,
   type DesignerLayout,
   type EditorElement,
-  type StallTypeDef,
+  type PaletteStallType,
 } from "@/lib/map/designer-ops";
-import type { SeedInfraType, SeedStallType } from "@/server/map/seed-aarush-lawn";
+import type { SeedInfraType } from "@/server/map/seed-aarush-lawn";
 
 interface Props {
-  stallTypes: StallTypeDef[];
+  stallTypes: PaletteStallType[];
   snap: boolean;
   gridFt: number;
   hasSelection: boolean;
   onSnap: (v: boolean) => void;
   onGrid: (v: number) => void;
-  onAddStall: (t: SeedStallType) => void;
+  onAddStall: (t: PaletteStallType) => void;
   onAddInfra: (t: SeedInfraType) => void;
   onDuplicate: () => void;
   onDelete: () => void;
@@ -62,7 +62,8 @@ export function DesignerToolbar(props: Props) {
         aria-label="Add stall"
         defaultValue=""
         onChange={(e) => {
-          if (e.target.value) props.onAddStall(e.target.value as SeedStallType);
+          const t = props.stallTypes.find((s) => s.id === e.target.value);
+          if (t) props.onAddStall(t);
           e.target.value = "";
         }}
       >
@@ -70,7 +71,7 @@ export function DesignerToolbar(props: Props) {
           + Add stall
         </option>
         {props.stallTypes.map((t) => (
-          <option key={t.type} value={t.type}>
+          <option key={t.id} value={t.id}>
             {t.name} ({t.widthFt}×{t.heightFt}ft)
           </option>
         ))}

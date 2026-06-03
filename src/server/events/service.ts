@@ -153,9 +153,38 @@ export function saveEventMap(session: Session, eventId: string, layout: Designer
             update: { layoutJson, version: { increment: 1 } },
             create: { eventId, layoutJson },
           });
-          // Pre-booking: full replace of stalls. Once bookings exist, merge to preserve booked ones.
-          await tx.stall.deleteMany({ where: { eventId } });
-          if (rows.length) await tx.stall.createMany({ data: rows as Prisma.StallCreateManyInput[] });
+          // Merge by label so active (booked/held) stalls survive a re-save.
+          const existing = await tx.stall.findMany({
+            where: { eventId },
+            select: { id: true, label: true, status: true, _count: { select: { bookings: true } } },
+          });
+          const byLabel = new Map(existing.map((s) => [s.label, s]));
+          const desired = new Set(rows.map((r) => r.label));
+          for (const r of rows) {
+            const cur = byLabel.get(r.label);
+            if (cur) {
+              const locked = cur.status === "BOOKED" || cur.status === "HELD" || cur.status === "PENDING";
+              await tx.stall.update({
+                where: { id: cur.id },
+                data: {
+                  kind: r.kind,
+                  stallTypeId: r.stallTypeId,
+                  xFt: r.xFt,
+                  yFt: r.yFt,
+                  widthFt: r.widthFt,
+                  heightFt: r.heightFt,
+                  rotation: r.rotation,
+                  priceInPaise: r.priceInPaise,
+                  ...(locked ? {} : { status: r.status }),
+                },
+              });
+            } else {
+              await tx.stall.create({ data: r as Prisma.StallUncheckedCreateInput });
+            }
+          }
+          // Remove stalls dropped from the layout — but never one with a booking.
+          const orphans = existing.filter((s) => !desired.has(s.label) && s._count.bookings === 0).map((s) => s.id);
+          if (orphans.length) await tx.stall.deleteMany({ where: { id: { in: orphans } } });
           return ml;
         });
         return { result: saved, after: { version: saved.version, stalls: rows.length } };

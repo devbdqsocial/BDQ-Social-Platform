@@ -7,9 +7,12 @@ import type { StallStatus } from "@/lib/stall-colors";
  * unit-testable; the service casts the output to Prisma's create input.
  */
 
+export type DesignerStatus = "AVAILABLE" | "BLOCKED" | "HELD" | "PENDING" | "BOOKED";
+
 export interface StallRow {
   eventId: string;
   kind: "STALL" | "INFRA";
+  stallTypeId: string | null;
   label: string;
   xFt: number;
   yFt: number;
@@ -17,7 +20,7 @@ export interface StallRow {
   heightFt: number;
   rotation: number;
   priceInPaise: number | null;
-  status: "AVAILABLE";
+  status: DesignerStatus;
 }
 
 /** Editor elements -> flat Stall create rows. Dedupes labels (@@unique([eventId,label])). */
@@ -35,6 +38,7 @@ export function elementsToStallRows(eventId: string, elements: EditorElement[]):
   return elements.map((el) => ({
     eventId,
     kind: el.kind === "infra" ? "INFRA" : "STALL",
+    stallTypeId: el.kind === "stall" ? el.stallTypeId ?? null : null,
     label: uniqueLabel(el.label),
     xFt: el.xFt,
     yFt: el.yFt,
@@ -42,7 +46,7 @@ export function elementsToStallRows(eventId: string, elements: EditorElement[]):
     heightFt: el.heightFt,
     rotation: el.rotation,
     priceInPaise: el.priceInPaise ?? null,
-    status: "AVAILABLE",
+    status: el.status === "BLOCKED" ? "BLOCKED" : "AVAILABLE",
   }));
 }
 

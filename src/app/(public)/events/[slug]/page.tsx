@@ -40,6 +40,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
     rotation: s.rotation,
   }));
 
+  const mapCanvas = (event.mapLayout?.layoutJson as { canvas?: { widthFt: number; heightFt: number } } | null)?.canvas;
   const sponsors = await sponsorsForEvent(event.id);
   const soldOut = event.ticketTypes.length > 0 && event.ticketTypes.every((t) => t.soldQty >= t.totalQty);
   const theme = (event.theme as { primary?: string; accent?: string } | null) ?? null;
@@ -118,7 +119,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
             <p className="mt-1 mb-4 text-sm text-muted-foreground">
               Selling at the market? Browse live availability and tap an open stall to hold it.
             </p>
-            <BookingFloorPlan stalls={mapStalls} />
+            <BookingFloorPlan stalls={mapStalls} canvas={mapCanvas} />
           </section>
         )}
 

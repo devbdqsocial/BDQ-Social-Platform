@@ -24,18 +24,20 @@ interface StallInput extends StallLike {
 
 interface Props {
   stalls: StallInput[];
+  /** true venue size from the saved layout; falls back to the default canvas */
+  canvas?: { widthFt: number; heightFt: number };
   /** vendor portal passes a server action; public page falls back to the API route */
   holdAction?: (stallId: string) => Promise<{ ok: boolean; unauthorized?: boolean }>;
   loginPath?: string;
 }
 
-export function BookingFloorPlan({ stalls, holdAction, loginPath = "/login" }: Props) {
+export function BookingFloorPlan({ stalls, canvas, holdAction, loginPath = "/login" }: Props) {
   const router = useRouter();
   const idByLabel = useMemo(
     () => Object.fromEntries(stalls.map((s) => [s.label, s.id])),
     [stalls],
   );
-  const { layout } = useMemo(() => stallsToRenderLayout(stalls), [stalls]);
+  const { layout } = useMemo(() => stallsToRenderLayout(stalls, canvas), [stalls, canvas]);
 
   const [statuses, setStatuses] = useState<Record<string, StallStatus>>(() =>
     Object.fromEntries(

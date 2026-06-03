@@ -2,12 +2,12 @@ import { z } from "zod";
 import {
   buildAarushLawnTemplate,
   type SeedInfraType,
-  type SeedStallType,
 } from "@/server/map/seed-aarush-lawn";
+import type { StallStatus } from "@/lib/stall-colors";
 
 /**
  * Pure helpers for the admin map designer. Geometry is in FEET. Prices are admin-entered per
- * stall/type (never hardcoded). DB persistence comes later; this layer is storage-agnostic.
+ * stall/type (never hardcoded). Stall types are sourced from the DB (StallTypeDef) per event.
  */
 
 export type EditorKind = "stall" | "infra";
@@ -15,7 +15,7 @@ export type EditorKind = "stall" | "infra";
 export interface EditorElement {
   id: string;
   kind: EditorKind;
-  /** stall/infra type tag (kept as string so imported JSON validates cleanly) */
+  /** stall/infra type tag (free string so imported JSON validates cleanly) */
   type: string;
   label: string;
   xFt: number;
@@ -25,23 +25,22 @@ export interface EditorElement {
   rotation: number;
   /** sellable stalls only; admin-entered (paise) */
   priceInPaise?: number;
+  /** link to the event's StallTypeDef this stall was created from */
+  stallTypeId?: string;
+  /** designer-set status (defaults AVAILABLE); BOOKED/HELD are preserved on save */
+  status?: StallStatus;
 }
 
-export interface StallTypeDef {
-  type: SeedStallType;
+/** Palette type the designer drops onto the canvas — sourced from the DB StallTypeDef rows. */
+export interface PaletteStallType {
+  id: string;
   name: string;
   widthFt: number;
   heightFt: number;
+  priceInPaise: number;
   color: string;
+  sellable: boolean;
 }
-
-/** Default stall types for the seed venue — sizes only; admin sets the price per event. */
-export const DEFAULT_STALL_TYPES: StallTypeDef[] = [
-  { type: "SMALL", name: "Small stall", widthFt: 10, heightFt: 10, color: "#3FA66A" },
-  { type: "LANE", name: "Lane stall", widthFt: 10, heightFt: 10, color: "#4F9379" },
-  { type: "PREMIUM", name: "Premium stall", widthFt: 15, heightFt: 12, color: "#C2603B" },
-  { type: "FOOD", name: "Food stall", widthFt: 10, heightFt: 10, color: "#E07B2C" },
-];
 
 export const INFRA_TYPES: SeedInfraType[] = [
   "STAGE",
@@ -56,6 +55,13 @@ export const INFRA_TYPES: SeedInfraType[] = [
 
 export const DEFAULT_CANVAS = { widthFt: 230, heightFt: 160 };
 
+export interface CanvasMeta {
+  widthFt: number;
+  heightFt: number;
+  gridFt?: number;
+  bgImage?: { url: string; opacity: number };
+}
+
 let seq = 0;
 const newId = () => `el_${Date.now().toString(36)}_${(seq++).toString(36)}`;
 
@@ -64,18 +70,20 @@ export function snapToGrid(value: number, gridFt: number): number {
   return Math.round(value / gridFt) * gridFt;
 }
 
-export function createStall(type: SeedStallType, xFt = 10, yFt = 10): EditorElement {
-  const def = DEFAULT_STALL_TYPES.find((d) => d.type === type) ?? DEFAULT_STALL_TYPES[0];
+export function createStall(def: PaletteStallType, xFt = 10, yFt = 10): EditorElement {
   return {
     id: newId(),
     kind: "stall",
-    type,
-    label: `${type[0]}-?`,
+    type: def.name,
+    label: `${def.name[0]?.toUpperCase() ?? "S"}-?`,
     xFt,
     yFt,
     widthFt: def.widthFt,
     heightFt: def.heightFt,
     rotation: 0,
+    stallTypeId: def.id,
+    priceInPaise: def.sellable ? def.priceInPaise : undefined,
+    status: "AVAILABLE",
   };
 }
 
@@ -112,6 +120,8 @@ export function seedToEditor(): EditorElement[] {
   }));
 }
 
+const statusEnum = z.enum(["AVAILABLE", "HELD", "PENDING", "BOOKED", "BLOCKED", "SELECTED"]);
+
 export const elementSchema = z.object({
   id: z.string(),
   kind: z.enum(["stall", "infra"]),
@@ -123,11 +133,18 @@ export const elementSchema = z.object({
   heightFt: z.number().positive(),
   rotation: z.number(),
   priceInPaise: z.number().int().nonnegative().optional(),
+  stallTypeId: z.string().optional(),
+  status: statusEnum.optional(),
 });
 
 export const layoutSchema = z.object({
   version: z.literal(1),
-  canvas: z.object({ widthFt: z.number().positive(), heightFt: z.number().positive() }),
+  canvas: z.object({
+    widthFt: z.number().positive(),
+    heightFt: z.number().positive(),
+    gridFt: z.number().positive().optional(),
+    bgImage: z.object({ url: z.string(), opacity: z.number().min(0).max(1) }).optional(),
+  }),
   elements: z.array(elementSchema),
 });
 
