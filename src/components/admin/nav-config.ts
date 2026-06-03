@@ -22,6 +22,7 @@ export const NAV_GROUPS: NavGroup[] = [
   ]},
   { label: "Venue", icon: Map, items: [
     { label: "Map Builder", href: "/admin/map", section: "map" },
+    { label: "Stall Inventory", href: "/admin/venue/stalls", section: "map" },
   ]},
   { label: "Ticketing", icon: Ticket, items: [
     { label: "Orders", href: "/admin/tickets/orders", section: "tickets" },
