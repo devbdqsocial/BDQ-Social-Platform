@@ -24,6 +24,8 @@ export const NAV_GROUPS: NavGroup[] = [
     { label: "Map Builder", href: "/admin/map", section: "map" },
   ]},
   { label: "Ticketing", icon: Ticket, items: [
+    { label: "Orders", href: "/admin/tickets/orders", section: "tickets" },
+    { label: "Attendees", href: "/admin/tickets/attendees", section: "tickets" },
     { label: "Comp Tickets", href: "/admin/comps", section: "comps" },
     { label: "Coupons & Promos", href: "/admin/coupons", section: "coupons" },
   ]},
