@@ -45,3 +45,6 @@ next-env.d.ts
 /tests_archive/
 /.agents/
 
+
+# Local idea/reference assets
+Idea/
