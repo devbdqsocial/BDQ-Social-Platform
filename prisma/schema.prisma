@@ -618,7 +618,8 @@ model Campaign {
 
 // ──────────────────────────── PLATFORM WAITLIST ────────────────
 model PlatformWaitlist {
-  id        String   @id @default(cuid())
-  phone     String   @unique
-  createdAt DateTime @default(now())
+  id                String   @id @default(cuid())
+  phone             String   @unique
+  interestedInStall Boolean  @default(false)
+  createdAt         DateTime @default(now())
 }

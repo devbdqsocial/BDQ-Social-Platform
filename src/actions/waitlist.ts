@@ -5,21 +5,19 @@ import { revalidatePath } from "next/cache";
 
 export async function joinPlatformWaitlist(formData: FormData) {
   const phone = formData.get("phone");
+  const interestedInStall = formData.get("interestedInStall") === "true";
 
   if (!phone || typeof phone !== "string" || phone.length < 5) {
     return { error: "Invalid phone number." };
   }
 
   try {
-    // Basic formatting - strip non-numeric characters for clean DB storage
     const formattedPhone = phone.replace(/\D/g, "");
 
     await db.platformWaitlist.upsert({
       where: { phone: formattedPhone },
-      update: {}, // if it already exists, do nothing
-      create: {
-        phone: formattedPhone,
-      },
+      update: { interestedInStall },
+      create: { phone: formattedPhone, interestedInStall },
     });
 
     revalidatePath("/coming-soon");

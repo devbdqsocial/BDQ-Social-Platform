@@ -49,6 +49,7 @@ export const NAV_GROUPS: NavGroup[] = [
   { label: "Growth", icon: TrendingUp, items: [
     { label: "Sponsors", href: "/admin/growth/sponsors", section: "sponsors" },
     { label: "Waitlists", href: "/admin/growth/waitlist", section: "waitlist" },
+    { label: "Platform Waitlist", href: "/admin/growth/platform-waitlist", section: "platform-waitlist" },
     { label: "Campaigns", href: "/admin/growth/campaigns", section: "growth" },
   ]},
   { label: "Analytics", icon: BarChart3, items: [
