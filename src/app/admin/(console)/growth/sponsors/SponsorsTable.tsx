@@ -2,6 +2,7 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import type { listSponsors } from "@/server/sponsors/service";
+import Image from "next/image";
 import { DataTable } from "@/components/data-table/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,8 +15,7 @@ const columns: ColumnDef<Row>[] = [
   {
     id: "logo", header: "", enableSorting: false,
     cell: ({ row }) => row.original.logoUrl
-      // eslint-disable-next-line @next/next/no-img-element
-      ? <img src={row.original.logoUrl} alt="" className="h-7 w-auto max-w-20 rounded object-contain" />
+      ? <Image src={row.original.logoUrl} alt="" width={80} height={28} className="h-7 w-auto max-w-20 rounded object-contain" />
       : <span className="text-muted-foreground">—</span>,
   },
   { accessorKey: "name", header: "Sponsor", cell: ({ row }) => <span className="font-medium">{row.original.name}</span> },

@@ -4,18 +4,18 @@ import { revalidatePath } from "next/cache";
 import { requireSuperAdmin } from "@/server/auth/guard";
 import { createCampaign, sendCampaign, CampaignSendError } from "@/server/campaigns/service";
 import { campaignSchema } from "@/server/schemas";
+import { parseOrThrow } from "@/lib/validation";
 
 export async function createCampaignAction(formData: FormData): Promise<void> {
   const session = await requireSuperAdmin();
-  const parsed = campaignSchema.safeParse({
+  const data = parseOrThrow(campaignSchema, {
     name: formData.get("name"),
     channel: formData.get("channel"),
     audience: formData.get("audience"),
     subject: formData.get("subject") || undefined,
     body: formData.get("body") || undefined,
   });
-  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Invalid campaign");
-  await createCampaign(session, parsed.data);
+  await createCampaign(session, data);
   revalidatePath("/admin/growth/campaigns");
 }
 

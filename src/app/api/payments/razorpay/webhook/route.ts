@@ -3,6 +3,8 @@ import { verifyWebhookSignature } from "@/lib/razorpay-signature";
 import { db } from "@/server/db";
 import { fulfillOrder } from "@/server/tickets/service";
 import { fulfillStallBooking } from "@/server/bookings/payment";
+import { logError } from "@/lib/logger";
+import { env } from "@/lib/env";
 
 export const runtime = "nodejs";
 
@@ -13,9 +15,12 @@ export const runtime = "nodejs";
 export async function POST(req: Request) {
   const raw = await req.text();
   const signature = req.headers.get("x-razorpay-signature") ?? "";
-  const secret = process.env.RAZORPAY_WEBHOOK_SECRET ?? "";
+  const secret = env.RAZORPAY_WEBHOOK_SECRET ?? "";
 
   if (!verifyWebhookSignature(raw, signature, secret)) {
+    logError("webhook.razorpay", new Error("BAD_SIGNATURE"), {
+      ip: (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim(),
+    });
     return NextResponse.json({ ok: false, error: { code: "BAD_SIGNATURE" } }, { status: 400 });
   }
 
@@ -40,8 +45,8 @@ export async function POST(req: Request) {
         if (order) await fulfillOrder(gatewayOrderId, paymentId);
         else await fulfillStallBooking(gatewayOrderId, paymentId);
       } catch (e) {
-        console.error("fulfil webhook", e);
-        return NextResponse.json({ ok: false }, { status: 500 });
+        // Always 2xx so Razorpay does not retry; the reconcile cron is the safety net.
+        logError("webhook.razorpay.fulfil", e, { gatewayOrderId, paymentId });
       }
     }
   }

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getApprovedVendor } from "@/server/vendors/service";
@@ -27,8 +28,7 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
 
       <header className="mt-4 flex items-center gap-5">
         {logo && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={logo} alt={v.brandName} className="size-24 rounded-xl border border-border object-cover" />
+          <Image src={logo} alt={v.brandName} width={96} height={96} className="size-24 rounded-xl border border-border object-cover" />
         )}
         <div>
           <h1 className="font-display text-3xl font-semibold">{v.brandName}</h1>
@@ -59,8 +59,9 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
           <h2 className="font-display text-2xl font-semibold">Products</h2>
           <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
             {products.map((src, i) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img key={i} src={src} alt="" className="aspect-square w-full rounded-lg border border-border object-cover" />
+              <div key={i} className="relative aspect-square w-full overflow-hidden rounded-lg border border-border">
+                <Image src={src} alt="" fill className="object-cover" sizes="(max-width:640px) 50vw, 33vw" />
+              </div>
             ))}
           </div>
         </section>

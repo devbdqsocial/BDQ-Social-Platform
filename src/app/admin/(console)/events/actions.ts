@@ -4,10 +4,11 @@ import { revalidatePath } from "next/cache";
 import { requireSuperAdmin } from "@/server/auth/guard";
 import { createEvent, publishEvent } from "@/server/events/service";
 import { createEventSchema } from "@/server/schemas";
+import { parseOrThrow } from "@/lib/validation";
 
 export async function createEventAction(formData: FormData): Promise<void> {
   const session = await requireSuperAdmin();
-  const parsed = createEventSchema.safeParse({
+  const data = parseOrThrow(createEventSchema, {
     name: formData.get("name"),
     description: formData.get("description") || undefined,
     location: formData.get("location") || undefined,
@@ -15,8 +16,7 @@ export async function createEventAction(formData: FormData): Promise<void> {
     endsAt: formData.get("endsAt"),
     capacity: formData.get("capacity") ? Number(formData.get("capacity")) : undefined,
   });
-  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Invalid input");
-  await createEvent(session, parsed.data);
+  await createEvent(session, data);
   revalidatePath("/admin/events");
   revalidatePath("/events");
 }

@@ -49,5 +49,24 @@ const schema = z.object({
   CLOUDINARY_API_SECRET: z.string().optional(),
 });
 
-export const env = schema.parse(process.env);
+const prodSchema = schema.superRefine((v, ctx) => {
+  if (v.NODE_ENV !== "production") return;
+  const required: Array<[keyof typeof v, string]> = [
+    ["SESSION_SECRET", "SESSION_SECRET must be set in production"],
+    ["CRON_SECRET", "CRON_SECRET must be set in production"],
+    ["RAZORPAY_WEBHOOK_SECRET", "RAZORPAY_WEBHOOK_SECRET must be set in production"],
+    ["DATABASE_URL", "DATABASE_URL must be set in production"],
+  ];
+  for (const [key, msg] of required) {
+    if (!v[key]) ctx.addIssue({ code: "custom", path: [key], message: msg });
+  }
+  if (v.SESSION_SECRET && v.SESSION_SECRET.length < 32) {
+    ctx.addIssue({ code: "custom", path: ["SESSION_SECRET"], message: "SESSION_SECRET must be at least 32 characters" });
+  }
+  if (v.CRON_SECRET && v.CRON_SECRET.length < 32) {
+    ctx.addIssue({ code: "custom", path: ["CRON_SECRET"], message: "CRON_SECRET must be at least 32 characters" });
+  }
+});
+
+export const env = prodSchema.parse(process.env);
 export type Env = z.infer<typeof schema>;

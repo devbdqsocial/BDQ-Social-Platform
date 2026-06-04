@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Camera, Music4, ShoppingBag, UtensilsCrossed } from "lucide-react";
 import { listPublished } from "@/server/events/service";
@@ -28,6 +29,7 @@ export default async function LandingPage() {
   const featured = brands.slice(0, 6);
   const minPrice = event?.ticketTypes.length ? Math.min(...event.ticketTypes.map((t) => t.priceInPaise)) : null;
   const sponsors = event ? await sponsorsForEvent(event.id) : [];
+  // Note: sponsors depends on event.id, so it cannot be parallelized with the initial fetch.
 
   return (
     <div>
@@ -105,10 +107,9 @@ export default async function LandingPage() {
                 const logo = primaryLogo(v.assets);
                 return (
                   <Link key={v.id} href={`/vendors/${v.id}`} className="group">
-                    <div className="card-hover aspect-square overflow-hidden rounded-2xl border border-border bg-muted shadow-sm">
+                    <div className="card-hover relative aspect-square overflow-hidden rounded-2xl border border-border bg-muted shadow-sm">
                       {logo ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={logo} alt={v.brandName} className="size-full object-cover" />
+                        <Image src={logo} alt={v.brandName} fill className="object-cover" sizes="(max-width:640px) 33vw, 17vw" />
                       ) : (
                         <div className="grid size-full place-items-center font-display text-2xl text-muted-foreground">
                           {v.brandName.charAt(0)}

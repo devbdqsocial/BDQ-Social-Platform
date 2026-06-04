@@ -3,11 +3,15 @@ import { requireSuperAdmin } from "@/server/auth/guard";
 import { db } from "@/server/db";
 import { toCsv } from "@/lib/csv";
 import { buildAuditWhere } from "@/lib/audit-filters";
+import { enforceRateLimit } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
+  const limited = await enforceRateLimit(req, "export-audit", 5, 60 * 60 * 1000);
+  if (limited) return limited;
+
   try {
     await requireSuperAdmin();
   } catch {
@@ -15,6 +19,7 @@ export async function GET(req: Request) {
   }
 
   const sp = new URL(req.url).searchParams;
+  const skip = Number(sp.get("skip") ?? "0");
   const where = buildAuditWhere({
     entity: sp.get("entity") || undefined,
     action: sp.get("action") || undefined,
@@ -25,7 +30,8 @@ export async function GET(req: Request) {
   const rows = await db.auditLog.findMany({
     where,
     orderBy: { createdAt: "desc" },
-    take: 5000,
+    skip,
+    take: 500,
     include: { actor: { select: { name: true, email: true } } },
   });
 

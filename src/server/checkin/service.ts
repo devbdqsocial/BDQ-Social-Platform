@@ -80,13 +80,25 @@ export async function capacitySnapshot(eventId: string) {
     db.ticketType.findMany({ where: { eventId }, select: { id: true, name: true }, orderBy: { priceInPaise: "asc" } }),
   ]);
 
-  const byType = await Promise.all(
-    types.map(async (t) => ({
-      name: t.name,
-      checkedIn: await db.ticket.count({ where: { ticketTypeId: t.id, status: "CHECKED_IN" } }),
-      sold: await db.ticket.count({ where: { ticketTypeId: t.id } }),
-    })),
-  );
+  // Single aggregation replaces N×2 COUNT queries.
+  const grouped = await db.ticket.groupBy({
+    by: ["ticketTypeId", "status"],
+    where: { order: { eventId } },
+    _count: { _all: true },
+  });
+
+  const countMap = new Map<string, { sold: number; checkedIn: number }>();
+  for (const row of grouped) {
+    const entry = countMap.get(row.ticketTypeId) ?? { sold: 0, checkedIn: 0 };
+    entry.sold += row._count._all;
+    if (row.status === "CHECKED_IN") entry.checkedIn += row._count._all;
+    countMap.set(row.ticketTypeId, entry);
+  }
+
+  const byType = types.map((t) => {
+    const c = countMap.get(t.id) ?? { sold: 0, checkedIn: 0 };
+    return { name: t.name, sold: c.sold, checkedIn: c.checkedIn };
+  });
 
   return { event: event?.name ?? null, capacity: event?.capacity ?? null, checkedIn, sold, byType };
 }

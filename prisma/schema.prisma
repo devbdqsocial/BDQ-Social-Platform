@@ -615,3 +615,10 @@ model Campaign {
 
   @@index([createdAt])
 }
+
+// ──────────────────────────── PLATFORM WAITLIST ────────────────
+model PlatformWaitlist {
+  id        String   @id @default(cuid())
+  phone     String   @unique
+  createdAt DateTime @default(now())
+}

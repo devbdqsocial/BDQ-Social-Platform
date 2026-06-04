@@ -7,6 +7,7 @@ import type { listVendors } from "@/server/vendors/admin-service";
 import { DataTable } from "@/components/data-table/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/input";
+import { fmtDate } from "@/lib/date-formats";
 
 type Row = Awaited<ReturnType<typeof listVendors>>[number];
 
@@ -16,7 +17,6 @@ const STATUS: Record<string, { label: string; variant: "primary" | "warning" | "
   APPROVED: { label: "Approved", variant: "success" },
   REJECTED: { label: "Declined", variant: "danger" },
 };
-const fmtDate = (d: Date) => new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeZone: "Asia/Kolkata" }).format(d);
 
 const columns: ColumnDef<Row>[] = [
   { accessorKey: "brandName", header: "Brand", cell: ({ row }) => <span className="font-medium">{row.original.brandName}</span> },

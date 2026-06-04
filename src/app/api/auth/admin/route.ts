@@ -36,11 +36,13 @@ export async function POST(req: Request) {
 
   // TESTING EXCEPTION: emails in ADMIN_NO_2FA_EMAILS sign in with password only (no TOTP).
   // Keep this list empty / remove the account before public launch.
-  const exempt = (process.env.ADMIN_NO_2FA_EMAILS ?? "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean)
-    .includes(email);
+  const exempt =
+    process.env.NODE_ENV !== "production" &&
+    (process.env.ADMIN_NO_2FA_EMAILS ?? "")
+      .split(",")
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean)
+      .includes(email);
 
   if (!exempt) {
     // SUPER_ADMIN must have 2FA; any user with it enabled must pass it.

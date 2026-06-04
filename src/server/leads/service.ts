@@ -23,8 +23,8 @@ export async function captureLead(input: {
   });
 }
 
-export function listLeads(vendorProfileId: string) {
-  return db.lead.findMany({ where: { vendorProfileId }, orderBy: { createdAt: "desc" } });
+export function listLeads(vendorProfileId: string, skip = 0, take = 1000) {
+  return db.lead.findMany({ where: { vendorProfileId }, orderBy: { createdAt: "desc" }, skip, take });
 }
 
 export function getLeadVendor(vendorProfileId: string) {

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { requireCheckin } from "@/server/auth/guard";
 import { listAllForAdmin } from "@/server/events/service";
-import { Scanner } from "@/components/checkin/Scanner";
+import { ScannerLoader } from "@/components/checkin/ScannerLoader";
 import { CapacityBoard } from "@/components/checkin/CapacityBoard";
 import { Select } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -33,7 +33,7 @@ export default async function CheckinPage({ searchParams }: { searchParams: Prom
 
       {activeId && <CapacityBoard eventId={activeId} />}
 
-      <Scanner />
+      <ScannerLoader />
     </div>
   );
 }

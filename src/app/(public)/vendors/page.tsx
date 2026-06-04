@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { Store } from "lucide-react";
 import { listApprovedVendors } from "@/server/vendors/service";
@@ -37,10 +38,9 @@ export default async function VendorsPage() {
                 href={`/vendors/${v.id}`}
                 className="card-hover group overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
               >
-                <div className="aspect-[4/5] bg-muted">
+                <div className="relative aspect-[4/5] bg-muted">
                   {logo ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={logo} alt={v.brandName} className="size-full object-cover" />
+                    <Image src={logo} alt={v.brandName} fill className="object-cover" sizes="(max-width:768px) 50vw, 25vw" />
                   ) : (
                     <div className="grid size-full place-items-center font-display text-2xl text-muted-foreground">
                       {v.brandName.charAt(0)}

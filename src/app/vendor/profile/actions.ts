@@ -6,6 +6,7 @@ import { addAsset, deleteAsset, upsertKyc, upsertProfile } from "@/server/vendor
 import { vendorKycSchema, vendorProfileSchema } from "@/server/schemas";
 import { signUpload, type UploadSignature } from "@/lib/cloudinary";
 import { isAllowedAssetKind } from "@/lib/assets";
+import { parseOrThrow } from "@/lib/validation";
 
 export async function getUploadSignatureAction(kind: string): Promise<UploadSignature> {
   await requireVendor();
@@ -30,27 +31,25 @@ export async function deleteAssetAction(assetId: string): Promise<void> {
 
 export async function saveProfileAction(formData: FormData): Promise<void> {
   const session = await requireVendor();
-  const parsed = vendorProfileSchema.safeParse({
+  const data = parseOrThrow(vendorProfileSchema, {
     brandName: formData.get("brandName"),
     category: formData.get("category") || undefined,
     description: formData.get("description") || undefined,
     website: formData.get("website") || undefined,
     instagram: formData.get("instagram") || undefined,
   });
-  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Invalid profile");
-  await upsertProfile(session.userId, parsed.data);
+  await upsertProfile(session.userId, data);
   revalidatePath("/vendor");
   revalidatePath("/vendor/profile");
 }
 
 export async function saveKycAction(formData: FormData): Promise<void> {
   const session = await requireVendor();
-  const parsed = vendorKycSchema.safeParse({
+  const data = parseOrThrow(vendorKycSchema, {
     pan: formData.get("pan") || undefined,
     fssai: formData.get("fssai") || undefined,
     gstin: formData.get("gstin") || undefined,
   });
-  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Invalid KYC");
-  await upsertKyc(session.userId, parsed.data);
+  await upsertKyc(session.userId, data);
   revalidatePath("/vendor/profile");
 }

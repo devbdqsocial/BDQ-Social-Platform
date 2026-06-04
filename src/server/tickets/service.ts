@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { db } from "@/server/db";
 import { createRazorpayOrder } from "@/lib/razorpay";
 import { signTicketToken } from "@/lib/qr-token";
+import { logError } from "@/lib/logger";
 import {
   priceOrder,
   type AppliedCoupon,
@@ -126,18 +127,20 @@ export async function fulfillOrder(gatewayOrderId: string, paymentId: string): P
       },
     });
 
+    // Build all ticket rows first, then insert in one batch + per-type soldQty bump.
+    const ticketRows: { id: string; orderId: string; ticketTypeId: string; qrToken: string }[] = [];
     for (const it of items) {
       for (let i = 0; i < it.qty; i++) {
         const id = randomUUID();
-        await tx.ticket.create({
-          data: { id, orderId: order.id, ticketTypeId: it.ticketTypeId, qrToken: signTicketToken(id) },
-        });
+        ticketRows.push({ id, orderId: order.id, ticketTypeId: it.ticketTypeId, qrToken: signTicketToken(id) });
       }
-      await tx.ticketType.update({
-        where: { id: it.ticketTypeId },
-        data: { soldQty: { increment: it.qty } },
-      });
     }
+    await tx.ticket.createMany({ data: ticketRows });
+    await Promise.all(
+      items.map((it) =>
+        tx.ticketType.update({ where: { id: it.ticketTypeId }, data: { soldQty: { increment: it.qty } } }),
+      ),
+    );
   });
 
   // best-effort delivery via the notification outbox — failures never fail fulfilment
@@ -146,7 +149,7 @@ export async function fulfillOrder(gatewayOrderId: string, paymentId: string): P
     await enqueueTicketNotifications(order.id);
     await processOutbox();
   } catch (e) {
-    console.error("notify", e);
+    logError("fulfillOrder.notify", e, { orderId: order.id });
   }
 
   // best-effort admin alert (in-app bell)
@@ -160,7 +163,7 @@ export async function fulfillOrder(gatewayOrderId: string, paymentId: string): P
       eventId: order.eventId,
     });
   } catch (e) {
-    console.error("admin notify", e);
+    logError("fulfillOrder.adminNotify", e, { orderId: order.id });
   }
 
   const after = await db.ticket.count({ where: { orderId: order.id } });

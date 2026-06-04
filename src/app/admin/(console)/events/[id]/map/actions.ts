@@ -7,6 +7,7 @@ import { saveEventMap } from "@/server/events/service";
 import { saveStallType, deleteStallType } from "@/server/map/stall-types";
 import { saveAsTemplate, applyTemplate } from "@/server/map/templates";
 import { stallTypeSchema } from "@/server/schemas";
+import { parseOrThrow } from "@/lib/validation";
 import { validateLayout } from "@/lib/map/designer-ops";
 import { signUpload, type UploadSignature } from "@/lib/cloudinary";
 
@@ -28,7 +29,7 @@ export async function saveStallTypeAction(formData: FormData): Promise<void> {
   const session = await requireSuperAdmin();
   const eventId = String(formData.get("eventId"));
   const id = formData.get("id") ? String(formData.get("id")) : undefined;
-  const parsed = stallTypeSchema.safeParse({
+  const data = parseOrThrow(stallTypeSchema, {
     name: formData.get("name"),
     widthFt: Number(formData.get("widthFt")),
     heightFt: Number(formData.get("heightFt")),
@@ -36,9 +37,8 @@ export async function saveStallTypeAction(formData: FormData): Promise<void> {
     color: String(formData.get("color") || "#3FA66A"),
     sellable: formData.get("sellable") === "on",
   });
-  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Invalid stall type");
   try {
-    await saveStallType(session, eventId, parsed.data, id);
+    await saveStallType(session, eventId, data, id);
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
       throw new Error("A stall type with that name already exists.");

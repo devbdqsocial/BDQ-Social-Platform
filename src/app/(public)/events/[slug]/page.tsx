@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { CalendarDays, Clock, MapPin } from "lucide-react";
 import { getBySlug } from "@/server/events/service";
 import { sponsorsForEvent } from "@/server/sponsors/service";
+import { fmtDateFull, fmtTime, fmtDayLabel } from "@/lib/date-formats";
 import { BookingFloorPlan } from "@/components/map/BookingFloorPlan";
 import { TicketCheckout } from "@/components/tickets/TicketCheckout";
 import { SponsorStrip } from "@/components/landing/SponsorStrip";
@@ -10,12 +11,9 @@ import { NotifyMe } from "@/components/events/NotifyMe";
 
 export const dynamic = "force-dynamic";
 
-const fmt = (d: Date) =>
-  new Intl.DateTimeFormat("en-IN", { dateStyle: "full", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(d);
-const time = (d: Date) =>
-  new Intl.DateTimeFormat("en-IN", { timeStyle: "short", timeZone: "Asia/Kolkata" }).format(d);
-const dayLabel = (d: Date) =>
-  new Intl.DateTimeFormat("en-IN", { weekday: "long", day: "numeric", month: "long", timeZone: "Asia/Kolkata" }).format(d);
+const fmt = fmtDateFull;
+const time = fmtTime;
+const dayLabel = fmtDayLabel;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;

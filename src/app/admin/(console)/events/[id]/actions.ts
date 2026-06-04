@@ -5,20 +5,20 @@ import { redirect } from "next/navigation";
 import { requireSuperAdmin } from "@/server/auth/guard";
 import { addScheduleItem, addTicketType, deleteEvent, deleteScheduleItem, deleteTicketType, setEventTheme, updateEvent } from "@/server/events/service";
 import { createEventSchema, eventThemeSchema, scheduleItemSchema, ticketTypeSchema } from "@/server/schemas";
+import { parseOrThrow } from "@/lib/validation";
 
 export async function addTicketTypeAction(formData: FormData): Promise<void> {
   const session = await requireSuperAdmin();
   const eventId = String(formData.get("eventId"));
   const earlyRupees = formData.get("earlyRupees");
-  const parsed = ticketTypeSchema.safeParse({
+  const data = parseOrThrow(ticketTypeSchema, {
     name: formData.get("name"),
     priceInPaise: Math.round(Number(formData.get("priceRupees")) * 100),
     earlyPricePaise: earlyRupees ? Math.round(Number(earlyRupees) * 100) : undefined,
     totalQty: Number(formData.get("totalQty")),
     attendeesPer: Number(formData.get("attendeesPer") || 1),
   });
-  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Invalid ticket type");
-  await addTicketType(session, eventId, parsed.data);
+  await addTicketType(session, eventId, data);
   revalidatePath(`/admin/events/${eventId}`);
   revalidatePath("/events");
 }
@@ -39,15 +39,14 @@ function revalidateEvent(eventId: string) {
 export async function addScheduleItemAction(formData: FormData): Promise<void> {
   const session = await requireSuperAdmin();
   const eventId = String(formData.get("eventId"));
-  const parsed = scheduleItemSchema.safeParse({
+  const data = parseOrThrow(scheduleItemSchema, {
     startsAt: formData.get("startsAt"),
     endsAt: formData.get("endsAt") || undefined,
     title: formData.get("title"),
     stageOrZone: formData.get("stageOrZone") || undefined,
     performer: formData.get("performer") || undefined,
   });
-  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Invalid schedule item");
-  await addScheduleItem(session, eventId, parsed.data);
+  await addScheduleItem(session, eventId, data);
   revalidateEvent(eventId);
 }
 
@@ -60,7 +59,7 @@ export async function deleteScheduleItemAction(formData: FormData): Promise<void
 export async function updateEventAction(formData: FormData): Promise<void> {
   const session = await requireSuperAdmin();
   const eventId = String(formData.get("eventId"));
-  const parsed = createEventSchema.safeParse({
+  const data = parseOrThrow(createEventSchema, {
     name: formData.get("name"),
     description: formData.get("description") || undefined,
     location: formData.get("location") || undefined,
@@ -68,8 +67,7 @@ export async function updateEventAction(formData: FormData): Promise<void> {
     endsAt: formData.get("endsAt"),
     capacity: formData.get("capacity") ? Number(formData.get("capacity")) : undefined,
   });
-  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Invalid input");
-  await updateEvent(session, eventId, parsed.data);
+  await updateEvent(session, eventId, data);
   revalidateEvent(eventId);
 }
 
@@ -86,11 +84,10 @@ export async function deleteEventAction(formData: FormData): Promise<void> {
 export async function setEventThemeAction(formData: FormData): Promise<void> {
   const session = await requireSuperAdmin();
   const eventId = String(formData.get("eventId"));
-  const parsed = eventThemeSchema.safeParse({
+  const data = parseOrThrow(eventThemeSchema, {
     primary: formData.get("primary") || "",
     accent: formData.get("accent") || "",
   });
-  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Invalid colors");
-  await setEventTheme(session, eventId, parsed.data);
+  await setEventTheme(session, eventId, data);
   revalidateEvent(eventId);
 }

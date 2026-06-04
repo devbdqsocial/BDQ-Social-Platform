@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 import { requireCheckin } from "@/server/auth/guard";
 import { capacitySnapshot } from "@/server/checkin/service";
+import { enforceRateLimit } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
+  const limited = await enforceRateLimit(req, "capacity", 60, 10 * 60 * 1000);
+  if (limited) return limited;
+
   try {
     await requireCheckin();
   } catch {

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requirePermission } from "@/server/auth/guard";
@@ -64,8 +65,7 @@ export default async function AdminVendorDetail({ params }: { params: Promise<{ 
       {v.assets.length > 0 && (
         <section className="flex flex-wrap gap-3">
           {v.assets.map((a) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img key={a.id} src={a.url} alt="" className="size-20 rounded-lg border border-border object-cover" />
+            <Image key={a.id} src={a.url} alt="" width={80} height={80} className="size-20 rounded-lg border border-border object-cover" />
           ))}
         </section>
       )}

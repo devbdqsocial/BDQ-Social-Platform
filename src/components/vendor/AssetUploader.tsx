@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { isAllowedImage, type UploadableAssetKind } from "@/lib/assets";
 import {
   deleteAssetAction,
@@ -52,9 +53,12 @@ export function AssetUploader({
       if (!res.ok) throw new Error("Upload failed");
       const json = (await res.json()) as { secure_url: string; public_id: string };
       await saveAssetAction(kind, json.secure_url, json.public_id);
+      toast.success("Asset uploaded");
       router.refresh();
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Upload failed");
+      const msg = e instanceof Error ? e.message : "Upload failed";
+      setErr(msg);
+      toast.error(msg);
     } finally {
       setBusy(false);
       if (fileRef.current) fileRef.current.value = "";

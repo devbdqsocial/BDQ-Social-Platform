@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { requireVendor } from "@/server/auth/guard";
@@ -26,8 +27,7 @@ export default async function VendorDashboard() {
     <div className="max-w-3xl space-y-6">
       <div className="flex items-center gap-4">
         {logo && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={logo.url} alt="" className="size-14 rounded-xl border border-border object-cover" />
+          <Image src={logo.url} alt="" width={56} height={56} className="size-14 rounded-xl border border-border object-cover" />
         )}
         <div>
           <h1 className="font-display text-2xl font-semibold">{profile ? profile.brandName : "Welcome aboard"}</h1>

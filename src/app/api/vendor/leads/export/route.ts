@@ -2,11 +2,15 @@ import { requireVendor } from "@/server/auth/guard";
 import { getProfile } from "@/server/vendors/service";
 import { listLeads } from "@/server/leads/service";
 import { toCsv } from "@/lib/csv";
+import { enforceRateLimit } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: Request) {
+  const limited = await enforceRateLimit(req, "export-leads", 10, 60 * 60 * 1000);
+  if (limited) return limited;
+
   let profileId: string | null = null;
   try {
     const session = await requireVendor();
@@ -17,7 +21,8 @@ export async function GET() {
   }
   if (!profileId) return new Response("No profile", { status: 404 });
 
-  const leads = await listLeads(profileId);
+  const skip = Number(new URL(req.url).searchParams.get("skip") ?? "0");
+  const leads = await listLeads(profileId, skip);
   const csv = toCsv(
     leads.map((l) => ({ name: l.name ?? "", phone: l.phone ?? "", email: l.email ?? "", consent: l.consent ? "yes" : "no", createdAt: l.createdAt.toISOString() })),
     [
