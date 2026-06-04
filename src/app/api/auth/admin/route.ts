@@ -37,7 +37,7 @@ export async function POST(req: Request) {
   // TESTING EXCEPTION: emails in ADMIN_NO_2FA_EMAILS sign in with password only (no TOTP).
   // Keep this list empty / remove the account before public launch.
   const exempt =
-    process.env.NODE_ENV !== "production" &&
+    process.env.NODE_ENV === "development" &&
     (process.env.ADMIN_NO_2FA_EMAILS ?? "")
       .split(",")
       .map((e) => e.trim().toLowerCase())

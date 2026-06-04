@@ -3,7 +3,6 @@ import type { MapElement } from "@prisma/client";
 import { requireSuperAdmin } from "@/server/auth/guard";
 import { ensureElementDefaults } from "@/server/map/elements";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/page-header";
 import { saveElementAction, deleteElementAction } from "./actions";
@@ -37,14 +36,15 @@ export default async function MapElementsPage() {
   const elements = await ensureElementDefaults();
 
   return (
-    <div className="max-w-4xl space-y-4">
+    <div className="space-y-6">
       <PageHeader title="Map Elements" description="Reusable stall sizes + infrastructure (stage, lane, water…) you drop onto any map. Sizes are in feet, true-to-scale." />
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Catalog ({elements.length})</CardTitle>
-          <CardDescription>Edit a row to update it, or add a new element below. These are shared across all maps.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-2">
+      
+      <div className="space-y-4">
+        <div className="space-y-1">
+          <h2 className="text-lg font-semibold tracking-tight">Catalog ({elements.length})</h2>
+          <p className="text-sm text-muted-foreground">Edit a row to update it, or add a new element below. These are shared across all maps.</p>
+        </div>
+        <div className="space-y-3">
           {elements.map((el) => (
             <div key={el.id} className="flex flex-wrap items-center gap-2">
               <form action={saveElementAction} className="flex flex-1 flex-wrap items-center gap-2">
@@ -64,8 +64,8 @@ export default async function MapElementsPage() {
             <ElementFields />
             <Button type="submit" size="sm">Add element</Button>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

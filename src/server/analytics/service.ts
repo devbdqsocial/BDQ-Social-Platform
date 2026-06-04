@@ -26,6 +26,12 @@ export async function getAnalytics(eventId?: string) {
     topCoupons,
     recentOrders,
     event,
+    paymentModes,
+    compTicketsCount,
+    waitlistGroups,
+    outboxStatus,
+    checkinGates,
+    vendorContracts,
   ] = await Promise.all([
     db.order.aggregate({ where: paidWhere, _sum: { total: true, discount: true }, _count: { _all: true } }),
     db.ticket.count({ where: ticketWhere }),
@@ -58,6 +64,25 @@ export async function getAnalytics(eventId?: string) {
       select: { id: true, total: true, createdAt: true, event: { select: { name: true } } },
     }),
     eventId ? db.event.findUnique({ where: { id: eventId }, select: { capacity: true, name: true } }) : Promise.resolve(null),
+    db.payment.groupBy({
+      by: ["mode"],
+      where: { status: "CAPTURED", ...(eventId ? { OR: [{ order: { eventId } }, { booking: { eventId } }] } : {}) },
+      _sum: { amount: true },
+      _count: { _all: true },
+    }),
+    db.ticket.count({ where: { ...ticketWhere, isComp: true } }),
+    db.waitlist.groupBy({
+      by: ["type"],
+      where: eventId ? { eventId } : {},
+      _count: { _all: true },
+    }),
+    db.outbox.groupBy({ by: ["status"], _count: { _all: true } }),
+    db.checkIn.groupBy({
+      by: ["gate"],
+      where: { direction: "IN", ...(eventId ? { ticket: { order: { eventId } } } : {}) },
+      _count: { _all: true },
+    }),
+    db.vendorContract.groupBy({ by: ["status"], _count: { _all: true } }),
   ]);
 
   const userRows = tally(paidUsers, (o) => o.userId);
@@ -72,6 +97,27 @@ export async function getAnalytics(eventId?: string) {
   const statusCounts = { PENDING: 0, PAID: 0, FAILED: 0, EXPIRED: 0 } as Record<string, number>;
   for (const g of statusGroups) statusCounts[g.status] = g._count._all;
   const createdOrders = statusGroups.reduce((s, g) => s + g._count._all, 0);
+
+  const onlineRevenue = paymentModes.find((p) => p.mode === "ONLINE")?._sum.amount ?? 0;
+  const offlineRevenue = paymentModes.find((p) => p.mode === "OFFLINE")?._sum.amount ?? 0;
+
+  const ticketWaitlist = waitlistGroups.find((w) => w.type === "TICKET")?._count._all ?? 0;
+  const stallWaitlist = waitlistGroups.find((w) => w.type === "STALL")?._count._all ?? 0;
+
+  const sentNotifications = outboxStatus.find((o) => o.status === "SENT")?._count._all ?? 0;
+  const failedNotifications = outboxStatus.find((o) => o.status === "FAILED")?._count._all ?? 0;
+  const queuedNotifications = outboxStatus.find((o) => o.status === "QUEUED")?._count._all ?? 0;
+  const totalNotifications = sentNotifications + failedNotifications + queuedNotifications;
+  const deliveryRate = totalNotifications ? sentNotifications / totalNotifications : 1.0;
+
+  const gates = checkinGates.map((g) => ({
+    gate: g.gate ?? "General Gate",
+    count: g._count._all,
+  }));
+
+  const signedContracts = vendorContracts.find((c) => c.status === "SIGNED")?._count._all ?? 0;
+  const sentContracts = vendorContracts.find((c) => c.status === "SENT")?._count._all ?? 0;
+  const totalContracts = signedContracts + sentContracts;
 
   return {
     kpis: {
@@ -121,5 +167,18 @@ export async function getAnalytics(eventId?: string) {
     utm: tally(paidUsers, (o) => (o.utm as { source?: string } | null)?.source, () => 0),
     topCoupons,
     recentOrders,
+    extras: {
+      onlineRevenue,
+      offlineRevenue,
+      compsCount: compTicketsCount,
+      ticketWaitlist,
+      stallWaitlist,
+      deliveryRate,
+      failedNotifications,
+      queuedNotifications,
+      gates,
+      signedContracts,
+      totalContracts,
+    },
   };
 }

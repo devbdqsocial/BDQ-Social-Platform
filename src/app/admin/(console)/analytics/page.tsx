@@ -3,13 +3,15 @@ import { requirePermission } from "@/server/auth/guard";
 import { getAnalytics } from "@/server/analytics/service";
 import { listAllForAdmin } from "@/server/events/service";
 import { formatPaise } from "@/lib/utils";
-import { Card, CardContent } from "@/components/ui/card";
 import { Select } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/page-header";
 import { ChartCard } from "@/components/charts/chart-card";
-import { RevenueAreaChart, StallOccupancyDonut } from "@/components/charts/dashboard-charts";
+import { KpiCard } from "@/components/charts/kpi-card";
+import {
+  RevenueAreaChart, TicketTypeBar, StallOccupancyDonut,
+} from "@/components/charts/dashboard-charts";
 
 export const metadata: Metadata = { title: "Analytics" };
 export const dynamic = "force-dynamic";
@@ -18,35 +20,16 @@ const pct = (n: number) => `${Math.round(n * 100)}%`;
 const fmtTime = (d: Date) =>
   new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(d);
 
-function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
-  return (
-    <Card>
-      <CardContent className="pt-6">
-        <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
-        <p className="mt-1 font-display text-2xl font-semibold">{value}</p>
-        {sub && <p className="mt-0.5 text-xs text-muted-foreground">{sub}</p>}
-      </CardContent>
-    </Card>
-  );
-}
-
-function PctBar({ value }: { value: number }) {
-  return (
-    <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-      <div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, Math.round(value * 100))}%` }} />
-    </div>
-  );
-}
-
 export default async function AnalyticsPage({ searchParams }: { searchParams: Promise<{ eventId?: string }> }) {
   await requirePermission("PAYMENT_VIEW");
   const { eventId } = await searchParams;
   const [a, events] = await Promise.all([getAnalytics(eventId || undefined), listAllForAdmin()]);
 
-  const peak = a.trend.reduce((m, t) => (t.revenue > m.revenue ? t : m), a.trend[0]);
+  const peak = a.trend.reduce((m, t) => (t.revenue > m.revenue ? t : m), a.trend[0] || { revenue: 0, day: "—" });
+  const trendSpark = a.trend.map((b) => b.revenue);
 
   return (
-    <div className="max-w-5xl space-y-8">
+    <div className="space-y-8">
       <PageHeader
         title="Analytics"
         description="Sales, revenue, attendance, and occupancy at a glance."
@@ -66,135 +49,211 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
         }
       />
 
-      {/* KPIs */}
+      {/* Primary KPIs */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Total revenue" value={formatPaise(a.kpis.totalRevenue)} sub={`Tickets ${formatPaise(a.kpis.grossTicketRevenue)} · Stalls ${formatPaise(a.kpis.stallRevenue)}`} />
-        <Stat label="Tickets sold" value={String(a.kpis.ticketsSold)} sub={`${a.kpis.paidOrders} paid orders`} />
-        <Stat label="Avg order value" value={formatPaise(a.kpis.avgOrderValue)} sub={`Discounts ${formatPaise(a.kpis.totalDiscount)}`} />
-        <Stat label="Customers" value={String(a.kpis.distinctCustomers)} sub={`${a.customers.returning} returning · ${a.customers.new} new`} />
-        <Stat label="Attendance" value={pct(a.kpis.attendanceRate)} sub={`${a.kpis.checkedIn} of ${a.kpis.ticketsSold} checked in`} />
-        <Stat
+        <KpiCard
+          label="Total revenue"
+          value={formatPaise(a.kpis.totalRevenue)}
+          sub={`Tickets ${formatPaise(a.kpis.grossTicketRevenue)} · Stalls ${formatPaise(a.kpis.stallRevenue)}`}
+          trend={trendSpark}
+        />
+        <KpiCard
+          label="Tickets sold"
+          value={String(a.kpis.ticketsSold)}
+          sub={`${a.kpis.paidOrders} paid orders`}
+        />
+        <KpiCard
+          label="Avg order value"
+          value={formatPaise(a.kpis.avgOrderValue)}
+          sub={`Discounts ${formatPaise(a.kpis.totalDiscount)}`}
+        />
+        <KpiCard
+          label="Customers"
+          value={String(a.kpis.distinctCustomers)}
+          sub={`${a.customers.returning} returning · ${a.customers.new} new`}
+        />
+        <KpiCard
+          label="Attendance"
+          value={pct(a.kpis.attendanceRate)}
+          sub={`${a.kpis.checkedIn} of ${a.kpis.ticketsSold} checked in`}
+        />
+        <KpiCard
           label="Capacity used"
           value={a.kpis.capacityUtil != null ? pct(a.kpis.capacityUtil) : "—"}
           sub={a.kpis.capacity != null ? `of ${a.kpis.capacity}` : "pick an event"}
         />
-        <Stat label="Conversion" value={pct(a.funnel.conversion)} sub={`${a.funnel.abandoned} abandoned`} />
-        <Stat label="Approved vendors" value={String(a.kpis.approvedVendors)} sub={`Stalls ${pct(a.stalls.pct)} booked`} />
+        <KpiCard
+          label="Conversion"
+          value={pct(a.funnel.conversion)}
+          sub={`${a.funnel.abandoned} abandoned`}
+        />
+        <KpiCard
+          label="Approved vendors"
+          value={String(a.kpis.approvedVendors)}
+          sub={`Stalls ${pct(a.stalls.pct)} booked`}
+        />
       </div>
 
-      {/* Sales trend */}
-      <ChartCard title="Revenue · last 30 days" description={`Peak ${formatPaise(peak.revenue)} on ${peak.day}`}>
-        <RevenueAreaChart data={a.trend} />
-      </ChartCard>
+      {/* Platform & Operational Metrics */}
+      <div className="space-y-4">
+        <h2 className="font-display text-lg font-semibold tracking-tight">Platform Operations & Health</h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <KpiCard
+            label="Online Revenue"
+            value={formatPaise(a.extras.onlineRevenue)}
+            sub="Razorpay payments captured"
+          />
+          <KpiCard
+            label="Offline Revenue"
+            value={formatPaise(a.extras.offlineRevenue)}
+            sub="Cash/Direct payments"
+          />
+          <KpiCard
+            label="Comp Tickets"
+            value={String(a.extras.compsCount)}
+            sub="Free / Complimentary tickets"
+          />
+          <KpiCard
+            label="Waitlist Signups"
+            value={String(a.extras.ticketWaitlist + a.extras.stallWaitlist)}
+            sub={`Tickets: ${a.extras.ticketWaitlist} · Stalls: ${a.extras.stallWaitlist}`}
+          />
+          <KpiCard
+            label="Outbox Delivery Success"
+            value={`${Math.round(a.extras.deliveryRate * 100)}%`}
+            sub="Notification success rate"
+          />
+          <KpiCard
+            label="Vendor Contracts Signed"
+            value={`${a.extras.signedContracts}/${a.extras.totalContracts}`}
+            sub={a.extras.totalContracts ? `${Math.round((a.extras.signedContracts / a.extras.totalContracts) * 100)}% signed` : "No contracts generated"}
+          />
+        </div>
+      </div>
 
-      {/* Funnel + ticket types */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardContent className="space-y-3 pt-6">
-            <h2 className="font-display text-lg font-semibold">Order funnel</h2>
+      {/* Charts */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <ChartCard title="Revenue · last 30 days" description={`Peak ${formatPaise(peak.revenue)} on ${peak.day}`}>
+          <RevenueAreaChart data={a.trend} />
+        </ChartCard>
+        <ChartCard title="Ticket sales" description="Sold vs capacity by type">
+          <TicketTypeBar data={a.ticketTypes.map((t) => ({ name: t.name, sold: t.sold, total: t.total }))} />
+        </ChartCard>
+        <ChartCard title="Stall occupancy" description="Live stall status">
+          <StallOccupancyDonut counts={a.stalls.counts} />
+        </ChartCard>
+        <ChartCard title="Check-in Gates Footfall" description="Scanned check-ins per gate">
+          {a.extras.gates.length === 0 ? (
+            <div className="grid h-[240px] place-items-center text-sm text-muted-foreground">No check-ins yet.</div>
+          ) : (
+            <div className="space-y-4 py-2">
+              {a.extras.gates.map((g) => (
+                <div key={g.gate} className="space-y-1">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium">{g.gate}</span>
+                    <span className="text-muted-foreground">{g.count} scans</span>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full bg-primary"
+                      style={{
+                        width: `${Math.min(100, Math.round((g.count / (a.kpis.checkedIn || 1)) * 100))}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </ChartCard>
+      </div>
+
+      {/* Feeds / Details */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 pt-4">
+        {/* Order funnel */}
+        <div className="space-y-3">
+          <h3 className="font-display text-sm font-semibold uppercase tracking-wide text-muted-foreground">Order funnel</h3>
+          <div className="space-y-2 text-sm">
             {(["PAID", "PENDING", "EXPIRED", "FAILED"] as const).map((s) => (
-              <div key={s} className="flex items-center justify-between text-sm">
+              <div key={s} className="flex items-center justify-between border-b border-border/40 pb-2 last:border-0 last:pb-0">
                 <span className="text-muted-foreground">{s}</span>
-                <span className="font-medium">{a.funnel.counts[s]}</span>
+                <span className="font-semibold">{a.funnel.counts[s]}</span>
               </div>
             ))}
-            <p className="border-t border-border pt-2 text-xs text-muted-foreground">{a.funnel.created} orders created · {pct(a.funnel.conversion)} paid</p>
-          </CardContent>
-        </Card>
+            <div className="pt-2 text-xs text-muted-foreground">
+              {a.funnel.created} orders created · {pct(a.funnel.conversion)} paid
+            </div>
+          </div>
+        </div>
 
-        <Card>
-          <CardContent className="space-y-3 pt-6">
-            <h2 className="font-display text-lg font-semibold">Ticket types</h2>
-            {a.ticketTypes.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No ticket types.</p>
-            ) : (
-              a.ticketTypes.map((t) => (
-                <div key={t.id} className="space-y-1">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium">{t.name}</span>
-                    <span className="text-muted-foreground">{t.sold}/{t.total} · {formatPaise(t.revenue)}</span>
-                  </div>
-                  <PctBar value={t.pct} />
-                </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Discounts + occupancy */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardContent className="space-y-3 pt-6">
-            <h2 className="font-display text-lg font-semibold">Discounts</h2>
+        {/* Discounts */}
+        <div className="space-y-3">
+          <h3 className="font-display text-sm font-semibold uppercase tracking-wide text-muted-foreground">Discounts & Coupons</h3>
+          <div className="space-y-2 text-sm">
             {a.discounts.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No discounts applied yet.</p>
+              <p className="text-muted-foreground text-xs">No discounts applied yet.</p>
             ) : (
               a.discounts.map((d) => (
-                <div key={d.source} className="flex items-center justify-between text-sm">
+                <div key={d.source} className="flex items-center justify-between border-b border-border/40 pb-2 last:border-0 last:pb-0">
                   <Badge variant="warning">{d.source.toLowerCase().replace(/_/g, " ")}</Badge>
                   <span className="text-muted-foreground">{d.count} orders · {formatPaise(d.total)}</span>
                 </div>
               ))
             )}
             {a.topCoupons.length > 0 && (
-              <div className="border-t border-border pt-2">
-                <p className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">Top coupons</p>
-                {a.topCoupons.map((c) => (
-                  <div key={c.code} className="flex items-center justify-between text-sm">
-                    <span className="font-mono">{c.code}</span>
-                    <span className="text-muted-foreground">
-                      {c.type === "PERCENT" ? `${c.value}%` : formatPaise(c.value)} · used {c.usedCount}{c.maxUses ? `/${c.maxUses}` : ""}
-                    </span>
-                  </div>
-                ))}
+              <div className="pt-2">
+                <p className="mb-2 text-xs uppercase tracking-wider font-semibold text-muted-foreground">Top coupons</p>
+                <div className="space-y-1">
+                  {a.topCoupons.map((c) => (
+                    <div key={c.code} className="flex items-center justify-between text-xs">
+                      <span className="font-mono text-primary">{c.code}</span>
+                      <span className="text-muted-foreground">
+                        {c.type === "PERCENT" ? `${c.value}%` : formatPaise(c.value)} · used {c.usedCount}{c.maxUses ? `/${c.maxUses}` : ""}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardContent className="space-y-3 pt-6">
-            <h2 className="font-display text-lg font-semibold">Stall occupancy</h2>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Booked</span>
-              <span className="font-medium">{a.stalls.booked}/{a.stalls.total} ({pct(a.stalls.pct)})</span>
-            </div>
-            <StallOccupancyDonut counts={a.stalls.counts} />
-            {a.utm.length > 0 && (
-              <div className="border-t border-border pt-2">
-                <p className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">Top sources</p>
-                {a.utm.slice(0, 5).map((u) => (
-                  <div key={u.key} className="flex items-center justify-between text-sm">
-                    <span>{u.key}</span>
-                    <span className="text-muted-foreground">{u.count}</span>
-                  </div>
-                ))}
-              </div>
+        {/* UTM Sources */}
+        <div className="space-y-3">
+          <h3 className="font-display text-sm font-semibold uppercase tracking-wide text-muted-foreground">Marketing Sources</h3>
+          <div className="space-y-2 text-sm">
+            {a.utm.length === 0 ? (
+              <p className="text-muted-foreground text-xs">No UTM tracking data.</p>
+            ) : (
+              a.utm.slice(0, 6).map((u) => (
+                <div key={u.key} className="flex items-center justify-between border-b border-border/40 pb-2 last:border-0 last:pb-0">
+                  <span className="truncate">{u.key || "Direct / Unknown"}</span>
+                  <span className="font-semibold text-muted-foreground">{u.count} orders</span>
+                </div>
+              ))
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
+
+        {/* Recent paid orders */}
+        <div className="space-y-3">
+          <h3 className="font-display text-sm font-semibold uppercase tracking-wide text-muted-foreground">Recent Paid Orders</h3>
+          <div className="space-y-2 text-sm">
+            {a.recentOrders.length === 0 ? (
+              <p className="text-muted-foreground text-xs">No paid orders yet.</p>
+            ) : (
+              a.recentOrders.map((o) => (
+                <div key={o.id} className="flex items-center justify-between gap-2 border-b border-border/40 pb-2 last:border-0 last:pb-0">
+                  <span className="truncate text-muted-foreground">{o.event.name}</span>
+                  <span className="font-medium shrink-0">{formatPaise(o.total)}</span>
+                  <span className="text-xs text-muted-foreground shrink-0">{fmtTime(o.createdAt).split(",")[0]}</span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </div>
-
-      {/* Recent orders */}
-      <section>
-        <h2 className="font-display text-lg font-semibold">Recent paid orders</h2>
-        {a.recentOrders.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">No paid orders yet.</p>
-        ) : (
-          <ul className="mt-3 divide-y divide-border overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-            {a.recentOrders.map((o) => (
-              <li key={o.id} className="flex items-center justify-between gap-3 p-3 text-sm">
-                <span className="truncate text-muted-foreground">{o.event.name}</span>
-                <span className="flex items-center gap-3">
-                  <span className="font-medium">{formatPaise(o.total)}</span>
-                  <span className="text-xs text-muted-foreground">{fmtTime(o.createdAt)}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
     </div>
   );
 }
+

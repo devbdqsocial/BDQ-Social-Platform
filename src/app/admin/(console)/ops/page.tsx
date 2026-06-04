@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { requireSuperAdmin } from "@/server/auth/guard";
 import { db } from "@/server/db";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/page-header";
 
@@ -13,12 +12,10 @@ const fmt = (d: Date) =>
 
 function Stat({ label, value, bad }: { label: string; value: string | number; bad?: boolean }) {
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
-        <p className={`mt-1 font-display text-2xl font-semibold ${bad ? "text-destructive" : ""}`}>{value}</p>
-      </CardContent>
-    </Card>
+    <div className="border-l-2 border-border/60 pl-4 py-1">
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className={`mt-1 font-display text-2xl font-semibold ${bad ? "text-destructive" : ""}`}>{value}</p>
+    </div>
   );
 }
 
@@ -41,7 +38,7 @@ export default async function OpsPage() {
   const ord = Object.fromEntries(orderGroups.map((g) => [g.status, g._count._all])) as Record<string, number>;
 
   return (
-    <div className="max-w-4xl space-y-8">
+    <div className="space-y-8">
       <PageHeader title="System health" description="Live operational signals. Read-only." />
 
       <div>
@@ -52,9 +49,9 @@ export default async function OpsPage() {
           <Stat label="Failed" value={ob.FAILED ?? 0} bad={(ob.FAILED ?? 0) > 0} />
         </div>
         {outboxFails.length > 0 && (
-          <ul className="mt-3 divide-y divide-border overflow-hidden rounded-xl border border-border bg-card text-sm shadow-sm">
+          <ul className="mt-3 divide-y divide-border border-y border-border text-sm">
             {outboxFails.map((f) => (
-              <li key={f.id} className="p-3">
+              <li key={f.id} className="py-3">
                 <p className="font-medium">{f.channel} → {f.toAddress} <span className="text-xs text-muted-foreground">({f.attempts} attempts)</span></p>
                 <p className="truncate text-xs text-destructive">{f.lastError ?? "unknown error"}</p>
               </li>
@@ -81,13 +78,11 @@ export default async function OpsPage() {
       <div className="grid gap-4 sm:grid-cols-3">
         <Stat label="Database" value="ok" />
         <Stat label="Active rate-limit windows" value={activeLimits} />
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Last admin action</p>
-            <p className="mt-1 text-sm font-medium">{lastAudit ? lastAudit.action : "—"}</p>
-            {lastAudit && <p className="text-xs text-muted-foreground">{fmt(lastAudit.createdAt)}</p>}
-          </CardContent>
-        </Card>
+        <div className="border-l-2 border-border/60 pl-4 py-1">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Last admin action</p>
+          <p className="mt-1 text-sm font-medium">{lastAudit ? lastAudit.action : "—"}</p>
+          {lastAudit && <p className="text-xs text-muted-foreground">{fmt(lastAudit.createdAt)}</p>}
+        </div>
       </div>
 
       <p className="text-xs text-muted-foreground">

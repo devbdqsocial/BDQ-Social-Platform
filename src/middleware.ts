@@ -26,7 +26,9 @@ export function middleware(req: NextRequest) {
   if (
     zone === "public" && 
     process.env.NEXT_PUBLIC_IS_COMING_SOON === "true" && 
-    pathname !== "/coming-soon"
+    pathname !== "/coming-soon" &&
+    !pathname.startsWith("/admin") &&
+    !pathname.startsWith("/vendor")
   ) {
     const url = req.nextUrl.clone();
     url.pathname = "/coming-soon";

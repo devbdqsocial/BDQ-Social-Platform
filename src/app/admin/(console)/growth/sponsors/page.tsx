@@ -3,7 +3,6 @@ import { requireSuperAdmin } from "@/server/auth/guard";
 import { listSponsors } from "@/server/sponsors/service";
 import { listAllForAdmin } from "@/server/events/service";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Input, Select } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
@@ -24,7 +23,7 @@ export default async function SponsorsPage({ searchParams }: { searchParams: Pro
   const sponsors = activeId ? await listSponsors(activeId) : [];
 
   return (
-    <div className="max-w-3xl space-y-8">
+    <div className="space-y-8">
       <PageHeader
         title="Sponsors"
         description="Add partners and their logos — they appear on the landing page and the event page."
@@ -39,29 +38,27 @@ export default async function SponsorsPage({ searchParams }: { searchParams: Pro
       />
 
       {activeId && (
-        <Card asChild>
-          <form action={createSponsorAction}>
-            <input type="hidden" name="eventId" value={activeId} />
-            <CardHeader>
-              <CardTitle>Add a sponsor</CardTitle>
-              <CardDescription>Paste a hosted logo URL, or leave it blank to show the name.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4 sm:grid-cols-2">
-              <Field label="Name">
-                <Input name="name" required placeholder="Acme Co." />
-              </Field>
-              <Field label="Tier">
-                <Select name="tier" defaultValue="ASSOCIATE">
-                  {TIERS.map((t) => <option key={t} value={t}>{tierLabel(t)}</option>)}
-                </Select>
-              </Field>
-              <Field label="Logo URL" hint="Optional." className="sm:col-span-2">
-                <Input name="logoUrl" type="url" placeholder="https://…/logo.png" />
-              </Field>
-              <Button type="submit" className="w-fit sm:col-span-2">Add sponsor</Button>
-            </CardContent>
-          </form>
-        </Card>
+        <form action={createSponsorAction} className="space-y-6">
+          <input type="hidden" name="eventId" value={activeId} />
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold tracking-tight">Add a sponsor</h2>
+            <p className="text-sm text-muted-foreground">Paste a hosted logo URL, or leave it blank to show the name.</p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Name">
+              <Input name="name" required placeholder="Acme Co." />
+            </Field>
+            <Field label="Tier">
+              <Select name="tier" defaultValue="ASSOCIATE">
+                {TIERS.map((t) => <option key={t} value={t}>{tierLabel(t)}</option>)}
+              </Select>
+            </Field>
+            <Field label="Logo URL" hint="Optional." className="sm:col-span-2">
+              <Input name="logoUrl" type="url" placeholder="https://…/logo.png" />
+            </Field>
+            <Button type="submit" className="w-fit sm:col-span-2">Add sponsor</Button>
+          </div>
+        </form>
       )}
 
       <div className="space-y-3">

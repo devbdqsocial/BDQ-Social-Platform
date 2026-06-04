@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Clock, Ticket as TicketIcon, UserCheck, XCircle, CheckCircle2 } from "lucide-react";
+import { Clock, Ticket as TicketIcon, UserCheck, XCircle, CheckCircle2, FileText, AlertCircle } from "lucide-react";
 import { requireAdmin } from "@/server/auth/guard";
 import { getActiveEvent } from "@/server/admin/event-context";
 import { getDashboard } from "@/server/analytics/dashboard";
@@ -43,6 +43,8 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
     { n: d.pending.expiringHolds, label: "stall hold(s) expiring within the hour", href: "/admin/venue/stalls", icon: Clock },
     { n: d.pending.failedPayments, label: "failed payment(s) in the last 30 days", href: "/admin/analytics", icon: XCircle },
     { n: d.pending.soldOutTypes, label: "ticket type(s) sold out", href: "/admin/analytics", icon: TicketIcon },
+    { n: d.extras.totalContracts - d.extras.signedContracts, label: "vendor contract(s) awaiting signature", href: "/admin/vendors", icon: FileText },
+    { n: d.extras.failedNotifications, label: "failed notification(s) in outbox", href: "/admin/ops", icon: AlertCircle },
   ].filter((t) => t.n > 0);
 
   return (
@@ -117,10 +119,14 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
           <CardHeader><CardTitle className="text-base">At a glance</CardTitle></CardHeader>
           <CardContent className="space-y-2 text-sm">
             <Row label="Total revenue" value={formatPaise(k.totalRevenue)} />
+            <Row label="Online / Offline split" value={`${formatPaise(d.extras.onlineRevenue)} / ${formatPaise(d.extras.offlineRevenue)}`} />
             <Row label="Stall revenue" value={formatPaise(k.stallRevenue)} />
             <Row label="Approved vendors" value={String(k.approvedVendors)} />
             <Row label="Avg order value" value={formatPaise(k.avgOrderValue)} />
             <Row label="Checked in" value={`${k.checkedIn} (${Math.round(k.attendanceRate * 100)}%)`} />
+            <Row label="Comp tickets issued" value={String(d.extras.compsCount)} />
+            <Row label="Waitlist (Tickets/Stalls)" value={`${d.extras.ticketWaitlist} / ${d.extras.stallWaitlist}`} />
+            <Row label="Outbox delivery rate" value={`${Math.round(d.extras.deliveryRate * 100)}%`} />
           </CardContent>
         </Card>
       </div>

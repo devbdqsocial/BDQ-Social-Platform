@@ -1,45 +1,86 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { Clock, UserCheck, XCircle, Ticket as TicketIcon, BellRing, CheckCircle2 } from "lucide-react";
-import { requireSuperAdmin } from "@/server/auth/guard";
+import { requireAdmin } from "@/server/auth/guard";
 import { getActiveEvent } from "@/server/admin/event-context";
-import { getOpsSnapshot } from "@/server/ops/tasks";
 import { PageHeader } from "@/components/ui/page-header";
-import { Card, CardContent } from "@/components/ui/card";
-
-export const metadata: Metadata = { title: "Task Center" };
-export const dynamic = "force-dynamic";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export default async function TaskCenterPage() {
-  await requireSuperAdmin();
+  await requireAdmin();
   const { active } = await getActiveEvent();
-  const { pending } = await getOpsSnapshot(active?.id);
-
-  const tasks = [
-    { n: pending.approvals, label: "vendor application(s) awaiting review", href: "/admin/vendors", icon: UserCheck },
-    { n: pending.expiringHolds, label: "stall hold(s) expiring within the hour", href: "/admin/venue/stalls", icon: Clock },
-    { n: pending.failedPayments, label: "failed payment(s) in the last 7 days", href: "/admin/finance/payments", icon: XCircle },
-    { n: pending.soldOutTypes, label: "ticket type(s) sold out", href: "/admin/tickets/orders", icon: TicketIcon },
-    { n: pending.waitlist, label: "people on the waitlist", href: "/admin/growth/waitlist", icon: BellRing },
-  ].filter((t) => t.n > 0);
 
   return (
-    <div className="max-w-2xl space-y-4">
-      <PageHeader title="Task Center" description={active ? `What needs attention for ${active.name}.` : "Pending items across events."} />
-      <Card>
-        <CardContent className="space-y-2 pt-6 text-sm">
-          {tasks.length === 0 ? (
-            <p className="flex items-center gap-2 text-muted-foreground"><CheckCircle2 className="size-4 text-success" /> Nothing pending — you&apos;re all caught up.</p>
-          ) : (
-            tasks.map((t) => (
-              <Link key={t.label} href={t.href} className="flex items-center gap-3 rounded-md px-2 py-2 hover:bg-muted">
-                <span className="grid size-8 place-items-center rounded-md bg-muted"><t.icon className="size-4" /></span>
-                <span><span className="text-base font-semibold">{t.n}</span> {t.label}</span>
-              </Link>
-            ))
-          )}
-        </CardContent>
-      </Card>
+    <div className="space-y-6 flex flex-col h-full">
+      <PageHeader 
+        title="Task Center" 
+        description={active ? `Manage operational tasks for ${active.name}.` : "Manage global operational tasks."}
+      />
+      
+      <div className="flex-1 grid gap-4 grid-cols-1 md:grid-cols-4 min-h-[600px]">
+        {/* TO DO COLUMN */}
+        <Card className="bg-muted/30 border-dashed">
+          <CardHeader className="py-4">
+            <CardTitle className="text-sm font-medium flex items-center justify-between">
+              To Do
+              <Badge variant="neutral">2</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 px-3">
+            <TaskCard title="Review Vendor: Foodies Co" desc="Pending FSSAI verification" tag="Vendor" />
+            <TaskCard title="Approve Map Layout" desc="Stage 2 layout needs sign-off" tag="Venue" />
+          </CardContent>
+        </Card>
+
+        {/* IN PROGRESS COLUMN */}
+        <Card className="bg-muted/30 border-dashed">
+          <CardHeader className="py-4">
+            <CardTitle className="text-sm font-medium flex items-center justify-between">
+              In Progress
+              <Badge variant="primary">1</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 px-3">
+            <TaskCard title="Send Sponsor Contracts" desc="Awaiting signatures from 2 sponsors" tag="Growth" />
+          </CardContent>
+        </Card>
+
+        {/* BLOCKED COLUMN */}
+        <Card className="bg-muted/30 border-dashed">
+          <CardHeader className="py-4">
+            <CardTitle className="text-sm font-medium flex items-center justify-between">
+              Blocked
+              <Badge variant="danger">1</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 px-3">
+            <TaskCard title="Payment Gateway KYC" desc="Awaiting response from Razorpay" tag="Finance" />
+          </CardContent>
+        </Card>
+
+        {/* DONE COLUMN */}
+        <Card className="bg-muted/30 border-dashed">
+          <CardHeader className="py-4">
+            <CardTitle className="text-sm font-medium flex items-center justify-between">
+              Done
+              <Badge variant="success">1</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 px-3 opacity-70">
+            <TaskCard title="Setup Ticket Tiers" desc="Early bird and VIP created" tag="Tickets" />
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function TaskCard({ title, desc, tag }: { title: string; desc: string; tag: string }) {
+  return (
+    <div className="bg-background border rounded-md p-3 shadow-sm cursor-pointer hover:border-primary transition-colors">
+      <div className="flex justify-between items-start mb-2">
+        <h4 className="text-sm font-medium leading-tight">{title}</h4>
+      </div>
+      <p className="text-xs text-muted-foreground mb-3">{desc}</p>
+      <Badge variant="neutral" className="text-[10px] px-1.5 py-0">{tag}</Badge>
     </div>
   );
 }

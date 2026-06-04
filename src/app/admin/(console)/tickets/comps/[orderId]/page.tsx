@@ -23,7 +23,7 @@ export default async function CompSheetPage({ params }: { params: Promise<{ orde
   );
 
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-semibold">{tickets.length} comp ticket{tickets.length === 1 ? "" : "s"}</h1>
@@ -34,7 +34,7 @@ export default async function CompSheetPage({ params }: { params: Promise<{ orde
 
       <div className="grid gap-4 sm:grid-cols-2">
         {tickets.map(({ t, qr }) => (
-          <div key={t.id} className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div key={t.id} className="flex items-center gap-4 rounded-lg border border-border p-4">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={qr} alt="Ticket QR" className="size-28 shrink-0 rounded-lg bg-white p-1.5" />
             <div className="min-w-0 text-sm">

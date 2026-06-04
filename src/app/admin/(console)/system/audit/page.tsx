@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireSuperAdmin } from "@/server/auth/guard";
 import { listAuditLogs, auditFilterOptions } from "@/server/audit-log";
-import { Card, CardContent } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Input, Select } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -42,7 +41,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
   };
 
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="space-y-6">
       <PageHeader
         title="Audit log"
         description="Every admin and staff action, newest first. Read-only and append-only."
@@ -53,44 +52,40 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
         }
       />
 
-      <Card asChild>
-        <form method="get" action="/admin/system/audit">
-          <CardContent className="grid items-end gap-3 pt-6 sm:grid-cols-5">
-            <Field label="Area">
-              <Select name="entity" defaultValue={sp.entity ?? ""}>
-                <option value="">All</option>
-                {options.entities.map((e) => <option key={e} value={e}>{e}</option>)}
-              </Select>
-            </Field>
-            <Field label="Action">
-              <Select name="action" defaultValue={sp.action ?? ""}>
-                <option value="">All</option>
-                {options.actions.map((a) => <option key={a} value={a}>{a}</option>)}
-              </Select>
-            </Field>
-            <Field label="From">
-              <Input type="date" name="from" defaultValue={sp.from ?? ""} />
-            </Field>
-            <Field label="To">
-              <Input type="date" name="to" defaultValue={sp.to ?? ""} />
-            </Field>
-            <div className="flex gap-2">
-              <Button type="submit">Apply</Button>
-              <Button asChild variant="ghost"><Link href="/admin/system/audit">Clear</Link></Button>
-            </div>
-          </CardContent>
-        </form>
-      </Card>
+      <form method="get" action="/admin/system/audit" className="grid items-end gap-3 sm:grid-cols-5">
+        <Field label="Area">
+          <Select name="entity" defaultValue={sp.entity ?? ""}>
+            <option value="">All</option>
+            {options.entities.map((e) => <option key={e} value={e}>{e}</option>)}
+          </Select>
+        </Field>
+        <Field label="Action">
+          <Select name="action" defaultValue={sp.action ?? ""}>
+            <option value="">All</option>
+            {options.actions.map((a) => <option key={a} value={a}>{a}</option>)}
+          </Select>
+        </Field>
+        <Field label="From">
+          <Input type="date" name="from" defaultValue={sp.from ?? ""} />
+        </Field>
+        <Field label="To">
+          <Input type="date" name="to" defaultValue={sp.to ?? ""} />
+        </Field>
+        <div className="flex gap-2">
+          <Button type="submit">Apply</Button>
+          <Button asChild variant="ghost"><Link href="/admin/system/audit">Clear</Link></Button>
+        </div>
+      </form>
 
       <p className="text-sm text-muted-foreground">
         {total === 0 ? "No matching entries" : `Showing ${rows.length} of ${total}`}
       </p>
 
-      <ul className="space-y-2">
+      <ul className="divide-y divide-border border-y border-border">
         {rows.map((r) => {
           const hasDelta = r.before != null || r.after != null;
           return (
-            <li key={r.id} className="rounded-xl border border-border bg-card p-4 shadow-sm">
+            <li key={r.id} className="py-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-medium">{r.action}</span>

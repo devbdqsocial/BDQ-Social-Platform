@@ -50,7 +50,7 @@ const schema = z.object({
 });
 
 const prodSchema = schema.superRefine((v, ctx) => {
-  if (v.NODE_ENV !== "production") return;
+  if (v.NODE_ENV === "development") return;
   const required: Array<[keyof typeof v, string]> = [
     ["SESSION_SECRET", "SESSION_SECRET must be set in production"],
     ["CRON_SECRET", "CRON_SECRET must be set in production"],

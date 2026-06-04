@@ -31,7 +31,7 @@ export default async function AdminVendorDetail({ params }: { params: Promise<{ 
   const status = STATUS[v.approvalStatus];
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <h1 className="font-display text-2xl font-semibold">{v.brandName}</h1>

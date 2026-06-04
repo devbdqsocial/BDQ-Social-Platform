@@ -136,7 +136,10 @@ export const vendorProfileSchema = z.object({
 /** Normalise to E.164 (+91…) to match the format Firebase returns on phone login. */
 export function normalizePhone(raw: string): string {
   const t = raw.trim();
-  const digits = t.replace(/\D/g, "");
+  let digits = t.replace(/\D/g, "");
+  if (!t.startsWith("+") && digits.startsWith("0")) {
+    digits = digits.substring(1);
+  }
   if (t.startsWith("+")) return `+${digits}`;
   if (digits.length === 10) return `+91${digits}`;
   if (digits.length === 12 && digits.startsWith("91")) return `+${digits}`;

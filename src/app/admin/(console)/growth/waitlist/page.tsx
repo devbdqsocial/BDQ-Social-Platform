@@ -23,7 +23,7 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
   const waiting = entries.filter((e) => !e.notifiedAt).length;
 
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="space-y-6">
       <PageHeader
         title="Waitlist"
         description="People who asked to be notified when tickets open up."
@@ -38,7 +38,7 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
       />
 
       {activeId && waiting > 0 && (
-        <form action={notifyWaitlistAction} className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
+        <form action={notifyWaitlistAction} className="flex items-center justify-between gap-3 border-y border-border py-4">
           <input type="hidden" name="eventId" value={activeId} />
           <p className="text-sm">{waiting} waiting to hear back.</p>
           <Button type="submit" size="sm">Notify available ({waiting})</Button>
@@ -48,9 +48,9 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
       {entries.length === 0 ? (
         <p className="text-sm text-muted-foreground">No one on the waitlist for this event.</p>
       ) : (
-        <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        <ul className="divide-y divide-border border-y border-border">
           {entries.map((e) => (
-            <li key={e.id} className="flex items-center justify-between gap-3 p-4">
+            <li key={e.id} className="flex items-center justify-between gap-3 py-4">
               <div className="min-w-0">
                 <p className="truncate font-medium">{e.contact ?? "—"}</p>
                 <p className="text-xs text-muted-foreground">{e.type.toLowerCase()} · {fmt(e.createdAt)}</p>

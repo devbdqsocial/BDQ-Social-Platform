@@ -22,7 +22,8 @@ export const NAV_GROUPS: NavGroup[] = [
     { label: "Past Events", href: "/admin/events/past", section: "events" },
   ]},
   { label: "Venue", icon: Map, items: [
-    { label: "Maps", href: "/admin/venue/maps", section: "map" },
+    { label: "All Maps", href: "/admin/venue/maps", section: "map" },
+    { label: "Create Map", href: "/admin/venue/maps/new", section: "map" },
     { label: "Map Elements", href: "/admin/venue/elements", section: "map" },
     { label: "Stall Inventory", href: "/admin/venue/stalls", section: "map" },
   ]},
