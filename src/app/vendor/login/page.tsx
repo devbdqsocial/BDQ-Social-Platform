@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { PhoneLogin } from "@/components/auth/PhoneLogin";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
+export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Vendor sign in" };
 
 export default function VendorLoginPage() {
