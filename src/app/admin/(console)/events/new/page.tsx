@@ -23,7 +23,7 @@ export default async function NewEventPage() {
         </div>
         <div className="grid gap-4">
           <Field label="Event name">
-            <Input name="name" required placeholder="BDQ Social — October Edition" />
+            <Input name="name" required placeholder="Lifestyle Festival / Night Market" />
           </Field>
           <Field label="Short description">
             <Textarea name="description" rows={2} placeholder="A line about the event for the public page." />

@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-export const alt = "BDQ Social — Vadodara's premium night market";
+export const alt = "Event Portal — Vadodara's premium experiences";
 
 export default function OpengraphImage() {
   return new ImageResponse(
@@ -21,14 +21,14 @@ export default function OpengraphImage() {
         }}
       >
         <div style={{ fontSize: 30, letterSpacing: 6, color: "#EFC65A", textTransform: "uppercase" }}>
-          Vadodara · Curated night market
+          Vadodara · Curated events
         </div>
         <div style={{ display: "flex", gap: 20, fontSize: 92, fontWeight: 700, marginTop: 24, lineHeight: 1.05 }}>
-          <span>BDQ</span>
-          <span style={{ color: "#C2603B" }}>Social</span>
+          <span>Event</span>
+          <span style={{ color: "#C2603B" }}>Portal</span>
         </div>
         <div style={{ fontSize: 38, marginTop: 24, color: "#C9BDA8" }}>
-          The city&apos;s most curated night market
+          The city&apos;s most curated events
         </div>
       </div>
     ),

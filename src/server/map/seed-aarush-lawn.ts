@@ -1,5 +1,5 @@
 /**
- * "Aarush Lawn, Vadodara" seed map template (Docs/project.md §7.5, BUSINESS-RULES §2.1).
+ * "Main Exhibition Grounds" seed map template (Docs/project.md §7.5, BUSINESS-RULES §2.1).
  * Produces layout geometry + sizes in FEET only — NO prices (prices are admin-entered per event
  * via StallTypeDef). Admins clone this, then tweak.
  *

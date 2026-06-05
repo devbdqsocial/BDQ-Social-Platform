@@ -36,7 +36,7 @@ export function AppSidebar({ allowed, user }: { allowed: string[]; user: { name:
             <Command className="size-4" />
           </span>
           <div className="grid leading-tight group-data-[collapsible=icon]:hidden">
-            <span className="text-sm font-semibold tracking-wide text-sidebar-primary">BDQ Social Admin</span>
+            <span className="text-sm font-semibold tracking-wide text-sidebar-primary">Event Portal Admin</span>
             <span className="text-[10px] font-medium text-sidebar-foreground/60">Console</span>
           </div>
         </Link>

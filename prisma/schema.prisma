@@ -197,6 +197,7 @@ model Event {
   createdById String?
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+  archiveJson Json?
 
   ticketTypes TicketType[]
   schedule    ScheduleItem[]

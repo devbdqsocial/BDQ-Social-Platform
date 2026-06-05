@@ -30,7 +30,7 @@ export function NewMapForm() {
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Map name" className="sm:col-span-2">
-          <Input name="name" required placeholder="Aarush Lawn — main ground" disabled={isPending} />
+          <Input name="name" required placeholder="Main Exhibition Grounds — Section A" disabled={isPending} />
         </Field>
         <Field label="Description" hint="Optional" className="sm:col-span-2">
           <Textarea name="description" rows={2} placeholder="Notes about this layout." disabled={isPending} />

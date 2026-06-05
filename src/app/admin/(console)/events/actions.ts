@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireSuperAdmin } from "@/server/auth/guard";
 import { createEvent, publishEvent } from "@/server/events/service";
+import { archiveEvent, unarchiveEvent } from "@/server/events/archive-service";
 import { createEventSchema } from "@/server/schemas";
 import { parseOrThrow } from "@/lib/validation";
 
@@ -25,5 +26,21 @@ export async function publishEventAction(formData: FormData) {
   const session = await requireSuperAdmin();
   await publishEvent(session, String(formData.get("id")));
   revalidatePath("/admin/events");
+  revalidatePath("/events");
+}
+
+export async function archiveEventAction(formData: FormData) {
+  const session = await requireSuperAdmin();
+  await archiveEvent(session, String(formData.get("id")));
+  revalidatePath("/admin/events");
+  revalidatePath("/admin/events/past");
+  revalidatePath("/events");
+}
+
+export async function unarchiveEventAction(formData: FormData) {
+  const session = await requireSuperAdmin();
+  await unarchiveEvent(session, String(formData.get("id")));
+  revalidatePath("/admin/events");
+  revalidatePath("/admin/events/past");
   revalidatePath("/events");
 }

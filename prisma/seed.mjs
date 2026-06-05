@@ -63,14 +63,14 @@ async function main() {
   }
 
   const event = await db.event.upsert({
-    where: { slug: "bdq-social-october-edition" },
+    where: { slug: "lifestyle-festival-october" },
     update: {},
     create: {
-      name: "BDQ Social — October Edition",
-      slug: "bdq-social-october-edition",
+      name: "Lifestyle Festival — October Edition",
+      slug: "lifestyle-festival-october",
       description:
-        "Vadodara's premium curated night market. 80+ indie brands, gourmet food, live indie music, and Instagrammable spaces — the anti-mela weekend before Diwali.",
-      location: "Aarush Lawn, Vadodara",
+        "Vadodara's premium curated lifestyle festival & night market. 80+ indie brands, gourmet food, live indie music, and curated spaces.",
+      location: "Main Exhibition Grounds, Vadodara",
       startsAt: new Date("2026-10-17T16:00:00+05:30"),
       endsAt: new Date("2026-10-17T23:00:00+05:30"),
       status: "PUBLISHED",
@@ -157,13 +157,13 @@ async function main() {
 
   // A 2nd concurrent event — proves multi-event isolation (separate tickets/stalls/analytics).
   const event2 = await db.event.upsert({
-    where: { slug: "bdq-social-december-edition" },
+    where: { slug: "lifestyle-festival-december" },
     update: {},
     create: {
-      name: "BDQ Social — December Edition",
-      slug: "bdq-social-december-edition",
-      description: "The winter night market — cosy lights, mulled treats, and a fresh lineup of makers.",
-      location: "Aarush Lawn, Vadodara",
+      name: "Lifestyle Festival — December Edition",
+      slug: "lifestyle-festival-december",
+      description: "The winter night market — cosy lights and a fresh lineup of makers.",
+      location: "Main Exhibition Grounds, Vadodara",
       startsAt: new Date("2026-12-19T16:00:00+05:30"),
       endsAt: new Date("2026-12-19T23:00:00+05:30"),
       status: "PUBLISHED",

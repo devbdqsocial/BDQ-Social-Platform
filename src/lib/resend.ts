@@ -27,7 +27,7 @@ export async function sendEmail(opts: {
   html: string;
   attachments?: EmailAttachment[];
 }): Promise<{ id: string }> {
-  const from = process.env.EMAIL_FROM ?? "BDQ Social <onboarding@resend.dev>";
+  const from = process.env.EMAIL_FROM ?? "Event Portal <onboarding@resend.dev>";
   const { data, error } = await client().emails.send({
     from,
     to: opts.to,

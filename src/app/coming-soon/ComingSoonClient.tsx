@@ -214,7 +214,7 @@ export function ComingSoonClient({ count }: { count: number }) {
         transition={{ delay: 1.5 }}
         className="absolute bottom-6 z-20 text-zinc-500 text-xs tracking-widest uppercase"
       >
-        © {new Date().getFullYear()} BDQSocial. All rights reserved.
+        © {new Date().getFullYear()} Event Portal. All rights reserved.
       </motion.div>
     </div>
   );

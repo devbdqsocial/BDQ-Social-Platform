@@ -105,7 +105,7 @@ export function duplicate(el: EditorElement): EditorElement {
   return { ...el, id: newId(), xFt: el.xFt + 5, yFt: el.yFt + 5, label: `${el.label}*` };
 }
 
-/** Aarush Lawn seed template → editable elements (geometry/sizes only, no prices). */
+/** Main Exhibition Grounds seed template → editable elements (geometry/sizes only, no prices). */
 export function seedToEditor(): EditorElement[] {
   return buildAarushLawnTemplate().elements.map((el) => ({
     id: newId(),

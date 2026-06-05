@@ -5,7 +5,7 @@ import QRCode from "qrcode";
 
 // Enroll (or rotate) a SUPER_ADMIN: sets an email/password credential + a TOTP secret, prints a
 // scannable QR for an authenticator app. Re-runnable. Run:
-//   node --env-file=.env scripts/admin-enroll.mjs admin@bdqsocial.com "your-password"
+//   node --env-file=.env scripts/admin-enroll.mjs admin@example.com "your-password"
 
 const db = new PrismaClient();
 
@@ -15,7 +15,7 @@ function hashPassword(pw) {
   return `${salt}:${scryptSync(pw, salt, 64).toString("hex")}`;
 }
 
-function otpauthUrl(account, secret, issuer = "BDQSocial") {
+function otpauthUrl(account, secret, issuer = "EventPortal") {
   const label = `${encodeURIComponent(issuer)}:${encodeURIComponent(account)}`;
   return `otpauth://totp/${label}?secret=${secret}&issuer=${encodeURIComponent(issuer)}`;
 }
@@ -35,7 +35,7 @@ async function main() {
   const user = await db.user.upsert({
     where: { email },
     update: data,
-    create: { email, name: "BDQ Admin", ...data },
+    create: { email, name: "Admin", ...data },
   });
 
   const url = otpauthUrl(email, secret);

@@ -15,17 +15,17 @@ const description = "Vadodara's premium curated lifestyle festival & night marke
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: { default: "BDQ Social", template: "%s · BDQ Social" },
+  title: { default: "Event Portal", template: "%s · Event Portal" },
   description,
   icons: { icon: "/icon.svg" },
   openGraph: {
     type: "website",
-    siteName: "BDQ Social",
-    title: "BDQ Social",
+    siteName: "Event Portal",
+    title: "Event Portal",
     description,
     locale: "en_IN",
   },
-  twitter: { card: "summary_large_image", title: "BDQ Social", description },
+  twitter: { card: "summary_large_image", title: "Event Portal", description },
 };
 
 export const viewport: Viewport = { themeColor: "#120E09" };

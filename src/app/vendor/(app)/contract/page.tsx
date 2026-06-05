@@ -12,8 +12,8 @@ export const metadata: Metadata = { title: "Contract" };
 const TERMS = [
   "I will trade only the products described in my brand profile, and hold any licences required (FSSAI for food).",
   "I will set up and staff my stall for the full event hours, and keep my space clean and safe.",
-  "All sales are my own responsibility; BDQ Social takes no commission and offers no refunds on stall fees.",
-  "I grant BDQ Social permission to feature my brand name and logo in event promotion.",
+  "All sales are my own responsibility; the organizers take no commission and offer no refunds on stall fees.",
+  "I grant the organizers permission to feature my brand name and logo in event promotion.",
   "I will follow the venue and organiser's reasonable instructions on the day.",
 ];
 

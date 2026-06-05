@@ -10,7 +10,7 @@ export default function AdminLoginPage() {
     <div className="dark bg-hero text-foreground">
       <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-4 py-16">
         <div className="mb-6 flex items-center justify-center gap-2 font-display text-xl font-semibold text-[#EDE6DA]">
-          <ShieldCheck className="size-5 text-primary" /> BDQ Social · Admin
+          <ShieldCheck className="size-5 text-primary" /> Event Portal · Admin
         </div>
         <Card className="shadow-lg">
           <CardHeader>

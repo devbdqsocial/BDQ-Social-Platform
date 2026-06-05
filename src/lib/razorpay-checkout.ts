@@ -45,7 +45,7 @@ export async function openCheckout(opts: {
     amount: opts.amountPaise,
     currency: "INR",
     order_id: opts.razorpayOrderId,
-    name: "BDQ Social",
+    name: "Event Portal",
     description: opts.description,
     theme: { color: "#C2603B" },
     handler: opts.onSuccess,

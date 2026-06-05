@@ -41,7 +41,7 @@ export function notifyWaitlist(session: Session, eventId: string) {
       for (const w of pending) {
         if (resendConfigured() && w.contact?.includes("@")) {
           try {
-            await sendEmail({ to: w.contact, subject: `Tickets available — ${event?.name ?? "BDQ Social"}`, html: waitlistHtml(event?.name ?? "BDQ Social", url) });
+            await sendEmail({ to: w.contact, subject: `Tickets available — ${event?.name ?? "Event"}`, html: waitlistHtml(event?.name ?? "Event", url) });
           } catch {
             continue; // leave un-notified for a retry
           }

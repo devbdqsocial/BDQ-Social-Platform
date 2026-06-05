@@ -16,7 +16,7 @@ export default async function PublicLayout({ children }: { children: React.React
         <div className="mx-auto flex max-w-[1200px] flex-col gap-8 px-4 py-12 sm:flex-row sm:items-start sm:justify-between sm:px-6">
           <div>
             <p className="font-display text-lg font-semibold">
-              BDQ <span className="text-primary">Social</span>
+              Event <span className="text-primary">Portal</span>
             </p>
             <p className="mt-1 max-w-xs text-sm text-muted-foreground">
               Vadodara&apos;s premium curated festival &amp; night market. Good people, great finds,
@@ -47,7 +47,7 @@ export default async function PublicLayout({ children }: { children: React.React
         </div>
         <div className="border-t border-border">
           <div className="mx-auto max-w-[1200px] px-4 py-4 text-xs text-muted-foreground sm:px-6">
-            All sales are final · © {new Date().getFullYear()} BDQ Social
+            All sales are final · © {new Date().getFullYear()} Event Portal
           </div>
         </div>
       </footer>

@@ -3,7 +3,7 @@
  * [BRACKETED] value with the real registered details before go-live, and have counsel review.
  */
 export const LEGAL = {
-  brand: "BDQ Social",
+  brand: "[BRAND NAME]",
   entity: "[LEGAL ENTITY NAME]",
   email: "[SUPPORT EMAIL]",
   phone: "[SUPPORT PHONE]",

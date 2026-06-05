@@ -44,17 +44,17 @@ async function main() {
 
   // 1) Real event (repurpose the october seed, or create fresh). Empty shell — content added in admin.
   const realData = {
-    name: "BDQ Social",
-    slug: "bdq-social",
+    name: "Lifestyle Festival",
+    slug: "lifestyle-festival",
     description:
-      "Vadodara's premium curated night market. Three nights — 30 & 31 October and 1 November — 4 PM to 11 PM each evening at Aarush Lawn. 80+ indie brands, gourmet food, live music, and Instagrammable spaces.",
-    location: "Aarush Lawn, Vadodara",
+      "Vadodara's premium curated lifestyle festival & night market. Three nights — 30 & 31 October and 1 November — 4 PM to 11 PM each evening at Main Exhibition Grounds. 80+ indie brands, gourmet food, live music, and curated spaces.",
+    location: "Main Exhibition Grounds, Vadodara",
     startsAt: new Date("2026-10-30T16:00:00+05:30"),
     endsAt: new Date("2026-11-01T23:00:00+05:30"),
     status: "PUBLISHED",
     capacity: 3000,
   };
-  const existing = await db.event.findFirst({ where: { OR: [{ slug: "bdq-social-october-edition" }, { slug: "bdq-social" }] }, select: { id: true } });
+  const existing = await db.event.findFirst({ where: { OR: [{ slug: "lifestyle-festival-october" }, { slug: "lifestyle-festival" }] }, select: { id: true } });
   if (existing) {
     await wipeEventChildren(existing.id);
     await db.event.update({ where: { id: existing.id }, data: realData });
@@ -65,11 +65,11 @@ async function main() {
   }
 
   // 2) Delete the December demo event entirely.
-  const dec = await db.event.findFirst({ where: { slug: "bdq-social-december-edition" }, select: { id: true } });
+  const dec = await db.event.findFirst({ where: { slug: "lifestyle-festival-december" }, select: { id: true } });
   if (dec) {
     await wipeEventChildren(dec.id);
     await db.event.delete({ where: { id: dec.id } });
-    console.log("Deleted demo event: bdq-social-december-edition");
+    console.log("Deleted demo event: lifestyle-festival-december");
   }
 
   // 3) Remove demo vendor profiles (cascades assets/kyc/contract/leads).

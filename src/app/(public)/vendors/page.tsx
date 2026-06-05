@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 
 export const metadata: Metadata = {
   title: "Brands",
-  description: "80+ handpicked indie brands at BDQ Social — fusion wear, jewellery, decor, and more.",
+  description: "80+ handpicked indie brands — fusion wear, jewellery, decor, and more.",
 };
 export const dynamic = "force-dynamic";
 
