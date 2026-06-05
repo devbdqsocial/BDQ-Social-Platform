@@ -74,9 +74,9 @@ export function ComingSoonClient({ count }: { count: number }) {
         <div className="text-center space-y-6">
           {/* Badge */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}>
-            <span className="inline-block text-xs font-semibold tracking-[0.2em] uppercase px-4 py-1.5 rounded-full bg-white/10 border border-white/15 text-zinc-300">
-              Vadodara&apos;s Premier Lifestyle Festival
-            </span>
+              <span className="inline-block text-xs font-semibold tracking-[0.2em] uppercase px-4 py-1.5 rounded-full bg-white/10 border border-white/15 text-zinc-300">
+                VADODARA&apos;S MOST ANTICIPATED SOCIAL EXPERIENCE
+              </span>
           </motion.div>
 
           {/* Headline */}
@@ -86,7 +86,7 @@ export function ComingSoonClient({ count }: { count: number }) {
             transition={{ delay: 0.3 }}
             className="font-display text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.1] bg-clip-text text-transparent bg-gradient-to-r from-white to-zinc-300 pb-3"
           >
-            Vadodara&apos;s Biggest Flea <br className="hidden sm:block" /> is Coming Soon
+            Vadodara&apos;s Next <br className="hidden sm:block" /> Great Gathering is Coming
           </motion.h1>
 
           <motion.p
@@ -95,7 +95,7 @@ export function ComingSoonClient({ count }: { count: number }) {
             transition={{ delay: 0.5 }}
             className="text-base sm:text-lg text-zinc-300 max-w-lg mx-auto"
           >
-            Curated stalls, live music, gourmet bites — all in one place. Join the waitlist to get early access and WhatsApp updates.
+            Discover curated markets, live experiences, creators, food, music, and meaningful connections.
           </motion.p>
 
           {/* Countdown */}
@@ -159,7 +159,7 @@ export function ComingSoonClient({ count }: { count: number }) {
                   disabled={status === "loading"}
                   className="bg-white text-black font-semibold rounded-xl px-8 py-4 hover:bg-zinc-200 transition-colors focus:outline-none focus:ring-2 focus:ring-white/50 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_30px_rgba(255,255,255,0.5)]"
                 >
-                  {status === "loading" ? "Joining..." : "Get Updates"}
+                  {status === "loading" ? "Joining..." : "Get Early Access"}
                 </button>
               </div>
 
@@ -182,7 +182,7 @@ export function ComingSoonClient({ count }: { count: number }) {
                     </svg>
                   )}
                 </div>
-                <span className="text-sm font-medium">I&apos;m interested in setting up a vendor stall</span>
+                <span className="text-sm font-medium">I want to exhibit my brand at the event</span>
               </button>
 
               {/* Error */}
