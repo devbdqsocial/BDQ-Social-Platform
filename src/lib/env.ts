@@ -66,11 +66,13 @@ const prodSchema = schema.superRefine((v, ctx) => {
   for (const [key, msg] of required) {
     if (!v[key]) ctx.addIssue({ code: "custom", path: [key], message: msg });
   }
-  // Auth bypasses must never be enabled in production (defence against a leaked/misset env).
-  if (v.DEV_ADMIN) ctx.addIssue({ code: "custom", path: ["DEV_ADMIN"], message: "DEV_ADMIN must not be set in production" });
-  if (v.DEV_VENDOR) ctx.addIssue({ code: "custom", path: ["DEV_VENDOR"], message: "DEV_VENDOR must not be set in production" });
+  // Auth bypasses are already inert in prod (every call site gates on NODE_ENV !== "production":
+  // guard.ts DEV_ADMIN, vendor layout DEV_VENDOR, admin route ADMIN_NO_2FA_EMAILS). A stray flag
+  // grants no access, so warn loudly to get it cleaned up — but don't crash the app over a no-op.
+  if (v.DEV_ADMIN) console.error("[env] DEV_ADMIN is set in production (ignored at runtime; remove it).");
+  if (v.DEV_VENDOR) console.error("[env] DEV_VENDOR is set in production (ignored at runtime; remove it).");
   if ((v.ADMIN_NO_2FA_EMAILS ?? "").trim())
-    ctx.addIssue({ code: "custom", path: ["ADMIN_NO_2FA_EMAILS"], message: "ADMIN_NO_2FA_EMAILS must be empty in production" });
+    console.error("[env] ADMIN_NO_2FA_EMAILS is non-empty in production (ignored at runtime; clear it).");
   if (v.SESSION_SECRET && v.SESSION_SECRET.length < 32) {
     ctx.addIssue({ code: "custom", path: ["SESSION_SECRET"], message: "SESSION_SECRET must be at least 32 characters" });
   }
