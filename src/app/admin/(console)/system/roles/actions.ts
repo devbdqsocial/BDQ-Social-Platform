@@ -4,13 +4,34 @@ import { revalidatePath } from "next/cache";
 import { requireSuperAdmin } from "@/server/auth/guard";
 import { setStaffPermissions } from "@/server/staff/service";
 
-const ALL = ["CHECKIN", "VENDOR_MANAGE", "VENDOR_VIEW", "EVENT_VIEW", "CUSTOMER_VIEW", "PAYMENT_VIEW"] as const;
+const ALL = [
+  "CHECKIN",
+  "VENDOR_MANAGE",
+  "VENDOR_VIEW",
+  "EVENT_VIEW",
+  "CUSTOMER_VIEW",
+  "PAYMENT_VIEW",
+  "TICKETS_MANAGE",
+] as const;
 
+/**
+ * Saves permission changes and optional role updates for a teammate.
+ * This function handles fine-grained permission setting. It parses the optional
+ * 'role' dropdown field (only submitted by SUPER_ADMINs) and validates it against
+ * standard roles before updating the teammate record.
+ *
+ * @throws {Error} If session authorization is invalid or boundaries are crossed.
+ */
 export async function setPermissionsAction(formData: FormData): Promise<void> {
   const session = await requireSuperAdmin();
   const id = String(formData.get("id"));
   const selected = formData.getAll("perm").map(String);
   const permissions = ALL.filter((p) => selected.includes(p));
-  await setStaffPermissions(session, id, permissions);
+  
+  const roleVal = formData.get("role");
+  const role = (roleVal === "STAFF" || roleVal === "ADMIN") ? roleVal : undefined;
+
+  await setStaffPermissions(session, id, permissions, role);
   revalidatePath("/admin/system/roles");
 }
+

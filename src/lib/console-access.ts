@@ -29,6 +29,7 @@ const REQUIRES: Record<ConsoleSection, { superAdminOnly?: boolean; perm?: Permis
 
 export function canAccessSection(o: { role: Role; permissions: Permission[] }, section: ConsoleSection): boolean {
   if (o.role === "SUPER_ADMIN") return true;
+  if (o.role === "ADMIN") return section !== "audit";
   const r = REQUIRES[section];
   if (r.superAdminOnly) return false;
   if (r.perm) return o.permissions.includes(r.perm);

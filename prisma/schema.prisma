@@ -16,6 +16,7 @@ enum Role {
   CUSTOMER
   VENDOR
   STAFF
+  ADMIN
   SUPER_ADMIN
 }
 
@@ -26,6 +27,7 @@ enum Permission {
   EVENT_VIEW
   CUSTOMER_VIEW
   PAYMENT_VIEW
+  TICKETS_MANAGE
 }
 
 enum EventStatus {

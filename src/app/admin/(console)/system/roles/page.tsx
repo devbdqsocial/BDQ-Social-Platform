@@ -17,12 +17,24 @@ const PERMS: { key: Permission; label: string }[] = [
   { key: "EVENT_VIEW", label: "View events" },
   { key: "CUSTOMER_VIEW", label: "View customers" },
   { key: "PAYMENT_VIEW", label: "Payments & analytics" },
+  { key: "TICKETS_MANAGE", label: "Manage tickets (comps, cash sales)" },
 ];
 const permLabel = (p: string) => PERMS.find((x) => x.key === p)?.label ?? p;
 
+/**
+ * Renders the Roles and Permissions configurations.
+ * This panel is restricted to SUPER_ADMINs and ADMINs:
+ * - ADMINs can view and edit standard STAFF permissions, but ADMIN accounts are filtered out.
+ * - SUPER_ADMINs see all teammates and can promote/demote teammates between STAFF and ADMIN roles.
+ */
 export default async function RolesPage() {
-  await requireSuperAdmin();
-  const staff = (await listStaff()).filter((s) => s.active);
+  const session = await requireSuperAdmin();
+  const isSuperAdmin = session.role === "SUPER_ADMIN";
+  
+  // Filter active staff: standard ADMIN users are restricted from viewing or editing other ADMINs.
+  const staff = (await listStaff()).filter(
+    (s) => s.active && (isSuperAdmin || s.role === "STAFF")
+  );
 
   return (
     <div className="space-y-8">
@@ -55,16 +67,33 @@ export default async function RolesPage() {
               <form key={s.id} action={setPermissionsAction} className="border-t border-border pt-6 first:border-t-0 first:pt-0 space-y-3">
                 <input type="hidden" name="id" value={s.id} />
                 <div className="flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="truncate font-medium">{s.name ?? s.email}</p>
-                    <p className="truncate text-xs text-muted-foreground">{s.email}</p>
+                  <div className="min-w-0 flex flex-wrap items-center gap-4">
+                    <div>
+                      <p className="truncate font-medium">{s.name ?? s.email}</p>
+                      <p className="truncate text-xs text-muted-foreground">{s.email}</p>
+                    </div>
+                    {isSuperAdmin ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">Role:</span>
+                        <select
+                          name="role"
+                          defaultValue={s.role}
+                          className="rounded border border-input bg-background px-2 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                        >
+                          <option value="STAFF">Staff</option>
+                          <option value="ADMIN">Admin</option>
+                        </select>
+                      </div>
+                    ) : (
+                      <Badge variant="neutral">Staff</Badge>
+                    )}
                   </div>
                   <Button type="submit" size="sm" variant="outline">Save</Button>
                 </div>
                 <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   {PERMS.map((p) => (
                     <label key={p.key} className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" name="perm" value={p.key} defaultChecked={s.permissions.includes(p.key)} className="size-4" />
+                      <input type="checkbox" name="perm" value={p.key} defaultChecked={(s.permissions as string[]).includes(p.key)} className="size-4" />
                       {p.label}
                     </label>
                   ))}
@@ -77,3 +106,4 @@ export default async function RolesPage() {
     </div>
   );
 }
+

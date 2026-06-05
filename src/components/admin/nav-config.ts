@@ -35,6 +35,7 @@ export const NAV_GROUPS: NavGroup[] = [
   ]},
   { label: "Vendors", icon: Store, items: [
     { label: "Applications", href: "/admin/vendors", section: "vendors" },
+    { label: "Add Vendor", href: "/admin/vendors/new", section: "vendors" },
   ]},
   { label: "Operations", icon: Zap, items: [
     { label: "Check-in Scanner", href: "/admin/ops/checkin", section: "checkin" },

@@ -3,14 +3,15 @@
  * Session resolution is stubbed in P0; Firebase verify + httpOnly session land in slice 2.
  */
 
-export type Role = "CUSTOMER" | "VENDOR" | "STAFF" | "SUPER_ADMIN";
+export type Role = "CUSTOMER" | "VENDOR" | "STAFF" | "ADMIN" | "SUPER_ADMIN";
 export type Permission =
   | "CHECKIN"
   | "VENDOR_MANAGE"
   | "VENDOR_VIEW"
   | "EVENT_VIEW"
   | "CUSTOMER_VIEW"
-  | "PAYMENT_VIEW";
+  | "PAYMENT_VIEW"
+  | "TICKETS_MANAGE";
 
 export type Zone = "public" | "customer" | "vendor" | "admin";
 
@@ -37,7 +38,7 @@ export const SEED_VENDOR_ID = "vendor_seed";
  */
 export async function requireAdmin(): Promise<Session> {
   const s = await getSession();
-  if (s && (s.role === "SUPER_ADMIN" || s.role === "STAFF")) return s;
+  if (s && (s.role === "SUPER_ADMIN" || s.role === "ADMIN" || s.role === "STAFF")) return s;
 
   const { env } = await import("@/lib/env");
   if (env.DEV_ADMIN && process.env.NODE_ENV !== "production") {
@@ -67,6 +68,20 @@ export async function requireVendor(): Promise<Session> {
  * Dev gate: DEV_ADMIN → super-admin.
  */
 export async function requireSuperAdmin(): Promise<Session> {
+  const s = await getSession();
+  if (s && (s.role === "SUPER_ADMIN" || s.role === "ADMIN")) return s;
+
+  const { env } = await import("@/lib/env");
+  if (env.DEV_ADMIN && process.env.NODE_ENV !== "production") {
+    return { userId: SEED_ADMIN_ID, role: "SUPER_ADMIN", permissions: [] };
+  }
+  throw new AuthError("FORBIDDEN");
+}
+
+/**
+ * Require SUPER_ADMIN role strictly (e.g. system audit logs).
+ */
+export async function requireSuperAdminOnly(): Promise<Session> {
   const s = await getSession();
   if (s && s.role === "SUPER_ADMIN") return s;
 
@@ -117,6 +132,8 @@ export class AuthError extends Error {
 
 function can(session: Session, need: Role | Permission): boolean {
   if (session.role === "SUPER_ADMIN") return true;
+  if (need === "SUPER_ADMIN") return false;
+  if (session.role === "ADMIN") return true;
   if (need === session.role) return true;
   return session.permissions.includes(need as Permission);
 }

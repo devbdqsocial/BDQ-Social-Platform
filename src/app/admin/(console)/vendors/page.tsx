@@ -14,10 +14,7 @@ export default async function AdminVendorsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <PageHeader title="Vendors" description="Review brands, give them a verification call, then approve and assign a stall." />
-        <Button asChild size="sm"><Link href="/admin/vendors/new">Add vendor</Link></Button>
-      </div>
+      <PageHeader title="Vendors" description="Review brands, give them a verification call, then approve and assign a stall." />
       <VendorsTable vendors={vendors} />
     </div>
   );

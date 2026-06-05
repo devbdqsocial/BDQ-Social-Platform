@@ -12,9 +12,18 @@ import { StaffTable } from "./StaffTable";
 
 export const metadata: Metadata = { title: "Staff" };
 
+/**
+ * Renders the Staff management page dashboard.
+ * The page serves as a self-contained panel for creating and updating staff members.
+ * It dynamically limits which roles can be managed depending on the session user's permissions:
+ * - A SUPER_ADMIN can create and manage standard staff presets and other ADMIN roles.
+ * - An ADMIN can only create and manage standard staff presets and cannot see or select the ADMIN option.
+ */
 export default async function AdminStaffPage() {
-  await requireSuperAdmin();
+  const session = await requireSuperAdmin();
   const staff = await listStaff();
+
+  const isSuperAdmin = session.role === "SUPER_ADMIN";
 
   return (
     <div className="space-y-8">
@@ -34,6 +43,9 @@ export default async function AdminStaffPage() {
           </Field>
           <Field label="Role">
             <Select name="preset" required defaultValue="SCANNER_ONLY">
+              {isSuperAdmin && (
+                <option value="ADMIN">Administrator (Access all but logs)</option>
+              )}
               {STAFF_PRESET_KEYS.map((k) => (
                 <option key={k} value={k}>{STAFF_PRESETS[k].label}</option>
               ))}
@@ -48,8 +60,9 @@ export default async function AdminStaffPage() {
 
       <div className="space-y-3">
         <h2 className="font-display text-lg font-semibold">Team ({staff.length})</h2>
-        <StaffTable staff={staff} />
+        <StaffTable staff={staff} currentUserRole={session.role} />
       </div>
     </div>
   );
 }
+
