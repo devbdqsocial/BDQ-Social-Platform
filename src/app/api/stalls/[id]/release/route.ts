@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/server/auth/guard";
 import { releaseStall } from "@/server/bookings/service";
+import { enforceRateLimit } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
 
-export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const limited = await enforceRateLimit(req, "release", 30, 10 * 60 * 1000);
+  if (limited) return limited;
+
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ ok: false, error: { code: "UNAUTHENTICATED" } }, { status: 401 });

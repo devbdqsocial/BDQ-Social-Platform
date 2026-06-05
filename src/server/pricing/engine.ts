@@ -33,6 +33,35 @@ export interface AppliedCoupon {
   minOrder?: number | null;
 }
 
+export interface CouponState {
+  active: boolean;
+  eventId: string | null;
+  startsAt: Date | null;
+  endsAt: Date | null;
+  maxUses: number | null;
+  usedCount: number;
+  perUserLimit: number;
+}
+
+/**
+ * Pure coupon eligibility check (window + global cap + per-user cap). `userUsage` = the caller's
+ * already-counted redemptions plus live (unexpired PENDING) orders holding this coupon.
+ */
+export function isCouponRedeemable(
+  c: CouponState | null,
+  eventId: string,
+  now: Date,
+  userUsage: number,
+): boolean {
+  if (!c || !c.active) return false;
+  if (c.eventId && c.eventId !== eventId) return false;
+  if (c.startsAt && c.startsAt > now) return false;
+  if (c.endsAt && c.endsAt < now) return false;
+  if (c.maxUses != null && c.usedCount >= c.maxUses) return false;
+  if (userUsage >= c.perUserLimit) return false;
+  return true;
+}
+
 export interface PriceResult {
   subtotal: number;
   discount: number;

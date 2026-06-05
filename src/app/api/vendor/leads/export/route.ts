@@ -2,6 +2,7 @@ import { requireVendor } from "@/server/auth/guard";
 import { getProfile } from "@/server/vendors/service";
 import { listLeads } from "@/server/leads/service";
 import { toCsv } from "@/lib/csv";
+import { parseSkip } from "@/lib/utils";
 import { enforceRateLimit } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
@@ -21,7 +22,7 @@ export async function GET(req: Request) {
   }
   if (!profileId) return new Response("No profile", { status: 404 });
 
-  const skip = Number(new URL(req.url).searchParams.get("skip") ?? "0");
+  const skip = parseSkip(new URL(req.url).searchParams.get("skip"));
   const leads = await listLeads(profileId, skip);
   const csv = toCsv(
     leads.map((l) => ({ name: l.name ?? "", phone: l.phone ?? "", email: l.email ?? "", consent: l.consent ? "yes" : "no", createdAt: l.createdAt.toISOString() })),

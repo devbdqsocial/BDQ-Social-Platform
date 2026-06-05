@@ -1,6 +1,7 @@
 import { requirePermission } from "@/server/auth/guard";
 import { db } from "@/server/db";
 import { toCsv } from "@/lib/csv";
+import { parseSkip } from "@/lib/utils";
 import { enforceRateLimit } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
@@ -20,7 +21,7 @@ export async function GET(req: Request) {
 
   const url = new URL(req.url);
   const eventId = url.searchParams.get("eventId") || undefined;
-  const skip = Number(url.searchParams.get("skip") ?? "0");
+  const skip = parseSkip(url.searchParams.get("skip"));
   const orders = await db.order.findMany({
     where: { status: "PAID", ...(eventId ? { eventId } : {}) },
     orderBy: { createdAt: "desc" },

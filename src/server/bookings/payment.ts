@@ -32,8 +32,14 @@ export async function createStallOrder(vendorProfileId: string, stallId: string)
       const b = await tx.booking.create({
         data: { eventId: stall.eventId, stallId, vendorProfileId, source: "VENDOR", status: "HELD" },
       });
-      // hold without TTL while paying (avoids the cron freeing a stall mid-payment)
-      await tx.stall.update({ where: { id: stallId }, data: { status: "HELD", holdUntil: null } });
+      // hold without TTL while paying (avoids the cron freeing a stall mid-payment). Compare-and-set
+      // so we never hold a stall that has meanwhile been taken — defence beyond the partial unique
+      // index on Booking that ultimately guarantees one active booking per stall.
+      const held = await tx.stall.updateMany({
+        where: { id: stallId, status: { in: ["AVAILABLE", "HELD"] } },
+        data: { status: "HELD", holdUntil: null },
+      });
+      if (held.count === 0) throw new StallUnavailableError();
       return b;
     });
   } catch (e) {

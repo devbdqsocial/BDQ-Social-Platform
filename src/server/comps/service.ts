@@ -3,8 +3,12 @@ import { randomUUID } from "crypto";
 import { Prisma } from "@prisma/client";
 import { db } from "@/server/db";
 import { withAudit } from "@/server/audit";
-import { signTicketToken } from "@/lib/qr-token";
+import { rateLimit } from "@/lib/ratelimit";
+import { signTicketToken, ticketTokenExpiry } from "@/lib/qr-token";
 import type { Session } from "@/server/auth/guard";
+
+/** Max comp-issuance actions per staff member per hour (abuse velocity cap, on top of the qty clamp). */
+const COMP_ISSUE_MAX_PER_HOUR = 50;
 
 /** Complimentary (VIP/sponsor/press) ticket issuance — real signed-QR tickets, no payment. */
 
@@ -17,13 +21,22 @@ export interface CompInput {
 }
 
 /** Issue `qty` comp tickets under a zero-value order. Returns the order id. */
-export function generateComps(session: Session, input: CompInput): Promise<string> {
+export async function generateComps(session: Session, input: CompInput): Promise<string> {
+  if (!(await rateLimit(`comp:${session.userId}`, COMP_ISSUE_MAX_PER_HOUR, 60 * 60 * 1000))) {
+    throw new Error("Comp issuance limit reached — try again later");
+  }
   return withAudit(session, { action: "COMP_ISSUE", entity: "Order" }, async () => ({
     before: null,
     run: async () => {
+      let unitPaise = 0;
       const orderId = await db.$transaction(async (tx) => {
-        const tt = await tx.ticketType.findUnique({ where: { id: input.ticketTypeId }, select: { eventId: true } });
+        const tt = await tx.ticketType.findUnique({
+          where: { id: input.ticketTypeId },
+          select: { eventId: true, priceInPaise: true, event: { select: { endsAt: true } } },
+        });
         if (!tt) throw new Error("Ticket type not found");
+        unitPaise = tt.priceInPaise;
+        const exp = ticketTokenExpiry(tt.event.endsAt);
         const order = await tx.order.create({
           data: {
             userId: session.userId,
@@ -43,7 +56,7 @@ export function generateComps(session: Session, input: CompInput): Promise<strin
               orderId: order.id,
               ticketTypeId: input.ticketTypeId,
               isComp: true,
-              qrToken: signTicketToken(id),
+              qrToken: signTicketToken(id, undefined, exp),
               holderName: input.holderName,
               holderPhone: input.holderPhone,
               holderEmail: input.holderEmail,
@@ -68,7 +81,15 @@ export function generateComps(session: Session, input: CompInput): Promise<strin
         }
       }
 
-      return { result: orderId, after: { ticketTypeId: input.ticketTypeId, qty: input.qty } };
+      return {
+        result: orderId,
+        after: {
+          ticketTypeId: input.ticketTypeId,
+          qty: input.qty,
+          unitPaise,
+          valuePaise: unitPaise * input.qty,
+        },
+      };
     },
   }));
 }

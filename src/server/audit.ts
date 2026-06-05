@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { db } from "@/server/db";
+import { logError } from "@/lib/logger";
 import type { Session } from "@/server/auth/guard";
 
 /**
@@ -39,8 +40,9 @@ export async function withAudit<TOut>(
         userAgent: meta.userAgent,
       },
     });
-  } catch {
-    // DB not configured in P0; audit persistence wired in slice 2.
+  } catch (e) {
+    // Never let an admin/staff mutation be recorded-as-success while its audit row is silently lost.
+    logError("audit.persist", e, { action: meta.action, entity: meta.entity, actorId: session.userId });
   }
   return result;
 }

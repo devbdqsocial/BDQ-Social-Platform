@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import { Fraunces, Geist, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -29,12 +30,14 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { themeColor: "#120E09" };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // CSP nonce minted in middleware (prod); next-themes' pre-hydration script needs it under a strict CSP.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${jakarta.variable} ${fraunces.variable} ${geist.variable} antialiased`}>
         <a href="#main" className="skip-link">Skip to content</a>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange nonce={nonce}>
           {children}
         </ThemeProvider>
         <ServiceWorkerRegister />

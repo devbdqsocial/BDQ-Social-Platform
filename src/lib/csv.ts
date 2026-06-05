@@ -7,7 +7,10 @@ export interface CsvColumn<T> {
 }
 
 function cell(v: unknown): string {
-  const s = v == null ? "" : String(v);
+  let s = v == null ? "" : String(v);
+  // Neutralise spreadsheet formula injection: a leading = + - @ (or tab/CR) makes Excel/Sheets
+  // execute the cell. Prefix with an apostrophe so it is treated as literal text.
+  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
   return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 

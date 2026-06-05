@@ -16,21 +16,21 @@ export class StallUnavailableError extends Error {
 }
 
 /** Atomically lock an AVAILABLE stall for this user. Throws if it isn't free. */
-export async function holdStall(_userId: string, stallId: string): Promise<{ status: "HELD"; holdUntil: Date }> {
+export async function holdStall(userId: string, stallId: string): Promise<{ status: "HELD"; holdUntil: Date }> {
   const holdUntil = holdExpiry();
   const res = await db.stall.updateMany({
     where: { id: stallId, status: "AVAILABLE" },
-    data: { status: "HELD", holdUntil },
+    data: { status: "HELD", holdUntil, holdUserId: userId },
   });
   if (res.count === 0) throw new StallUnavailableError();
   return { status: "HELD", holdUntil };
 }
 
-/** Release a held stall back to AVAILABLE (deselect). No-op if it isn't HELD. */
-export async function releaseStall(_userId: string, stallId: string): Promise<void> {
+/** Release a held stall back to AVAILABLE (deselect). No-op unless this user owns the hold. */
+export async function releaseStall(userId: string, stallId: string): Promise<void> {
   await db.stall.updateMany({
-    where: { id: stallId, status: "HELD" },
-    data: { status: "AVAILABLE", holdUntil: null },
+    where: { id: stallId, status: "HELD", holdUserId: userId },
+    data: { status: "AVAILABLE", holdUntil: null, holdUserId: null },
   });
 }
 
@@ -38,7 +38,7 @@ export async function releaseStall(_userId: string, stallId: string): Promise<vo
 export async function releaseExpiredHolds(now: Date = new Date()): Promise<number> {
   const res = await db.stall.updateMany({
     where: { status: "HELD", holdUntil: { lt: now } },
-    data: { status: "AVAILABLE", holdUntil: null },
+    data: { status: "AVAILABLE", holdUntil: null, holdUserId: null },
   });
   return res.count;
 }

@@ -3,9 +3,10 @@ import { randomUUID } from "crypto";
 import { Prisma } from "@prisma/client";
 import { db } from "@/server/db";
 import { createRazorpayOrder } from "@/lib/razorpay";
-import { signTicketToken } from "@/lib/qr-token";
+import { signTicketToken, ticketTokenExpiry } from "@/lib/qr-token";
 import { logError } from "@/lib/logger";
 import {
+  isCouponRedeemable,
   priceOrder,
   type AppliedCoupon,
   type BulkTier,
@@ -20,24 +21,32 @@ interface OrderItemInput {
 }
 
 export class CheckoutError extends Error {
-  constructor(public code: "EVENT_NOT_AVAILABLE" | "SOLD_OUT" | "COUPON_INVALID" | "EMPTY") {
+  constructor(public code: "EVENT_NOT_AVAILABLE" | "SOLD_OUT" | "COUPON_INVALID" | "INVALID_TOTAL" | "EMPTY") {
     super(code);
     this.name = "CheckoutError";
   }
 }
 
-async function resolveCoupon(eventId: string, code: string): Promise<AppliedCoupon & { id: string }> {
+/**
+ * Validate a coupon for this user: window + global `maxUses` + `perUserLimit`. Per-user usage =
+ * confirmed redemptions (CouponRedemption) + this user's live unexpired PENDING orders holding it,
+ * so a user cannot stack the discount across parallel checkouts.
+ */
+async function resolveCoupon(
+  eventId: string,
+  code: string,
+  userId: string,
+): Promise<AppliedCoupon & { id: string }> {
   const c = await db.coupon.findUnique({ where: { code } });
   const now = new Date();
-  const ok =
-    c &&
-    c.active &&
-    (!c.eventId || c.eventId === eventId) &&
-    (!c.startsAt || c.startsAt <= now) &&
-    (!c.endsAt || c.endsAt >= now) &&
-    (c.maxUses == null || c.usedCount < c.maxUses);
-  if (!ok) throw new CheckoutError("COUPON_INVALID");
-  return { id: c.id, type: c.type, value: c.value, minOrder: c.minOrder };
+  const [redeemed, pending] = c
+    ? await Promise.all([
+        db.couponRedemption.count({ where: { couponId: c.id, userId } }),
+        db.order.count({ where: { couponId: c.id, userId, status: "PENDING", expiresAt: { gt: now } } }),
+      ])
+    : [0, 0];
+  if (!isCouponRedeemable(c, eventId, now, redeemed + pending)) throw new CheckoutError("COUPON_INVALID");
+  return { id: c!.id, type: c!.type, value: c!.value, minOrder: c!.minOrder };
 }
 
 /** Create a PENDING order + a Razorpay order. No money moves until the webhook confirms payment. */
@@ -63,7 +72,7 @@ export async function createTicketOrder(
     lineItems.push({ priceInPaise: t.priceInPaise, earlyPriceInPaise: t.earlyPricePaise, qty: it.qty });
   }
 
-  const coupon = couponCode ? await resolveCoupon(eventId, couponCode) : null;
+  const coupon = couponCode ? await resolveCoupon(eventId, couponCode, userId) : null;
   const pricing = priceOrder(
     lineItems,
     {
@@ -72,6 +81,10 @@ export async function createTicketOrder(
     },
     coupon,
   );
+
+  // Paid checkout must never produce a zero/negative charge (e.g. a 100%-off coupon). Free
+  // tickets are issued only via the admin comp flow, never here.
+  if (pricing.total <= 0) throw new CheckoutError("INVALID_TOTAL");
 
   const order = await db.order.create({
     data: {
@@ -104,11 +117,15 @@ export async function createTicketOrder(
  * Idempotent — keyed on the Razorpay order/payment id, so duplicate webhooks are no-ops.
  */
 export async function fulfillOrder(gatewayOrderId: string, paymentId: string): Promise<{ issued: number }> {
-  const order = await db.order.findUnique({ where: { gatewayOrderId }, include: { tickets: true } });
+  const order = await db.order.findUnique({
+    where: { gatewayOrderId },
+    include: { tickets: true, event: { select: { endsAt: true } } },
+  });
   if (!order) return { issued: 0 };
   if (order.status === "PAID") return { issued: order.tickets.length };
 
   const items = (order.items as OrderItemInput[] | null) ?? [];
+  const exp = ticketTokenExpiry(order.event.endsAt);
 
   await db.$transaction(async (tx) => {
     // idempotency guard: bail if this payment was already recorded
@@ -132,7 +149,7 @@ export async function fulfillOrder(gatewayOrderId: string, paymentId: string): P
     for (const it of items) {
       for (let i = 0; i < it.qty; i++) {
         const id = randomUUID();
-        ticketRows.push({ id, orderId: order.id, ticketTypeId: it.ticketTypeId, qrToken: signTicketToken(id) });
+        ticketRows.push({ id, orderId: order.id, ticketTypeId: it.ticketTypeId, qrToken: signTicketToken(id, undefined, exp) });
       }
     }
     await tx.ticket.createMany({ data: ticketRows });
@@ -141,6 +158,16 @@ export async function fulfillOrder(gatewayOrderId: string, paymentId: string): P
         tx.ticketType.update({ where: { id: it.ticketTypeId }, data: { soldQty: { increment: it.qty } } }),
       ),
     );
+
+    // Record the coupon redemption (per-user-limit ledger) and bump the global usedCount under a
+    // conditional guard so it can never exceed maxUses. The Payment.gatewayRef idempotency check
+    // above guarantees this runs at most once per order.
+    if (order.couponId) {
+      await tx.couponRedemption.create({
+        data: { couponId: order.couponId, userId: order.userId, orderId: order.id },
+      });
+      await tx.$executeRaw`UPDATE "Coupon" SET "usedCount" = "usedCount" + 1 WHERE "id" = ${order.couponId} AND ("maxUses" IS NULL OR "usedCount" < "maxUses")`;
+    }
   });
 
   // best-effort delivery via the notification outbox — failures never fail fulfilment

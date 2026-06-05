@@ -25,4 +25,22 @@ jobs:
       - run: npx prisma generate
       - run: npm run lint
       - run: npm run typecheck
+      - run: npm run test:run
       - run: npm run build
+      # Fail the build on known high/critical CVEs in production deps.
+      - name: Dependency audit
+        run: npm audit --omit=dev --audit-level=high
+      - name: Secret scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  dependency-review:
+    name: Dependency review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high

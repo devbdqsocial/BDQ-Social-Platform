@@ -15,12 +15,17 @@ function configured(): boolean {
   );
 }
 
+// Raster image formats only — excludes SVG (XSS vector) and all non-image/raw types. Enforced by
+// Cloudinary because `allowed_formats` is part of the signed payload and the URL pins resource_type.
+const ALLOWED_FORMATS = "jpg,jpeg,png,webp";
+
 export interface UploadSignature {
   cloudName: string;
   apiKey: string;
   timestamp: number;
   signature: string;
   folder: string;
+  allowedFormats: string;
   uploadUrl: string;
 }
 
@@ -31,7 +36,11 @@ export function signUpload(folder: string): UploadSignature {
   const apiSecret = process.env.CLOUDINARY_API_SECRET!;
   const timestamp = Math.floor(Date.now() / 1000);
 
-  const signature = cloudinary.utils.api_sign_request({ folder, timestamp }, apiSecret);
+  // Sign the format restriction too, so a client cannot drop it (size cap → signed upload preset).
+  const signature = cloudinary.utils.api_sign_request(
+    { allowed_formats: ALLOWED_FORMATS, folder, timestamp },
+    apiSecret,
+  );
 
   return {
     cloudName,
@@ -39,6 +48,7 @@ export function signUpload(folder: string): UploadSignature {
     timestamp,
     signature,
     folder,
-    uploadUrl: `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
+    allowedFormats: ALLOWED_FORMATS,
+    uploadUrl: `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
   };
 }

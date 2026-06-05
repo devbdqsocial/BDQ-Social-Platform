@@ -22,6 +22,10 @@ const schema = z.object({
 
   // Auth / app secrets
   SESSION_SECRET: z.string().optional(),
+  // Dedicated key for ticket QR HMAC (falls back to SESSION_SECRET if unset).
+  QR_TOKEN_SECRET: z.string().optional(),
+  // AES-256-GCM key (base64, 32 bytes) for KYC field encryption. Required once KYC is collected.
+  KYC_ENC_KEY: z.string().optional(),
   CRON_SECRET: z.string().optional(),
   // TESTING ONLY: comma-list of admin emails allowed to sign in without TOTP. Empty in real prod.
   ADMIN_NO_2FA_EMAILS: z.string().optional(),
@@ -62,6 +66,11 @@ const prodSchema = schema.superRefine((v, ctx) => {
   for (const [key, msg] of required) {
     if (!v[key]) ctx.addIssue({ code: "custom", path: [key], message: msg });
   }
+  // Auth bypasses must never be enabled in production (defence against a leaked/misset env).
+  if (v.DEV_ADMIN) ctx.addIssue({ code: "custom", path: ["DEV_ADMIN"], message: "DEV_ADMIN must not be set in production" });
+  if (v.DEV_VENDOR) ctx.addIssue({ code: "custom", path: ["DEV_VENDOR"], message: "DEV_VENDOR must not be set in production" });
+  if ((v.ADMIN_NO_2FA_EMAILS ?? "").trim())
+    ctx.addIssue({ code: "custom", path: ["ADMIN_NO_2FA_EMAILS"], message: "ADMIN_NO_2FA_EMAILS must be empty in production" });
   if (v.SESSION_SECRET && v.SESSION_SECRET.length < 32) {
     ctx.addIssue({ code: "custom", path: ["SESSION_SECRET"], message: "SESSION_SECRET must be at least 32 characters" });
   }

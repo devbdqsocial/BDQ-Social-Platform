@@ -4,7 +4,7 @@ import { randomUUID } from "crypto";
 import { Prisma } from "@prisma/client";
 import { db } from "@/server/db";
 import { requireAdmin } from "@/server/auth/guard";
-import { signTicketToken } from "@/lib/qr-token";
+import { signTicketToken, ticketTokenExpiry } from "@/lib/qr-token";
 import { logError } from "@/lib/logger";
 
 export interface OfflineCartItem {
@@ -67,6 +67,10 @@ export async function issueOfflineTickets({
 
   try {
     const res = await db.$transaction(async (tx) => {
+      const event = await tx.event.findUnique({ where: { id: eventId }, select: { endsAt: true } });
+      if (!event) throw new Error("Event not found");
+      const exp = ticketTokenExpiry(event.endsAt);
+
       // Create order marked as PAID
       const order = await tx.order.create({
         data: {
@@ -103,7 +107,7 @@ export async function issueOfflineTickets({
             id, 
             orderId: order.id, 
             ticketTypeId: it.ticketTypeId, 
-            qrToken: signTicketToken(id),
+            qrToken: signTicketToken(id, undefined, exp),
             holderName: name || null,
             holderPhone: phone || null,
             holderEmail: email || null

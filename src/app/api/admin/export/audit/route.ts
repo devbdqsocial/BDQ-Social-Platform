@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { requireSuperAdmin } from "@/server/auth/guard";
 import { db } from "@/server/db";
 import { toCsv } from "@/lib/csv";
+import { parseSkip } from "@/lib/utils";
 import { buildAuditWhere } from "@/lib/audit-filters";
 import { enforceRateLimit } from "@/lib/ratelimit";
 
@@ -19,7 +20,7 @@ export async function GET(req: Request) {
   }
 
   const sp = new URL(req.url).searchParams;
-  const skip = Number(sp.get("skip") ?? "0");
+  const skip = parseSkip(sp.get("skip"));
   const where = buildAuditWhere({
     entity: sp.get("entity") || undefined,
     action: sp.get("action") || undefined,

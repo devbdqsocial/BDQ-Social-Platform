@@ -1,44 +1,39 @@
 import "server-only";
 import { NextResponse } from "next/server";
 import { db } from "@/server/db";
-import { nextWindow } from "@/lib/rate-window";
+import { clientIp } from "@/lib/client-ip";
 
 /**
  * Fixed-window rate limit backed by Postgres (serverless-safe, shared across instances; no Redis).
- * Good enough for abuse protection on OTP/checkout/etc (BUSINESS-RULES §8). Returns true if allowed.
+ * A single atomic upsert (INSERT … ON CONFLICT) does the increment-or-reset, so concurrent requests
+ * cannot slip past the cap via a read-then-write race. Returns true if allowed (BUSINESS-RULES §8).
  */
 export async function rateLimit(key: string, max: number, windowMs: number): Promise<boolean> {
   const now = new Date();
-  const row = await db.rateLimit.findUnique({ where: { key } });
-  const d = nextWindow(row, now, max, windowMs);
-
-  if (d.reset) {
-    await db.rateLimit.upsert({
-      where: { key },
-      update: { count: 1, resetAt: d.resetAt },
-      create: { key, count: 1, resetAt: d.resetAt },
-    });
-    return true;
-  }
-  if (!d.allowed) return false;
-  await db.rateLimit.update({ where: { key }, data: { count: { increment: 1 } } });
-  return true;
+  const newReset = new Date(now.getTime() + windowMs);
+  const rows = await db.$queryRaw<{ count: number }[]>`
+    INSERT INTO "RateLimit" ("key", "count", "resetAt")
+    VALUES (${key}, 1, ${newReset})
+    ON CONFLICT ("key") DO UPDATE SET
+      "count"   = CASE WHEN "RateLimit"."resetAt" <= ${now} THEN 1 ELSE "RateLimit"."count" + 1 END,
+      "resetAt" = CASE WHEN "RateLimit"."resetAt" <= ${now} THEN ${newReset} ELSE "RateLimit"."resetAt" END
+    RETURNING "count"
+  `;
+  return Number(rows[0]?.count ?? 1) <= max;
 }
 
-function clientKey(req: Request, action: string): string {
-  const ip = (req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? "local")
-    .split(",")[0]
-    .trim();
-  return `${action}:${ip}`;
-}
-
-/** Returns a 429 response if over the limit, else null. Call before auth/body parsing. */
+/**
+ * Returns a 429 response if over the limit, else null. Call before auth/body parsing.
+ * Pass `target` (e.g. email/phone) to also bound per-account attempts, defeating IP rotation.
+ */
 export async function enforceRateLimit(
   req: Request,
   action: string,
   max: number,
   windowMs: number,
+  target?: string,
 ): Promise<NextResponse | null> {
-  const allowed = await rateLimit(clientKey(req, action), max, windowMs);
+  const key = target ? `${action}:${clientIp(req)}:${target}` : `${action}:${clientIp(req)}`;
+  const allowed = await rateLimit(key, max, windowMs);
   return allowed ? null : NextResponse.json({ ok: false, error: { code: "RATE_LIMITED" } }, { status: 429 });
 }

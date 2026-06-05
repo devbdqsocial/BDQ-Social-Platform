@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/server/db";
 import { processOutbox } from "@/server/notifications/outbox";
+import { isCronAuthed } from "@/lib/cron-auth";
 
 export const runtime = "nodejs";
 
@@ -9,11 +10,7 @@ export const runtime = "nodejs";
  * (deduped via the Outbox), then drain. Triggered by Vercel Cron.
  */
 async function handle(req: Request) {
-  const secret = process.env.CRON_SECRET;
-  const authed =
-    !!secret &&
-    (req.headers.get("authorization") === `Bearer ${secret}` || req.headers.get("x-cron-key") === secret);
-  if (!authed) return NextResponse.json({ ok: false, error: { code: "FORBIDDEN" } }, { status: 403 });
+  if (!isCronAuthed(req)) return NextResponse.json({ ok: false, error: { code: "FORBIDDEN" } }, { status: 403 });
 
   const now = new Date();
   const within = new Date(now.getTime() + 24 * 60 * 60 * 1000);

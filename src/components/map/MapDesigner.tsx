@@ -94,6 +94,7 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, s
       fd.append("timestamp", String(sig.timestamp));
       fd.append("signature", sig.signature);
       fd.append("folder", sig.folder);
+      fd.append("allowed_formats", sig.allowedFormats);
       const res = await fetch(sig.uploadUrl, { method: "POST", body: fd });
       if (!res.ok) throw new Error("Upload failed");
       const json = (await res.json()) as { secure_url: string };

@@ -50,7 +50,8 @@ export function upsertStaff(
       run: async () => {
         const user = await db.user.upsert({
           where: { email },
-          update: { name: input.name, permissions, ...(passwordHash ? { passwordHash } : {}) },
+          // bump tokenVersion so a permission change takes effect on the next request (revocation)
+          update: { name: input.name, permissions, tokenVersion: { increment: 1 }, ...(passwordHash ? { passwordHash } : {}) },
           create: { email, name: input.name, role: "STAFF", permissions, passwordHash },
         });
         return { result: user, after: { role: user.role, permissions: user.permissions } };
@@ -66,7 +67,7 @@ export function setStaffPermissions(session: Session, id: string, permissions: P
     return {
       before,
       run: async () => {
-        const u = await db.user.update({ where: { id }, data: { permissions } });
+        const u = await db.user.update({ where: { id }, data: { permissions, tokenVersion: { increment: 1 } } });
         return { result: u, after: { permissions: u.permissions } };
       },
     };
@@ -80,7 +81,7 @@ export function removeStaffAccess(session: Session, id: string) {
     return {
       before,
       run: async () => {
-        const u = await db.user.update({ where: { id }, data: { passwordHash: null, permissions: [] } });
+        const u = await db.user.update({ where: { id }, data: { passwordHash: null, permissions: [], tokenVersion: { increment: 1 } } });
         return { result: u, after: { permissions: [] } };
       },
     };

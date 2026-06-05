@@ -8,7 +8,7 @@ import {
   deleteAssetAction,
   getUploadSignatureAction,
   saveAssetAction,
-} from "@/app/vendor/profile/actions";
+} from "@/app/vendor/(app)/profile/actions";
 import { Button } from "@/components/ui/button";
 
 interface Asset {
@@ -49,6 +49,7 @@ export function AssetUploader({
       fd.append("timestamp", String(sig.timestamp));
       fd.append("signature", sig.signature);
       fd.append("folder", sig.folder);
+      fd.append("allowed_formats", sig.allowedFormats);
       const res = await fetch(sig.uploadUrl, { method: "POST", body: fd });
       if (!res.ok) throw new Error("Upload failed");
       const json = (await res.json()) as { secure_url: string; public_id: string };

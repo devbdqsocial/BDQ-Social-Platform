@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/server/db";
 import { fetchCapturedPayment } from "@/lib/razorpay";
 import { fulfillOrder } from "@/server/tickets/service";
+import { isCronAuthed } from "@/lib/cron-auth";
 
 export const runtime = "nodejs";
 
@@ -10,11 +11,7 @@ export const runtime = "nodejs";
  * captured and fulfil (idempotent); expire ones that never paid. Triggered by Vercel Cron.
  */
 async function handle(req: Request) {
-  const secret = process.env.CRON_SECRET;
-  const authed =
-    !!secret &&
-    (req.headers.get("authorization") === `Bearer ${secret}` || req.headers.get("x-cron-key") === secret);
-  if (!authed) return NextResponse.json({ ok: false, error: { code: "FORBIDDEN" } }, { status: 403 });
+  if (!isCronAuthed(req)) return NextResponse.json({ ok: false, error: { code: "FORBIDDEN" } }, { status: 403 });
 
   const cutoff = new Date(Date.now() - 2 * 60 * 1000); // give webhooks ~2 min first
   const pending = await db.order.findMany({

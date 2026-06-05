@@ -1,3 +1,6 @@
+import { redirect } from "next/navigation";
+import { getSession } from "@/server/auth/guard";
+import { env } from "@/lib/env";
 import { ZoneSidebar } from "@/components/nav/ZoneSidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 
@@ -9,7 +12,14 @@ const NAV = [
   { href: "/vendor/leads", label: "Leads" },
 ];
 
-export default function VendorLayout({ children }: { children: React.ReactNode }) {
+export default async function VendorLayout({ children }: { children: React.ReactNode }) {
+  // Backstop authz for the whole authenticated portal (login lives outside this route group).
+  // Per-page requireVendor() guards remain — a layout must not be the only gate.
+  const session = await getSession();
+  const devBypass = env.DEV_VENDOR && process.env.NODE_ENV !== "production";
+  const ok = session && (session.role === "VENDOR" || session.role === "SUPER_ADMIN");
+  if (!ok && !devBypass) redirect("/vendor/login");
+
   return (
     <div className="flex min-h-dvh flex-col sm:flex-row">
       <ZoneSidebar variant="vendor" brand="Vendor" items={NAV} />

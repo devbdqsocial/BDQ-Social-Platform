@@ -165,6 +165,7 @@ model User {
   passwordHash String?
   totpSecret   String?
   totpEnabled  Boolean      @default(false)
+  tokenVersion Int          @default(0)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
@@ -173,6 +174,7 @@ model User {
   checkIns      CheckIn[]      @relation("ScannedBy")
   auditLogs     AuditLog[]
   waitlist      Waitlist[]
+  couponRedemptions CouponRedemption[]
 
   @@index([role])
 }
@@ -321,6 +323,7 @@ model Stall {
   priceInPaise Int?
   status       StallStatus   @default(AVAILABLE)
   holdUntil    DateTime?
+  holdUserId   String?
   bookings     Booking[]
 
   @@unique([eventId, label])
@@ -349,6 +352,7 @@ model Order {
 
   tickets  Ticket[]
   payments Payment[]
+  couponRedemptions CouponRedemption[]
 
   @@index([userId, status])
   @@index([eventId, status])
@@ -407,6 +411,23 @@ model Coupon {
   endsAt       DateTime?
   active       Boolean    @default(true)
   orders       Order[]
+  redemptions  CouponRedemption[]
+}
+
+/// Per-(coupon,user,order) redemption record. The (couponId,userId,orderId) unique index makes
+/// per-user coupon limit enforcement race-safe (see src/server/tickets/service.ts).
+model CouponRedemption {
+  id        String   @id @default(cuid())
+  couponId  String
+  coupon    Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([couponId, userId, orderId])
+  @@index([couponId, userId])
 }
 
 // ──────────────────────────── VENDORS ──────────────────────────

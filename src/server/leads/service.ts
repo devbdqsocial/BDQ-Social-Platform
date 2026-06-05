@@ -3,6 +3,15 @@ import { db } from "@/server/db";
 
 /** Lead capture at a vendor's stall (scan QR → consented contact). */
 
+/** A lead may only be captured for an existing, APPROVED vendor (blocks injection to arbitrary ids). */
+export async function isLeadVendorValid(vendorProfileId: string): Promise<boolean> {
+  const v = await db.vendorProfile.findUnique({
+    where: { id: vendorProfileId },
+    select: { approvalStatus: true },
+  });
+  return v?.approvalStatus === "APPROVED";
+}
+
 export async function captureLead(input: {
   vendorProfileId: string;
   eventId: string;

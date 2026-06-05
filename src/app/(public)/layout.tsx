@@ -33,6 +33,16 @@ export default async function PublicLayout({ children }: { children: React.React
             <p className="font-medium text-foreground">For partners</p>
             <Link href="/vendor/login" className="hover:text-foreground">Sell with us</Link>
             <Link href="/login" className="hover:text-foreground">Sign in</Link>
+            <Link href="/about" className="hover:text-foreground">About us</Link>
+            <Link href="/contact" className="hover:text-foreground">Contact</Link>
+          </nav>
+          <nav className="flex flex-col gap-2 text-sm text-muted-foreground">
+            <p className="font-medium text-foreground">Legal</p>
+            <Link href="/privacy" className="hover:text-foreground">Privacy policy</Link>
+            <Link href="/terms" className="hover:text-foreground">Terms &amp; conditions</Link>
+            <Link href="/refunds" className="hover:text-foreground">Cancellation &amp; refunds</Link>
+            <Link href="/shipping" className="hover:text-foreground">Shipping &amp; delivery</Link>
+            <Link href="/vendor-terms" className="hover:text-foreground">Vendor terms</Link>
           </nav>
         </div>
         <div className="border-t border-border">

@@ -2,6 +2,7 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { db } from "@/server/db";
 import { withAudit } from "@/server/audit";
+import { decryptKyc } from "@/server/vendors/service";
 import type { Session } from "@/server/auth/guard";
 
 /** Admin-side vendor review + approval → stall assignment (creates the Booking). */
@@ -16,8 +17,8 @@ export function listVendors() {
   });
 }
 
-export function getVendor(id: string) {
-  return db.vendorProfile.findUnique({
+export async function getVendor(id: string) {
+  const vendor = await db.vendorProfile.findUnique({
     where: { id },
     include: {
       user: { select: { phone: true, email: true } },
@@ -27,6 +28,8 @@ export function getVendor(id: string) {
       bookings: { include: { stall: { select: { label: true } }, event: { select: { name: true } } } },
     },
   });
+  if (vendor?.kyc) vendor.kyc = decryptKyc(vendor.kyc)!;
+  return vendor;
 }
 
 export class ContractNotSignedError extends Error {
