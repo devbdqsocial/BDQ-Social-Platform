@@ -36,7 +36,7 @@ export async function POST(req: Request) {
 
   const user = await db.user.findUnique({ where: { email } });
   if (!user || !user.passwordHash) return FAIL;
-  if (user.role !== "SUPER_ADMIN" && user.role !== "STAFF") return FAIL;
+  if (user.role !== "SUPER_ADMIN" && user.role !== "ADMIN" && user.role !== "STAFF") return FAIL;
   if (!(await verifyPassword(body.password, user.passwordHash))) return FAIL;
 
   // TESTING EXCEPTION: emails in ADMIN_NO_2FA_EMAILS sign in with password only (no TOTP).
@@ -50,8 +50,8 @@ export async function POST(req: Request) {
       .includes(email);
 
   if (!exempt) {
-    // SUPER_ADMIN must have 2FA; any user with it enabled must pass it.
-    if (user.role === "SUPER_ADMIN" && !user.totpEnabled) return FAIL;
+    // SUPER_ADMIN and ADMIN must have 2FA; any user with it enabled must pass it.
+    if ((user.role === "SUPER_ADMIN" || user.role === "ADMIN") && !user.totpEnabled) return FAIL;
     if (user.totpEnabled) {
       if (!body.code || !user.totpSecret || !verifyCode(body.code, user.totpSecret)) return FAIL;
     }

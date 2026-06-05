@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Admin sign in" };
 
 export default function AdminLoginPage() {
   return (
-    <div className="dark bg-hero text-foreground">
+    <div className="admin dark min-h-dvh bg-background text-foreground">
       <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-4 py-16">
         <div className="mb-6 flex items-center justify-center gap-2 font-display text-xl font-semibold text-[#EDE6DA]">
           <ShieldCheck className="size-5 text-primary" /> Event Portal · Admin

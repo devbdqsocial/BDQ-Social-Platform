@@ -9,9 +9,11 @@ import type { Permission, Role, Session } from "./guard";
 const COOKIE = "bdq_session";
 const DAY = 60 * 60 * 24;
 /** Shorter window for privileged accounts; customers keep the 7-day session (BUSINESS-RULES §6). */
-const ttlSeconds = (role: Role) => (role === "SUPER_ADMIN" || role === "STAFF" ? 60 * 60 * 12 : 7 * DAY);
+const ttlSeconds = (role: Role) =>
+  role === "SUPER_ADMIN" || role === "ADMIN" || role === "STAFF" ? 60 * 60 * 12 : 7 * DAY;
 /** Roles whose token is re-checked against the DB `tokenVersion` on every read (instant revocation). */
-const isPrivileged = (role: Role) => role === "SUPER_ADMIN" || role === "STAFF" || role === "VENDOR";
+const isPrivileged = (role: Role) =>
+  role === "SUPER_ADMIN" || role === "ADMIN" || role === "STAFF" || role === "VENDOR";
 
 function secret(): Uint8Array {
   const s = process.env.SESSION_SECRET;
