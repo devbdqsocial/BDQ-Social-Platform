@@ -7,7 +7,9 @@ export function generateSecret(): string {
 }
 
 export function verifyCode(token: string, secret: string): boolean {
-  return verifySync({ token, secret }).valid;
+  // ±1 step (30s) clock-skew tolerance. otplib v13 defaults to epochTolerance:0, which accepts ONLY
+  // the exact current step — rejecting codes typed a moment late or with minor device clock drift.
+  return verifySync({ token, secret, epochTolerance: 30 }).valid;
 }
 
 export function otpauthUrl(account: string, secret: string, issuer = "BDQSocial"): string {
