@@ -19,7 +19,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const devBypass = env.DEV_ADMIN && process.env.NODE_ENV !== "production";
 
   const effective: { role: Role; permissions: Permission[] } | null =
-    session && (session.role === "SUPER_ADMIN" || session.role === "STAFF")
+    session && (session.role === "SUPER_ADMIN" || session.role === "ADMIN" || session.role === "STAFF")
       ? { role: session.role, permissions: session.permissions }
       : devBypass
         ? { role: "SUPER_ADMIN", permissions: [] }
