@@ -19,6 +19,23 @@ const FAIL = NextResponse.json({ ok: false, error: { code: "UNAUTHENTICATED" } }
 
 /** Admin/staff sign-in: email + password + TOTP. Generic failures (no user enumeration). */
 export async function POST(req: Request) {
+  try {
+    return await handle(req);
+  } catch (e) {
+    // TEMP DIAGNOSTIC: surface the real prod error only when the caller sends x-diag:1. Revert after.
+    logError("auth.admin.crash", e);
+    if (req.headers.get("x-diag") === "1") {
+      const err = e as { name?: string; message?: string; stack?: string };
+      return NextResponse.json(
+        { ok: false, diag: { name: err?.name, message: err?.message, stack: (err?.stack ?? "").split("\n").slice(0, 6) } },
+        { status: 500 },
+      );
+    }
+    return NextResponse.json({ ok: false, error: { code: "SERVER_ERROR" } }, { status: 500 });
+  }
+}
+
+async function handle(req: Request) {
   const limited = await enforceRateLimit(req, "admin-auth", 10, 10 * 60 * 1000);
   if (limited) return limited;
 
