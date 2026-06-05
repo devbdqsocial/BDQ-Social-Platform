@@ -15,7 +15,7 @@ export default function CustomerLoginPage() {
           <CardDescription>Sign in with your phone number to book tickets and find them again later.</CardDescription>
         </CardHeader>
         <CardContent>
-          <PhoneLogin />
+          <PhoneLogin redirectTo="/dashboard" />
         </CardContent>
       </Card>
       <p className="mt-4 text-center text-xs text-muted-foreground">

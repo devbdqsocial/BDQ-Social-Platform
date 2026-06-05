@@ -56,8 +56,8 @@ export function PublicHeader({ signedIn = false }: { signedIn?: boolean }) {
               </button>
               {menu && (
                 <div className="absolute right-0 mt-2 w-44 rounded-lg border border-border bg-popover p-1 shadow-md">
-                  <Link href="/tickets" onClick={() => setMenu(false)} className="flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-muted">
-                    <Ticket className="size-4" /> My tickets
+                  <Link href="/dashboard" onClick={() => setMenu(false)} className="flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-muted">
+                    <Ticket className="size-4" /> Dashboard
                   </Link>
                   <button onClick={signOut} className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-muted">
                     <LogOut className="size-4" /> Sign out
@@ -99,7 +99,7 @@ export function PublicHeader({ signedIn = false }: { signedIn?: boolean }) {
             ))}
             {signedIn ? (
               <>
-                <Link href="/tickets" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-sm hover:bg-muted">My tickets</Link>
+                <Link href="/dashboard" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-sm hover:bg-muted">Dashboard</Link>
                 <button onClick={signOut} className="rounded-md px-3 py-2 text-left text-sm hover:bg-muted">Sign out</button>
               </>
             ) : (

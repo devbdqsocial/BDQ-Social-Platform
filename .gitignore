@@ -54,6 +54,7 @@ Idea/
 **/*.spec.ts
 **/*.spec.tsx
 vitest.config.ts
+vitest.server-only.stub.ts
 playwright.config.ts
 /e2e/
 /coverage/

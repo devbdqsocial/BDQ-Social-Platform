@@ -5,7 +5,7 @@ import { ZoneSidebar } from "@/components/nav/ZoneSidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const NAV = [
-  { href: "/vendor", label: "Dashboard" },
+  { href: "/vendor/dashboard", label: "Dashboard" },
   { href: "/vendor/profile", label: "Brand profile" },
   { href: "/vendor/events", label: "Book a stall" },
   { href: "/vendor/contract", label: "Contract" },

@@ -75,7 +75,7 @@ export function VendorStallPay({
         razorpayOrderId: r.razorpayOrderId,
         amountPaise: r.amountPaise ?? 0,
         description: `Stall ${sel}`,
-        onSuccess: () => router.push("/vendor"),
+        onSuccess: () => router.push("/vendor/dashboard"),
         onDismiss: () => setBusy(false),
       });
     } catch (e) {

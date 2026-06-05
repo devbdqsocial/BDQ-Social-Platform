@@ -13,7 +13,7 @@ import type { ConsoleSection } from "@/lib/console-access";
 export interface NavLeaf { label: string; href: string; section: ConsoleSection }
 export interface NavGroup { label: string; icon: LucideIcon; items: NavLeaf[] }
 
-export const NAV_DASHBOARD: NavLeaf = { label: "Dashboard", href: "/admin", section: "overview" };
+export const NAV_DASHBOARD: NavLeaf = { label: "Dashboard", href: "/admin/dashboard", section: "overview" };
 
 export const NAV_GROUPS: NavGroup[] = [
   { label: "Events", icon: Calendar, items: [
