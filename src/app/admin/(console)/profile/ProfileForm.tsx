@@ -34,8 +34,8 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
       if (pwdInput) {
         pwdInput.value = "";
       }
-    } catch (err: any) {
-      toast.error(err.message || "Failed to update profile.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update profile.");
     } finally {
       setBusy(false);
     }

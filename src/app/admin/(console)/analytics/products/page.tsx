@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { requirePermission } from "@/server/auth/guard";
 import { getProductMargin } from "@/server/analytics/deep";
 import { getActiveEvent } from "@/server/admin/event-context";
-import { formatPaise } from "@/lib/utils";
 import { ChartCard } from "@/components/charts/chart-card";
 import { StatBar } from "@/components/charts/mini";
 import { PageHeader } from "@/components/ui/page-header";

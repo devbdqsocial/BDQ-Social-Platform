@@ -3,7 +3,7 @@ import { requirePermission } from "@/server/auth/guard";
 import { listAllForAdmin } from "@/server/events/service";
 import { db } from "@/server/db";
 import { PageHeader } from "@/components/ui/page-header";
-import { UnifiedWaitlistTable } from "./UnifiedWaitlistTable";
+import { UnifiedWaitlistTable, type WaitlistEntry } from "./UnifiedWaitlistTable";
 
 export const metadata: Metadata = { title: "Waitlist" };
 export const dynamic = "force-dynamic";
@@ -41,8 +41,8 @@ export default async function WaitlistPage() {
       />
 
       <UnifiedWaitlistTable
-        platformEntries={platformEntries as any}
-        eventEntries={eventEntries as any}
+        platformEntries={platformEntries as unknown as WaitlistEntry[]}
+        eventEntries={eventEntries as unknown as WaitlistEntry[]}
         events={events}
       />
     </div>
