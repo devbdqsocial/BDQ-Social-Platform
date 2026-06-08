@@ -17,7 +17,7 @@ jobs:
       CRON_SECRET: test-cron-secret-at-least-32-chars!!
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 20
           cache: npm
