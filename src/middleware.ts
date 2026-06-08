@@ -12,7 +12,7 @@ import { strictCsp } from "@/lib/csp";
 type Zone = "public" | "vendor" | "admin";
 
 // Policy/contact pages stay reachable even in coming-soon mode (Razorpay verification + legal access).
-const ALWAYS_PUBLIC = ["/privacy", "/terms", "/refunds", "/shipping", "/contact", "/about", "/vendor-terms"];
+const ALWAYS_PUBLIC = ["/privacy", "/terms", "/refunds", "/shipping", "/contact", "/about", "/vendor-terms", "/unsubscribe"];
 
 function resolveZone(req: NextRequest): Zone {
   const override = req.nextUrl.searchParams.get("zone");

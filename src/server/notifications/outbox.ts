@@ -6,6 +6,12 @@ import { channelsFor } from "@/lib/notify-channels";
 import { buildReminderEmail, buildTicketEmail, buildFinanceDigestEmail } from "@/server/notifications/email";
 import { sendTicketWhatsApp } from "@/server/notifications/whatsapp";
 import { bumpCampaignStat } from "@/server/campaigns/stats";
+import { campaignEmailHtml } from "@/lib/email-template";
+import { unsubscribeUrl } from "@/lib/unsubscribe-token";
+
+/** Inter-send pause for bulk campaign messages, to stay under provider rate limits. */
+const CAMPAIGN_THROTTLE_MS = 60;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
  * Durable, retryable, multi-channel delivery (ARCHITECTURE §17). Fulfilment enqueues; a processor
@@ -80,13 +86,14 @@ export async function processOutbox(limit = 20): Promise<{ sent: number; failed:
           await sendEmail({
             to: row.toAddress,
             subject: payload.subject || "(no subject)",
-            html: payload.body || "",
+            html: campaignEmailHtml({ body: payload.body || "", unsubscribeUrl: unsubscribeUrl(row.toAddress) }),
             tags: row.campaignId ? [{ name: "campaign_id", value: row.campaignId }] : undefined,
           });
         } else if (row.channel === "WHATSAPP") {
           await sendWhatsAppText(row.toAddress, payload.body || "");
         }
         if (row.campaignId) await bumpCampaignStat(row.campaignId, "delivered");
+        await sleep(CAMPAIGN_THROTTLE_MS);
       } else {
         if (!payload.orderId) throw new Error("missing orderId");
         if (row.channel === "EMAIL") {

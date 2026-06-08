@@ -39,3 +39,26 @@ export function ticketEmailHtml(o: {
   </div>
 </body></html>`;
 }
+
+/**
+ * Branded wrapper for a marketing campaign body (admin-authored HTML). Includes the CAN-SPAM footer:
+ * a physical mailing address + a working unsubscribe link.
+ */
+export function campaignEmailHtml(o: { body: string; unsubscribeUrl: string }): string {
+  return `<!doctype html>
+<html><body style="margin:0;background:#FBF7F0;font-family:Inter,Arial,sans-serif;color:#352F26">
+  <div style="max-width:600px;margin:0 auto;padding:24px">
+    <div style="background:#120E09;color:#EDE6DA;border-radius:14px 14px 0 0;padding:24px">
+      <div style="font-size:20px;font-weight:600">BDQ <span style="color:#D69A22">Social</span></div>
+    </div>
+    <div style="background:#fff;border:1px solid #ECE4D6;border-top:none;border-radius:0 0 14px 14px;padding:24px;font-size:15px;line-height:1.6">
+      ${o.body}
+    </div>
+    <div style="padding:16px 24px;color:#9A8E78;font-size:12px;text-align:center;line-height:1.6">
+      <p style="margin:0 0 6px">BDQ Social · Main Exhibition Grounds, Vadodara, Gujarat, India</p>
+      <p style="margin:0">You're receiving this because you engaged with BDQ Social.
+        <a href="${o.unsubscribeUrl}" style="color:#9A8E78;text-decoration:underline">Unsubscribe</a>.</p>
+    </div>
+  </div>
+</body></html>`;
+}

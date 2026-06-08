@@ -14,8 +14,8 @@ const columns: ColumnDef<Row>[] = [
   { accessorKey: "name", header: "Campaign", cell: ({ row }) => <span className="font-medium">{row.original.name}</span> },
   { id: "channel", accessorFn: (r) => r.channel, header: "Channel", cell: ({ row }) => <span className="text-muted-foreground">{row.original.channel === "EMAIL" ? "Email" : "WhatsApp"}</span> },
   { id: "audience", accessorFn: (r) => r.audience, header: "Audience", cell: ({ row }) => (row.original.audience === "BUYERS" ? "Ticket buyers" : "All customers") },
-  { id: "status", accessorFn: (r) => r.status, header: "Status", cell: ({ row }) => <Badge variant={row.original.status === "SENT" ? "success" : "neutral"}>{row.original.status}</Badge> },
-  { id: "sent", accessorFn: (r) => r.sentCount, header: "Sent", cell: ({ row }) => (row.original.status === "SENT" ? row.original.sentCount : "—") },
+  { id: "status", accessorFn: (r) => r.status, header: "Status", cell: ({ row }) => <Badge variant={row.original.status === "COMPLETED" ? "success" : "neutral"}>{row.original.status}</Badge> },
+  { id: "sent", accessorFn: (r) => r.sentCount, header: "Sent", cell: ({ row }) => (row.original.status === "COMPLETED" ? row.original.sentCount : "—") },
   { id: "created", accessorFn: (r) => r.createdAt.getTime(), header: "Created", cell: ({ row }) => <span className="text-muted-foreground">{fmt(row.original.createdAt)}</span> },
   {
     id: "actions", header: "", enableSorting: false,

@@ -454,6 +454,7 @@ export function CampaignBuilder({ campaign: initialCampaign }: { campaign: Campa
               campaign.status === "PROCESSING" ? "bg-cyan-500/10 text-cyan-500 border-cyan-500/20 animate-pulse" :
               campaign.status === "PAUSED" ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
               campaign.status === "CANCELLED" ? "bg-red-500/10 text-red-500 border-red-500/20" :
+              campaign.status === "COMPLETED" ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" :
               "bg-muted text-muted-foreground"
             }`}>
               {campaign.status}
@@ -539,7 +540,7 @@ export function CampaignBuilder({ campaign: initialCampaign }: { campaign: Campa
         </div>
 
         {/* PREVIEW FRAME OR ACTIVE ANALYTICS CHARTS */}
-        {isActive || campaign.status === "SENT" || campaign.status === "CANCELLED" ? (
+        {isActive || campaign.status === "COMPLETED" || campaign.status === "CANCELLED" ? (
           
           /* Queue Delivery Analytics Grid */
           <div className="rounded-2xl border bg-card/60 backdrop-blur-md p-6 shadow-md space-y-6">

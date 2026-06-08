@@ -130,5 +130,17 @@ export async function resolveAudience(
     });
   }
 
-  return Array.from(contacts.values());
+  const resolved = Array.from(contacts.values());
+
+  // Honour the unsubscribe suppression list (CAN-SPAM) — drop any contact whose email or phone opted out.
+  const keys = resolved.flatMap((c) => [c.email?.toLowerCase(), c.phone?.toLowerCase()]).filter(Boolean) as string[];
+  if (keys.length === 0) return resolved;
+  const suppressed = new Set(
+    (await db.suppression.findMany({ where: { contact: { in: keys } }, select: { contact: true } })).map((s) => s.contact),
+  );
+  return resolved.filter((c) => {
+    const e = c.email?.toLowerCase();
+    const p = c.phone?.toLowerCase();
+    return !(e && suppressed.has(e)) && !(p && suppressed.has(p));
+  });
 }

@@ -132,12 +132,14 @@ export function sendCampaign(session: Session, id: string) {
             };
           });
 
-          // Insert into Outbox (we avoid createMany skipDuplicates if we just generate unique keys safely)
-          // For very large batches, chunks would be needed, but assume reasonable size.
-          await db.outbox.createMany({
-            data: outboxItems,
-            skipDuplicates: true
-          });
+          // Insert into Outbox in chunks so very large audiences don't exceed query/param limits.
+          const ENQUEUE_CHUNK = 500;
+          for (let i = 0; i < outboxItems.length; i += ENQUEUE_CHUNK) {
+            await db.outbox.createMany({
+              data: outboxItems.slice(i, i + ENQUEUE_CHUNK),
+              skipDuplicates: true,
+            });
+          }
 
           const after = await db.campaign.update({
             where: { id },
@@ -258,6 +260,9 @@ export async function getSystemSetting(key: string): Promise<string | null> {
  * Side Effects: Overwrites or inserts setting keys in the SystemSetting database table.
  */
 export function updateSystemSetting(session: Session, key: string, value: string) {
+  if (SECRET_SETTING_KEYS.has(key)) {
+    throw new Error("This secret can only be configured via environment variables, not the database.");
+  }
   return withAudit(session, { action: "UPDATE_SETTING", entity: "SystemSetting", entityId: key }, async () => {
     const before = await db.systemSetting.findUnique({ where: { key } });
     return {

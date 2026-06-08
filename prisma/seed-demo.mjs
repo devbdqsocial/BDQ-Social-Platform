@@ -580,8 +580,8 @@ async function main() {
 
   // ── campaigns ──
   for (const c of [
-    { name: "Spring launch blast", channel: "EMAIL", status: "SENT", sentCount: 1240 },
-    { name: "Final 48 hours", channel: "WHATSAPP", status: "SENT", sentCount: 860 },
+    { name: "Spring launch blast", channel: "EMAIL", status: "COMPLETED", sentCount: 1240 },
+    { name: "Final 48 hours", channel: "WHATSAPP", status: "COMPLETED", sentCount: 860 },
     { name: "Winter teaser", channel: "EMAIL", status: "DRAFT", sentCount: 0 },
   ]) {
     await db.campaign.create({ data: { ...c, eventId: pick(events).event.id, audience: pick(["ALL", "BUYERS"]), subject: faker.lorem.sentence(), body: faker.lorem.paragraph(), sentAt: c.status === "SENT" ? faker.date.recent({ days: 15 }) : null, createdById: ADMIN_ID } });

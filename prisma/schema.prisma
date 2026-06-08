@@ -751,18 +751,28 @@ model Notification {
   @@index([eventId])
 }
 
+enum CampaignStatus {
+  DRAFT
+  PROCESSING
+  SCHEDULED
+  PAUSED
+  CANCELLED
+  COMPLETED
+  FAILED
+}
+
 // Marketing campaigns (WhatsApp / email). Additive.
 model Campaign {
-  id             String       @id @default(cuid())
+  id             String         @id @default(cuid())
   name           String
-  channel        NotifChannel @default(EMAIL)
+  channel        NotifChannel   @default(EMAIL)
   eventId        String?
-  audience       String       @default("ALL")
+  audience       String         @default("ALL")
   targeting      Json? // Stores segment rules (e.g. { role: "VENDOR" })
   subject        String?
   body           String?
-  status         String       @default("DRAFT")
-  sentCount      Int          @default(0)
+  status         CampaignStatus @default(DRAFT)
+  sentCount      Int            @default(0)
   stats          Json? // Stores analytics: { delivered: 0, opened: 0, clicked: 0, failed: 0 }
   customContacts Json? // Stores [{ name, email, phone }] for manual overrides
   sentAt         DateTime?
@@ -778,5 +788,12 @@ model SystemSetting {
   key       String   @id
   value     String
   updatedAt DateTime @updatedAt
+}
+
+// Email/phone unsubscribe suppression list (CAN-SPAM). `contact` is the lowercased email or E.164 phone.
+model Suppression {
+  contact   String   @id
+  reason    String?
+  createdAt DateTime @default(now())
 }
 
