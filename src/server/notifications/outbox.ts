@@ -3,7 +3,7 @@ import { db } from "@/server/db";
 import { resendConfigured, sendEmail } from "@/lib/resend";
 import { whatsAppConfigured } from "@/lib/whatsapp";
 import { channelsFor } from "@/lib/notify-channels";
-import { buildReminderEmail, buildTicketEmail } from "@/server/notifications/email";
+import { buildReminderEmail, buildTicketEmail, buildFinanceDigestEmail } from "@/server/notifications/email";
 import { sendTicketWhatsApp } from "@/server/notifications/whatsapp";
 
 /**
@@ -53,6 +53,11 @@ export async function processOutbox(limit = 20): Promise<{ sent: number; failed:
       if (row.template === "reminder") {
         if (row.channel === "EMAIL" && payload.eventId) {
           const email = await buildReminderEmail(payload.eventId);
+          if (email) await sendEmail({ to: row.toAddress, subject: email.subject, html: email.html });
+        }
+      } else if (row.template === "finance-digest") {
+        if (row.channel === "EMAIL" && payload.eventId) {
+          const email = await buildFinanceDigestEmail(payload.eventId);
           if (email) await sendEmail({ to: row.toAddress, subject: email.subject, html: email.html });
         }
       } else {

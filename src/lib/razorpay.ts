@@ -29,11 +29,22 @@ export async function createRazorpayOrder(
   return { id: String(order.id) };
 }
 
+/** Gateway fee/tax for a captured payment (Razorpay returns these in paise). */
+export interface GatewayFees {
+  feePaise: number | null;
+  taxPaise: number | null;
+}
+
 /** Find a captured payment for a Razorpay order (used by the reconcile cron for missed webhooks). */
-export async function fetchCapturedPayment(razorpayOrderId: string): Promise<{ id: string } | null> {
-  const res = (await client().orders.fetchPayments(razorpayOrderId)) as { items?: { id: string; status: string }[] };
+export async function fetchCapturedPayment(
+  razorpayOrderId: string,
+): Promise<({ id: string } & GatewayFees) | null> {
+  const res = (await client().orders.fetchPayments(razorpayOrderId)) as {
+    items?: { id: string; status: string; fee?: number | null; tax?: number | null }[];
+  };
   const captured = res.items?.find((p) => p.status === "captured");
-  return captured ? { id: String(captured.id) } : null;
+  if (!captured) return null;
+  return { id: String(captured.id), feePaise: captured.fee ?? null, taxPaise: captured.tax ?? null };
 }
 
 export { verifyWebhookSignature } from "@/lib/razorpay-signature";

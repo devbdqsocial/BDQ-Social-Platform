@@ -4,6 +4,10 @@ import { fetchCapturedPayment } from "@/lib/razorpay";
 import { fulfillOrder } from "@/server/tickets/service";
 import { releaseExpiredHolds } from "@/server/bookings/service";
 import { processOutbox } from "@/server/notifications/outbox";
+import { materializeDueExpenseSchedules } from "@/server/finance/expenses";
+import { getEventPnl } from "@/server/finance/pnl";
+import { notify } from "@/server/notifications/admin";
+import { formatPaise } from "@/lib/utils";
 import { logError } from "@/lib/logger";
 
 /**
@@ -27,7 +31,7 @@ export async function reconcilePendingPayments() {
     try {
       const cap = await fetchCapturedPayment(o.gatewayOrderId!);
       if (cap) {
-        await fulfillOrder(o.gatewayOrderId!, cap.id);
+        await fulfillOrder(o.gatewayOrderId!, cap.id, { feePaise: cap.feePaise, taxPaise: cap.taxPaise });
         fulfilled++;
         continue;
       }
@@ -73,6 +77,43 @@ export async function sendEventReminders() {
   return { events: events.length, enqueued, ...result };
 }
 
+/**
+ * Weekly finance digest: pick the most relevant event (LIVE, else latest), post an in-app summary
+ * and enqueue a P&L email to every admin. Weekly dedupe key keeps the daily cron from re-sending.
+ */
+export async function sendFinanceDigest() {
+  const event =
+    (await db.event.findFirst({ where: { status: "LIVE" }, orderBy: { startsAt: "desc" }, select: { id: true, name: true } })) ??
+    (await db.event.findFirst({ orderBy: { startsAt: "desc" }, select: { id: true, name: true } }));
+  if (!event) return { event: null };
+
+  const pnl = await getEventPnl(event.id);
+  await notify({
+    type: "FINANCE_DIGEST",
+    title: `Finance digest — ${event.name}`,
+    body: `Net profit ${formatPaise(pnl.netProfit)} · margin ${(pnl.marginPct * 100).toFixed(1)}%`,
+    href: "/finance/pnl",
+    eventId: event.id,
+  });
+
+  const admins = await db.user.findMany({
+    where: { role: { in: ["SUPER_ADMIN", "ADMIN"] }, email: { not: null } },
+    select: { id: true, email: true },
+  });
+  const week = Math.floor(Date.now() / (7 * 24 * 60 * 60 * 1000));
+  let enqueued = 0;
+  for (const a of admins) {
+    await db.outbox.upsert({
+      where: { dedupeKey: `findigest:${event.id}:${a.id}:${week}` },
+      update: {},
+      create: { channel: "EMAIL", toAddress: a.email!, template: "finance-digest", payload: { eventId: event.id }, dedupeKey: `findigest:${event.id}:${a.id}:${week}` },
+    });
+    enqueued++;
+  }
+  const result = await processOutbox(50);
+  return { event: event.id, admins: admins.length, enqueued, ...result };
+}
+
 /** Prune stale rows: expired RateLimit windows (>1d) and SENT Outbox rows (>30d). */
 export async function pruneStaleRows() {
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -91,6 +132,8 @@ export async function runAllMaintenance(): Promise<Record<string, unknown>> {
     releaseHolds: async () => ({ released: await releaseExpiredHolds() }),
     notifyRetry: async () => processOutbox(50),
     reminders: sendEventReminders,
+    recurringExpenses: async () => ({ created: await materializeDueExpenseSchedules() }),
+    financeDigest: sendFinanceDigest,
     cleanup: pruneStaleRows,
   };
   const out: Record<string, unknown> = {};

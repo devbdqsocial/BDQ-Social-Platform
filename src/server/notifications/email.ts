@@ -3,6 +3,8 @@ import QRCode from "qrcode";
 import { db } from "@/server/db";
 import type { EmailAttachment } from "@/lib/resend";
 import { ticketEmailHtml, ticketEmailSubject } from "@/lib/email-template";
+import { getEventPnl } from "@/server/finance/pnl";
+import { formatPaise } from "@/lib/utils";
 
 export interface BuiltEmail {
   subject: string;
@@ -43,6 +45,30 @@ export async function buildTicketEmail(orderId: string): Promise<BuiltEmail | nu
       tickets: order.tickets.map((t) => ({ type: t.ticketType.name, ref: t.id.slice(0, 8) })),
     }),
     attachments,
+  };
+}
+
+/** Build a finance digest email (P&L snapshot) for an event. Null if the event is gone. */
+export async function buildFinanceDigestEmail(eventId: string): Promise<BuiltEmail | null> {
+  const event = await db.event.findUnique({ where: { id: eventId }, select: { name: true } });
+  if (!event) return null;
+  const p = await getEventPnl(eventId);
+  const row = (l: string, v: string) =>
+    `<tr><td style="padding:4px 12px 4px 0">${l}</td><td style="padding:4px 0;text-align:right;font-weight:600">${v}</td></tr>`;
+
+  return {
+    subject: `Finance digest — ${event.name}`,
+    html: `<div style="font-family:sans-serif;max-width:520px"><h2>${event.name} — P&L snapshot</h2>
+<table style="width:100%;border-collapse:collapse;font-size:14px">
+${row("Net revenue", formatPaise(p.netRevenue))}
+${row("Gateway fees", `−${formatPaise(p.totalFees)}`)}
+${row("Expenses", `−${formatPaise(p.expensesTotal)}`)}
+${row("Net profit", formatPaise(p.netProfit))}
+${row("Margin", `${(p.marginPct * 100).toFixed(1)}%`)}
+${row("ROI", p.roiPct == null ? "—" : `${(p.roiPct * 100).toFixed(1)}%`)}
+</table>
+<p style="font-size:12px;color:#666">Revenue is net of Razorpay fees. Open the console for the full breakdown.</p></div>`,
+    attachments: [],
   };
 }
 

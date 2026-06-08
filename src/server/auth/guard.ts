@@ -11,7 +11,8 @@ export type Permission =
   | "EVENT_VIEW"
   | "CUSTOMER_VIEW"
   | "PAYMENT_VIEW"
-  | "TICKETS_MANAGE";
+  | "TICKETS_MANAGE"
+  | "FINANCE_MANAGE";
 
 export type Zone = "public" | "customer" | "vendor" | "admin";
 

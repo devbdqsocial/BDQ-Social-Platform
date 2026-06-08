@@ -1,7 +1,7 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
 import { db } from "@/server/db";
-import { createRazorpayOrder } from "@/lib/razorpay";
+import { createRazorpayOrder, type GatewayFees } from "@/lib/razorpay";
 import { StallUnavailableError } from "@/server/bookings/service";
 
 /**
@@ -59,7 +59,11 @@ export async function createStallOrder(vendorProfileId: string, stallId: string)
 }
 
 /** Idempotent: a paid stall booking → PENDING (awaiting verification) + Payment + Stall PENDING. */
-export async function fulfillStallBooking(gatewayOrderId: string, paymentId: string): Promise<{ ok: boolean }> {
+export async function fulfillStallBooking(
+  gatewayOrderId: string,
+  paymentId: string,
+  fees?: GatewayFees,
+): Promise<{ ok: boolean }> {
   const booking = await db.booking.findUnique({ where: { gatewayOrderId } });
   if (!booking) return { ok: false };
   if (booking.status !== "HELD") return { ok: true }; // already advanced
@@ -75,7 +79,16 @@ export async function fulfillStallBooking(gatewayOrderId: string, paymentId: str
     await tx.booking.update({ where: { id: booking.id }, data: { status: "PENDING" } });
     await tx.stall.update({ where: { id: booking.stallId }, data: { status: "PENDING" } });
     await tx.payment.create({
-      data: { bookingId: booking.id, gateway: "RAZORPAY", mode: "ONLINE", gatewayRef: paymentId, amount, status: "CAPTURED" },
+      data: {
+        bookingId: booking.id,
+        gateway: "RAZORPAY",
+        mode: "ONLINE",
+        gatewayRef: paymentId,
+        amount,
+        feePaise: fees?.feePaise ?? null,
+        taxPaise: fees?.taxPaise ?? null,
+        status: "CAPTURED",
+      },
     });
   });
   return { ok: true };

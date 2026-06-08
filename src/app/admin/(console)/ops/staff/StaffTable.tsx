@@ -10,7 +10,19 @@ import { removeStaffAction } from "./actions";
 import type { Role } from "@/server/auth/guard";
 
 type Row = Awaited<ReturnType<typeof listStaff>>[number];
-const perm = (p: string) => p.toLowerCase().replace(/_/g, " ");
+
+const perm = (p: string) => {
+  const map: Record<string, string> = {
+    CHECKIN: "Check-In",
+    VENDOR_MANAGE: "Vendor Manage",
+    VENDOR_VIEW: "Vendor View",
+    EVENT_VIEW: "Event View",
+    CUSTOMER_VIEW: "Customer View",
+    PAYMENT_VIEW: "Payment View",
+    TICKETS_MANAGE: "Tickets Manage",
+  };
+  return map[p] ?? p;
+};
 
 interface StaffTableProps {
   staff: Row[];

@@ -163,7 +163,65 @@ export const vendorKycSchema = z.object({
   gstin: z.string().trim().optional(),
 });
 
+/** Finance ledger (cost side). Money is integer paise; the action converts rupee inputs first. */
+export const EXPENSE_CATEGORIES = [
+  "VENUE", "MARKETING", "STAFF", "SECURITY", "LOGISTICS",
+  "PRODUCTION", "TALENT", "FNB", "PERMIT", "VENDOR_PAYOUT", "MISC",
+] as const;
+
+const optionalUrl = z.string().url().optional().or(z.literal("").transform(() => undefined));
+
+export const expenseSchema = z.object({
+  eventId: id.optional(),
+  category: z.enum(EXPENSE_CATEGORIES),
+  vendorProfileId: id.optional(),
+  title: z.string().trim().min(2).max(160),
+  amountPaise: z.number().int().positive(),
+  incurredAt: z.coerce.date(),
+  note: z.string().trim().max(500).optional(),
+  receiptUrl: optionalUrl,
+  status: z.enum(["DRAFT", "APPROVED", "PAID"]).default("DRAFT"),
+});
+
+export const budgetSchema = z.object({
+  eventId: id,
+  category: z.enum(EXPENSE_CATEGORIES),
+  plannedPaise: z.number().int().nonnegative(),
+});
+
+export const expenseScheduleSchema = z.object({
+  eventId: id.optional(),
+  category: z.enum(EXPENSE_CATEGORIES),
+  title: z.string().trim().min(2).max(160),
+  amountPaise: z.number().int().positive(),
+  cadence: z.enum(["WEEKLY", "MONTHLY"]),
+  nextRunAt: z.coerce.date(),
+  remaining: z.number().int().positive().optional(),
+});
+
+export const sponsorshipSchema = z.object({
+  eventId: id.optional(),
+  sponsorName: z.string().trim().min(2).max(160),
+  tier: z.string().trim().max(60).optional(),
+  amountPaise: z.number().int().positive(),
+  status: z.enum(["PROPOSED", "SIGNED", "PAID"]).default("PROPOSED"),
+  note: z.string().trim().max(500).optional(),
+});
+
+export const settlementSchema = z.object({
+  gatewayRef: z.string().trim().min(3).max(120), // Razorpay settlement id / UTR
+  amountPaise: z.number().int().nonnegative(),    // net amount Razorpay deposited
+  feePaise: z.number().int().nonnegative().default(0),
+  taxPaise: z.number().int().nonnegative().default(0),
+  settledAt: z.coerce.date(),
+});
+
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;
 export type TicketTypeInput = z.infer<typeof ticketTypeSchema>;
 export type VendorProfileInput = z.infer<typeof vendorProfileSchema>;
 export type VendorKycInput = z.infer<typeof vendorKycSchema>;
+export type ExpenseInput = z.infer<typeof expenseSchema>;
+export type BudgetInput = z.infer<typeof budgetSchema>;
+export type ExpenseScheduleInput = z.infer<typeof expenseScheduleSchema>;
+export type SponsorshipInput = z.infer<typeof sponsorshipSchema>;
+export type SettlementInput = z.infer<typeof settlementSchema>;

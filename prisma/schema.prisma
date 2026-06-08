@@ -28,6 +28,7 @@ enum Permission {
   CUSTOMER_VIEW
   PAYMENT_VIEW
   TICKETS_MANAGE
+  FINANCE_MANAGE
 }
 
 enum EventStatus {
@@ -137,6 +138,11 @@ enum WaitlistType {
   STALL
 }
 
+enum WaitlistSource {
+  PLATFORM
+  EVENT
+}
+
 enum CheckInDirection {
   IN
   OUT
@@ -212,6 +218,10 @@ model Event {
   sponsors    Sponsor[]
   waitlist    Waitlist[]
   leads       Lead[]
+  expenses         Expense[]
+  budgets          Budget[]
+  expenseSchedules ExpenseSchedule[]
+  sponsorships     Sponsorship[]
   mapId       String?
 
   @@index([status])
@@ -390,6 +400,8 @@ model Payment {
   mode         PaymentMode
   gatewayRef   String?        @unique
   amount       Int
+  feePaise     Int?           // gateway fee (Razorpay), captured from webhook/reconcile
+  taxPaise     Int?           // tax on the gateway fee (GST on Razorpay fee, not on the sale)
   status       PaymentStatus  @default(CREATED)
   recordedById String?
   meta         Json?
@@ -453,6 +465,7 @@ model VendorProfile {
   contract VendorContract?
   bookings Booking[]
   leads    Lead[]
+  expenses Expense[]
 }
 
 model VendorKyc {
@@ -537,18 +550,23 @@ model Sponsor {
 }
 
 model Waitlist {
-  id         String       @id @default(cuid())
-  eventId    String
-  event      Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  type       WaitlistType
+  id         String         @id @default(cuid())
+  source     WaitlistSource @default(EVENT)
+  eventId    String?
+  event      Event?         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  type       WaitlistType   @default(TICKET)
   userId     String?
-  user       User?        @relation(fields: [userId], references: [id])
+  user       User?          @relation(fields: [userId], references: [id])
+  name       String?
+  email      String?
+  phone      String?
   contact    String?
   meta       Json?
   notifiedAt DateTime?
-  createdAt  DateTime     @default(now())
+  createdAt  DateTime       @default(now())
 
   @@index([eventId, type])
+  @@index([source])
 }
 
 model Lead {
@@ -607,6 +625,126 @@ model RateLimit {
   resetAt DateTime
 }
 
+// ──────────────────────────── FINANCE LEDGER ───────────────────
+// Cost side of the books (revenue lives in Order/Payment/Booking). Money is integer paise.
+// Every mutation here is audited (withAudit). Net revenue = captured − Payment.feePaise − taxPaise.
+
+enum ExpenseCategory {
+  VENUE
+  MARKETING
+  STAFF
+  SECURITY
+  LOGISTICS
+  PRODUCTION    // stage, sound, lights
+  TALENT        // performers / artists
+  FNB           // food & beverage procurement
+  PERMIT        // licenses, permits
+  VENDOR_PAYOUT // outgoing payment to a vendor
+  MISC
+}
+
+enum ExpenseStatus {
+  DRAFT
+  APPROVED
+  PAID
+}
+
+enum ExpenseCadence {
+  WEEKLY
+  MONTHLY
+}
+
+enum SponsorshipStatus {
+  PROPOSED
+  SIGNED
+  PAID
+}
+
+enum SettlementStatus {
+  RECONCILED
+  UNMATCHED
+}
+
+model Expense {
+  id              String          @id @default(cuid())
+  eventId         String?         // null = org-wide overhead (not tied to one event)
+  event           Event?          @relation(fields: [eventId], references: [id])
+  category        ExpenseCategory
+  vendorProfileId String?         // optional counterparty (e.g. VENDOR_PAYOUT)
+  vendorProfile   VendorProfile?  @relation(fields: [vendorProfileId], references: [id])
+  title           String
+  amountPaise     Int
+  incurredAt      DateTime
+  status          ExpenseStatus   @default(DRAFT)
+  receiptUrl      String?         // Cloudinary
+  note            String?
+  scheduleId      String?         // set when materialized from an ExpenseSchedule
+  schedule        ExpenseSchedule? @relation(fields: [scheduleId], references: [id])
+  recordedById    String?
+  approvedById    String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([eventId, category])
+  @@index([eventId, incurredAt])
+}
+
+model Budget {
+  id           String          @id @default(cuid())
+  eventId      String
+  event        Event           @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  category     ExpenseCategory
+  plannedPaise Int
+
+  @@unique([eventId, category])
+}
+
+model ExpenseSchedule {
+  id          String         @id @default(cuid())
+  eventId     String?
+  event       Event?         @relation(fields: [eventId], references: [id])
+  category    ExpenseCategory
+  title       String
+  amountPaise Int
+  cadence     ExpenseCadence
+  nextRunAt   DateTime
+  remaining   Int?           // installments left; null = open-ended recurring
+  active      Boolean        @default(true)
+  generated   Expense[]
+  createdAt   DateTime       @default(now())
+
+  @@index([active, nextRunAt])
+}
+
+model Sponsorship {
+  id          String            @id @default(cuid())
+  eventId     String?
+  event       Event?            @relation(fields: [eventId], references: [id])
+  sponsorName String
+  tier        String?
+  amountPaise Int
+  status      SponsorshipStatus @default(PROPOSED)
+  paidAt      DateTime?
+  note        String?
+  createdAt   DateTime          @default(now())
+
+  @@index([eventId, status])
+}
+
+model Settlement {
+  id          String           @id @default(cuid())
+  gatewayRef  String           @unique // Razorpay settlement id / UTR
+  amountPaise Int
+  feePaise    Int
+  taxPaise    Int
+  settledAt   DateTime
+  status      SettlementStatus @default(UNMATCHED)
+  meta        Json?
+  createdAt   DateTime         @default(now())
+
+  @@index([settledAt])
+}
+
 // In-app admin notifications (alerts feed + header bell). Additive.
 model Notification {
   id        String    @id @default(cuid())
@@ -640,10 +778,4 @@ model Campaign {
   @@index([createdAt])
 }
 
-// ──────────────────────────── PLATFORM WAITLIST ────────────────
-model PlatformWaitlist {
-  id                String   @id @default(cuid())
-  phone             String   @unique
-  interestedInStall Boolean  @default(false)
-  createdAt         DateTime @default(now())
-}
+

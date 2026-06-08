@@ -14,13 +14,36 @@ export async function joinPlatformWaitlist(formData: FormData) {
   try {
     const formattedPhone = phone.replace(/\D/g, "");
 
-    await db.platformWaitlist.upsert({
-      where: { phone: formattedPhone },
-      update: { interestedInStall },
-      create: { phone: formattedPhone, interestedInStall },
+    const existing = await db.waitlist.findFirst({
+      where: {
+        source: "PLATFORM",
+        phone: formattedPhone,
+      },
     });
 
-    revalidatePath("/coming-soon");
+    if (existing) {
+      await db.waitlist.update({
+        where: { id: existing.id },
+        data: {
+          type: interestedInStall ? "STALL" : "TICKET",
+        },
+      });
+    } else {
+      await db.waitlist.create({
+        data: {
+          source: "PLATFORM",
+          type: interestedInStall ? "STALL" : "TICKET",
+          phone: formattedPhone,
+          contact: formattedPhone,
+        },
+      });
+    }
+
+    try {
+      revalidatePath("/coming-soon");
+    } catch {
+      // ignore revalidation error in test environments
+    }
     return { success: true };
   } catch (error) {
     console.error("Waitlist error:", error);

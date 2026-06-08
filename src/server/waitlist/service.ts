@@ -10,16 +10,16 @@ export type WaitlistType = "TICKET" | "STALL";
 
 export async function joinWaitlist(input: { eventId: string; type: WaitlistType; contact: string; userId?: string }) {
   const existing = await db.waitlist.findFirst({
-    where: { eventId: input.eventId, type: input.type, contact: input.contact },
+    where: { eventId: input.eventId, type: input.type, contact: input.contact, source: "EVENT" },
   });
   if (existing) return existing;
   return db.waitlist.create({
-    data: { eventId: input.eventId, type: input.type, contact: input.contact, userId: input.userId ?? null },
+    data: { eventId: input.eventId, type: input.type, contact: input.contact, userId: input.userId ?? null, source: "EVENT" },
   });
 }
 
 export function listWaitlist(eventId: string) {
-  return db.waitlist.findMany({ where: { eventId }, orderBy: { createdAt: "desc" } });
+  return db.waitlist.findMany({ where: { eventId, source: "EVENT" }, orderBy: { createdAt: "desc" } });
 }
 
 function waitlistHtml(eventName: string, url: string): string {
@@ -34,7 +34,7 @@ export function notifyWaitlist(session: Session, eventId: string) {
     before: null,
     run: async () => {
       const event = await db.event.findUnique({ where: { id: eventId }, select: { name: true, slug: true } });
-      const pending = await db.waitlist.findMany({ where: { eventId, notifiedAt: null } });
+      const pending = await db.waitlist.findMany({ where: { eventId, source: "EVENT", notifiedAt: null } });
       const url = `https://${process.env.APP_BASE_DOMAIN ?? "bdqsocial.com"}/events/${event?.slug ?? ""}`;
 
       let notified = 0;

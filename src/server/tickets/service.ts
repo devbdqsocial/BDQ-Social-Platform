@@ -2,7 +2,7 @@ import "server-only";
 import { randomUUID } from "crypto";
 import { Prisma } from "@prisma/client";
 import { db } from "@/server/db";
-import { createRazorpayOrder } from "@/lib/razorpay";
+import { createRazorpayOrder, type GatewayFees } from "@/lib/razorpay";
 import { signTicketToken, ticketTokenExpiry } from "@/lib/qr-token";
 import { logError } from "@/lib/logger";
 import {
@@ -116,7 +116,11 @@ export async function createTicketOrder(
  * Fulfil a paid order: mark PAID, record Payment, issue signed-QR tickets, bump soldQty.
  * Idempotent — keyed on the Razorpay order/payment id, so duplicate webhooks are no-ops.
  */
-export async function fulfillOrder(gatewayOrderId: string, paymentId: string): Promise<{ issued: number }> {
+export async function fulfillOrder(
+  gatewayOrderId: string,
+  paymentId: string,
+  fees?: GatewayFees,
+): Promise<{ issued: number }> {
   const order = await db.order.findUnique({
     where: { gatewayOrderId },
     include: { tickets: true, event: { select: { endsAt: true } } },
@@ -140,6 +144,8 @@ export async function fulfillOrder(gatewayOrderId: string, paymentId: string): P
         mode: "ONLINE",
         gatewayRef: paymentId,
         amount: order.total,
+        feePaise: fees?.feePaise ?? null,
+        taxPaise: fees?.taxPaise ?? null,
         status: "CAPTURED",
       },
     });

@@ -5,7 +5,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import type { listPaymentsForEvent } from "@/server/finance/service";
 import { DataTable } from "@/components/data-table/data-table";
 import { Badge } from "@/components/ui/badge";
-import { Select } from "@/components/ui/input";
+import { Input, Select } from "@/components/ui/input";
 import { formatPaise } from "@/lib/utils";
 
 type Row = Awaited<ReturnType<typeof listPaymentsForEvent>>[number];
@@ -27,13 +27,38 @@ const columns: ColumnDef<Row>[] = [
   { id: "date", accessorFn: (r) => r.createdAt.getTime(), header: "When", cell: ({ row }) => <span className="text-muted-foreground">{fmt(row.original.createdAt)}</span> },
 ];
 
+/**
+ * Renders the Payments data table with an aligned search and status filtering panel.
+ * It combines search querying and category filtering on a single aligned row.
+ */
 export function PaymentsTable({ payments }: { payments: Row[] }) {
+  const [search, setSearch] = useState("");
   const [status, setStatus] = useState("ALL");
-  const data = useMemo(() => (status === "ALL" ? payments : payments.filter((p) => p.status === status)), [payments, status]);
+
+  const filteredData = useMemo(() => {
+    let list = payments;
+    if (status !== "ALL") {
+      list = list.filter((p) => p.status === status);
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter((p) => {
+        const srcVal = source(p).toLowerCase();
+        return srcVal.includes(q);
+      });
+    }
+    return list;
+  }, [payments, status, search]);
 
   return (
-    <div className="space-y-3">
-      <div className="flex justify-end">
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search source…"
+          className="max-w-xs"
+        />
         <Select value={status} onChange={(e) => setStatus(e.target.value)} className="w-44">
           <option value="ALL">All statuses</option>
           <option value="CAPTURED">Captured</option>
@@ -41,7 +66,7 @@ export function PaymentsTable({ payments }: { payments: Row[] }) {
           <option value="FAILED">Failed</option>
         </Select>
       </div>
-      <DataTable columns={columns} data={data} searchPlaceholder="Search source…" emptyMessage="No payments for this event yet." />
+      <DataTable columns={columns} data={filteredData} searchable={false} emptyMessage="No payments match the filters." />
     </div>
   );
 }
