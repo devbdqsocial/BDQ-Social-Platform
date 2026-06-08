@@ -7,8 +7,8 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
-  url       = env("DATABASE_URL")          // pooled (runtime)
-  directUrl = env("DATABASE_URL_DIRECT")   // direct (migrations)
+  url       = env("DATABASE_URL") // pooled (runtime)
+  directUrl = env("DATABASE_URL_DIRECT") // direct (migrations)
 }
 
 // ──────────────────────────── ENUMS ────────────────────────────
@@ -163,25 +163,25 @@ enum NotifStatus {
 
 // ──────────────────────────── IDENTITY ─────────────────────────
 model User {
-  id          String       @id @default(cuid())
-  role        Role         @default(CUSTOMER)
-  phone       String?      @unique
-  email       String?      @unique
-  name        String?
+  id           String       @id @default(cuid())
+  role         Role         @default(CUSTOMER)
+  phone        String?      @unique
+  email        String?      @unique
+  name         String?
   firebaseUid  String?      @unique
   permissions  Permission[] @default([])
   passwordHash String?
   totpSecret   String?
   totpEnabled  Boolean      @default(false)
   tokenVersion Int          @default(0)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
-  orders        Order[]
-  vendorProfile VendorProfile?
-  checkIns      CheckIn[]      @relation("ScannedBy")
-  auditLogs     AuditLog[]
-  waitlist      Waitlist[]
+  orders            Order[]
+  vendorProfile     VendorProfile?
+  checkIns          CheckIn[]          @relation("ScannedBy")
+  auditLogs         AuditLog[]
+  waitlist          Waitlist[]
   couponRedemptions CouponRedemption[]
 
   @@index([role])
@@ -207,22 +207,21 @@ model Event {
   updatedAt   DateTime    @updatedAt
   archiveJson Json?
 
-  ticketTypes TicketType[]
-  schedule    ScheduleItem[]
-  stallTypes  StallTypeDef[]
-  stalls      Stall[]
-  mapLayout   MapLayout?
-  orders      Order[]
-  coupons     Coupon[]
-  bookings    Booking[]
-  sponsors    Sponsor[]
-  waitlist    Waitlist[]
-  leads       Lead[]
+  ticketTypes      TicketType[]
+  schedule         ScheduleItem[]
+  stallTypes       StallTypeDef[]
+  stalls           Stall[]
+  mapLayout        MapLayout?
+  orders           Order[]
+  coupons          Coupon[]
+  bookings         Booking[]
+  sponsors         Sponsor[]
+  waitlist         Waitlist[]
+  leads            Lead[]
   expenses         Expense[]
   budgets          Budget[]
   expenseSchedules ExpenseSchedule[]
-  sponsorships     Sponsorship[]
-  mapId       String?
+  mapId            String?
 
   @@index([status])
 }
@@ -363,8 +362,8 @@ model Order {
   expiresAt      DateTime?
   createdAt      DateTime       @default(now())
 
-  tickets  Ticket[]
-  payments Payment[]
+  tickets           Ticket[]
+  payments          Payment[]
   couponRedemptions CouponRedemption[]
 
   @@index([userId, status])
@@ -400,8 +399,8 @@ model Payment {
   mode         PaymentMode
   gatewayRef   String?        @unique
   amount       Int
-  feePaise     Int?           // gateway fee (Razorpay), captured from webhook/reconcile
-  taxPaise     Int?           // tax on the gateway fee (GST on Razorpay fee, not on the sale)
+  feePaise     Int? // gateway fee (Razorpay), captured from webhook/reconcile
+  taxPaise     Int? // tax on the gateway fee (GST on Razorpay fee, not on the sale)
   status       PaymentStatus  @default(CREATED)
   recordedById String?
   meta         Json?
@@ -411,20 +410,20 @@ model Payment {
 }
 
 model Coupon {
-  id           String     @id @default(cuid())
+  id           String             @id @default(cuid())
   eventId      String?
-  event        Event?     @relation(fields: [eventId], references: [id])
-  code         String     @unique
+  event        Event?             @relation(fields: [eventId], references: [id])
+  code         String             @unique
   type         CouponType
   value        Int
   maxUses      Int?
-  usedCount    Int        @default(0)
-  perUserLimit Int        @default(1)
+  usedCount    Int                @default(0)
+  perUserLimit Int                @default(1)
   minOrder     Int?
   scope        Json?
   startsAt     DateTime?
   endsAt       DateTime?
-  active       Boolean    @default(true)
+  active       Boolean            @default(true)
   orders       Order[]
   redemptions  CouponRedemption[]
 }
@@ -514,20 +513,20 @@ model Booking {
   payment         Payment?
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
+  // "one active booking per stall" is enforced by a partial unique index (raw SQL migration,
+  // see Docs/SCHEMA.md §4).
 
   @@index([stallId, status])
   @@index([eventId, status])
-  // "one active booking per stall" is enforced by a partial unique index (raw SQL migration,
-  // see Docs/SCHEMA.md §4).
 }
 
 // ──────────────────────────── OPS / GROWTH ─────────────────────
 model CheckIn {
-  id          String           @id @default(cuid())
-  ticketId    String
-  ticket      Ticket           @relation(fields: [ticketId], references: [id])
-  scannedById String
-  scannedBy   User             @relation("ScannedBy", fields: [scannedById], references: [id])
+  id           String           @id @default(cuid())
+  ticketId     String
+  ticket       Ticket           @relation(fields: [ticketId], references: [id])
+  scannedById  String
+  scannedBy    User             @relation("ScannedBy", fields: [scannedById], references: [id])
   gate         String?
   direction    CheckInDirection @default(IN)
   clientScanId String?          @unique
@@ -537,14 +536,19 @@ model CheckIn {
 }
 
 model Sponsor {
-  id         String      @id @default(cuid())
-  eventId    String
-  event      Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  name       String
-  tier       SponsorTier
-  logoUrl    String?
-  placements Json?
-  leadAccess Boolean     @default(false)
+  id          String            @id @default(cuid())
+  eventId     String
+  event       Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name        String
+  tier        SponsorTier
+  logoUrl     String?
+  placements  Json?
+  leadAccess  Boolean           @default(false)
+  amountPaise Int               @default(0)
+  status      SponsorshipStatus @default(PROPOSED)
+  paidAt      DateTime?
+  note        String?
+  createdAt   DateTime          @default(now())
 
   @@index([eventId])
 }
@@ -586,17 +590,19 @@ model Lead {
 
 // ──────────────────────────── DELIVERY / AUDIT ─────────────────
 model Outbox {
-  id        String       @id @default(cuid())
-  channel   NotifChannel
-  toAddress String
-  template  String
-  payload   Json
-  status    NotifStatus  @default(QUEUED)
-  attempts  Int          @default(0)
-  lastError String?
-  dedupeKey String       @unique
-  createdAt DateTime     @default(now())
-  sentAt    DateTime?
+  id         String       @id @default(cuid())
+  channel    NotifChannel
+  toAddress  String
+  template   String
+  payload    Json
+  status     NotifStatus  @default(QUEUED)
+  attempts   Int          @default(0)
+  lastError  String?
+  dedupeKey  String       @unique
+  campaignId String?
+  campaign   Campaign?    @relation(fields: [campaignId], references: [id])
+  createdAt  DateTime     @default(now())
+  sentAt     DateTime?
 
   @@index([status])
 }
@@ -635,10 +641,10 @@ enum ExpenseCategory {
   STAFF
   SECURITY
   LOGISTICS
-  PRODUCTION    // stage, sound, lights
-  TALENT        // performers / artists
-  FNB           // food & beverage procurement
-  PERMIT        // licenses, permits
+  PRODUCTION // stage, sound, lights
+  TALENT // performers / artists
+  FNB // food & beverage procurement
+  PERMIT // licenses, permits
   VENDOR_PAYOUT // outgoing payment to a vendor
   MISC
 }
@@ -666,24 +672,24 @@ enum SettlementStatus {
 }
 
 model Expense {
-  id              String          @id @default(cuid())
-  eventId         String?         // null = org-wide overhead (not tied to one event)
-  event           Event?          @relation(fields: [eventId], references: [id])
+  id              String           @id @default(cuid())
+  eventId         String? // null = org-wide overhead (not tied to one event)
+  event           Event?           @relation(fields: [eventId], references: [id])
   category        ExpenseCategory
-  vendorProfileId String?         // optional counterparty (e.g. VENDOR_PAYOUT)
-  vendorProfile   VendorProfile?  @relation(fields: [vendorProfileId], references: [id])
+  vendorProfileId String? // optional counterparty (e.g. VENDOR_PAYOUT)
+  vendorProfile   VendorProfile?   @relation(fields: [vendorProfileId], references: [id])
   title           String
   amountPaise     Int
   incurredAt      DateTime
-  status          ExpenseStatus   @default(DRAFT)
-  receiptUrl      String?         // Cloudinary
+  status          ExpenseStatus    @default(DRAFT)
+  receiptUrl      String? // Cloudinary
   note            String?
-  scheduleId      String?         // set when materialized from an ExpenseSchedule
+  scheduleId      String? // set when materialized from an ExpenseSchedule
   schedule        ExpenseSchedule? @relation(fields: [scheduleId], references: [id])
   recordedById    String?
   approvedById    String?
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 
   @@index([eventId, category])
   @@index([eventId, incurredAt])
@@ -700,35 +706,20 @@ model Budget {
 }
 
 model ExpenseSchedule {
-  id          String         @id @default(cuid())
+  id          String          @id @default(cuid())
   eventId     String?
-  event       Event?         @relation(fields: [eventId], references: [id])
+  event       Event?          @relation(fields: [eventId], references: [id])
   category    ExpenseCategory
   title       String
   amountPaise Int
   cadence     ExpenseCadence
   nextRunAt   DateTime
-  remaining   Int?           // installments left; null = open-ended recurring
-  active      Boolean        @default(true)
+  remaining   Int? // installments left; null = open-ended recurring
+  active      Boolean         @default(true)
   generated   Expense[]
-  createdAt   DateTime       @default(now())
+  createdAt   DateTime        @default(now())
 
   @@index([active, nextRunAt])
-}
-
-model Sponsorship {
-  id          String            @id @default(cuid())
-  eventId     String?
-  event       Event?            @relation(fields: [eventId], references: [id])
-  sponsorName String
-  tier        String?
-  amountPaise Int
-  status      SponsorshipStatus @default(PROPOSED)
-  paidAt      DateTime?
-  note        String?
-  createdAt   DateTime          @default(now())
-
-  @@index([eventId, status])
 }
 
 model Settlement {
@@ -762,20 +753,30 @@ model Notification {
 
 // Marketing campaigns (WhatsApp / email). Additive.
 model Campaign {
-  id          String    @id @default(cuid())
-  name        String
-  channel     String    @default("EMAIL")
-  eventId     String?
-  audience    String    @default("ALL")
-  subject     String?
-  body        String?
-  status      String    @default("DRAFT")
-  sentCount   Int       @default(0)
-  sentAt      DateTime?
-  createdById String?
-  createdAt   DateTime  @default(now())
+  id             String       @id @default(cuid())
+  name           String
+  channel        NotifChannel @default(EMAIL)
+  eventId        String?
+  audience       String       @default("ALL")
+  targeting      Json? // Stores segment rules (e.g. { role: "VENDOR" })
+  subject        String?
+  body           String?
+  status         String       @default("DRAFT")
+  sentCount      Int          @default(0)
+  stats          Json? // Stores analytics: { delivered: 0, opened: 0, clicked: 0, failed: 0 }
+  customContacts Json? // Stores [{ name, email, phone }] for manual overrides
+  sentAt         DateTime?
+  createdById    String?
+  createdAt      DateTime     @default(now())
+
+  outboxItems Outbox[]
 
   @@index([createdAt])
 }
 
+model SystemSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
 

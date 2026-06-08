@@ -49,7 +49,6 @@ export const NAV_GROUPS: NavGroup[] = [
     { label: "Revenue", href: "/revenue", section: "finance" },
     { label: "Expenses", href: "/finance/expenses", section: "finance" },
     { label: "Budgets", href: "/finance/budgets", section: "finance" },
-    { label: "Sponsorships", href: "/finance/sponsorships", section: "finance" },
     { label: "Payments", href: "/payments", section: "finance" },
     { label: "Settlements", href: "/finance/settlements", section: "finance" },
   ]},

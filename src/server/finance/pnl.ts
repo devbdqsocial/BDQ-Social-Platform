@@ -1,5 +1,6 @@
 import "server-only";
 import { db } from "@/server/db";
+import { Prisma } from "@prisma/client";
 
 /**
  * Event P&L / ROI. Money is integer paise; percentages are returned as ratios (0.25 = 25%).
@@ -117,7 +118,10 @@ export async function getEventPnl(eventId: string): Promise<Pnl> {
         where: { status: "CAPTURED", booking: { eventId } },
         _sum: { amount: true, feePaise: true, taxPaise: true },
       }),
-      db.sponsorship.aggregate({ where: { eventId, status: "PAID" }, _sum: { amountPaise: true } }),
+      db.sponsor.aggregate({
+        where: { eventId, status: "PAID" },
+        _sum: { amountPaise: true },
+      } as unknown as Prisma.SponsorAggregateArgs),
       db.expense.groupBy({
         by: ["category"],
         where: { eventId, status: { in: ["APPROVED", "PAID"] } },
@@ -141,7 +145,7 @@ export async function getEventPnl(eventId: string): Promise<Pnl> {
     ticketFees,
     stallGross: stallAgg._sum.amount ?? 0,
     stallFees,
-    sponsorship: sponsorAgg._sum.amountPaise ?? 0,
+    sponsorship: (sponsorAgg as unknown as { _sum: { amountPaise: number | null } })._sum.amountPaise ?? 0,
     discount: orderAgg._sum.discount ?? 0,
     compValue,
     expensesByCategory: expenseGroups.map((g) => ({ category: g.category, amountPaise: g._sum.amountPaise ?? 0 })),

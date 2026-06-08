@@ -15,7 +15,7 @@ const REQUIRES: Record<ConsoleSection, { superAdminOnly?: boolean; perm?: Permis
   audit: { superAdminOnly: true },
   coupons: { superAdminOnly: true },
   comps: { superAdminOnly: true },
-  sponsors: { superAdminOnly: true },
+  sponsors: {},
   ops: { superAdminOnly: true },
   finance: { perm: "FINANCE_MANAGE" }, // SUPER_ADMIN/ADMIN always; STAFF needs FINANCE_MANAGE. P&L/settlement pages add requireSuperAdmin.
   analytics: { perm: "PAYMENT_VIEW" },

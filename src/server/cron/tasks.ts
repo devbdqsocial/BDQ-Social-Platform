@@ -114,15 +114,21 @@ export async function sendFinanceDigest() {
   return { event: event.id, admins: admins.length, enqueued, ...result };
 }
 
-/** Prune stale rows: expired RateLimit windows (>1d) and SENT Outbox rows (>30d). */
+/** Prune stale rows: expired RateLimit windows (>1d), SENT Outbox rows (>30d), and Notifications (>14d). */
 export async function pruneStaleRows() {
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-  const [rateLimitResult, outboxResult] = await Promise.all([
+  const [rateLimitResult, outboxResult, notificationResult] = await Promise.all([
     db.rateLimit.deleteMany({ where: { resetAt: { lt: oneDayAgo } } }),
     db.outbox.deleteMany({ where: { status: "SENT", createdAt: { lt: thirtyDaysAgo } } }),
+    db.notification.deleteMany({ where: { createdAt: { lt: fourteenDaysAgo } } }),
   ]);
-  return { rateLimitPruned: rateLimitResult.count, outboxPruned: outboxResult.count };
+  return { 
+    rateLimitPruned: rateLimitResult.count, 
+    outboxPruned: outboxResult.count,
+    notificationsPruned: notificationResult.count
+  };
 }
 
 /** Run every maintenance task; one failing task never aborts the others. */

@@ -1,4 +1,4 @@
-import { cloudConfigured, sendCloudWhatsApp } from "@/lib/whatsapp-cloud";
+import { cloudConfigured, sendCloudWhatsApp, sendCloudWhatsAppText } from "@/lib/whatsapp-cloud";
 import { interaktConfigured, sendInteraktWhatsApp } from "@/lib/interakt";
 
 /**
@@ -48,5 +48,11 @@ export async function sendWhatsApp(msg: WhatsAppMessage): Promise<{ skipped: tru
   const provider = whatsAppProvider();
   if (provider === "cloud") return sendCloudWhatsApp(msg);
   if (provider === "interakt") return sendInteraktWhatsApp(msg);
+  return { skipped: true };
+}
+
+/** Free-text send (campaign body). Only the cloud provider supports free text; otherwise dormant. */
+export async function sendWhatsAppText(phone: string, body: string): Promise<{ skipped: true } | { id: string }> {
+  if (whatsAppProvider() === "cloud") return sendCloudWhatsAppText(phone, body);
   return { skipped: true };
 }

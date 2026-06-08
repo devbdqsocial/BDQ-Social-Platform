@@ -43,3 +43,25 @@ export async function sendCloudWhatsApp(msg: WhatsAppMessage): Promise<{ skipped
   const json = (await res.json().catch(() => ({}))) as { messages?: { id?: string }[] };
   return { id: json.messages?.[0]?.id ?? "sent" };
 }
+
+/**
+ * Free-text WhatsApp message (campaign body). Note: Meta only permits free-form text inside the
+ * 24h customer-service window; cold marketing must use approved templates. Dormant when unconfigured.
+ */
+export async function sendCloudWhatsAppText(phone: string, body: string): Promise<{ skipped: true } | { id: string }> {
+  if (!cloudConfigured()) return { skipped: true };
+
+  const version = process.env.WHATSAPP_CLOUD_API_VERSION || DEFAULT_VERSION;
+  const url = `https://graph.facebook.com/${version}/${process.env.WHATSAPP_CLOUD_PHONE_ID}/messages`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.WHATSAPP_CLOUD_TOKEN}`,
+    },
+    body: JSON.stringify({ messaging_product: "whatsapp", to: phone.replace(/\D/g, ""), type: "text", text: { body } }),
+  });
+  if (!res.ok) throw new Error(`WhatsApp Cloud text send failed: ${res.status}`);
+  const json = (await res.json().catch(() => ({}))) as { messages?: { id?: string }[] };
+  return { id: json.messages?.[0]?.id ?? "sent" };
+}

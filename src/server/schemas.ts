@@ -90,6 +90,9 @@ export const sponsorSchema = z.object({
   name: z.string().min(1),
   tier: z.enum(["TITLE", "POWERED_BY", "ZONE", "STALL", "ASSOCIATE"]),
   logoUrl: z.string().url().optional().or(z.literal("").transform(() => undefined)),
+  amountPaise: z.number().int().nonnegative().optional(),
+  status: z.enum(["PROPOSED", "SIGNED", "PAID"]).optional(),
+  note: z.string().optional(),
 });
 
 export const waitlistSchema = z.object({
@@ -199,15 +202,6 @@ export const expenseScheduleSchema = z.object({
   remaining: z.number().int().positive().optional(),
 });
 
-export const sponsorshipSchema = z.object({
-  eventId: id.optional(),
-  sponsorName: z.string().trim().min(2).max(160),
-  tier: z.string().trim().max(60).optional(),
-  amountPaise: z.number().int().positive(),
-  status: z.enum(["PROPOSED", "SIGNED", "PAID"]).default("PROPOSED"),
-  note: z.string().trim().max(500).optional(),
-});
-
 export const settlementSchema = z.object({
   gatewayRef: z.string().trim().min(3).max(120), // Razorpay settlement id / UTR
   amountPaise: z.number().int().nonnegative(),    // net amount Razorpay deposited
@@ -223,5 +217,4 @@ export type VendorKycInput = z.infer<typeof vendorKycSchema>;
 export type ExpenseInput = z.infer<typeof expenseSchema>;
 export type BudgetInput = z.infer<typeof budgetSchema>;
 export type ExpenseScheduleInput = z.infer<typeof expenseScheduleSchema>;
-export type SponsorshipInput = z.infer<typeof sponsorshipSchema>;
 export type SettlementInput = z.infer<typeof settlementSchema>;

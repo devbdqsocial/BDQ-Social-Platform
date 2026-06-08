@@ -14,7 +14,23 @@ export interface NotifyInput {
 /** Best-effort: emitting a notification must never break the calling flow. */
 export async function notify(input: NotifyInput): Promise<void> {
   try {
-    await db.notification.create({ data: input });
+    await db.$transaction(async (tx) => {
+      await tx.notification.create({ data: input });
+      const count = await tx.notification.count();
+      if (count > 150) {
+        const oldestToKeep = await tx.notification.findMany({
+          orderBy: { createdAt: "desc" },
+          skip: 149,
+          take: 1,
+          select: { createdAt: true }
+        });
+        if (oldestToKeep.length > 0) {
+          await tx.notification.deleteMany({
+            where: { createdAt: { lt: oldestToKeep[0].createdAt } }
+          });
+        }
+      }
+    });
   } catch (e) {
     console.error("notify", e);
   }
