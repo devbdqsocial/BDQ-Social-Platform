@@ -100,7 +100,7 @@ export function ComingSoonClient({ count }: { count: number }) {
                   style={{ fontSize: "var(--h42)", color: "var(--color)" }}
                 />
               </div>
-              <button type="submit" disabled={status === "loading"} className="btn shrink-0 self-center sm:self-end" data-cursor style={{ width: "9rem" }}>
+              <button type="submit" disabled={status === "loading"} className="btn shrink-0 self-center sm:self-end" data-cursor>
                 <span className="btn__text">{status === "loading" ? "Joining…" : "Join"}</span>
               </button>
             </div>

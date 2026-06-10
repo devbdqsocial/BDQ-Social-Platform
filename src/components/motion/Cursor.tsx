@@ -28,9 +28,18 @@ export function Cursor() {
     };
     gsap.ticker.add(tick);
 
+    // Invisible until the pointer actually moves — otherwise the dot sits mid-viewport on load.
+    el.style.opacity = "0";
+    let seen = false;
     const onMove = (e: MouseEvent) => {
       mouse.x = e.clientX;
       mouse.y = e.clientY;
+      if (!seen) {
+        seen = true;
+        pos.x = e.clientX;
+        pos.y = e.clientY;
+        el.style.opacity = "1";
+      }
     };
     const isTarget = (t: EventTarget | null) =>
       t instanceof Element && !!t.closest("a, button, [role='button'], [data-cursor]");

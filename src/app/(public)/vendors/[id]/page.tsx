@@ -88,7 +88,7 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
             Find {v.brandName} at the market.
           </h2>
           <div className="mt-[var(--space-2xl)] flex justify-center">
-            <Link href="/events" className="btn" data-cursor style={{ width: "8.5rem" }}>
+            <Link href="/events" className="btn" data-cursor>
               <span className="btn__text">Get tickets</span>
             </Link>
           </div>

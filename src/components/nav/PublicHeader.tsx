@@ -77,7 +77,7 @@ export function PublicHeader({ signedIn = false }: { signedIn?: boolean }) {
 
       {/* Persistent "Let's talk" CTA — desktop only (mobile has the bottom tab bar). */}
       <Magnetic className="fixed bottom-[var(--space-xl)] right-[var(--space-xl)] z-[90] hidden sm:block">
-        <Link href="/contact" data-cursor className="btn pointer-events-auto" style={{ width: "8.5rem" }}>
+        <Link href="/contact" data-cursor className="btn btn--accent pointer-events-auto">
           <span className="btn__text">Let&apos;s talk</span>
         </Link>
       </Magnetic>

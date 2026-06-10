@@ -2,7 +2,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
-// RPA-style cookie consent: a small navy card bottom-left, fades in after load, once per device.
+// Slim one-line consent bar pinned to the bottom edge: ink bg, never covers content.
+// Shows once per device; sits below the customer tab bar's z-index on mobile.
 export function CookieBanner() {
   const [show, setShow] = useState(false);
 
@@ -30,20 +31,20 @@ export function CookieBanner() {
 
   return (
     <div
-      className="gama-1 bg-1 paint fixed bottom-[var(--space-lg)] left-[var(--space-lg)] z-[80] w-[min(27rem,calc(100vw-2*var(--space-lg)))] rounded-[var(--radius-lg)] p-[var(--space-xl)] shadow-[0_18px_48px_rgba(0,0,0,0.35)]"
+      className="fixed inset-x-0 bottom-0 z-[80] flex flex-wrap items-center justify-center gap-x-[var(--space-xl)] gap-y-[var(--space-sm)] px-[var(--wrapper-padd)] py-[var(--space-md)] text-center"
+      style={{ background: "var(--ink, #14141A)", color: "#F4F2EC" }}
       role="dialog"
       aria-label="Cookie notice"
     >
-      <p className="f-exat" style={{ fontSize: "var(--h42)", lineHeight: 1.05 }}>Cookies</p>
-      <p className="f-paragraph-small mt-[var(--space-sm)] opacity-80">
-        We use cookies to make the site work and to understand what&apos;s popular. See our{" "}
-        <Link href="/privacy" className="underline" data-cursor>privacy policy</Link>.
+      <p className="f-paragraph-small opacity-90">
+        We use cookies to make the site work and to see what&apos;s popular.{" "}
+        <Link href="/privacy" className="underline" data-cursor>Privacy policy</Link>
       </p>
-      <div className="mt-[var(--space-lg)] flex items-center gap-[var(--space-lg)]">
-        <button type="button" onClick={accept} className="btn" data-cursor style={{ width: "7.5rem" }}>
-          <span className="btn__text">Accept</span>
+      <div className="flex items-center gap-[var(--space-xl)]">
+        <button type="button" onClick={accept} data-cursor className="f-paragraph-small f-bold t-upper underline" style={{ letterSpacing: "0.12em" }}>
+          Accept
         </button>
-        <button type="button" onClick={accept} data-cursor className="f-paragraph-small f-bold t-upper opacity-70" style={{ letterSpacing: "0.12em" }}>
+        <button type="button" onClick={accept} data-cursor className="f-paragraph-small f-bold t-upper opacity-60" style={{ letterSpacing: "0.12em" }}>
           Dismiss
         </button>
       </div>

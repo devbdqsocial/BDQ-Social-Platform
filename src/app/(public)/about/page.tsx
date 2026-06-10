@@ -15,7 +15,7 @@ const WHAT: [string, string][] = [
 
 function Btn({ href, children }: { href: string; children: React.ReactNode }) {
   return (
-    <Link href={href} className="btn" data-cursor style={{ width: "8.5rem" }}>
+    <Link href={href} className="btn" data-cursor>
       <span className="btn__text">{children}</span>
     </Link>
   );

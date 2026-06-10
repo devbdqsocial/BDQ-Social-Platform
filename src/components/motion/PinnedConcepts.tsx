@@ -33,9 +33,11 @@ export function PinnedConcepts() {
           snap: 1 / (panels.length - 1),
         },
       });
+      // Sequential fade (out, then in) — simultaneous crossfade leaves both texts legible
+      // mid-scrub and they collide.
       panels.forEach((p, i) => {
         if (i === 0) return;
-        tl.to(panels[i - 1], { opacity: 0, duration: 0.5 }).to(p, { opacity: 1, duration: 0.5 }, "<");
+        tl.to(panels[i - 1], { opacity: 0, duration: 0.45 }).to(p, { opacity: 1, duration: 0.45 }, ">");
       });
     }, el);
 
@@ -48,8 +50,8 @@ export function PinnedConcepts() {
         {STEPS.map((s) => (
           <div key={s.word} className={`concept-panel ${s.gama} paint`}>
             <div className="wrapper">
-              <h2 className="f-exat" style={{ fontSize: "var(--h235)", lineHeight: 0.9 }}>{s.word}</h2>
-              <p className="f-paragraph mx-auto mt-[var(--space-lg)] max-w-[34ch] opacity-80">{s.body}</p>
+              <h2 className="f-exat" style={{ fontSize: "var(--h235)", lineHeight: 0.95 }}>{s.word}</h2>
+              <p className="f-paragraph mx-auto mt-[var(--space-2xl)] max-w-[34ch] opacity-80">{s.body}</p>
             </div>
           </div>
         ))}

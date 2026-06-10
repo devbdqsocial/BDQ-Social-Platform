@@ -40,9 +40,11 @@ export const viewport: Viewport = { themeColor: "#01065B" };
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // CSP nonce minted in middleware (prod); next-themes' pre-hydration script needs it under a strict CSP.
   const nonce = (await headers()).get("x-nonce") ?? undefined;
+  // Font vars must sit on <html>: the --f-exat/--f-inter aliases are declared at :root, and
+  // custom-property var() substitution happens where the property is declared — <body> is too late.
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${exat.variable} ${geist.variable} antialiased`}>
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${exat.variable} ${geist.variable}`}>
+      <body className="antialiased">
         <a href="#main" className="skip-link">Skip to content</a>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange nonce={nonce}>
           {children}

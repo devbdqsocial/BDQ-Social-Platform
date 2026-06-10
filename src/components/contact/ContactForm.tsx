@@ -73,7 +73,7 @@ export function ContactForm({ to }: { to: string }) {
       <Field id="cf-name" label="Your name" value={name} onChange={setName} />
       <Field id="cf-email" label="Your email" value={email} onChange={setEmail} type="email" />
       <Field id="cf-message" label="Your message" value={message} onChange={setMessage} textarea />
-      <button type="submit" className="btn self-start" data-cursor style={{ width: "8.5rem" }}>
+      <button type="submit" className="btn self-start" data-cursor>
         <span className="btn__text">Send it</span>
       </button>
     </form>
