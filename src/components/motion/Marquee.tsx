@@ -7,18 +7,24 @@ import { cn } from "@/lib/utils";
 export function Marquee({
   children,
   speed = 40,
+  reverse = false,
   className,
 }: {
   children: React.ReactNode;
   /** seconds for one full loop; larger = slower */
   speed?: number;
+  /** scroll the other way (for stacked opposite-direction rows) */
+  reverse?: boolean;
   className?: string;
 }) {
   return (
     <div className={cn("marquee", className)}>
       <div
         className="marquee-track"
-        style={{ ["--marquee-duration" as string]: `${speed}s` }}
+        style={{
+          ["--marquee-duration" as string]: `${speed}s`,
+          animationDirection: reverse ? "reverse" : undefined,
+        }}
       >
         <div className="flex shrink-0 items-center">{children}</div>
         <div className="flex shrink-0 items-center" aria-hidden>

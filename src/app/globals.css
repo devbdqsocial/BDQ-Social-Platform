@@ -380,8 +380,8 @@
 .rpa .link--split .arrow { width: 1em; transition: transform .5s cubic-bezier(.25,1,.5,1); }
 .rpa .link--split:hover .arrow { transform: translateX(0.25em); }
 
-/* Logo-wall marquee (rows of tinted cells scrolling). */
-.rpa .wall { position: relative; overflow: hidden; }
+/* `.wall` is a semantic hook only (WordmarkWall rows are selected via `.wall .marquee`).
+   No positioning here — it would out-rank Tailwind's layered `absolute` utility. */
 
 /* =============================== end RPA system =============================== */
 

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { PublicHeader } from "@/components/nav/PublicHeader";
 import { CustomerTabBar } from "@/components/nav/CustomerTabBar";
 import { MotionProviders } from "@/components/motion/MotionProviders";
+import { WordmarkWall } from "@/components/motion/WordmarkWall";
 import { getSession } from "@/server/auth/guard";
 
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
@@ -18,7 +19,9 @@ export default async function PublicLayout({ children }: { children: React.React
         {/* top: brand blurb + nav columns */}
         <div className="wrapper flex flex-col gap-[var(--space-2xl)] pt-[var(--space-4xl)] sm:flex-row sm:justify-between">
           <div className="max-w-[40ch]">
-            <p className="f-exat" style={{ fontSize: "var(--h42)", lineHeight: 1.1 }}>BDQ Social</p>
+            <p className="f-exat" style={{ fontSize: "var(--h42)", lineHeight: 1.1 }}>
+              BDQ Social<span style={{ color: "var(--green)" }}>.</span>
+            </p>
             <p className="f-paragraph-small mt-[var(--space-md)] opacity-80">
               Vadodara&apos;s premium curated festival &amp; night market. Good people, great finds,
               unforgettable evenings.
@@ -31,7 +34,7 @@ export default async function PublicLayout({ children }: { children: React.React
               ["Legal", [["Privacy", "/privacy"], ["Terms", "/terms"], ["Refunds", "/refunds"], ["Shipping", "/shipping"], ["Vendor terms", "/vendor-terms"]]],
             ].map(([heading, items]) => (
               <nav key={heading as string} className="f-paragraph-small f-bold flex flex-col gap-[var(--space-sm)]">
-                <span className="t-upper opacity-50" style={{ letterSpacing: "0.16em" }}>{heading as string}</span>
+                <span className="kicker opacity-50">{heading as string}</span>
                 {(items as [string, string][]).map(([label, href]) => (
                   <Link key={href} href={href} data-cursor className="opacity-80 transition-opacity hover:opacity-100">
                     {label}
@@ -42,9 +45,10 @@ export default async function PublicLayout({ children }: { children: React.React
           </div>
         </div>
 
-        {/* giant Let's talk */}
+        {/* signature wall + giant Let's talk */}
+        <WordmarkWall rows={2} duration={26} rowClassName="f-h76" className="opacity-20" />
         <div className="wrapper py-[var(--space-2xl)]">
-          <Link href="/contact" data-cursor className="f-exat block w-fit" style={{ fontSize: "var(--h235)", lineHeight: 0.9 }}>
+          <Link href="/contact" data-cursor className="f-exat block w-fit" style={{ fontSize: "var(--h235)", lineHeight: 0.95 }}>
             Let&apos;s talk
           </Link>
         </div>

@@ -39,7 +39,7 @@ export function PublicHeader({ signedIn = false }: { signedIn?: boolean }) {
             className="f-exat pointer-events-auto"
             style={{ fontSize: "var(--h32)", lineHeight: 1 }}
           >
-            BDQ Social
+            BDQ<span style={{ color: "var(--green)" }}>.</span>
           </Link>
 
           <div className="pointer-events-auto flex items-center gap-[var(--space-lg)]">
@@ -58,10 +58,10 @@ export function PublicHeader({ signedIn = false }: { signedIn?: boolean }) {
               aria-expanded={open}
               aria-controls="menu-overlay"
               data-cursor
-              className="flex h-6 w-9 flex-col items-end justify-center gap-[5px]"
+              className="group flex h-6 w-9 flex-col items-end justify-center gap-[5px]"
             >
-              <span className="block h-[2px] w-full" style={{ background: "currentColor" }} />
-              <span className="block h-[2px] w-2/3" style={{ background: "currentColor" }} />
+              <span className="block h-[2px] w-full transition-all duration-300 group-hover:w-2/3" style={{ background: "currentColor" }} />
+              <span className="block h-[2px] w-2/3 transition-all duration-300 group-hover:w-full" style={{ background: "currentColor" }} />
             </button>
           </div>
         </div>

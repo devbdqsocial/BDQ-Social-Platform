@@ -7,7 +7,10 @@ import { primaryLogo } from "@/lib/vendor-assets";
 import { formatPaise } from "@/lib/utils";
 import { Countdown } from "@/components/landing/Countdown";
 import { Reveal } from "@/components/motion/Reveal";
+import { SplitReveal } from "@/components/motion/SplitReveal";
+import { Parallax } from "@/components/motion/Parallax";
 import { Marquee } from "@/components/motion/Marquee";
+import { WordmarkWall } from "@/components/motion/WordmarkWall";
 import { PinnedServices } from "@/components/motion/PinnedServices";
 import { BrandsCarousel } from "@/components/motion/BrandsCarousel";
 
@@ -38,55 +41,81 @@ export default async function LandingPage() {
       {/* ============ HERO (cabecera--home) — navy / light-blue ============ */}
       <section className="gama-1 bg-1 paint relative flex min-h-[100svh] items-center overflow-hidden">
         <div className="wrapper grid w-full items-center gap-[var(--space-3xl)] py-[var(--space-5xl)] lg:grid-cols-2">
-          <Reveal stagger>
-            <span className="f-paragraph-small f-bold t-upper" style={{ letterSpacing: "0.18em" }}>
-              {event?.location ?? "Vadodara"} · Curated night market
-            </span>
-            <h1 className="f-exat mt-[var(--space-md)]" style={{ fontSize: "var(--h133)", lineHeight: 1.0 }}>
+          <div>
+            <Reveal>
+              <span className="kicker block">{event?.location ?? "Vadodara"} · Curated night market</span>
+            </Reveal>
+            <SplitReveal as="h1" mode="chars" className="f-exat mt-[var(--space-md)] max-w-[14ch]" style={{ fontSize: "var(--h133)", lineHeight: 0.98 }}>
               The city&apos;s most curated night market
-            </h1>
-            <p className="f-paragraph mt-[var(--space-lg)] max-w-[34ch] opacity-80">
-              An evening of handpicked brands, gourmet food, and live music — the warm, grown-up
-              alternative to the usual mela.
-            </p>
-            {event && (
-              <p className="f-paragraph-small f-bold mt-[var(--space-lg)] t-upper" style={{ letterSpacing: "0.12em" }}>
-                {fmtDate(event.startsAt)} · {event.location}
+            </SplitReveal>
+            <Reveal stagger delay={0.2}>
+              <p className="f-paragraph mt-[var(--space-lg)] max-w-[34ch] opacity-80">
+                An evening of handpicked brands, gourmet food, and live music — the warm, grown-up
+                alternative to the usual mela.
               </p>
-            )}
-            {event && <div className="mt-[var(--space-md)]"><Countdown target={event.startsAt.toISOString()} /></div>}
-            <div className="mt-[var(--space-xl)] flex flex-wrap items-center gap-[var(--space-lg)]">
-              <Btn href="/events">Tickets</Btn>
-              <Btn href="/vendors">Brands</Btn>
-              {minPrice != null && (
-                <span className="f-paragraph-small opacity-70">from {formatPaise(minPrice)}</span>
+              {event && (
+                <p className="kicker mt-[var(--space-lg)]">
+                  {fmtDate(event.startsAt)} · {event.location}
+                </p>
               )}
-            </div>
-          </Reveal>
+              {event && <div className="mt-[var(--space-md)]"><Countdown target={event.startsAt.toISOString()} /></div>}
+              <div className="mt-[var(--space-xl)] flex flex-wrap items-center gap-[var(--space-lg)]">
+                <Btn href="/events">Tickets</Btn>
+                <Btn href="/vendors">Brands</Btn>
+                {minPrice != null && (
+                  <span className="f-paragraph-small opacity-70">from {formatPaise(minPrice)}</span>
+                )}
+              </div>
+            </Reveal>
+          </div>
 
-          <Reveal className="hidden lg:block">
-            <div className="svg svg--form11 mx-auto w-[80%]">
-              {heroImg ? (
-                <Image src={heroImg} alt="" fill className="svg__img" sizes="40vw" priority />
-              ) : (
-                <div className="svg__bg" />
-              )}
-            </div>
+          <Reveal effect="clip" className="hidden lg:block">
+            <Parallax amount={10}>
+              <div className="svg svg--form11 media-tint mx-auto w-[80%]">
+                {heroImg ? (
+                  <Image src={heroImg} alt="" fill className="svg__img" sizes="40vw" priority />
+                ) : (
+                  <div className="svg__bg" />
+                )}
+              </div>
+            </Parallax>
           </Reveal>
         </div>
+
+        {/* event-facts ticker pinned to the hero's bottom edge */}
+        {event && (
+          <div
+            className="absolute inset-x-0 bottom-0 py-[var(--space-md)]"
+            style={{ borderTop: "1px solid color-mix(in srgb, currentColor 25%, transparent)" }}
+          >
+            <Marquee speed={32}>
+              {[
+                event.name,
+                fmtDate(event.startsAt),
+                event.location ?? "Vadodara",
+                ...(minPrice != null ? [`Tickets from ${formatPaise(minPrice)}`] : []),
+                "80+ curated brands",
+                "Live music",
+              ].map((fact, i) => (
+                <span key={i} className="kicker px-[var(--space-2xl)]">
+                  {fact} <span className="opacity-50">·</span>
+                </span>
+              ))}
+            </Marquee>
+          </div>
+        )}
       </section>
 
       {/* ============ MANIFESTO (mod-text--big) — cream / ink ============ */}
       <section className="paint py-[var(--space-5xl)]">
         <div className="wrapper">
-          <Reveal>
-            <p
-              className="f-exat max-w-[18ch]"
-              style={{ fontSize: "var(--h100)", lineHeight: 1.05, textIndent: "2em" }}
-            >
-              One unforgettable evening a year — set to a warm fairy-light glow.
-            </p>
-          </Reveal>
+          <SplitReveal
+            as="p"
+            className="f-exat max-w-[18ch]"
+            style={{ fontSize: "var(--h100)", lineHeight: 1.05, textIndent: "2em" }}
+          >
+            One unforgettable evening a year — set to a warm fairy-light glow.
+          </SplitReveal>
         </div>
       </section>
 
@@ -98,8 +127,10 @@ export default async function LandingPage() {
         <section className="gama-2 surface-2 paint py-[var(--space-5xl)]">
           <div className="wrapper">
             <div className="flex items-end justify-between gap-4">
-              <h2 className="f-exat" style={{ fontSize: "var(--h76)", lineHeight: 1.05 }}>The brands</h2>
-              <Link href="/vendors" data-cursor className="f-paragraph-small f-bold t-upper">See all →</Link>
+              <SplitReveal as="h2" mode="chars" className="f-exat" style={{ fontSize: "var(--h133)", lineHeight: 1.0 }}>
+                The brands
+              </SplitReveal>
+              <Link href="/vendors" data-cursor className="kicker link-underline">See all →</Link>
             </div>
             <div className="mt-[var(--space-3xl)]">
               <BrandsCarousel
@@ -110,25 +141,33 @@ export default async function LandingPage() {
         </section>
       )}
 
-      {/* ============ SPONSORS marquee (clientes) — dark-green / green ============ */}
+      {/* ============ SPONSORS marquee (clientes) — dark-green / green, opposite rows ============ */}
       {(sponsors.length > 0 || brands.length > 4) && (
         <section className="gama-1 bg-2 paint overflow-hidden py-[var(--space-4xl)]">
-          <Marquee speed={28}>
-            {(sponsors.length ? sponsors.map((s) => s.name) : brands.map((b) => b.brandName)).map((name, i) => (
-              <span key={`${name}-${i}`} className="f-exat px-[var(--space-3xl)]" style={{ fontSize: "var(--h60)" }}>
-                {name}
-              </span>
-            ))}
-          </Marquee>
+          {[false, true].map((reverse) => (
+            <Marquee key={String(reverse)} speed={reverse ? 36 : 28} reverse={reverse} className={reverse ? "mt-[var(--space-lg)] opacity-60" : ""}>
+              {(sponsors.length ? sponsors.map((s) => s.name) : brands.map((b) => b.brandName)).map((name, i) => (
+                <span key={`${name}-${i}`} className="f-exat px-[var(--space-3xl)]" style={{ fontSize: "var(--h60)" }}>
+                  {name}
+                </span>
+              ))}
+            </Marquee>
+          ))}
         </section>
       )}
 
-      {/* ============ CIERRE CTA — dark-red / green ============ */}
+      {/* ============ CIERRE CTA — dark-red / green, wall texture ============ */}
       {event && (
-        <section className="gama-3 bg-3 paint flex min-h-[80svh] items-center py-[var(--space-5xl)]">
-          <div className="wrapper text-center">
+        <section className="gama-3 bg-3 paint relative flex min-h-[80svh] items-center overflow-hidden py-[var(--space-5xl)]">
+          <WordmarkWall
+            rows={5}
+            duration={24}
+            rowClassName="f-h133"
+            className="pointer-events-none absolute inset-0 flex flex-col justify-between py-[var(--space-lg)] opacity-10"
+          />
+          <div className="wrapper relative w-full text-center">
             <Reveal>
-              <span className="f-paragraph-small f-bold t-upper" style={{ letterSpacing: "0.18em" }}>Up next</span>
+              <span className="kicker block">Up next</span>
               <h2 className="f-exat mx-auto mt-[var(--space-md)] max-w-[16ch]" style={{ fontSize: "var(--h133)", lineHeight: 1.0 }}>
                 {event.name}
               </h2>
@@ -137,7 +176,9 @@ export default async function LandingPage() {
                 {minPrice != null && <> · from {formatPaise(minPrice)}</>}
               </p>
               <div className="mt-[var(--space-2xl)] flex justify-center">
-                <Btn href={`/events/${event.slug}`}>Get tickets</Btn>
+                <Link href={`/events/${event.slug}`} className="btn btn--lg" data-cursor>
+                  <span className="btn__text">Get tickets</span>
+                </Link>
               </div>
             </Reveal>
           </div>
@@ -156,8 +197,11 @@ export default async function LandingPage() {
               ["Is there food?", "Plenty. A full food court with the city's best cafés, bakers, and street food."],
             ].map(([q, a]) => (
               <details key={q} className="group py-[var(--space-lg)]" style={{ borderTop: "1px solid var(--color)" }}>
-                <summary className="f-exat cursor-pointer list-none" style={{ fontSize: "var(--h32)" }}>{q}</summary>
-                <p className="f-paragraph mt-[var(--space-sm)] opacity-80">{a}</p>
+                <summary className="f-exat flex cursor-pointer list-none items-center justify-between gap-[var(--space-lg)]" style={{ fontSize: "var(--h60)", lineHeight: 1.05 }}>
+                  {q}
+                  <span aria-hidden className="shrink-0 transition-transform duration-300 group-open:rotate-45" style={{ fontSize: "var(--h42)" }}>+</span>
+                </summary>
+                <p className="f-paragraph mt-[var(--space-md)] max-w-[52ch] opacity-80">{a}</p>
               </details>
             ))}
           </div>

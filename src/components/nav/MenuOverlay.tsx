@@ -1,16 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
-import { X } from "lucide-react";
+import { useEffect, useRef } from "react";
+import { gsap } from "@/lib/gsap";
+import { EASE, STAGGER } from "@/lib/motion";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Magnetic } from "@/components/motion/Magnetic";
 import { cn } from "@/lib/utils";
 
 export type MenuLink = { href: string; label: string };
 
-// RPA full-screen menu: a deep-navy panel that drops in, with big grotesk links that stagger up.
-// CSS-transition driven (auto-respects reduced-motion via globals), Esc to close, body scroll lock.
+// RPA full-screen menu: deep-navy panel drops in (CSS transition), then link labels rise out
+// of overflow masks via GSAP (skipped under reduced-motion — links are visible by default).
+// Esc to close, body scroll lock.
 export function MenuOverlay({
   open,
   onClose,
@@ -24,6 +26,8 @@ export function MenuOverlay({
   signedIn: boolean;
   onSignOut: () => void;
 }) {
+  const nav = useRef<HTMLElement>(null);
+
   useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
@@ -36,79 +40,107 @@ export function MenuOverlay({
     };
   }, [open, onClose]);
 
+  // Mask-rise the labels each time the panel opens.
+  useEffect(() => {
+    const el = nav.current;
+    if (!open || !el) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const labels = el.querySelectorAll("[data-menu-label]");
+    const tween = gsap.fromTo(
+      labels,
+      { yPercent: 110 },
+      { yPercent: 0, duration: 0.5, ease: EASE.strong, stagger: STAGGER.items, delay: 0.3 },
+    );
+    return () => {
+      tween.kill();
+      gsap.set(labels, { clearProps: "transform" });
+    };
+  }, [open]);
+
   return (
     <div
       id="menu-overlay"
       aria-hidden={!open}
       className={cn(
-        "bg-ink fixed inset-0 z-[120] flex flex-col text-cream-100 transition-[opacity,transform] duration-500 ease-[cubic-bezier(0.76,0,0.24,1)]",
+        "fixed inset-0 z-[120] flex flex-col transition-[opacity,transform] duration-500 ease-[cubic-bezier(0.76,0,0.24,1)]",
         open ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-full opacity-0",
       )}
+      style={
+        {
+          background: "var(--dark-blue)",
+          color: "var(--light-blue)",
+          // gama pair for descendants (.btn reads these)
+          "--bgcolor": "var(--dark-blue)",
+          "--color": "var(--light-blue)",
+        } as React.CSSProperties
+      }
     >
-      <div className="mx-auto flex h-16 w-full max-w-[1200px] items-center justify-between px-4 sm:px-6">
-        <Link href="/" onClick={onClose} className="font-display text-xl font-bold tracking-tight">
-          BDQ<span className="text-lavender-400">.</span>
+      <div className="flex items-center justify-between px-[var(--wrapper-padd)] py-[var(--space-lg)]">
+        <Link href="/" onClick={onClose} data-cursor className="f-exat" style={{ fontSize: "var(--h32)", lineHeight: 1 }}>
+          BDQ<span style={{ color: "var(--green)" }}>.</span>
         </Link>
         <button
           type="button"
           onClick={onClose}
           aria-label="Close menu"
-          className="grid size-11 place-items-center rounded-full border border-white/15 transition-colors hover:bg-white/10"
+          data-cursor
+          className="relative grid size-10 place-items-center"
         >
-          <X className="size-5" />
+          <span className="absolute block h-[2px] w-7 rotate-45" style={{ background: "currentColor" }} />
+          <span className="absolute block h-[2px] w-7 -rotate-45" style={{ background: "currentColor" }} />
         </button>
       </div>
 
-      <nav className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col justify-center gap-1 px-4 sm:px-6">
+      <nav ref={nav} className="wrapper flex flex-1 flex-col justify-center gap-[var(--space-md)]">
         {links.map((l, i) => (
-          <Link
-            key={l.href}
-            href={l.href}
-            onClick={onClose}
-            style={{ transitionDelay: open ? `${i * 55 + 120}ms` : "0ms" }}
-            className={cn(
-              "font-display text-4xl font-bold tracking-tight text-cream-100/90 transition-all duration-500 hover:text-lavender-400 sm:text-6xl",
-              open ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0",
-            )}
-          >
-            {l.label}
+          <Link key={l.href} href={l.href} onClick={onClose} data-cursor className="group flex w-fit items-baseline gap-[var(--space-lg)]">
+            <span className="kicker opacity-50">{String(i + 1).padStart(2, "0")}</span>
+            <span className="block overflow-hidden">
+              <span
+                data-menu-label
+                className="f-exat block transition-colors duration-300 group-hover:text-[var(--green)]"
+                style={{ fontSize: "var(--h100)", lineHeight: 1.05 }}
+              >
+                {l.label}
+              </span>
+            </span>
           </Link>
         ))}
       </nav>
 
-      <div className="mx-auto flex w-full max-w-[1200px] flex-wrap items-center justify-between gap-4 border-t border-white/10 px-4 py-6 sm:px-6">
-        <div className="flex items-center gap-4 text-sm text-cream-100/70">
+      <div className="wrapper flex flex-wrap items-center justify-between gap-[var(--space-lg)] py-[var(--space-xl)]" style={{ borderTop: "1px solid color-mix(in srgb, currentColor 25%, transparent)" }}>
+        <div className="f-paragraph-small f-bold flex items-center gap-[var(--space-xl)]">
+          <a href="https://instagram.com/bdqsocial" target="_blank" rel="noreferrer" data-cursor className="link-underline t-upper" style={{ letterSpacing: "0.12em" }}>
+            Instagram
+          </a>
           {signedIn ? (
             <>
-              <Link href="/dashboard" onClick={onClose} className="link-underline hover:text-cream-100">
+              <Link href="/dashboard" onClick={onClose} data-cursor className="link-underline t-upper" style={{ letterSpacing: "0.12em" }}>
                 My tickets
               </Link>
               <button
                 type="button"
+                data-cursor
                 onClick={() => {
                   onClose();
                   onSignOut();
                 }}
-                className="link-underline hover:text-cream-100"
+                className="link-underline t-upper"
+                style={{ letterSpacing: "0.12em" }}
               >
                 Sign out
               </button>
             </>
           ) : (
-            <Link href="/login" onClick={onClose} className="link-underline hover:text-cream-100">
+            <Link href="/login" onClick={onClose} data-cursor className="link-underline t-upper" style={{ letterSpacing: "0.12em" }}>
               Sign in
             </Link>
           )}
           <ThemeToggle />
         </div>
         <Magnetic>
-          <Link
-            href="/contact"
-            onClick={onClose}
-            data-cursor
-            className="inline-flex h-12 items-center rounded-full bg-lavender-400 px-7 font-medium text-navy-900 transition-colors hover:bg-cream-100"
-          >
-            Let&apos;s talk
+          <Link href="/contact" onClick={onClose} data-cursor className="btn">
+            <span className="btn__text">Let&apos;s talk</span>
           </Link>
         </Magnetic>
       </div>

@@ -20,8 +20,8 @@ export function BrandsCarousel({ brands }: { brands: Brand[] }) {
     >
       {brands.map((v) => (
         <SwiperSlide key={v.id}>
-          <Link href={`/vendors/${v.id}`} data-cursor className="block select-none">
-            <div className="svg svg--form2 w-full">
+          <Link href={`/vendors/${v.id}`} data-cursor="view" className="block select-none">
+            <div className="svg svg--form2 media-zoom media-tint w-full">
               {v.logo ? (
                 <Image src={v.logo} alt={v.brandName} fill className="svg__img" sizes="33vw" />
               ) : (
