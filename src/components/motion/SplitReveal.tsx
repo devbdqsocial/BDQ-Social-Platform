@@ -1,18 +1,21 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { DUR, EASE, STAGGER } from "@/lib/motion";
 
 type Props = {
   as?: "h1" | "h2" | "h3" | "p";
+  /** "lines" (default) for body/intros; "chars" for hero headlines. */
+  mode?: "lines" | "chars";
   className?: string;
   style?: React.CSSProperties;
   children: React.ReactNode;
 };
 
-// RPA masked line reveal: each line rises from behind a clip. SplitText is imported lazily INSIDE
-// the effect so it only ever loads on the client (it touches `document` at module-load, which
-// crashes SSR). SSR renders the text fully visible; reduced-motion skips the animation.
-export function SplitReveal({ as: Tag = "h2", className, style, children }: Props) {
+// RPA masked text reveal: lines (or chars) rise from behind a clip. SplitText is imported lazily
+// INSIDE the effect so it only ever loads on the client (it touches `document` at module-load,
+// which crashes SSR). SSR renders the text fully visible; reduced-motion skips the animation.
+export function SplitReveal({ as: Tag = "h2", mode = "lines", className, style, children }: Props) {
   const ref = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -21,7 +24,7 @@ export function SplitReveal({ as: Tag = "h2", className, style, children }: Prop
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     let killed = false;
-    let split: { lines: Element[]; revert: () => void } | null = null;
+    let split: { lines: Element[]; chars: Element[]; revert: () => void } | null = null;
     let st: { kill: () => void } | null = null;
 
     (async () => {
@@ -35,18 +38,24 @@ export function SplitReveal({ as: Tag = "h2", className, style, children }: Prop
       if (killed || !ref.current) return;
 
       split = new mod.SplitText(el, {
-        type: "lines",
+        type: mode === "chars" ? "chars,lines" : "lines",
         mask: "lines",
         linesClass: "split-line",
-      }) as unknown as { lines: Element[]; revert: () => void };
+      }) as unknown as { lines: Element[]; chars: Element[]; revert: () => void };
 
-      gsap.set(split.lines, { yPercent: 110 });
+      const targets = mode === "chars" ? split.chars : split.lines;
+      gsap.set(targets, { yPercent: 110 });
       st = ScrollTrigger.create({
         trigger: el,
         start: "top 88%",
         once: true,
         onEnter: () => {
-          if (split) gsap.to(split.lines, { yPercent: 0, duration: 0.7, ease: "power3.out", stagger: 0.1 });
+          gsap.to(targets, {
+            yPercent: 0,
+            duration: mode === "chars" ? DUR.micro : 0.7,
+            ease: EASE.strong,
+            stagger: mode === "chars" ? STAGGER.chars : STAGGER.lines,
+          });
         },
       });
     })();
@@ -56,7 +65,7 @@ export function SplitReveal({ as: Tag = "h2", className, style, children }: Prop
       st?.kill();
       split?.revert();
     };
-  }, []);
+  }, [mode]);
 
   return (
     <Tag ref={ref as React.Ref<HTMLHeadingElement>} className={className} style={style}>

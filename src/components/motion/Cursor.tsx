@@ -41,13 +41,22 @@ export function Cursor() {
         el.style.opacity = "1";
       }
     };
-    const isTarget = (t: EventTarget | null) =>
-      t instanceof Element && !!t.closest("a, button, [role='button'], [data-cursor]");
+    const findTarget = (t: EventTarget | null) =>
+      t instanceof Element ? t.closest("a, button, [role='button'], [data-cursor]") : null;
     const onOver = (e: MouseEvent) => {
-      if (isTarget(e.target)) el.classList.add("is-hover");
+      const t = findTarget(e.target);
+      if (!t) return;
+      el.classList.add("is-hover");
+      // data-cursor="view" (etc.) selects a sized variant in CSS.
+      const variant = t.getAttribute("data-cursor");
+      if (variant) el.dataset.state = variant;
+      else delete el.dataset.state;
     };
     const onOut = (e: MouseEvent) => {
-      if (isTarget(e.target)) el.classList.remove("is-hover");
+      if (findTarget(e.target)) {
+        el.classList.remove("is-hover");
+        delete el.dataset.state;
+      }
     };
 
     document.documentElement.classList.add("cursor-none");

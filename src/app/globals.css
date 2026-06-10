@@ -282,13 +282,15 @@
 #mouse {
   position: fixed; top: 0; left: 0; z-index: 99999999; pointer-events: none;
   width: 1.4rem; height: 1.4rem; mix-blend-mode: difference; will-change: transform;
-  transition: width .33s cubic-bezier(.34,1.56,.64,1), height .33s cubic-bezier(.34,1.56,.64,1);
+  transition: width .33s var(--ease-bounce), height .33s var(--ease-bounce);
 }
 #mouse .mouse__dot {
   width: 100%; height: 100%; border-radius: 999px; background: var(--yellow);
   transform: translate(-50%, -50%);
 }
-#mouse.is-hover { width: 1rem; height: 1rem; }
+/* Hover EXPANDS (reference behaviour); data-cursor="view" cards get the big variant. */
+#mouse.is-hover { width: 3.4rem; height: 3.4rem; }
+#mouse.is-hover[data-state="view"] { width: 4.8rem; height: 4.8rem; }
 @media (hover: none), (pointer: coarse) { #mouse { display: none; } }
 
 /* SVG clip-path "form" mask system. */
@@ -309,6 +311,24 @@
 .rpa .svg--form12 { aspect-ratio: 638/588; clip-path: url(#svg-form12); }
 .rpa .svg--form13 { aspect-ratio: 654/452; clip-path: url(#svg-form13); }
 .rpa .svg--form14 { aspect-ratio: 400/212; clip-path: url(#svg-form14); }
+
+/* Image treatments (used with the mask system above).
+   media-zoom: inner image swells on link/card hover. media-tint: subtle wash of the
+   section's bg colour so mixed photography reads as one art-directed set. */
+.rpa .media-zoom .svg__img { transition: transform .75s cubic-bezier(.22, 1, .36, 1); }
+.rpa a:hover .media-zoom .svg__img,
+.rpa .media-zoom:hover .svg__img { transform: scale(1.45); }
+.rpa .media-tint::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: var(--bgcolor); opacity: .16; mix-blend-mode: multiply;
+}
+.rpa .media-tint .svg__img { filter: saturate(.92) contrast(1.02); }
+
+/* Uppercase tracked micro-label (kicker) — replaces ad-hoc inline letter-spacing. */
+.rpa .kicker {
+  font-size: var(--paragraph-small); line-height: var(--lh-paragraph-small);
+  font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em;
+}
 
 /* Paint a section with its gama/bg color pair (opt-in; doesn't touch non-RPA sections). */
 .rpa .paint { background: var(--bgcolor); color: var(--color); }
