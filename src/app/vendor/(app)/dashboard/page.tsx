@@ -30,7 +30,7 @@ export default async function VendorDashboard() {
           <Image src={logo.url} alt="" width={56} height={56} className="size-14 rounded-xl border border-border object-cover" />
         )}
         <div>
-          <h1 className="font-display text-2xl font-semibold">{profile ? profile.brandName : "Welcome aboard"}</h1>
+          <h1 className="font-display text-3xl font-bold tracking-tight">{profile ? profile.brandName : "Welcome aboard"}</h1>
           <p className="mt-1 text-sm text-muted-foreground">Set up your brand, share a few details, then pick your spot at the market.</p>
         </div>
       </div>

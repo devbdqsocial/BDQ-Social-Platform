@@ -18,7 +18,7 @@ export default async function VendorOnboarding({ searchParams }: { searchParams:
   if (!profile) {
     return (
       <div className="max-w-xl space-y-3">
-        <h1 className="font-display text-2xl font-semibold">Let&apos;s get started</h1>
+        <h1 className="font-display text-3xl font-bold tracking-tight">Let&apos;s get started</h1>
         <p className="text-sm text-muted-foreground">We couldn&apos;t find your vendor profile. Sign up to begin.</p>
         <Button asChild><Link href="/vendor/signup?zone=vendor">Become a vendor</Link></Button>
       </div>
@@ -63,7 +63,7 @@ export default async function VendorOnboarding({ searchParams }: { searchParams:
   return (
     <div className="max-w-3xl space-y-8">
       <div>
-        <h1 className="font-display text-2xl font-semibold">Vendor onboarding</h1>
+        <h1 className="font-display text-3xl font-bold tracking-tight">Vendor onboarding</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Complete each step. Your stall is confirmed after our team verifies your details and you pay.
         </p>

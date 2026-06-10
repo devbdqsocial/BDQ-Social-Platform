@@ -19,7 +19,7 @@ export default async function VendorProfilePage() {
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <h1 className="font-display text-2xl font-semibold">Your brand</h1>
+        <h1 className="font-display text-3xl font-bold tracking-tight">Your brand</h1>
         <p className="mt-1 text-sm text-muted-foreground text-pretty">
           Tell shoppers who you are. We&apos;ll give you a quick call to verify your details before your stall is confirmed.
         </p>

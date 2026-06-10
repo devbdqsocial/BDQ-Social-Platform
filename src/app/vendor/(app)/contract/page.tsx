@@ -29,7 +29,7 @@ export default async function VendorContractPage() {
   return (
     <div className="max-w-2xl space-y-6">
       <div className="flex items-center gap-3">
-        <h1 className="font-display text-2xl font-semibold">Participation contract</h1>
+        <h1 className="font-display text-3xl font-bold tracking-tight">Participation contract</h1>
         <Badge variant={signed ? "success" : "warning"}>{signed ? "Signed" : "Not signed"}</Badge>
       </div>
 

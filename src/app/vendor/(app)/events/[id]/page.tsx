@@ -30,7 +30,7 @@ export default async function VendorEventStallsPage({ params }: { params: Promis
     <div className="space-y-4">
       <header className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-semibold">Pick your stall · {event.name}</h1>
+          <h1 className="font-display text-3xl font-bold tracking-tight">Pick your stall · {event.name}</h1>
           <p className="mt-1 text-sm text-muted-foreground text-pretty">
             Tap an open stall to reserve it. You&apos;ll sign the agreement next; we verify by call and approve you before payment.
           </p>

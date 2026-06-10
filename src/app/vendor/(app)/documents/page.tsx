@@ -38,7 +38,7 @@ export default async function VendorDocuments() {
   return (
     <div className="max-w-3xl space-y-6">
       <div>
-        <h1 className="font-display text-2xl font-semibold">Documents</h1>
+        <h1 className="font-display text-3xl font-bold tracking-tight">Documents</h1>
         <p className="mt-1 text-sm text-muted-foreground">Your agreement, receipts, event rules, and uploads — all in one place.</p>
       </div>
 

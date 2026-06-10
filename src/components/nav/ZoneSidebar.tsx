@@ -35,11 +35,20 @@ export function ZoneSidebar({
   const isActive = (href: string, i: number) =>
     i === 0 ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
 
-  const brandMark = (
-    <span className="flex items-center gap-2 font-display text-lg font-semibold text-sidebar-foreground">
-      <Icon className="size-5 text-primary" /> {brand}
-    </span>
-  );
+  // Vendor zone carries the brand wordmark (customer-facing chrome); admin stays neutral.
+  const brandMark =
+    variant === "vendor" ? (
+      <span className="flex items-baseline gap-2 text-sidebar-foreground">
+        <span className="font-display text-xl font-bold tracking-tight">
+          BDQ<span className="text-lavender-400">.</span>
+        </span>
+        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/60">{brand}</span>
+      </span>
+    ) : (
+      <span className="flex items-center gap-2 font-display text-lg font-semibold text-sidebar-foreground">
+        <Icon className="size-5 text-primary" /> {brand}
+      </span>
+    );
 
   const links = (onClick?: () => void) =>
     items.map((it, i) => (
@@ -52,6 +61,7 @@ export function ZoneSidebar({
           isActive(it.href, i)
             ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
             : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+          variant === "vendor" && isActive(it.href, i) && "border-l-2 border-lavender-400 pl-[10px]",
         )}
       >
         {it.label}

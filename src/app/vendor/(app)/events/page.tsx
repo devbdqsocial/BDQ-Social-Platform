@@ -17,7 +17,7 @@ export default async function VendorEventsPage() {
   return (
     <div className="max-w-2xl space-y-4">
       <div>
-        <h1 className="font-display text-2xl font-semibold">Pick a market</h1>
+        <h1 className="font-display text-3xl font-bold tracking-tight">Pick a market</h1>
         <p className="mt-1 text-sm text-muted-foreground">Choose an upcoming event to see the event layout and grab your stall.</p>
       </div>
       {events.length === 0 ? (

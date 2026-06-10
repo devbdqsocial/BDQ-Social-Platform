@@ -384,6 +384,17 @@
 }
 .rpa .qty-btn:hover { background: var(--color); color: var(--bgcolor); }
 
+/* Status pill in the section's accent pair. */
+.rpa .badge-rpa {
+  display: inline-flex; align-items: center; padding: 2px var(--space-md);
+  border-radius: 999px; font-size: var(--paragraph-small); font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  background: var(--color); color: var(--bgcolor);
+}
+.rpa .badge-rpa--muted {
+  background: color-mix(in srgb, currentColor 14%, transparent); color: inherit; opacity: .75;
+}
+
 /* Arrow link. */
 .rpa .link--split { display: inline-flex; align-items: center; gap: 0.25em; overflow: hidden; }
 .rpa .link--split .arrow { width: 1em; transition: transform .5s cubic-bezier(.25,1,.5,1); }

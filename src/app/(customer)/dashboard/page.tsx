@@ -1,12 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Ticket } from "lucide-react";
 import { getSession } from "@/server/auth/guard";
 import { listUserTickets } from "@/server/tickets/service";
 import { toQrDataUrl } from "@/lib/qr-token";
-import { Button } from "@/components/ui/button";
-import { EmptyState } from "@/components/ui/empty-state";
 
 export const metadata: Metadata = { title: "Dashboard" };
 export const dynamic = "force-dynamic";
@@ -24,22 +21,22 @@ export default async function CustomerDashboardPage() {
   return (
     <section className="paint py-[var(--space-5xl)]">
       <div className="wrapper max-w-[62rem]">
-        <span className="f-paragraph-small f-bold t-upper opacity-50" style={{ letterSpacing: "0.18em" }}>Your wallet</span>
+        <span className="kicker opacity-50">Your wallet</span>
         <h1 className="f-exat mt-[var(--space-sm)]" style={{ fontSize: "var(--h76)", lineHeight: 1.0 }}>Tickets</h1>
         <p className="f-paragraph mt-[var(--space-sm)] opacity-70">Show the QR code at the gate — that&apos;s your way in.</p>
 
         {withQr.length === 0 ? (
-          <EmptyState
-            icon={Ticket}
-            className="mt-10"
-            title="No tickets yet"
-            description="Just paid? Your tickets land here the moment payment is confirmed."
-            action={
-              <Button asChild>
-                <Link href="/events">Find an event</Link>
-              </Button>
-            }
-          />
+          <div className="mt-[var(--space-3xl)] p-[var(--space-2xl)] text-center" style={{ border: "1px dashed var(--color)" }}>
+            <p className="f-exat" style={{ fontSize: "var(--h42)", lineHeight: 1.05 }}>No tickets yet</p>
+            <p className="f-paragraph-small mt-[var(--space-sm)] opacity-70">
+              Just paid? Your tickets land here the moment payment is confirmed.
+            </p>
+            <div className="mt-[var(--space-lg)] flex justify-center">
+              <Link href="/events" className="btn" data-cursor>
+                <span className="btn__text">Find an event</span>
+              </Link>
+            </div>
+          </div>
         ) : (
           <div className="mt-[var(--space-3xl)] grid gap-[var(--space-lg)]">
             {withQr.map(({ t, qr }) => {
@@ -55,14 +52,7 @@ export default async function CustomerDashboardPage() {
                       {t.ticketType.name} · {fmt(t.order.event.startsAt)}
                     </p>
                     <div className="mt-[var(--space-md)] flex items-center gap-[var(--space-md)]">
-                      <span
-                        className="f-paragraph-small f-bold inline-flex items-center rounded-full px-[var(--space-md)] py-[2px] t-upper"
-                        style={
-                          used
-                            ? { background: "rgba(255,255,255,0.12)", opacity: 0.7, letterSpacing: "0.1em" }
-                            : { background: "var(--color)", color: "var(--bgcolor)", letterSpacing: "0.1em" }
-                        }
-                      >
+                      <span className={used ? "badge-rpa badge-rpa--muted" : "badge-rpa"}>
                         {used ? "Checked in" : "Valid"}
                       </span>
                       <span className="f-paragraph-small opacity-50">#{t.id.slice(0, 8)}</span>

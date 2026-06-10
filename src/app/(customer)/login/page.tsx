@@ -14,9 +14,9 @@ export default function CustomerLoginPage() {
       </div>
 
       {/* right — the phone-OTP form on cream */}
-      <div className="flex items-center justify-center p-[var(--space-2xl)]" style={{ background: "#F4F2EC", color: "#14141A" }}>
+      <div className="paint flex items-center justify-center p-[var(--space-2xl)]">
         <div className="w-full max-w-md">
-          <span className="f-paragraph-small f-bold t-upper opacity-50" style={{ letterSpacing: "0.18em" }}>Sign in</span>
+          <span className="kicker opacity-50">Sign in</span>
           <h2 className="f-exat mt-[var(--space-sm)] lg:hidden" style={{ fontSize: "var(--h60)", lineHeight: 1.0 }}>Welcome in</h2>
           <p className="f-paragraph mt-[var(--space-md)] opacity-70">
             Sign in with your phone number to book tickets and find them again later.

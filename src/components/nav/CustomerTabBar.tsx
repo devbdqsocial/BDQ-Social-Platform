@@ -17,7 +17,7 @@ export function CustomerTabBar() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur sm:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-navy-500/95 backdrop-blur sm:hidden">
       <div className="mx-auto flex max-w-md items-stretch justify-around">
         {TABS.map((t) => {
           const active = t.exact ? pathname === t.href : pathname === t.href || pathname.startsWith(`${t.href}/`);
@@ -28,7 +28,7 @@ export function CustomerTabBar() {
               href={t.href}
               className={cn(
                 "flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition-colors",
-                active ? "text-primary" : "text-muted-foreground hover:text-foreground",
+                active ? "text-lavender-400" : "text-cream-100/60 hover:text-cream-100",
               )}
             >
               <Icon className="size-5" />
