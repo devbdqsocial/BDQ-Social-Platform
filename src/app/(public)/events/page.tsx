@@ -20,7 +20,7 @@ export default async function EventsPage() {
     <>
       <section className="gama-3 bg-1 paint flex min-h-[60svh] items-end py-[var(--space-5xl)]">
         <div className="wrapper">
-          <span className="f-paragraph-small f-bold t-upper" style={{ letterSpacing: "0.18em" }}>What&apos;s on</span>
+          <span className="kicker">What&apos;s on</span>
           <SplitReveal as="h1" className="f-exat mt-[var(--space-md)]" style={{ fontSize: "var(--h133)", lineHeight: 1.0 }}>
             Events &amp; tickets
           </SplitReveal>
@@ -47,12 +47,12 @@ export default async function EventsPage() {
                   <Link
                     key={e.id}
                     href={`/events/${e.slug}`}
-                    data-cursor
-                    className="flex flex-col gap-[var(--space-sm)] py-[var(--space-2xl)] sm:flex-row sm:items-end sm:justify-between"
+                    data-cursor="view"
+                    className="group flex flex-col gap-[var(--space-sm)] py-[var(--space-2xl)] transition-transform duration-300 sm:flex-row sm:items-end sm:justify-between lg:hover:translate-x-[var(--space-md)]"
                     style={{ borderTop: "1px solid var(--color)" }}
                   >
                     <div>
-                      <h2 className="f-exat" style={{ fontSize: "var(--h76)", lineHeight: 1.05 }}>{e.name}</h2>
+                      <h2 className="f-exat transition-opacity duration-300 group-hover:opacity-70" style={{ fontSize: "var(--h76)", lineHeight: 1.05 }}>{e.name}</h2>
                       <p className="f-paragraph mt-[var(--space-sm)] opacity-80">
                         {fmt(e.startsAt)}{e.location ? ` · ${e.location}` : ""}
                       </p>

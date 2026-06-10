@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { formatPaise } from "@/lib/utils";
 import { openCheckout } from "@/lib/razorpay-checkout";
 
@@ -56,31 +55,37 @@ export function TicketCheckout({ eventId, ticketTypes }: { eventId: string; tick
   };
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-      <ul className="divide-y divide-border">
-        {ticketTypes.map((t) => (
-          <li key={t.id} className="flex items-center justify-between gap-4 py-3.5">
+    <div className="p-[var(--space-xl)]" style={{ border: "1px solid var(--color)" }}>
+      <ul>
+        {ticketTypes.map((t, i) => (
+          <li
+            key={t.id}
+            className="flex items-center justify-between gap-[var(--space-lg)] py-[var(--space-lg)]"
+            style={i > 0 ? { borderTop: "1px solid color-mix(in srgb, currentColor 30%, transparent)" } : undefined}
+          >
             <div>
-              <p className="font-medium">{t.name}</p>
-              <p className="text-sm text-muted-foreground">{formatPaise(t.priceInPaise)}</p>
+              <p className="f-paragraph f-bold">{t.name}</p>
+              <p className="f-paragraph-small opacity-70">{formatPaise(t.priceInPaise)}</p>
             </div>
-            <div className="flex items-center gap-2">
-              <Button type="button" variant="outline" size="icon-sm" onClick={() => setQ(t.id, (qty[t.id] ?? 0) - 1)}>−</Button>
-              <span className="w-6 text-center text-sm font-medium">{qty[t.id] ?? 0}</span>
-              <Button type="button" variant="outline" size="icon-sm" onClick={() => setQ(t.id, (qty[t.id] ?? 0) + 1)}>+</Button>
+            <div className="flex items-center gap-[var(--space-md)]">
+              <button type="button" aria-label={`Fewer ${t.name}`} data-cursor className="qty-btn" onClick={() => setQ(t.id, (qty[t.id] ?? 0) - 1)}>−</button>
+              <span className="f-exat w-[2ch] text-center" style={{ fontSize: "var(--h32)", lineHeight: 1 }}>{qty[t.id] ?? 0}</span>
+              <button type="button" aria-label={`More ${t.name}`} data-cursor className="qty-btn" onClick={() => setQ(t.id, (qty[t.id] ?? 0) + 1)}>+</button>
             </div>
           </li>
         ))}
       </ul>
-      <div className="mt-5 flex items-center justify-between border-t border-border pt-4">
+      <div className="mt-[var(--space-lg)] flex flex-wrap items-end justify-between gap-[var(--space-lg)] pt-[var(--space-lg)]" style={{ borderTop: "1px solid var(--color)" }}>
         <div>
-          <p className="font-display text-xl font-semibold">{formatPaise(total)}</p>
-          <p className="text-xs text-muted-foreground">{count} ticket{count === 1 ? "" : "s"}</p>
+          <p className="f-exat" style={{ fontSize: "var(--h60)", lineHeight: 1 }}>{formatPaise(total)}</p>
+          <p className="kicker mt-[var(--space-xs)] opacity-70">{count} ticket{count === 1 ? "" : "s"}</p>
         </div>
-        <Button className="h-11 px-6" disabled={!count || busy} onClick={buy}>{busy ? "Starting…" : "Buy tickets"}</Button>
+        <button type="button" className="btn" data-cursor disabled={!count || busy} onClick={buy}>
+          <span className="btn__text">{busy ? "Starting…" : "Buy tickets"}</span>
+        </button>
       </div>
-      {err && <p role="alert" className="mt-2 text-sm text-destructive">{err}</p>}
-      <p className="mt-3 text-xs text-muted-foreground">
+      {err && <p role="alert" className="f-paragraph-small f-bold mt-[var(--space-md)]" style={{ color: "var(--red)" }}>{err}</p>}
+      <p className="f-paragraph-small mt-[var(--space-md)] opacity-60">
         Buying 6 or more? Bulk savings apply automatically. Coupons too. Secure payment via Razorpay.
       </p>
     </div>

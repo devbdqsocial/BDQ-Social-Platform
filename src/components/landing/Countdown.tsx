@@ -15,7 +15,7 @@ export function Countdown({ target }: { target: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [target]);
 
-  if (t.done) return <p className="text-sm text-lavender-300">Happening now</p>;
+  if (t.done) return <p className="kicker">Happening now</p>;
 
   const cells: [number, string][] = [
     [t.days, "days"],
@@ -25,11 +25,15 @@ export function Countdown({ target }: { target: string }) {
   ];
 
   return (
-    <div className="flex gap-3" suppressHydrationWarning>
+    <div className="flex gap-[var(--space-md)]" suppressHydrationWarning>
       {cells.map(([v, label]) => (
-        <div key={label} className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-center">
-          <div className="font-display text-2xl font-bold text-lavender-300">{pad(v)}</div>
-          <div className="text-[10px] uppercase tracking-wider text-cream-100/60">{label}</div>
+        <div
+          key={label}
+          className="px-[var(--space-md)] py-[var(--space-sm)] text-center"
+          style={{ border: "1px solid color-mix(in srgb, currentColor 35%, transparent)" }}
+        >
+          <div className="f-exat tabular-nums" style={{ fontSize: "var(--h42)", lineHeight: 1 }}>{pad(v)}</div>
+          <div className="kicker mt-[var(--space-xs)] opacity-60">{label}</div>
         </div>
       ))}
     </div>

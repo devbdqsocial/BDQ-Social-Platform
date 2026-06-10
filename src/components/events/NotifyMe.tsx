@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 /** Sold-out "notify me" capture → POST /api/waitlist. */
 export function NotifyMe({ eventId }: { eventId: string }) {
@@ -25,20 +23,30 @@ export function NotifyMe({ eventId }: { eventId: string }) {
     }
   };
 
-  if (state === "done") return <p className="text-sm font-medium text-success">You&apos;re on the list — we&apos;ll email you the moment tickets open.</p>;
+  if (state === "done") {
+    return <p className="f-paragraph-small f-bold">You&apos;re on the list — we&apos;ll email you the moment tickets open.</p>;
+  }
 
   return (
-    <form onSubmit={submit} className="flex flex-wrap gap-2">
-      <Input
+    <form onSubmit={submit} className="flex flex-wrap items-end gap-[var(--space-lg)]">
+      <input
         type="email"
         value={contact}
         onChange={(e) => setContact(e.target.value)}
         placeholder="you@email.com"
         required
-        className="min-w-48 flex-1"
+        aria-label="Email address"
+        className="f-paragraph min-w-[16rem] flex-1 bg-transparent pb-[var(--space-sm)] outline-none placeholder:opacity-50"
+        style={{ borderBottom: "1px solid var(--color)", color: "var(--color)" }}
       />
-      <Button type="submit" disabled={state === "busy"}>{state === "busy" ? "Adding…" : "Notify me"}</Button>
-      {state === "error" && <p className="w-full text-sm text-destructive">Something went wrong — try again.</p>}
+      <button type="submit" className="btn" data-cursor disabled={state === "busy"}>
+        <span className="btn__text">{state === "busy" ? "Adding…" : "Notify me"}</span>
+      </button>
+      {state === "error" && (
+        <p role="alert" className="f-paragraph-small f-bold w-full" style={{ color: "var(--red)" }}>
+          Something went wrong — try again.
+        </p>
+      )}
     </form>
   );
 }

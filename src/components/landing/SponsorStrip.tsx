@@ -18,17 +18,21 @@ export function SponsorStrip({ sponsors, className }: { sponsors: Sponsor[]; cla
 
   return (
     <div className={className}>
-      <p className="text-center text-xs font-medium uppercase tracking-[0.15em] text-muted-foreground">Our partners</p>
-      <div className="mt-6 space-y-6">
+      <p className="kicker text-center opacity-70">Our partners</p>
+      <div className="mt-[var(--space-xl)] space-y-[var(--space-xl)]">
         {tiers.map((tier) => (
           <div key={tier}>
-            <p className="text-center text-[11px] uppercase tracking-wide text-muted-foreground/70">{TIER_LABEL[tier] ?? "Partners"}</p>
-            <div className="mt-3 flex flex-wrap items-center justify-center gap-4">
+            <p className="kicker text-center opacity-50">{TIER_LABEL[tier] ?? "Partners"}</p>
+            <div className="mt-[var(--space-md)] flex flex-wrap items-center justify-center gap-[var(--space-lg)]">
               {sponsors.filter((s) => s.tier === tier).map((s) =>
                 s.logoUrl ? (
-                  <Image key={s.id} src={s.logoUrl} alt={s.name} title={s.name} width={160} height={64} className={`${tier === "TITLE" ? "h-16" : "h-10"} w-auto rounded-lg object-contain`} />
+                  <Image key={s.id} src={s.logoUrl} alt={s.name} title={s.name} width={160} height={64} className={`${tier === "TITLE" ? "h-16" : "h-10"} w-auto object-contain`} />
                 ) : (
-                  <span key={s.id} className={`rounded-lg border border-border bg-card px-4 py-2 font-display font-semibold ${tier === "TITLE" ? "text-lg" : "text-sm"}`}>
+                  <span
+                    key={s.id}
+                    className="f-exat px-[var(--space-lg)] py-[var(--space-sm)]"
+                    style={{ border: "1px solid currentColor", fontSize: tier === "TITLE" ? "var(--h42)" : "var(--h32)", lineHeight: 1.1 }}
+                  >
                     {s.name}
                   </span>
                 ),

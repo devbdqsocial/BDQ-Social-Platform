@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Clock } from "lucide-react";
 import { getBySlug } from "@/server/events/service";
 import { sponsorsForEvent } from "@/server/sponsors/service";
 import { fmtDateFull, fmtTime, fmtDayLabel } from "@/lib/date-formats";
@@ -50,9 +49,9 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
       <section className="gama-1 bg-1 paint flex min-h-[65svh] items-end py-[var(--space-5xl)]">
         <div className="wrapper">
           <h1 className="f-exat" style={{ fontSize: "var(--h133)", lineHeight: 0.95 }}>{event.name}</h1>
-          <div className="f-paragraph-small f-bold mt-[var(--space-lg)] flex flex-wrap gap-[var(--space-lg)] t-upper" style={{ letterSpacing: "0.12em" }}>
-            <span>{fmt(event.startsAt)}</span>
-            {event.location && <span>{event.location}</span>}
+          <div className="mt-[var(--space-lg)] flex flex-wrap gap-[var(--space-lg)]">
+            <span className="kicker">{fmt(event.startsAt)}</span>
+            {event.location && <span className="kicker">{event.location}</span>}
           </div>
           {event.description && (
             <p className="f-paragraph mt-[var(--space-lg)] max-w-[52ch] opacity-80">{event.description}</p>
@@ -64,14 +63,14 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
         <div className="wrapper max-w-[62rem]">
           <h2 className="f-exat mb-[var(--space-lg)]" style={{ fontSize: "var(--h42)" }}>Get your tickets</h2>
           {event.ticketTypes.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-border bg-card/50 p-6 text-center text-muted-foreground">
+            <p className="f-paragraph p-[var(--space-xl)] text-center opacity-70" style={{ border: "1px dashed var(--color)" }}>
               Ticket sales open soon — check back shortly.
             </p>
           ) : soldOut ? (
-            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-              <p className="font-display text-lg font-semibold">Sold out</p>
-              <p className="mt-1 text-sm text-muted-foreground">Leave your email and we&apos;ll tell you the moment more tickets open up.</p>
-              <div className="mt-4"><NotifyMe eventId={event.id} /></div>
+            <div className="p-[var(--space-xl)]" style={{ border: "1px solid var(--color)" }}>
+              <p className="f-exat" style={{ fontSize: "var(--h42)", lineHeight: 1.05 }}>Sold out</p>
+              <p className="f-paragraph-small mt-[var(--space-sm)] opacity-70">Leave your email and we&apos;ll tell you the moment more tickets open up.</p>
+              <div className="mt-[var(--space-lg)]"><NotifyMe eventId={event.id} /></div>
             </div>
           ) : (
             <TicketCheckout
@@ -91,17 +90,21 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
                   }, {}),
                 ).map(([day, items]) => (
                   <div key={day}>
-                    <h3 className="mb-2.5 text-sm font-semibold uppercase tracking-wide text-muted-foreground">{day}</h3>
-                    <ul className="space-y-2.5">
+                    <h3 className="kicker mb-[var(--space-md)] opacity-70">{day}</h3>
+                    <ul>
                       {items.map((s) => (
-                        <li key={s.id} className="flex items-start gap-4 rounded-xl border border-border bg-card p-4 shadow-sm">
-                          <span className="flex shrink-0 items-center gap-1.5 text-sm font-medium text-primary">
-                            <Clock className="size-4" /> {time(s.startsAt)}{s.endsAt ? `–${time(s.endsAt)}` : ""}
+                        <li
+                          key={s.id}
+                          className="flex items-baseline gap-[var(--space-xl)] py-[var(--space-md)]"
+                          style={{ borderTop: "1px solid color-mix(in srgb, currentColor 30%, transparent)" }}
+                        >
+                          <span className="f-paragraph-small f-bold w-[9ch] shrink-0 tabular-nums">
+                            {time(s.startsAt)}{s.endsAt ? `–${time(s.endsAt)}` : ""}
                           </span>
-                          <span className="text-sm">
+                          <span className="f-paragraph">
                             {s.title}
-                            {s.stageOrZone ? <span className="text-muted-foreground"> · {s.stageOrZone}</span> : ""}
-                            {s.performer ? <span className="text-muted-foreground"> · {s.performer}</span> : ""}
+                            {s.stageOrZone ? <span className="opacity-60"> · {s.stageOrZone}</span> : ""}
+                            {s.performer ? <span className="opacity-60"> · {s.performer}</span> : ""}
                           </span>
                         </li>
                       ))}
@@ -115,7 +118,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
           {mapStalls.length > 0 && (
             <div className="mt-[var(--space-4xl)]">
               <h2 className="f-exat" style={{ fontSize: "var(--h42)" }}>Event layout</h2>
-              <p className="mt-1 mb-4 text-sm text-muted-foreground">
+              <p className="f-paragraph-small mb-[var(--space-lg)] mt-[var(--space-xs)] opacity-70">
                 Selling at the market? Browse live availability and tap an open stall to hold it.
               </p>
               <BookingFloorPlan stalls={mapStalls} canvas={mapCanvas} />
