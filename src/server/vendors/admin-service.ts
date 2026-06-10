@@ -200,6 +200,56 @@ export function approveVendor(session: Session, vendorProfileId: string, stallId
   );
 }
 
+/**
+ * Self-serve approve-before-pay: confirm the vendor's RESERVED stall and open it for payment
+ * (Booking → PENDING_PAYMENT + payBy). The stall is BOOKED only once the vendor pays. Contract
+ * must be SIGNED (locked rule: approval follows a team call-back + signed agreement).
+ */
+export function approveForPayment(session: Session, vendorProfileId: string, payByHours = 48) {
+  return withAudit(session, { action: "APPROVE", entity: "VendorProfile", entityId: vendorProfileId }, async () => {
+    const before = await db.vendorProfile.findUnique({ where: { id: vendorProfileId }, select: { approvalStatus: true } });
+    return {
+      before,
+      run: async () => {
+        const contract = await db.vendorContract.findUnique({ where: { vendorProfileId }, select: { status: true } });
+        if (contract?.status !== "SIGNED") throw new ContractNotSignedError();
+        const booking = await db.booking.findFirst({
+          where: { vendorProfileId, status: "RESERVED" },
+          orderBy: { createdAt: "desc" },
+        });
+        if (!booking) throw new Error("No reserved stall to approve");
+        const payBy = new Date(Date.now() + payByHours * 3600 * 1000);
+        const updated = await db.$transaction(async (tx) => {
+          const b = await tx.booking.update({ where: { id: booking.id }, data: { status: "PENDING_PAYMENT", payBy } });
+          await tx.vendorProfile.update({
+            where: { id: vendorProfileId },
+            data: { approvalStatus: "APPROVED", verifiedCallById: session.userId, verifiedAt: new Date() },
+          });
+          return b;
+        });
+        return { result: updated, after: { approvalStatus: "APPROVED", bookingId: updated.id, payBy } };
+      },
+    };
+  });
+}
+
+/** Record a verification call-back (note + timestamp) and move the application to UNDER_REVIEW. */
+export function logCallback(session: Session, id: string, note: string) {
+  return withAudit(session, { action: "UPDATE", entity: "VendorProfile", entityId: id }, async () => {
+    const before = await db.vendorProfile.findUnique({ where: { id }, select: { callbackNote: true, callbackAt: true } });
+    return {
+      before,
+      run: async () => {
+        const v = await db.vendorProfile.update({
+          where: { id },
+          data: { callbackNote: note || null, callbackAt: new Date(), approvalStatus: "UNDER_REVIEW" },
+        });
+        return { result: v, after: { callbackAt: v.callbackAt, approvalStatus: v.approvalStatus } };
+      },
+    };
+  });
+}
+
 export function rejectVendor(session: Session, id: string) {
   return withAudit(session, { action: "REJECT", entity: "VendorProfile", entityId: id }, async () => {
     const before = await db.vendorProfile.findUnique({ where: { id }, select: { approvalStatus: true } });

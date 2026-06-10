@@ -29,6 +29,30 @@ export interface UploadSignature {
   uploadUrl: string;
 }
 
+/** Server-side raw upload (e.g. a generated contract PDF buffer) → returns the secure URL. */
+export async function uploadPdfBuffer(
+  buffer: Buffer,
+  folder: string,
+  publicId: string,
+): Promise<{ url: string; publicId: string }> {
+  if (!configured()) throw new Error("Cloudinary not configured");
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
+    api_key: process.env.CLOUDINARY_API_KEY!,
+    api_secret: process.env.CLOUDINARY_API_SECRET!,
+    secure: true,
+  });
+  const dataUri = `data:application/pdf;base64,${buffer.toString("base64")}`;
+  const res = await cloudinary.uploader.upload(dataUri, {
+    folder,
+    public_id: publicId,
+    resource_type: "raw",
+    format: "pdf",
+    overwrite: true,
+  });
+  return { url: res.secure_url, publicId: res.public_id };
+}
+
 export function signUpload(folder: string): UploadSignature {
   if (!configured()) throw new Error("Cloudinary not configured");
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME!;

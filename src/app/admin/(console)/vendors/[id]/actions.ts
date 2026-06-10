@@ -6,6 +6,8 @@ import {
   ContractNotSignedError,
   StallAlreadyBookedError,
   approveVendor,
+  approveForPayment,
+  logCallback,
   assignStallByAdmin,
   rejectVendor,
   setUnderReview,
@@ -49,6 +51,27 @@ export async function assignStallAction(formData: FormData): Promise<void> {
     if (e instanceof StallAlreadyBookedError) throw new Error("That stall is already booked.");
     throw e;
   }
+  revalidate(id);
+}
+
+/** Approve-before-pay: confirm the reserved stall and open it for vendor payment. */
+export async function approveForPaymentAction(formData: FormData): Promise<void> {
+  const session = await requirePermission("VENDOR_MANAGE");
+  const id = String(formData.get("id"));
+  try {
+    await approveForPayment(session, id);
+  } catch (e) {
+    if (e instanceof ContractNotSignedError) throw new Error("This vendor hasn't signed the agreement yet.");
+    throw e;
+  }
+  revalidate(id);
+}
+
+export async function logCallbackAction(formData: FormData): Promise<void> {
+  const session = await requirePermission("VENDOR_MANAGE");
+  const id = String(formData.get("id"));
+  const note = String(formData.get("note") ?? "");
+  await logCallback(session, id, note);
   revalidate(id);
 }
 

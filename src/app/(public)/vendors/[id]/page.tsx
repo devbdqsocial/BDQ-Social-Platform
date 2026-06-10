@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getApprovedVendor } from "@/server/vendors/service";
 import { primaryLogo, productImages } from "@/lib/vendor-assets";
+import { Reveal } from "@/components/motion/Reveal";
 
 export const dynamic = "force-dynamic";
 
@@ -23,49 +24,76 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
   const socials = (v.socials as { instagram?: string } | null) ?? null;
 
   return (
-    <main className="mx-auto max-w-[900px] px-4 py-12">
-      <Link href="/vendors" className="text-sm text-muted-foreground hover:text-foreground">← All brands</Link>
-
-      <header className="mt-4 flex items-center gap-5">
-        {logo && (
-          <Image src={logo} alt={v.brandName} width={96} height={96} className="size-24 rounded-xl border border-border object-cover" />
-        )}
-        <div>
-          <h1 className="font-display text-3xl font-semibold">{v.brandName}</h1>
-          {v.category && <p className="text-muted-foreground">{v.category}</p>}
+    <>
+      <section className="gama-1 bg-1 paint flex min-h-[85svh] items-end py-[var(--space-5xl)]">
+        <div className="wrapper w-full">
+          <Link href="/vendors" data-cursor className="f-paragraph-small f-bold t-upper" style={{ letterSpacing: "0.14em" }}>
+            ← All brands
+          </Link>
+          <div className="mt-[var(--space-2xl)] grid items-end gap-[var(--space-3xl)] lg:grid-cols-2">
+            <div>
+              {v.category && (
+                <span className="f-paragraph-small f-bold t-upper" style={{ letterSpacing: "0.18em" }}>{v.category}</span>
+              )}
+              <h1 className="f-exat mt-[var(--space-sm)]" style={{ fontSize: "var(--h133)", lineHeight: 0.95 }}>
+                {v.brandName}
+              </h1>
+              {v.description && (
+                <p className="f-paragraph mt-[var(--space-lg)] max-w-[48ch] opacity-80">{v.description}</p>
+              )}
+              <div className="f-paragraph-small f-bold mt-[var(--space-lg)] flex gap-[var(--space-lg)]">
+                {v.website && (
+                  <a href={v.website} target="_blank" rel="noreferrer" data-cursor className="underline">Website</a>
+                )}
+                {socials?.instagram && (
+                  <a
+                    href={`https://instagram.com/${socials.instagram.replace(/^@/, "")}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    data-cursor
+                    className="underline"
+                  >
+                    {socials.instagram}
+                  </a>
+                )}
+              </div>
+            </div>
+            {logo && (
+              <div className="svg svg--form11 mx-auto w-[80%] lg:ml-auto lg:mr-0">
+                <Image src={logo} alt={v.brandName} fill className="svg__img" sizes="40vw" priority />
+              </div>
+            )}
+          </div>
         </div>
-      </header>
-
-      {v.description && <p className="mt-6 text-lg leading-relaxed">{v.description}</p>}
-
-      <div className="mt-4 flex gap-4 text-sm">
-        {v.website && (
-          <a href={v.website} target="_blank" rel="noreferrer" className="text-primary underline">Website</a>
-        )}
-        {socials?.instagram && (
-          <a
-            href={`https://instagram.com/${socials.instagram.replace(/^@/, "")}`}
-            target="_blank"
-            rel="noreferrer"
-            className="text-primary underline"
-          >
-            {socials.instagram}
-          </a>
-        )}
-      </div>
+      </section>
 
       {products.length > 0 && (
-        <section className="mt-10">
-          <h2 className="font-display text-2xl font-semibold">Products</h2>
-          <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
-            {products.map((src, i) => (
-              <div key={i} className="relative aspect-square w-full overflow-hidden rounded-lg border border-border">
-                <Image src={src} alt="" fill className="object-cover" sizes="(max-width:640px) 50vw, 33vw" />
-              </div>
-            ))}
+        <section className="paint py-[var(--space-5xl)]">
+          <div className="wrapper">
+            <h2 className="f-exat" style={{ fontSize: "var(--h60)", lineHeight: 1.05 }}>The goods</h2>
+            <Reveal stagger className="mt-[var(--space-3xl)] grid grid-cols-2 gap-[var(--grid-gap)] sm:grid-cols-3">
+              {products.map((src, i) => (
+                <div key={i} className="svg svg--form2 w-full">
+                  <Image src={src} alt="" fill className="svg__img" sizes="33vw" />
+                </div>
+              ))}
+            </Reveal>
           </div>
         </section>
       )}
-    </main>
+
+      <section className="gama-3 bg-3 paint flex min-h-[60svh] items-center py-[var(--space-5xl)]">
+        <div className="wrapper text-center">
+          <h2 className="f-exat mx-auto max-w-[18ch]" style={{ fontSize: "var(--h100)", lineHeight: 1.0 }}>
+            Find {v.brandName} at the market.
+          </h2>
+          <div className="mt-[var(--space-2xl)] flex justify-center">
+            <Link href="/events" className="btn" data-cursor style={{ width: "8.5rem" }}>
+              <span className="btn__text">Get tickets</span>
+            </Link>
+          </div>
+        </div>
+      </section>
+    </>
   );
 }

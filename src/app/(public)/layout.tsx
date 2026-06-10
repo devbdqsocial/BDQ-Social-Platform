@@ -1,54 +1,60 @@
 import Link from "next/link";
 import { PublicHeader } from "@/components/nav/PublicHeader";
 import { CustomerTabBar } from "@/components/nav/CustomerTabBar";
+import { MotionProviders } from "@/components/motion/MotionProviders";
 import { getSession } from "@/server/auth/guard";
 
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
   return (
-    <div className="flex min-h-dvh flex-col">
+    <div className="rpa flex min-h-dvh flex-col">
+      <MotionProviders />
       <PublicHeader signedIn={!!session} />
 
       {/* pb gives room for the mobile tab bar */}
       <div id="main" className="flex-1 pb-16 sm:pb-0">{children}</div>
 
-      <footer className="border-t border-border bg-card">
-        <div className="mx-auto flex max-w-[1200px] flex-col gap-8 px-4 py-12 sm:flex-row sm:items-start sm:justify-between sm:px-6">
-          <div>
-            <p className="font-display text-lg font-semibold">
-              Event <span className="text-primary">Portal</span>
-            </p>
-            <p className="mt-1 max-w-xs text-sm text-muted-foreground">
+      <footer className="gama-1 bg-1 paint relative flex min-h-[100svh] flex-col justify-between overflow-hidden">
+        {/* top: brand blurb + nav columns */}
+        <div className="wrapper flex flex-col gap-[var(--space-2xl)] pt-[var(--space-4xl)] sm:flex-row sm:justify-between">
+          <div className="max-w-[40ch]">
+            <p className="f-exat" style={{ fontSize: "var(--h42)", lineHeight: 1.1 }}>BDQ Social</p>
+            <p className="f-paragraph-small mt-[var(--space-md)] opacity-80">
               Vadodara&apos;s premium curated festival &amp; night market. Good people, great finds,
               unforgettable evenings.
             </p>
           </div>
-          <nav className="flex flex-col gap-2 text-sm text-muted-foreground">
-            <p className="font-medium text-foreground">Explore</p>
-            <Link href="/events" className="hover:text-foreground">Events &amp; tickets</Link>
-            <Link href="/vendors" className="hover:text-foreground">Meet the brands</Link>
-            <Link href="/map" className="hover:text-foreground">Event layout</Link>
-          </nav>
-          <nav className="flex flex-col gap-2 text-sm text-muted-foreground">
-            <p className="font-medium text-foreground">For partners</p>
-            <Link href="/vendor/login" className="hover:text-foreground">Sell with us</Link>
-            <Link href="/login" className="hover:text-foreground">Sign in</Link>
-            <Link href="/about" className="hover:text-foreground">About us</Link>
-            <Link href="/contact" className="hover:text-foreground">Contact</Link>
-          </nav>
-          <nav className="flex flex-col gap-2 text-sm text-muted-foreground">
-            <p className="font-medium text-foreground">Legal</p>
-            <Link href="/privacy" className="hover:text-foreground">Privacy policy</Link>
-            <Link href="/terms" className="hover:text-foreground">Terms &amp; conditions</Link>
-            <Link href="/refunds" className="hover:text-foreground">Cancellation &amp; refunds</Link>
-            <Link href="/shipping" className="hover:text-foreground">Shipping &amp; delivery</Link>
-            <Link href="/vendor-terms" className="hover:text-foreground">Vendor terms</Link>
-          </nav>
-        </div>
-        <div className="border-t border-border">
-          <div className="mx-auto max-w-[1200px] px-4 py-4 text-xs text-muted-foreground sm:px-6">
-            All sales are final · © {new Date().getFullYear()} Event Portal
+          <div className="flex flex-wrap gap-[var(--space-3xl)]">
+            {[
+              ["Explore", [["Events & tickets", "/events"], ["Meet the brands", "/vendors"], ["Event layout", "/map"]]],
+              ["Partners", [["Sell with us", "/vendor/login"], ["Sign in", "/login"], ["About us", "/about"], ["Contact", "/contact"]]],
+              ["Legal", [["Privacy", "/privacy"], ["Terms", "/terms"], ["Refunds", "/refunds"], ["Shipping", "/shipping"], ["Vendor terms", "/vendor-terms"]]],
+            ].map(([heading, items]) => (
+              <nav key={heading as string} className="f-paragraph-small f-bold flex flex-col gap-[var(--space-sm)]">
+                <span className="t-upper opacity-50" style={{ letterSpacing: "0.16em" }}>{heading as string}</span>
+                {(items as [string, string][]).map(([label, href]) => (
+                  <Link key={href} href={href} data-cursor className="opacity-80 transition-opacity hover:opacity-100">
+                    {label}
+                  </Link>
+                ))}
+              </nav>
+            ))}
           </div>
+        </div>
+
+        {/* giant Let's talk */}
+        <div className="wrapper py-[var(--space-2xl)]">
+          <Link href="/contact" data-cursor className="f-exat block w-fit" style={{ fontSize: "var(--h235)", lineHeight: 0.9 }}>
+            Let&apos;s talk
+          </Link>
+        </div>
+
+        {/* bottom: legal + lang */}
+        <div className="wrapper flex items-end justify-between pb-[var(--space-lg)]">
+          <span className="f-paragraph-small opacity-60">
+            All sales are final · © {new Date().getFullYear()} BDQ Social
+          </span>
+          <span className="f-paragraph-small f-bold t-upper" style={{ letterSpacing: "0.14em" }}>EN</span>
         </div>
       </footer>
 

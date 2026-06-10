@@ -38,9 +38,9 @@ export default async function VendorDashboard() {
       {!profile ? (
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm">Let&apos;s start with your brand profile — it only takes a minute.</p>
+            <p className="text-sm">Let&apos;s get you set up — brand, documents, stall, and agreement in a few quick steps.</p>
             <Button asChild className="mt-4">
-              <Link href="/vendor/profile">Set up my brand <ArrowRight className="size-4" /></Link>
+              <Link href="/vendor/onboarding">Continue onboarding <ArrowRight className="size-4" /></Link>
             </Button>
           </CardContent>
         </Card>
@@ -62,7 +62,7 @@ export default async function VendorDashboard() {
                 <Badge variant={profile.kyc ? "success" : "neutral"}>{profile.kyc ? "Received" : "Pending"}</Badge>
               </div>
               <CardDescription>
-                <Link href="/vendor/profile" className="text-primary hover:underline">Update brand &amp; documents →</Link>
+                <Link href="/vendor/onboarding" className="text-primary hover:underline">Continue setup →</Link>
               </CardDescription>
             </CardHeader>
           </Card>
@@ -73,8 +73,8 @@ export default async function VendorDashboard() {
                 <Badge variant={signed ? "success" : "warning"}>{signed ? "Signed" : "Action needed"}</Badge>
               </div>
               <CardDescription>
-                <Link href="/vendor/contract" className="text-primary hover:underline">
-                  {signed ? "View your signed contract →" : "Read & sign to confirm your stall →"}
+                <Link href="/vendor/onboarding?step=contract" className="text-primary hover:underline">
+                  {signed ? "View your signed agreement →" : "Read & sign the agreement →"}
                 </Link>
               </CardDescription>
             </CardHeader>

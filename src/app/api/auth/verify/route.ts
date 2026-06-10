@@ -7,7 +7,13 @@ import { enforceRateLimit } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
 
-const bodySchema = z.object({ idToken: z.string().min(10), zone: z.enum(["vendor", "customer"]).optional() });
+const bodySchema = z.object({
+  idToken: z.string().min(10),
+  zone: z.enum(["vendor", "customer"]).optional(),
+  // Deliberate self-serve vendor signup (the ONLY path that grants VENDOR without admin). Sent only
+  // by the vendor signup wizard — never by the generic login form.
+  vendorSignup: z.boolean().optional(),
+});
 
 /** Exchange a Firebase ID token for an app session. New accounts are always CUSTOMER. */
 export async function POST(req: Request) {
@@ -42,6 +48,21 @@ export async function POST(req: Request) {
     });
   } else {
     user = await db.user.create({ data: { firebaseUid: verified.uid, phone: verified.phone, email: verified.email, role: "CUSTOMER" } });
+  }
+
+  // Deliberate vendor self-signup: create the applicant profile (SUBMITTED) and elevate to VENDOR.
+  // Booking is only confirmed after a team call-back + admin approval (CLAUDE.md locked rule).
+  if (body.vendorSignup && user.role !== "SUPER_ADMIN") {
+    const existing = await db.vendorProfile.findUnique({ where: { userId: user.id }, select: { id: true } });
+    if (!existing) {
+      await db.vendorProfile.create({ data: { userId: user.id, brandName: "New vendor", approvalStatus: "SUBMITTED" } });
+    }
+    if (user.role !== "VENDOR") {
+      user = await db.user.update({ where: { id: user.id }, data: { role: "VENDOR" } });
+    }
+    await db.auditLog.create({
+      data: { actorId: user.id, role: user.role, action: "CREATE", entity: "VendorProfile", entityId: user.id, after: { selfSignup: true } },
+    });
   }
 
   await createSession({ userId: user.id, role: user.role, permissions: user.permissions });

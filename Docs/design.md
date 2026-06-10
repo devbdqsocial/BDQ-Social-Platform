@@ -5,6 +5,15 @@
 > APIs live in [project.md](project.md). Implementation target: Tailwind CSS v4 + shadcn/ui +
 > lucide icons, mobile-first PWA.
 
+> **⚠️ SUPERSEDED for customer-facing surfaces (owner-approved override).** The brand/colour/type
+> below (§3 clay-pine-gold, no-purple) now applies **only to the admin/staff console**. The
+> **landing, public pages, customer + vendor portals** follow the **RPA Comunicación direction**,
+> implemented as the `.rpa` token layer in `src/app/globals.css`: navy `#01065B` + lavender
+> `#868EFF` / green / yellow / pink / red colour-blocked `gama/bg/surface` sections, **Exat-Bold**
+> display + **Inter** body, fluid type scale, clip-path SVG masks, custom cursor, Lenis smooth
+> scroll, GSAP scroll-pinned sections + reveals. The admin console keeps the neutral OKLCH theme
+> and the no-purple rule. See `CLAUDE.md` locked rules.
+
 ---
 
 ## 1. Design Principles & Brand Aesthetic

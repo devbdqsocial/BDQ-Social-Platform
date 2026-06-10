@@ -12,7 +12,16 @@ import { Button } from "@/components/ui/button";
 
 const msg = (e: unknown) => (e instanceof Error ? e.message : "Something went wrong");
 
-export function PhoneLogin({ redirectTo = "/events", zone }: { redirectTo?: string; zone?: "vendor" | "customer" }) {
+export function PhoneLogin({
+  redirectTo = "/events",
+  zone,
+  vendorSignup = false,
+}: {
+  redirectTo?: string;
+  zone?: "vendor" | "customer";
+  /** Deliberate self-serve vendor signup — grants the VENDOR applicant role (see /api/auth/verify). */
+  vendorSignup?: boolean;
+}) {
   const router = useRouter();
   const verifierRef = useRef<RecaptchaVerifier | null>(null);
   const [phone, setPhone] = useState("+91");
@@ -50,7 +59,7 @@ export function PhoneLogin({ redirectTo = "/events", zone }: { redirectTo?: stri
       const res = await fetch("/api/auth/verify", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ idToken, zone }),
+        body: JSON.stringify({ idToken, zone, vendorSignup }),
       });
       if (!res.ok) throw new Error("Sign-in failed");
       router.push(redirectTo);

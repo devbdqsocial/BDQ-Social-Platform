@@ -4,8 +4,9 @@ import Link from "next/link";
 import { Store } from "lucide-react";
 import { listApprovedVendors } from "@/server/vendors/service";
 import { primaryLogo } from "@/lib/vendor-assets";
-import { Container } from "@/components/ui/section";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Reveal } from "@/components/motion/Reveal";
+import { SplitReveal } from "@/components/motion/SplitReveal";
 
 export const metadata: Metadata = {
   title: "Brands",
@@ -17,45 +18,53 @@ export default async function VendorsPage() {
   const vendors = await listApprovedVendors();
 
   return (
-    <Container className="py-12 sm:py-16">
-      <h1 className="font-display text-4xl font-semibold sm:text-5xl">Meet the brands</h1>
-      <p className="mt-2 text-muted-foreground">A handpicked lineup of independent makers you&apos;ll meet at the market.</p>
-
-      {vendors.length === 0 ? (
-        <EmptyState
-          icon={Store}
-          className="mt-10"
-          title="The lineup drops soon"
-          description="We're finalising this season's makers. Check back shortly to see who's joining."
-        />
-      ) : (
-        <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {vendors.map((v) => {
-            const logo = primaryLogo(v.assets);
-            return (
-              <Link
-                key={v.id}
-                href={`/vendors/${v.id}`}
-                className="card-hover group overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
-              >
-                <div className="relative aspect-[4/5] bg-muted">
-                  {logo ? (
-                    <Image src={logo} alt={v.brandName} fill className="object-cover" sizes="(max-width:768px) 50vw, 25vw" />
-                  ) : (
-                    <div className="grid size-full place-items-center font-display text-2xl text-muted-foreground">
-                      {v.brandName.charAt(0)}
-                    </div>
-                  )}
-                </div>
-                <div className="p-3">
-                  <p className="truncate font-medium group-hover:text-primary">{v.brandName}</p>
-                  {v.category && <p className="text-xs text-muted-foreground">{v.category}</p>}
-                </div>
-              </Link>
-            );
-          })}
+    <>
+      <section className="gama-2 surface-2 paint flex min-h-[60svh] items-end py-[var(--space-5xl)]">
+        <div className="wrapper">
+          <span className="f-paragraph-small f-bold t-upper" style={{ letterSpacing: "0.18em" }}>The lineup</span>
+          <SplitReveal as="h1" className="f-exat mt-[var(--space-md)]" style={{ fontSize: "var(--h133)", lineHeight: 1.0 }}>
+            Meet the brands
+          </SplitReveal>
+          <p className="f-paragraph mt-[var(--space-lg)] max-w-[44ch] opacity-80">
+            A handpicked lineup of independent makers you&apos;ll meet at the market.
+          </p>
         </div>
-      )}
-    </Container>
+      </section>
+
+      <section className="paint py-[var(--space-5xl)]">
+        <div className="wrapper">
+          {vendors.length === 0 ? (
+            <EmptyState
+              icon={Store}
+              title="The lineup drops soon"
+              description="We're finalising this season's makers. Check back shortly to see who's joining."
+            />
+          ) : (
+            <Reveal stagger className="grid grid-cols-2 gap-[var(--grid-gap)] sm:grid-cols-3 lg:grid-cols-4">
+              {vendors.map((v) => {
+                const logo = primaryLogo(v.assets);
+                return (
+                  <Link key={v.id} href={`/vendors/${v.id}`} data-cursor className="block">
+                    <div className="svg svg--form2 w-full">
+                      {logo ? (
+                        <Image src={logo} alt={v.brandName} fill className="svg__img" sizes="(max-width:768px) 50vw, 25vw" />
+                      ) : (
+                        <div className="svg__bg grid place-items-center">
+                          <span className="f-exat" style={{ fontSize: "var(--h60)", color: "var(--bgcolor)" }}>
+                            {v.brandName.charAt(0)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <p className="f-paragraph-small f-bold mt-[var(--space-sm)] truncate">{v.brandName}</p>
+                    {v.category && <p className="f-paragraph-small truncate opacity-60">{v.category}</p>}
+                  </Link>
+                );
+              })}
+            </Reveal>
+          )}
+        </div>
+      </section>
+    </>
   );
 }

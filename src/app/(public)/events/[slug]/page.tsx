@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { CalendarDays, Clock, MapPin } from "lucide-react";
+import { Clock } from "lucide-react";
 import { getBySlug } from "@/server/events/service";
 import { sponsorsForEvent } from "@/server/sponsors/service";
 import { fmtDateFull, fmtTime, fmtDayLabel } from "@/lib/date-formats";
@@ -46,21 +46,23 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
 
   return (
     <div style={themeStyle}>
-      {/* Event header band */}
-      <section className="bg-hero text-[#EDE6DA]">
-        <div className="mx-auto max-w-[800px] px-4 py-16 sm:px-6">
-          <h1 className="font-display text-4xl font-semibold text-balance sm:text-5xl">{event.name}</h1>
-          <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[#C9BDA8]">
-            <span className="flex items-center gap-1.5"><CalendarDays className="size-4" /> {fmt(event.startsAt)}</span>
-            {event.location && <span className="flex items-center gap-1.5"><MapPin className="size-4" /> {event.location}</span>}
+      {/* Event header — cabecera--proyecto */}
+      <section className="gama-1 bg-1 paint flex min-h-[65svh] items-end py-[var(--space-5xl)]">
+        <div className="wrapper">
+          <h1 className="f-exat" style={{ fontSize: "var(--h133)", lineHeight: 0.95 }}>{event.name}</h1>
+          <div className="f-paragraph-small f-bold mt-[var(--space-lg)] flex flex-wrap gap-[var(--space-lg)] t-upper" style={{ letterSpacing: "0.12em" }}>
+            <span>{fmt(event.startsAt)}</span>
+            {event.location && <span>{event.location}</span>}
           </div>
-          {event.description && <p className="mt-6 max-w-2xl text-lg leading-relaxed text-[#D9CFBE] text-pretty">{event.description}</p>}
+          {event.description && (
+            <p className="f-paragraph mt-[var(--space-lg)] max-w-[52ch] opacity-80">{event.description}</p>
+          )}
         </div>
       </section>
 
-      <main className="mx-auto max-w-[800px] px-4 py-12 sm:px-6">
-        <section>
-          <h2 className="mb-4 font-display text-2xl font-semibold">Get your tickets</h2>
+      <section className="paint py-[var(--space-5xl)]">
+        <div className="wrapper max-w-[62rem]">
+          <h2 className="f-exat mb-[var(--space-lg)]" style={{ fontSize: "var(--h42)" }}>Get your tickets</h2>
           {event.ticketTypes.length === 0 ? (
             <p className="rounded-xl border border-dashed border-border bg-card/50 p-6 text-center text-muted-foreground">
               Ticket sales open soon — check back shortly.
@@ -77,56 +79,56 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
               ticketTypes={event.ticketTypes.map((t) => ({ id: t.id, name: t.name, priceInPaise: t.priceInPaise }))}
             />
           )}
-        </section>
 
-        {event.schedule.length > 0 && (
-          <section className="mt-12">
-            <h2 className="font-display text-2xl font-semibold">What&apos;s happening</h2>
-            <div className="mt-4 space-y-6">
-              {Object.entries(
-                event.schedule.reduce<Record<string, typeof event.schedule>>((acc, s) => {
-                  (acc[dayLabel(s.startsAt)] ??= []).push(s);
-                  return acc;
-                }, {}),
-              ).map(([day, items]) => (
-                <div key={day}>
-                  <h3 className="mb-2.5 text-sm font-semibold uppercase tracking-wide text-muted-foreground">{day}</h3>
-                  <ul className="space-y-2.5">
-                    {items.map((s) => (
-                      <li key={s.id} className="flex items-start gap-4 rounded-xl border border-border bg-card p-4 shadow-sm">
-                        <span className="flex shrink-0 items-center gap-1.5 text-sm font-medium text-primary">
-                          <Clock className="size-4" /> {time(s.startsAt)}{s.endsAt ? `–${time(s.endsAt)}` : ""}
-                        </span>
-                        <span className="text-sm">
-                          {s.title}
-                          {s.stageOrZone ? <span className="text-muted-foreground"> · {s.stageOrZone}</span> : ""}
-                          {s.performer ? <span className="text-muted-foreground"> · {s.performer}</span> : ""}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
+          {event.schedule.length > 0 && (
+            <div className="mt-[var(--space-4xl)]">
+              <h2 className="f-exat" style={{ fontSize: "var(--h42)" }}>What&apos;s happening</h2>
+              <div className="mt-[var(--space-lg)] space-y-6">
+                {Object.entries(
+                  event.schedule.reduce<Record<string, typeof event.schedule>>((acc, s) => {
+                    (acc[dayLabel(s.startsAt)] ??= []).push(s);
+                    return acc;
+                  }, {}),
+                ).map(([day, items]) => (
+                  <div key={day}>
+                    <h3 className="mb-2.5 text-sm font-semibold uppercase tracking-wide text-muted-foreground">{day}</h3>
+                    <ul className="space-y-2.5">
+                      {items.map((s) => (
+                        <li key={s.id} className="flex items-start gap-4 rounded-xl border border-border bg-card p-4 shadow-sm">
+                          <span className="flex shrink-0 items-center gap-1.5 text-sm font-medium text-primary">
+                            <Clock className="size-4" /> {time(s.startsAt)}{s.endsAt ? `–${time(s.endsAt)}` : ""}
+                          </span>
+                          <span className="text-sm">
+                            {s.title}
+                            {s.stageOrZone ? <span className="text-muted-foreground"> · {s.stageOrZone}</span> : ""}
+                            {s.performer ? <span className="text-muted-foreground"> · {s.performer}</span> : ""}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
             </div>
-          </section>
-        )}
+          )}
 
-        {mapStalls.length > 0 && (
-          <section className="mt-12">
-            <h2 className="font-display text-2xl font-semibold">Event layout</h2>
-            <p className="mt-1 mb-4 text-sm text-muted-foreground">
-              Selling at the market? Browse live availability and tap an open stall to hold it.
-            </p>
-            <BookingFloorPlan stalls={mapStalls} canvas={mapCanvas} />
-          </section>
-        )}
+          {mapStalls.length > 0 && (
+            <div className="mt-[var(--space-4xl)]">
+              <h2 className="f-exat" style={{ fontSize: "var(--h42)" }}>Event layout</h2>
+              <p className="mt-1 mb-4 text-sm text-muted-foreground">
+                Selling at the market? Browse live availability and tap an open stall to hold it.
+              </p>
+              <BookingFloorPlan stalls={mapStalls} canvas={mapCanvas} />
+            </div>
+          )}
 
-        {sponsors.length > 0 && (
-          <section className="mt-12">
-            <SponsorStrip sponsors={sponsors} />
-          </section>
-        )}
-      </main>
+          {sponsors.length > 0 && (
+            <div className="mt-[var(--space-4xl)]">
+              <SponsorStrip sponsors={sponsors} />
+            </div>
+          )}
+        </div>
+      </section>
     </div>
   );
 }

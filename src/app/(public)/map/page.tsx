@@ -10,15 +10,20 @@ export default function MapPage() {
   const statuses = assignDemoStatuses(layout);
 
   return (
-    <main className="mx-auto max-w-[1200px] px-4 py-10 sm:px-6">
-      <header className="mb-6">
-        <h1 className="font-display text-3xl font-semibold sm:text-4xl">Take a look around</h1>
-        <p className="mt-2 max-w-2xl text-sm text-muted-foreground text-pretty">
-          The full venue layout — stages, food court, lounges, and every stall. Scroll to zoom,
-          drag to move around, and tap a stall to see it up close.
+    <section className="paint py-[var(--space-4xl)]">
+      <div className="wrapper">
+        <span className="f-paragraph-small f-bold t-upper opacity-50" style={{ letterSpacing: "0.18em" }}>The venue</span>
+        <h1 className="f-exat mt-[var(--space-sm)]" style={{ fontSize: "var(--h76)", lineHeight: 1.05 }}>
+          Take a look around
+        </h1>
+        <p className="f-paragraph mt-[var(--space-md)] max-w-[52ch] opacity-80">
+          The full venue layout — stages, food court, lounges, and every stall. Scroll to zoom, drag to
+          move around, and tap a stall to see it up close.
         </p>
-      </header>
-      <MapPreview layout={layout} statuses={statuses} />
-    </main>
+        <div className="mt-[var(--space-2xl)]">
+          <MapPreview layout={layout} statuses={statuses} />
+        </div>
+      </div>
+    </section>
   );
 }

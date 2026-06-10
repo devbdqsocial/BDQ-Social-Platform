@@ -128,12 +128,38 @@ export const checkinSchema = z.object({
   clientScanId: z.string().optional(),
 });
 
+/** Structured product-category taxonomy for the brand-details step. */
+export const PRODUCT_CATEGORIES = [
+  "Apparel & Fashion",
+  "Jewellery & Accessories",
+  "Food & Beverage",
+  "Home & Decor",
+  "Beauty & Wellness",
+  "Art & Craft",
+  "Kids",
+  "Other",
+] as const;
+
+const optionalText = (max: number) => z.string().trim().max(max).optional().or(z.literal("").transform(() => undefined));
+
 export const vendorProfileSchema = z.object({
   brandName: z.string().min(2),
+  registeredName: optionalText(160),
   category: z.string().optional(),
-  description: z.string().optional(),
-  website: z.string().optional(),
-  instagram: z.string().optional(),
+  productCategory: z.enum(PRODUCT_CATEGORIES).optional().or(z.literal("").transform(() => undefined)),
+  products: optionalText(600),
+  description: optionalText(1000),
+  website: optionalText(200),
+  instagram: optionalText(120),
+  contactPerson: optionalText(120),
+  whatsapp: optionalText(20),
+  city: optionalText(80),
+});
+
+/** Contract e-sign: typed legal name + explicit agreement (captured with time + IP server-side). */
+export const contractSignSchema = z.object({
+  signerName: z.string().trim().min(2).max(120),
+  agree: z.coerce.boolean().refine((v) => v === true, { message: "You must agree to the terms to sign" }),
 });
 
 /** Normalise to E.164 (+91…) to match the format Firebase returns on phone login. */
@@ -214,6 +240,7 @@ export type CreateOrderInput = z.infer<typeof createOrderSchema>;
 export type TicketTypeInput = z.infer<typeof ticketTypeSchema>;
 export type VendorProfileInput = z.infer<typeof vendorProfileSchema>;
 export type VendorKycInput = z.infer<typeof vendorKycSchema>;
+export type ContractSignInput = z.infer<typeof contractSignSchema>;
 export type ExpenseInput = z.infer<typeof expenseSchema>;
 export type BudgetInput = z.infer<typeof budgetSchema>;
 export type ExpenseScheduleInput = z.infer<typeof expenseScheduleSchema>;

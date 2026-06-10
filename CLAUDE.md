@@ -27,7 +27,9 @@ Token-efficient: no fluff, no preamble, no restating the prompt. Answer or act.
 - External SDKs only via adapters in `src/lib/` (razorpay, firebase-admin, interakt, resend,
   cloudinary, qr, totp, ratelimit). Swappable behind one interface.
 - Mutations go through the wrappers: `withAuth(role|perm)` → `withValidation(zod)` → `withAudit()`.
-- UI uses shadcn/ui + **semantic design tokens** only (never raw hex; see `design.md`).
+- UI uses shadcn/ui + **semantic design tokens** (admin/app console). Customer-facing surfaces
+  (landing, public, customer + vendor portals) add the **RPA `.rpa` token layer** in `globals.css`
+  — palette, fluid Exat type scale, `gama/bg/surface` colour-blocked sections, clip-path masks.
 - Validate every input + webhook with Zod. Server-side authz on every mutation (middleware isn't enough).
 
 ## Locked rules (never violate)
@@ -38,7 +40,11 @@ Token-efficient: no fluff, no preamble, no restating the prompt. Answer or act.
 - **Fulfilment is webhook-driven + idempotent** (by `gatewayRef`); never trust client payment callback.
 - **One active booking per stall** (DB partial-unique index + transactional holds). No double-book.
 - **Audit every admin/staff mutation** (append-only `AuditLog`, before/after) via `withAudit()`.
-- **No purple/violet** in UI. Brand = clay / pine / gold (`design.md` §3).
+- **Customer-facing brand = RPA Comunicación direction** (owner-approved override of the old
+  clay/pine/gold + no-purple rule; `design.md` §3 superseded for these surfaces): navy `#01065B` +
+  lavender `#868EFF` / green / yellow / pink / red colour-blocked `gama/bg/surface` sections,
+  Exat-Bold display + Inter body, in the `.rpa` layer of `globals.css`. **The admin console stays
+  neutral OKLCH and keeps the no-purple rule** — never apply RPA colours or the `.rpa` zone there.
 - Vendor approval requires a **team call-back**; admin (SUPER_ADMIN) requires **TOTP 2FA**.
 
 ## Stack

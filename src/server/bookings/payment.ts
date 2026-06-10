@@ -58,7 +58,36 @@ export async function createStallOrder(vendorProfileId: string, stallId: string)
   };
 }
 
-/** Idempotent: a paid stall booking → PENDING (awaiting verification) + Payment + Stall PENDING. */
+/**
+ * Create a Razorpay order to PAY for an already-APPROVED stall (approve-before-pay flow). The admin
+ * approval moved the booking to PENDING_PAYMENT + set payBy; this is the vendor paying within that
+ * window. Distinct from the legacy `createStallOrder` (pay-to-hold).
+ */
+export async function createStallPaymentOrder(vendorProfileId: string, bookingId: string) {
+  const booking = await db.booking.findUnique({
+    where: { id: bookingId },
+    include: { stall: { include: { stallType: { select: { priceInPaise: true } } } } },
+  });
+  if (!booking || booking.vendorProfileId !== vendorProfileId) throw new Error("Booking not found");
+  if (booking.status !== "PENDING_PAYMENT") throw new Error("This booking isn't ready for payment yet");
+  if (booking.payBy && booking.payBy < new Date()) throw new Error("Payment window expired — please contact us");
+  const price = await stallPrice(booking.stall);
+  if (price <= 0) throw new Error("This stall has no price set yet");
+
+  const rzp = await createRazorpayOrder(price, booking.id, { kind: "stall", bookingId: booking.id });
+  await db.booking.update({ where: { id: booking.id }, data: { gatewayOrderId: rzp.id } });
+  return {
+    bookingId: booking.id,
+    razorpayOrderId: rzp.id,
+    amountPaise: price,
+    keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? process.env.RAZORPAY_KEY_ID ?? "",
+  };
+}
+
+/**
+ * Idempotent fulfilment on the verified webhook. An approved booking (PENDING_PAYMENT) → BOOKED;
+ * a legacy pay-to-hold booking (HELD) → PENDING (awaiting verification). Stall follows.
+ */
 export async function fulfillStallBooking(
   gatewayOrderId: string,
   paymentId: string,
@@ -66,7 +95,9 @@ export async function fulfillStallBooking(
 ): Promise<{ ok: boolean }> {
   const booking = await db.booking.findUnique({ where: { gatewayOrderId } });
   if (!booking) return { ok: false };
-  if (booking.status !== "HELD") return { ok: true }; // already advanced
+  if (booking.status === "BOOKED") return { ok: true }; // already advanced
+  if (booking.status !== "HELD" && booking.status !== "PENDING_PAYMENT") return { ok: true };
+  const approved = booking.status === "PENDING_PAYMENT";
 
   await db.$transaction(async (tx) => {
     if (await tx.payment.findUnique({ where: { gatewayRef: paymentId } })) return;
@@ -76,8 +107,8 @@ export async function fulfillStallBooking(
     });
     const amount = stall ? await stallPrice(stall) : 0;
 
-    await tx.booking.update({ where: { id: booking.id }, data: { status: "PENDING" } });
-    await tx.stall.update({ where: { id: booking.stallId }, data: { status: "PENDING" } });
+    await tx.booking.update({ where: { id: booking.id }, data: { status: approved ? "BOOKED" : "PENDING" } });
+    await tx.stall.update({ where: { id: booking.stallId }, data: { status: approved ? "BOOKED" : "PENDING" } });
     await tx.payment.create({
       data: {
         bookingId: booking.id,

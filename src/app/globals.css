@@ -18,10 +18,12 @@
 }
 
 /*
-  BDQ Social design tokens — see Docs/design.md.
-  Brand: clay (primary) / pine (secondary) / gold (accent). Warm neutrals. No purple/violet.
+  BDQ Social design tokens — RPA Comunicación direction (see Docs/design.md).
+  Customer-facing brand: navy (primary) / lavender (secondary+accent) on cream. Near-black ink text.
   Components consume the SEMANTIC vars below (shadcn-compatible names), so light/dark + white-label
   is a single swap. Money/UI never hardcodes raw hex.
+  NOTE: the warm clay/pine/gold palette is retired here; the admin `.admin` scope below stays
+  neutral OKLCH (and keeps the no-purple rule). Lavender is an accent/fill only — never small text.
 */
 
 @theme inline {
@@ -62,16 +64,20 @@
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
 
-  /* brand ramps (direct use, e.g. bg-clay-500) */
-  --color-clay-50: #FBF3EF;  --color-clay-100: #F6E1D7; --color-clay-300: #E0A083;
-  --color-clay-500: #C2603B; --color-clay-600: #A44C2D; --color-clay-700: #833B24;
-  --color-pine-100: #D8E7DF; --color-pine-400: #4F9379; --color-pine-500: #2F755C;
-  --color-pine-600: #245C49; --color-pine-700: #1C4739;
-  --color-gold-100: #FAEDC8; --color-gold-300: #EFC65A; --color-gold-400: #E8B23A;
-  --color-gold-500: #D69A22; --color-gold-700: #8A5F13;
-  --color-sand-50: #F6F1E7;  --color-sand-100: #ECE4D6; --color-sand-200: #D9CDB8;
-  --color-sand-500: #6F6552; --color-sand-700: #352F26; --color-sand-900: #15120E;
-  --color-espresso: #120E09;
+  /* RPA brand ramps (direct use, e.g. bg-navy-500 / text-lavender-400) */
+  --color-navy-50: #EAEAF4;  --color-navy-100: #C9CAE3; --color-navy-300: #6A6DA8;
+  --color-navy-500: #01065B; --color-navy-600: #01044A; --color-navy-700: #010338;
+  --color-navy-900: #050814;
+  --color-lavender-100: #E7E8FF; --color-lavender-300: #B4B9FF; --color-lavender-400: #868EFF;
+  --color-lavender-500: #6C75F5; --color-lavender-700: #4A53C8;
+  --color-cream-50: #FBFAF6;  --color-cream-100: #F4F2EC; --color-cream-200: #ECEAE2;
+  --color-cream-300: #E4E2DA; --color-ink: #14141A;
+
+  /* Legacy ramp aliases → RPA hues. Transitional: keeps not-yet-rebuilt screens on-brand
+     (badge.tsx, landing, Countdown, customer dashboard). Removed as each is migrated. */
+  --color-gold-300: var(--color-lavender-400); --color-gold-500: var(--color-lavender-400);
+  --color-gold-700: var(--color-lavender-700);
+  --color-clay-500: var(--color-navy-500);     --color-clay-600: var(--color-navy-600);
 
   /* map stall status (Docs/design.md §3.6) */
   --color-stall-available: #3FA66A;
@@ -80,9 +86,15 @@
   --color-stall-booked: #8C8576;
   --color-stall-blocked: #4E4639;
 
-  /* fonts */
-  --font-sans: var(--font-jakarta);
-  --font-display: var(--font-fraunces);
+  /* fonts (RPA: Inter body, Exat-Bold display) */
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-exat);
+
+  /* RPA named palette → Tailwind utilities (bg-dark-blue, text-green, …) */
+  --color-dark-blue: #01065B;  --color-light-blue: #868EFF;
+  --color-dark-green: #1A3526; --color-green: #92FF73;
+  --color-yellow: #D0F95F;     --color-pink: #FF58AC;
+  --color-dark-red: #560900;   --color-red: #FF514D;
 
   /* radius */
   --radius-sm: 6px;
@@ -94,79 +106,255 @@
   --shadow-sm: 0 1px 2px rgba(21, 18, 14, 0.06);
   --shadow-md: 0 6px 20px rgba(21, 18, 14, 0.10);
   --shadow-lg: 0 18px 48px rgba(21, 18, 14, 0.16);
-  --shadow-glow: 0 0 28px rgba(214, 154, 34, 0.35);
+  --shadow-glow: 0 0 32px rgba(134, 142, 255, 0.35);
 }
 
-/* LIGHT (default) — warm paper */
+/* LIGHT (default) — RPA cream + navy ink */
 :root {
-  --background: #FBF7F0;
-  --foreground: #352F26;
-  --card: #F6F1E7;
-  --card-foreground: #352F26;
-  --popover: #FBF7F0;
-  --popover-foreground: #352F26;
-  --primary: #C2603B;
+  --background: #F4F2EC;
+  --foreground: #14141A;
+  --card: #FBFAF6;
+  --card-foreground: #14141A;
+  --popover: #FBFAF6;
+  --popover-foreground: #14141A;
+  --primary: #01065B;
   --primary-foreground: #FFFFFF;
-  --secondary: #2F755C;
-  --secondary-foreground: #FFFFFF;
-  --muted: #ECE4D6;
-  --muted-foreground: #6F6552;
-  --accent: #D69A22;
-  --accent-foreground: #15120E;
+  --secondary: #868EFF;
+  --secondary-foreground: #0B0B14;
+  --muted: #ECEAE2;
+  --muted-foreground: #5B5B66;
+  --accent: #868EFF;
+  --accent-foreground: #0B0B14;
   --destructive: #C0392B;
   --destructive-foreground: #FFFFFF;
   --success: #2F8F5B;
-  --warning: #E0A106;
-  --info: #2C7A8C;
-  --border: #ECE4D6;
-  --input: #D9CDB8;
-  --ring: #D69A22;
+  --warning: #C9871A;
+  --info: #2C5FB8;
+  --border: #E4E2DA;
+  --input: #D9D7CE;
+  --ring: #868EFF;
   --radius: 12px;
 
-  --sidebar: #F6F1E7;
-  --sidebar-foreground: #352F26;
-  --sidebar-primary: #C2603B;
+  --sidebar: #FBFAF6;
+  --sidebar-foreground: #14141A;
+  --sidebar-primary: #01065B;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #ECE4D6;
-  --sidebar-accent-foreground: #352F26;
-  --sidebar-border: #ECE4D6;
-  --sidebar-ring: #D69A22;
+  --sidebar-accent: #ECEAE2;
+  --sidebar-accent-foreground: #14141A;
+  --sidebar-border: #E4E2DA;
+  --sidebar-ring: #868EFF;
 }
 
-/* DARK (night) — espresso */
+/* DARK (night) — deep navy ink */
 .dark {
-  --background: #120E09;
-  --foreground: #EDE6DA;
-  --card: #1C1710;
-  --card-foreground: #EDE6DA;
-  --popover: #1C1710;
-  --popover-foreground: #EDE6DA;
-  --primary: #D17E5A;
-  --primary-foreground: #1A130D;
-  --secondary: #245C49;
-  --secondary-foreground: #EDE6DA;
-  --muted: #271F16;
-  --muted-foreground: #B7AB97;
-  --accent: #EFC65A;
-  --accent-foreground: #15120E;
+  --background: #070814;
+  --foreground: #ECEAE2;
+  --card: #0E1024;
+  --card-foreground: #ECEAE2;
+  --popover: #0E1024;
+  --popover-foreground: #ECEAE2;
+  --primary: #868EFF;
+  --primary-foreground: #070814;
+  --secondary: #1A1E3A;
+  --secondary-foreground: #ECEAE2;
+  --muted: #14172E;
+  --muted-foreground: #A6A9C4;
+  --accent: #868EFF;
+  --accent-foreground: #070814;
   --destructive: #E25A4A;
-  --destructive-foreground: #1A130D;
+  --destructive-foreground: #070814;
   --success: #46B377;
-  --warning: #F0B92E;
-  --info: #4FA7B8;
-  --border: #322920;
-  --input: #3A3024;
-  --ring: #EFC65A;
+  --warning: #E8B23A;
+  --info: #6A8FE0;
+  --border: #20243F;
+  --input: #262B48;
+  --ring: #868EFF;
 
-  --sidebar: #1C1710;
-  --sidebar-foreground: #EDE6DA;
-  --sidebar-primary: #D17E5A;
-  --sidebar-primary-foreground: #1A130D;
-  --sidebar-accent: #271F16;
-  --sidebar-accent-foreground: #EDE6DA;
-  --sidebar-border: #322920;
-  --sidebar-ring: #EFC65A;
+  --sidebar: #0E1024;
+  --sidebar-foreground: #ECEAE2;
+  --sidebar-primary: #868EFF;
+  --sidebar-primary-foreground: #070814;
+  --sidebar-accent: #14172E;
+  --sidebar-accent-foreground: #ECEAE2;
+  --sidebar-border: #20243F;
+  --sidebar-ring: #868EFF;
 }
+
+/* =================================================================================
+   RPA SYSTEM (customer-facing). Scoped to `.rpa` so admin/shadcn stay on rem/16px.
+   Palette + fonts in @theme inline above. See plan Part II §0–§4.
+   ================================================================================= */
+:root {
+  /* palette (raw, for direct var use inside the RPA layer) */
+  --dark-blue: #01065B;  --light-blue: #868EFF;
+  --dark-green: #1A3526; --green: #92FF73;
+  --yellow: #D0F95F;     --pink: #FF58AC;
+  --dark-red: #560900;   --red: #FF514D;
+  --f-exat: var(--font-exat), ui-sans-serif, system-ui, sans-serif;
+  --f-inter: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --f-bold: 700;
+
+  /* fluid root size for the RPA zone (RPA breakpoints; em tokens below scale off this) */
+  --fsize: 1.25vw;
+  /* type scale — em (relative to --fsize when inside .rpa) */
+  --paragraph-small: 0.75em; --paragraph: 1em;
+  --h32: 1.3333em; --h42: 1.75em; --h60: 2.5em; --h76: 3.1667em;
+  --h100: 4.1667em; --h133: 5.5417em; --h235: 9.7917em;
+  --lh-paragraph-small: 1.3; --lh-paragraph: 1.3;
+  --lh-h32: 1.15; --lh-h42: 1.15; --lh-h60: 1.05; --lh-h76: 1.05;
+  --lh-h100: 1.05; --lh-h133: 1.05; --lh-h235: 1.05;
+  /* spacing — em */
+  --space-none: 0; --space-xs: 0.1667em; --space-sm: 0.3333em; --space-md: 0.6667em;
+  --space-lg: 1em; --space-xl: 1.3333em; --space-2xl: 2em; --space-3xl: 2.6667em;
+  --space-4xl: 4em; --space-5xl: 6em;
+  --grid-gap: 1.1667em; --wrapper-padd: var(--space-lg);
+}
+@media (max-width: 1366px) { :root { --fsize: 2.0vw; } }
+@media (max-width: 1024px) { :root { --fsize: 2.4vw; } }
+@media (max-width: 950px)  { :root { --fsize: 2.7vw; --h235: 6.25em; --h133: 4.1667em; --h100: 2.9166em; } }
+@media (max-width: 768px)  { :root { --fsize: 3.2vw; } }
+@media (max-width: 576px)  { :root { --fsize: 4.4vw; --h235: 3.3333em; --h133: 2.5em; --h76: 2.3333em; --h60: 1.9166em; } }
+
+/* The RPA zone: fluid base size + Inter + default section colors. Sections override via gama/bg. */
+.rpa {
+  font-size: var(--fsize);
+  font-family: var(--f-inter);
+  --bgcolor: #F4F2EC; --color: #14141A;
+  background: var(--bgcolor);
+  color: var(--color);
+  -webkit-font-smoothing: antialiased;
+}
+.rpa :is(h1, h2, h3, h4, h5, h6) { font-family: var(--f-exat); font-weight: var(--f-bold); line-height: 1.05; }
+
+/* Color-section classes: set --bgcolor/--color; `.filter` tints imagery to the accent (verbatim). */
+.gama-1.bg-1 { --bgcolor: var(--dark-blue);  --color: var(--light-blue); }
+.gama-1.bg-2 { --bgcolor: var(--dark-green); --color: var(--green); }
+.gama-1.bg-3 { --bgcolor: var(--dark-blue);  --color: var(--green); }
+.gama-2.surface-1 { --bgcolor: var(--dark-blue); --color: var(--yellow); }
+.gama-2.surface-2 { --bgcolor: var(--dark-blue); --color: var(--pink); }
+.gama-3.bg-1 { --bgcolor: var(--dark-red);   --color: var(--red); }
+.gama-3.bg-2 { --bgcolor: var(--dark-green); --color: var(--green); }
+.gama-3.bg-3 { --bgcolor: var(--dark-red);   --color: var(--green); }
+.gama-1.bg-1 .filter, .filter-blue {
+  filter: invert(58%) sepia(17%) saturate(3803%) hue-rotate(207deg) brightness(99%) contrast(103%);
+}
+.gama-1.bg-2 .filter, .gama-1.bg-3 .filter, .gama-3.bg-2 .filter, .gama-3.bg-3 .filter, .filter-green {
+  filter: invert(75%) sepia(88%) saturate(288%) hue-rotate(51deg) brightness(101%) contrast(106%);
+}
+.gama-2.surface-2 .filter, .filter-pink {
+  filter: invert(51%) sepia(17%) saturate(3196%) hue-rotate(292deg) brightness(101%) contrast(101%);
+}
+.c-dark-blue { color: var(--dark-blue); } .c-light-blue { color: var(--light-blue); }
+.c-dark-green { color: var(--dark-green); } .c-green { color: var(--green); }
+.c-yellow { color: var(--yellow); } .c-pink { color: var(--pink); }
+.c-dark-red { color: var(--dark-red); } .c-red { color: var(--red); }
+
+/* Type + spacing utilities (em-based; scale with the fluid zone). */
+.rpa .f-exat { font-family: var(--f-exat); } .rpa .f-inter { font-family: var(--f-inter); }
+.rpa .f-bold { font-weight: 700; } .rpa .f-light { font-weight: 300; } .rpa .f-normal { font-weight: 400; }
+.rpa .t-center { text-align: center; } .rpa .t-right { text-align: right; } .rpa .t-upper { text-transform: uppercase; }
+.f-paragraph-small { font-size: var(--paragraph-small); line-height: var(--lh-paragraph-small); }
+.f-paragraph { font-size: var(--paragraph); line-height: var(--lh-paragraph); }
+.f-h32 { font-size: var(--h32); line-height: var(--lh-h32); }
+.f-h42 { font-size: var(--h42); line-height: var(--lh-h42); }
+.f-h60 { font-size: var(--h60); line-height: var(--lh-h60); }
+.f-h76 { font-size: var(--h76); line-height: var(--lh-h76); }
+.f-h100 { font-size: var(--h100); line-height: var(--lh-h100); }
+.f-h133 { font-size: var(--h133); line-height: var(--lh-h133); }
+.f-h235 { font-size: var(--h235); line-height: var(--lh-h235); }
+
+/* 12-col grid + wrapper (RPA calc, verbatim). */
+.rpa .wrapper { padding-left: var(--wrapper-padd); padding-right: var(--wrapper-padd); }
+.rpa .col-1  { width: calc((99.9vw - var(--wrapper-padd)*2 - var(--grid-gap)*11)/12 *  1 + var(--grid-gap)*0); }
+.rpa .col-2  { width: calc((99.9vw - var(--wrapper-padd)*2 - var(--grid-gap)*11)/12 *  2 + var(--grid-gap)*1); }
+.rpa .col-3  { width: calc((99.9vw - var(--wrapper-padd)*2 - var(--grid-gap)*11)/12 *  3 + var(--grid-gap)*2); }
+.rpa .col-4  { width: calc((99.9vw - var(--wrapper-padd)*2 - var(--grid-gap)*11)/12 *  4 + var(--grid-gap)*3); }
+.rpa .col-5  { width: calc((99.9vw - var(--wrapper-padd)*2 - var(--grid-gap)*11)/12 *  5 + var(--grid-gap)*4); }
+.rpa .col-6  { width: calc((99.9vw - var(--wrapper-padd)*2 - var(--grid-gap)*11)/12 *  6 + var(--grid-gap)*5); }
+.rpa .col-7  { width: calc((99.9vw - var(--wrapper-padd)*2 - var(--grid-gap)*11)/12 *  7 + var(--grid-gap)*6); }
+.rpa .col-8  { width: calc((99.9vw - var(--wrapper-padd)*2 - var(--grid-gap)*11)/12 *  8 + var(--grid-gap)*7); }
+.rpa .col-9  { width: calc((99.9vw - var(--wrapper-padd)*2 - var(--grid-gap)*11)/12 *  9 + var(--grid-gap)*8); }
+.rpa .col-10 { width: calc((99.9vw - var(--wrapper-padd)*2 - var(--grid-gap)*11)/12 * 10 + var(--grid-gap)*9); }
+.rpa .col-12 { width: 100%; }
+
+/* Custom cursor (#mouse) — mix-blend difference, follows via GSAP. */
+#mouse {
+  position: fixed; top: 0; left: 0; z-index: 99999999; pointer-events: none;
+  width: 1.4rem; height: 1.4rem; mix-blend-mode: difference; will-change: transform;
+  transition: width .33s cubic-bezier(.34,1.56,.64,1), height .33s cubic-bezier(.34,1.56,.64,1);
+}
+#mouse .mouse__dot {
+  width: 100%; height: 100%; border-radius: 999px; background: var(--yellow);
+  transform: translate(-50%, -50%);
+}
+#mouse.is-hover { width: 1rem; height: 1rem; }
+@media (hover: none), (pointer: coarse) { #mouse { display: none; } }
+
+/* SVG clip-path "form" mask system. */
+.rpa .svg { position: relative; width: 100%; overflow: hidden; }
+.rpa .svg__img, .rpa .svg__bg {
+  position: absolute; inset: 1%; width: 98%; height: 98%;
+  object-fit: cover; object-position: center;
+}
+.rpa .svg__bg { background: var(--color); }
+.rpa .svg__text { position: absolute; inset: 0; color: var(--color); }
+/* named mask shapes (aspect-ratio + clip-path) */
+.rpa .svg--logo  { aspect-ratio: 159/43;  clip-path: url(#svg-logo); min-width: 6.625rem; }
+.rpa .svg--form1 { aspect-ratio: 534/487; clip-path: url(#svg-form1); }
+.rpa .svg--form2 { aspect-ratio: 368/335; clip-path: url(#svg-form2); }
+.rpa .svg--form6 { aspect-ratio: 355/291; clip-path: url(#svg-form6); }
+.rpa .svg--form10 { aspect-ratio: 341/288; clip-path: url(#svg-form10); }
+.rpa .svg--form11 { aspect-ratio: 722/620; clip-path: url(#svg-form11); }
+.rpa .svg--form12 { aspect-ratio: 638/588; clip-path: url(#svg-form12); }
+.rpa .svg--form13 { aspect-ratio: 654/452; clip-path: url(#svg-form13); }
+.rpa .svg--form14 { aspect-ratio: 400/212; clip-path: url(#svg-form14); }
+
+/* Paint a section with its gama/bg color pair (opt-in; doesn't touch non-RPA sections). */
+.rpa .paint { background: var(--bgcolor); color: var(--color); }
+
+/* Horizontal pinned services: stacked full-height slides on mobile (native scroll),
+   GSAP pins the section + translates the row on desktop (servicios--anima). */
+.rpa .pinned-track { display: flex; flex-direction: column; }
+.rpa .pinned-slide { min-height: 100svh; display: flex; flex-direction: column; justify-content: center; }
+@media (min-width: 951px) {
+  .rpa .pinned-track { flex-direction: row; width: max-content; height: 100svh; }
+  .rpa .pinned-slide { width: 100vw; height: 100svh; }
+}
+
+/* Conceptos: vertical pinned crossfade steps. Mobile = stacked full-height colour panels. */
+.rpa .concept-stage { position: relative; }
+.rpa .concept-panel { position: relative; min-height: 100svh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+@media (min-width: 951px) {
+  .rpa .concept-stage { height: 100svh; overflow: hidden; }
+  .rpa .concept-panel { position: absolute; inset: 0; min-height: 0; }
+}
+
+/* Angled `.btn` tab (RPA clip-path polygons + hover morph). */
+.rpa .btn { position: relative; display: block; width: 7.125rem; transform-origin: top right; cursor: pointer; }
+.rpa .btn::before {
+  content: ""; display: block; width: 100%; aspect-ratio: 171/75; background: var(--color);
+  clip-path: polygon(100% 0%, 100% 37.13%, 72.6% 100%, 0% 100%, 0% 60.82%, 64.3% 0%, 100% 0%);
+  transition: clip-path .15s ease;
+}
+.rpa .btn:hover::before, .rpa .btn.hover::before {
+  clip-path: polygon(100% 0%, 100% 29%, 78% 80%, 20% 80%, 20% 48%, 71% 0%, 100% 0%);
+}
+.rpa .btn__text {
+  position: absolute; bottom: 0; left: 0; width: 73%; height: 40%;
+  font-size: var(--paragraph-small); font-weight: 700; color: var(--bgcolor);
+  display: grid; place-items: center; letter-spacing: -0.025em; transition: all .15s ease;
+}
+.rpa .btn:hover .btn__text, .rpa .btn.hover .btn__text { bottom: 21%; left: 20%; width: 58%; height: 31%; }
+
+/* Arrow link. */
+.rpa .link--split { display: inline-flex; align-items: center; gap: 0.25em; overflow: hidden; }
+.rpa .link--split .arrow { width: 1em; transition: transform .5s cubic-bezier(.25,1,.5,1); }
+.rpa .link--split:hover .arrow { transform: translateX(0.25em); }
+
+/* Logo-wall marquee (rows of tinted cells scrolling). */
+.rpa .wall { position: relative; overflow: hidden; }
+
+/* =============================== end RPA system =============================== */
 
 /*
   ADMIN console scope — neutral OKLCH theme (shadcn default, the reference dashboard's palette).
@@ -229,8 +417,8 @@
     font-family: var(--font-geist), ui-sans-serif, system-ui, sans-serif !important;
   }
   h1, h2, h3, .font-display {
-    font-family: var(--font-display), ui-serif, Georgia, serif;
-    letter-spacing: -0.018em;
+    font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -0.02em;
   }
   /* Admin uses the sans (Geist) for headings, not the festival serif. */
   .admin :is(h1, h2, h3), .admin .font-display {
@@ -243,13 +431,58 @@
   .text-balance { text-wrap: balance; }
   .text-pretty { text-wrap: pretty; }
 
-  /* Warm dusk hero backdrop: espresso base + a soft gold glow pooling top-centre. */
+  /* RPA full-bleed dark section: deep navy base + soft lavender glow pooling top-centre.
+     `.bg-hero` kept as an alias so not-yet-rebuilt screens still render (migrated to .bg-ink). */
+  .bg-ink,
   .bg-hero {
-    background-color: var(--color-espresso);
+    background-color: var(--color-navy-500);
     background-image:
-      radial-gradient(120% 80% at 50% -10%, rgba(214, 154, 34, 0.22), transparent 60%),
-      radial-gradient(90% 60% at 85% 110%, rgba(194, 96, 59, 0.18), transparent 55%);
+      radial-gradient(120% 80% at 50% -10%, rgba(134, 142, 255, 0.28), transparent 60%),
+      radial-gradient(90% 60% at 85% 110%, rgba(134, 142, 255, 0.14), transparent 55%);
   }
+
+  /* Seamless infinite marquee. Track holds the content twice; translate -50% loops cleanly. */
+  .marquee {
+    overflow: hidden;
+  }
+  .marquee-track {
+    display: inline-flex;
+    width: max-content;
+    will-change: transform;
+    animation: marquee var(--marquee-duration, 40s) linear infinite;
+  }
+  .marquee:hover .marquee-track {
+    animation-play-state: paused;
+  }
+  @keyframes marquee {
+    from { transform: translate3d(0, 0, 0); }
+    to   { transform: translate3d(-50%, 0, 0); }
+  }
+
+  /* RPA animated link underline: wipes in from the left on hover/focus. */
+  .link-underline {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    background-size: 0% 1.5px;
+    transition: background-size 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+  .link-underline:hover,
+  .link-underline:focus-visible {
+    background-size: 100% 1.5px;
+  }
+
+  /* Hide the native cursor where the custom cursor is active (pointer-fine only). */
+  .cursor-none {
+    cursor: none;
+  }
+
+  /* Lenis smooth-scroll (recommended baseline styles). */
+  html.lenis, html.lenis body { height: auto; }
+  .lenis.lenis-smooth { scroll-behavior: auto !important; }
+  .lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+  .lenis.lenis-stopped { overflow: hidden; }
+  .lenis.lenis-smooth iframe { pointer-events: none; }
 
   /* Subtle lift on interactive cards. */
   .card-hover {
@@ -297,6 +530,9 @@
   }
   .card-hover:hover {
     transform: none;
+  }
+  .marquee-track {
+    animation: none !important;
   }
 }
 

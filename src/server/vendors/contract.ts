@@ -17,19 +17,31 @@ export async function getOrCreateContract(vendorProfileId: string) {
   });
 }
 
-export function signContract(session: Session, vendorProfileId: string) {
+export function signContract(
+  session: Session,
+  vendorProfileId: string,
+  opts?: { signerName?: string; signerIp?: string | null; url?: string | null; version?: string },
+) {
   return withAudit(session, { action: "SIGN", entity: "VendorContract", entityId: vendorProfileId }, async () => {
     const before = await db.vendorContract.findUnique({ where: { vendorProfileId }, select: { status: true } });
+    const fields = {
+      status: "SIGNED" as const,
+      signedAt: new Date(),
+      signerName: opts?.signerName ?? null,
+      signerIp: opts?.signerIp ?? null,
+      version: opts?.version ?? null,
+      ...(opts?.url ? { url: opts.url } : {}),
+    };
     return {
-      before,
       run: async () => {
         const c = await db.vendorContract.upsert({
           where: { vendorProfileId },
-          update: { status: "SIGNED", signedAt: new Date() },
-          create: { vendorProfileId, status: "SIGNED", signedAt: new Date() },
+          update: fields,
+          create: { vendorProfileId, ...fields },
         });
-        return { result: c, after: { status: c.status, signedAt: c.signedAt } };
+        return { result: c, after: { status: c.status, signedAt: c.signedAt, signerName: c.signerName } };
       },
+      before,
     };
   });
 }

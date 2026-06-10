@@ -62,3 +62,6 @@ playwright.config.ts
 # audit & internal docs
 AUDIT-REPORT.md
 Docs/PLAN-*.md
+
+# Mirrored third-party reference site (not shipped)
+reference/

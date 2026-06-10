@@ -3,8 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireVendor } from "@/server/auth/guard";
 import { getEventWithStalls } from "@/server/events/service";
-import { VendorStallPay } from "@/components/vendor/VendorStallPay";
-import { createStallOrderAction } from "./actions";
+import { VendorStallReserve } from "@/components/vendor/VendorStallReserve";
 
 export const metadata: Metadata = { title: "Pick a stall" };
 
@@ -33,7 +32,7 @@ export default async function VendorEventStallsPage({ params }: { params: Promis
         <div>
           <h1 className="font-display text-2xl font-semibold">Pick your stall · {event.name}</h1>
           <p className="mt-1 text-sm text-muted-foreground text-pretty">
-            Tap an open stall and pay to reserve it. We&apos;ll give you a quick call to verify before it&apos;s confirmed.
+            Tap an open stall to reserve it. You&apos;ll sign the agreement next; we verify by call and approve you before payment.
           </p>
         </div>
         <Link href="/vendor/events" className="shrink-0 text-sm text-muted-foreground hover:text-foreground">← All markets</Link>
@@ -42,7 +41,7 @@ export default async function VendorEventStallsPage({ params }: { params: Promis
       {mapStalls.length === 0 ? (
         <p className="text-sm text-muted-foreground">The event layout for this market isn&apos;t ready yet — check back soon.</p>
       ) : (
-        <VendorStallPay stalls={mapStalls} payAction={createStallOrderAction} />
+        <VendorStallReserve eventId={id} stalls={mapStalls} />
       )}
     </div>
   );

@@ -22,52 +22,60 @@ export default async function CustomerDashboardPage() {
   const withQr = await Promise.all(tickets.map(async (t) => ({ t, qr: await toQrDataUrl(t.qrToken) })));
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-12 sm:px-6">
-      <h1 className="font-display text-3xl font-semibold sm:text-4xl">Dashboard</h1>
-      <p className="mt-2 text-muted-foreground">Show the QR code at the gate — that&apos;s your way in.</p>
+    <section className="paint py-[var(--space-5xl)]">
+      <div className="wrapper max-w-[62rem]">
+        <span className="f-paragraph-small f-bold t-upper opacity-50" style={{ letterSpacing: "0.18em" }}>Your wallet</span>
+        <h1 className="f-exat mt-[var(--space-sm)]" style={{ fontSize: "var(--h76)", lineHeight: 1.0 }}>Tickets</h1>
+        <p className="f-paragraph mt-[var(--space-sm)] opacity-70">Show the QR code at the gate — that&apos;s your way in.</p>
 
-      {withQr.length === 0 ? (
-        <EmptyState
-          icon={Ticket}
-          className="mt-10"
-          title="No tickets yet"
-          description="Just paid? Your tickets land here the moment payment is confirmed."
-          action={
-            <Button asChild>
-              <Link href="/events">Find an event</Link>
-            </Button>
-          }
-        />
-      ) : (
-        <div className="mt-8 space-y-4">
-          {withQr.map(({ t, qr }) => {
-            const used = t.status === "CHECKED_IN";
-            return (
-              <div
-                key={t.id}
-                className="flex items-center gap-5 overflow-hidden rounded-2xl border border-white/10 bg-hero p-5 text-[#EDE6DA] shadow-md"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="font-display text-lg font-semibold">{t.order.event.name}</p>
-                  <p className="text-sm text-[#C9BDA8]">{t.ticketType.name} · {fmt(t.order.event.startsAt)}</p>
-                  <div className="mt-3 flex items-center gap-2">
-                    <span
-                      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        used ? "bg-white/10 text-[#C9BDA8]" : "bg-gold-500/20 text-gold-300"
-                      }`}
-                    >
-                      {used ? "Checked in" : "Valid"}
-                    </span>
-                    <span className="text-xs text-[#9c907c]">#{t.id.slice(0, 8)}</span>
+        {withQr.length === 0 ? (
+          <EmptyState
+            icon={Ticket}
+            className="mt-10"
+            title="No tickets yet"
+            description="Just paid? Your tickets land here the moment payment is confirmed."
+            action={
+              <Button asChild>
+                <Link href="/events">Find an event</Link>
+              </Button>
+            }
+          />
+        ) : (
+          <div className="mt-[var(--space-3xl)] grid gap-[var(--space-lg)]">
+            {withQr.map(({ t, qr }) => {
+              const used = t.status === "CHECKED_IN";
+              return (
+                <div
+                  key={t.id}
+                  className="gama-1 bg-1 paint flex items-center gap-[var(--space-xl)] overflow-hidden rounded-[var(--radius-lg)] p-[var(--space-xl)]"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="f-exat" style={{ fontSize: "var(--h42)", lineHeight: 1.05 }}>{t.order.event.name}</p>
+                    <p className="f-paragraph-small mt-[var(--space-xs)] opacity-70">
+                      {t.ticketType.name} · {fmt(t.order.event.startsAt)}
+                    </p>
+                    <div className="mt-[var(--space-md)] flex items-center gap-[var(--space-md)]">
+                      <span
+                        className="f-paragraph-small f-bold inline-flex items-center rounded-full px-[var(--space-md)] py-[2px] t-upper"
+                        style={
+                          used
+                            ? { background: "rgba(255,255,255,0.12)", opacity: 0.7, letterSpacing: "0.1em" }
+                            : { background: "var(--color)", color: "var(--bgcolor)", letterSpacing: "0.1em" }
+                        }
+                      >
+                        {used ? "Checked in" : "Valid"}
+                      </span>
+                      <span className="f-paragraph-small opacity-50">#{t.id.slice(0, 8)}</span>
+                    </div>
                   </div>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={qr} alt="Ticket QR" className="size-24 shrink-0 rounded-lg bg-white p-1.5" />
                 </div>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={qr} alt="Ticket QR" className="size-24 shrink-0 rounded-lg bg-white p-1.5" />
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </main>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </section>
   );
 }

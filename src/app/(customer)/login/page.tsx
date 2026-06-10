@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { PhoneLogin } from "@/components/auth/PhoneLogin";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
 
@@ -8,19 +7,28 @@ export const metadata: Metadata = { title: "Sign in" };
 
 export default function CustomerLoginPage() {
   return (
-    <main className="mx-auto flex max-w-md flex-col justify-center px-4 py-16 sm:py-24">
-      <Card className="shadow-md">
-        <CardHeader>
-          <CardTitle className="text-2xl">Welcome in</CardTitle>
-          <CardDescription>Sign in with your phone number to book tickets and find them again later.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <PhoneLogin redirectTo="/dashboard" />
-        </CardContent>
-      </Card>
-      <p className="mt-4 text-center text-xs text-muted-foreground">
-        We&apos;ll text you a one-time code. No passwords to remember.
-      </p>
-    </main>
+    <section className="grid min-h-[100svh] lg:grid-cols-2">
+      {/* left — big Exat headline on navy */}
+      <div className="gama-1 bg-1 paint hidden items-end p-[var(--space-4xl)] lg:flex">
+        <h1 className="f-exat" style={{ fontSize: "var(--h235)", lineHeight: 0.9 }}>Welcome in</h1>
+      </div>
+
+      {/* right — the phone-OTP form on cream */}
+      <div className="flex items-center justify-center p-[var(--space-2xl)]" style={{ background: "#F4F2EC", color: "#14141A" }}>
+        <div className="w-full max-w-md">
+          <span className="f-paragraph-small f-bold t-upper opacity-50" style={{ letterSpacing: "0.18em" }}>Sign in</span>
+          <h2 className="f-exat mt-[var(--space-sm)] lg:hidden" style={{ fontSize: "var(--h60)", lineHeight: 1.0 }}>Welcome in</h2>
+          <p className="f-paragraph mt-[var(--space-md)] opacity-70">
+            Sign in with your phone number to book tickets and find them again later.
+          </p>
+          <div className="mt-[var(--space-2xl)]">
+            <PhoneLogin redirectTo="/dashboard" />
+          </div>
+          <p className="f-paragraph-small mt-[var(--space-lg)] opacity-50">
+            We&apos;ll text you a one-time code. No passwords to remember.
+          </p>
+        </div>
+      </div>
+    </section>
   );
 }

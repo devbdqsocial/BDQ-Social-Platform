@@ -1,5 +1,5 @@
-/** Shared shell for policy/legal pages: title, last-updated, and consistent typographic styling
- *  (no typography plugin — descendant utilities style the semantic HTML each page provides). */
+/** Shared shell for policy/legal pages, RPA `mod-text--content` style: big Exat title + centred
+ *  Inter body. Descendant utilities style the semantic HTML each page provides (no typography plugin). */
 export function LegalPage({
   title,
   updated,
@@ -10,12 +10,17 @@ export function LegalPage({
   children: React.ReactNode;
 }) {
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
-      <h1 className="font-display text-3xl font-semibold text-foreground">{title}</h1>
-      <p className="mt-2 text-sm text-muted-foreground">Last updated: {updated}</p>
-      <div className="mt-8 space-y-4 text-sm leading-relaxed text-muted-foreground [&_a]:text-primary [&_a]:underline [&_h2]:mt-8 [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:text-foreground [&_li]:marker:text-muted-foreground [&_strong]:text-foreground [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-6">
-        {children}
+    <section className="paint py-[var(--space-5xl)]">
+      <div className="wrapper">
+        <span className="f-paragraph-small f-bold t-upper opacity-50" style={{ letterSpacing: "0.16em" }}>Legal</span>
+        <h1 className="f-exat mt-[var(--space-sm)]" style={{ fontSize: "var(--h76)", lineHeight: 1.05 }}>{title}</h1>
+        <p className="f-paragraph-small mt-[var(--space-md)] opacity-60">Last updated: {updated}</p>
+        <div
+          className="mx-auto mt-[var(--space-3xl)] max-w-[60rem] [&_a]:underline [&_h2]:mb-[var(--space-md)] [&_h2]:mt-[var(--space-2xl)] [&_h2]:[font-family:var(--f-exat)] [&_h2]:[font-size:var(--h42)] [&_h2]:[line-height:1.1] [&_li]:mb-[var(--space-xs)] [&_li]:opacity-80 [&_p]:mb-[var(--space-lg)] [&_p]:opacity-80 [&_p]:[font-size:var(--paragraph)] [&_p]:[line-height:1.5] [&_strong]:font-bold [&_ul]:mb-[var(--space-lg)] [&_ul]:list-disc [&_ul]:pl-[var(--space-lg)]"
+        >
+          {children}
+        </div>
       </div>
-    </main>
+    </section>
   );
 }

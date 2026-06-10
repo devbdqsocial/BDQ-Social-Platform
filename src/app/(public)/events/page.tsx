@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CalendarDays, MapPin } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import { listPublished } from "@/server/events/service";
 import { formatPaise } from "@/lib/utils";
-import { Container } from "@/components/ui/section";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Badge } from "@/components/ui/badge";
+import { Reveal } from "@/components/motion/Reveal";
+import { SplitReveal } from "@/components/motion/SplitReveal";
 
 export const metadata: Metadata = { title: "Events" };
 export const dynamic = "force-dynamic";
@@ -17,49 +17,56 @@ export default async function EventsPage() {
   const events = await listPublished();
 
   return (
-    <Container className="py-12 sm:py-16">
-      <h1 className="font-display text-4xl font-semibold sm:text-5xl">What&apos;s on</h1>
-      <p className="mt-2 text-muted-foreground">Pick a date and grab your tickets before they go.</p>
-
-      {events.length === 0 ? (
-        <EmptyState
-          icon={CalendarDays}
-          className="mt-10"
-          title="Nothing on sale right now"
-          description="Our next evening is being lined up. Check back soon — you won't want to miss it."
-        />
-      ) : (
-        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {events.map((e) => {
-            const prices = e.ticketTypes.map((t) => t.priceInPaise);
-            const from = prices.length ? Math.min(...prices) : null;
-            return (
-              <Link
-                key={e.id}
-                href={`/events/${e.slug}`}
-                className="card-hover group flex flex-col rounded-2xl border border-border bg-card p-6 shadow-sm"
-              >
-                <h2 className="font-display text-xl font-semibold group-hover:text-primary">{e.name}</h2>
-                <p className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <CalendarDays className="size-4" /> {fmt(e.startsAt)}
-                </p>
-                {e.location && (
-                  <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <MapPin className="size-4" /> {e.location}
-                  </p>
-                )}
-                <div className="mt-4">
-                  {from != null ? (
-                    <Badge variant="primary">From {formatPaise(from)}</Badge>
-                  ) : (
-                    <Badge variant="neutral">Tickets soon</Badge>
-                  )}
-                </div>
-              </Link>
-            );
-          })}
+    <>
+      <section className="gama-3 bg-1 paint flex min-h-[60svh] items-end py-[var(--space-5xl)]">
+        <div className="wrapper">
+          <span className="f-paragraph-small f-bold t-upper" style={{ letterSpacing: "0.18em" }}>What&apos;s on</span>
+          <SplitReveal as="h1" className="f-exat mt-[var(--space-md)]" style={{ fontSize: "var(--h133)", lineHeight: 1.0 }}>
+            Events &amp; tickets
+          </SplitReveal>
+          <p className="f-paragraph mt-[var(--space-lg)] max-w-[44ch] opacity-80">
+            Pick a date and grab your tickets before they go.
+          </p>
         </div>
-      )}
-    </Container>
+      </section>
+
+      <section className="paint py-[var(--space-4xl)]">
+        <div className="wrapper">
+          {events.length === 0 ? (
+            <EmptyState
+              icon={CalendarDays}
+              title="Nothing on sale right now"
+              description="Our next evening is being lined up. Check back soon — you won't want to miss it."
+            />
+          ) : (
+            <Reveal stagger>
+              {events.map((e) => {
+                const prices = e.ticketTypes.map((t) => t.priceInPaise);
+                const from = prices.length ? Math.min(...prices) : null;
+                return (
+                  <Link
+                    key={e.id}
+                    href={`/events/${e.slug}`}
+                    data-cursor
+                    className="flex flex-col gap-[var(--space-sm)] py-[var(--space-2xl)] sm:flex-row sm:items-end sm:justify-between"
+                    style={{ borderTop: "1px solid var(--color)" }}
+                  >
+                    <div>
+                      <h2 className="f-exat" style={{ fontSize: "var(--h76)", lineHeight: 1.05 }}>{e.name}</h2>
+                      <p className="f-paragraph mt-[var(--space-sm)] opacity-80">
+                        {fmt(e.startsAt)}{e.location ? ` · ${e.location}` : ""}
+                      </p>
+                    </div>
+                    <span className="f-exat shrink-0" style={{ fontSize: "var(--h42)" }}>
+                      {from != null ? `from ${formatPaise(from)}` : "Tickets soon"}
+                    </span>
+                  </Link>
+                );
+              })}
+            </Reveal>
+          )}
+        </div>
+      </section>
+    </>
   );
 }

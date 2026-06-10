@@ -5,12 +5,16 @@ export const metadata: Metadata = { title: "Offline" };
 
 export default function OfflinePage() {
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center px-4 text-center">
-      <h1 className="font-display text-3xl font-semibold">You&apos;re offline</h1>
-      <p className="mt-2 text-muted-foreground">
-        No connection right now. Your tickets are saved on your phone — reconnect to load the latest.
-      </p>
-      <Link href="/" className="mt-6 text-sm font-medium text-primary hover:underline">Try again</Link>
-    </main>
+    <div className="rpa">
+      <section className="gama-1 bg-1 paint flex min-h-[100svh] flex-col items-center justify-center px-[var(--wrapper-padd)] text-center">
+        <h1 className="f-exat" style={{ fontSize: "var(--h100)", lineHeight: 1.0 }}>You&apos;re offline</h1>
+        <p className="f-paragraph mt-[var(--space-md)] max-w-[40ch] opacity-80">
+          No connection right now. Your tickets are saved on your phone — reconnect to load the latest.
+        </p>
+        <Link href="/" className="f-paragraph-small f-bold mt-[var(--space-2xl)] t-upper underline" style={{ letterSpacing: "0.14em" }}>
+          Try again
+        </Link>
+      </section>
+    </div>
   );
 }

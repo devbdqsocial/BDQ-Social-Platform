@@ -20,10 +20,13 @@ export function ZoneSidebar({
   variant,
   brand,
   items,
+  footer,
 }: {
   variant: "admin" | "vendor";
   brand: string;
   items: Item[];
+  /** Optional bottom slot (e.g. sign-out). Rendered in both the desktop sidebar and mobile drawer. */
+  footer?: React.ReactNode;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -61,6 +64,7 @@ export function ZoneSidebar({
       <aside className="hidden w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar p-4 sm:flex">
         <div className="mb-6">{brandMark}</div>
         <nav className="flex flex-col gap-1">{links()}</nav>
+        {footer && <div className="mt-auto pt-6">{footer}</div>}
       </aside>
 
       {/* Mobile top bar */}
@@ -94,6 +98,7 @@ export function ZoneSidebar({
               </button>
             </div>
             <nav className="flex flex-col gap-1">{links(() => setOpen(false))}</nav>
+            {footer && <div className="mt-auto pt-6" onClick={() => setOpen(false)}>{footer}</div>}
           </div>
         </div>
       )}

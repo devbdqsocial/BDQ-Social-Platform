@@ -64,15 +64,45 @@ export function upsertProfile(userId: string, input: VendorProfileInput) {
   const socials = input.instagram ? { instagram: input.instagram } : Prisma.JsonNull;
   const data = {
     brandName: input.brandName,
+    registeredName: input.registeredName || null,
     category: input.category || null,
+    productCategory: input.productCategory || null,
+    products: input.products || null,
     description: input.description || null,
     website: input.website || null,
-    socials,
+    instagram: input.instagram || null,
+    contactPerson: input.contactPerson || null,
+    whatsapp: input.whatsapp || null,
+    city: input.city || null,
+    socials, // kept in sync for the public brand page
   };
   return db.vendorProfile.upsert({
     where: { userId },
     update: data,
     create: { userId, ...data },
+  });
+}
+
+/** Store/replace a single KYC document reference in VendorKyc.docUrls (keyed by docType). */
+export async function setKycDoc(
+  userId: string,
+  docType: "pan" | "fssai" | "gst" | "id",
+  doc: { url: string; publicId: string } | null,
+) {
+  const profile = await db.vendorProfile.findUnique({
+    where: { userId },
+    select: { id: true, kyc: { select: { docUrls: true } } },
+  });
+  if (!profile) throw new Error("Create your profile first");
+  const current = (profile.kyc?.docUrls as Record<string, unknown> | null) ?? {};
+  const next: Record<string, unknown> = { ...current };
+  if (doc) next[docType] = doc;
+  else delete next[docType];
+  const docUrls = next as Prisma.InputJsonValue;
+  return db.vendorKyc.upsert({
+    where: { vendorProfileId: profile.id },
+    update: { docUrls },
+    create: { vendorProfileId: profile.id, docUrls },
   });
 }
 

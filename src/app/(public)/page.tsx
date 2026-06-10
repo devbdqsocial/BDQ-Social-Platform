@@ -1,27 +1,29 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Camera, Music4, ShoppingBag, UtensilsCrossed } from "lucide-react";
 import { listPublished } from "@/server/events/service";
 import { listApprovedVendors } from "@/server/vendors/service";
 import { sponsorsForEvent } from "@/server/sponsors/service";
 import { primaryLogo } from "@/lib/vendor-assets";
 import { formatPaise } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Section, Container } from "@/components/ui/section";
 import { Countdown } from "@/components/landing/Countdown";
-import { SponsorStrip } from "@/components/landing/SponsorStrip";
+import { Reveal } from "@/components/motion/Reveal";
+import { Marquee } from "@/components/motion/Marquee";
+import { PinnedServices } from "@/components/motion/PinnedServices";
+import { BrandsCarousel } from "@/components/motion/BrandsCarousel";
 
 export const dynamic = "force-dynamic";
 
 const fmtDate = (d: Date) =>
-  new Intl.DateTimeFormat("en-IN", { dateStyle: "full", timeZone: "Asia/Kolkata" }).format(d);
+  new Intl.DateTimeFormat("en-IN", { dateStyle: "long", timeZone: "Asia/Kolkata" }).format(d);
 
-const ATTRACTIONS = [
-  { icon: ShoppingBag, title: "Shopping you won't find at the mall", body: "80+ handpicked indie brands — fusion wear, jewellery, home, and thoughtful Diwali gifting." },
-  { icon: UtensilsCrossed, title: "A proper food court", body: "The city's best cafés, bakers, and inventive street food. Clean, fresh, and genuinely good." },
-  { icon: Music4, title: "Live music all evening", body: "Easy acoustic sets at sundown that build into a warm, high-energy night." },
-  { icon: Camera, title: "Corners made for photos", body: "Lounges, neon, and little surprises — bring friends and stay a while." },
-];
+// Angled RPA tab button.
+function Btn({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <Link href={href} className="btn" data-cursor>
+      <span className="btn__text">{children}</span>
+    </Link>
+  );
+}
 
 export default async function LandingPage() {
   const [events, brands] = await Promise.all([listPublished(), listApprovedVendors()]);
@@ -29,147 +31,138 @@ export default async function LandingPage() {
   const featured = brands.slice(0, 6);
   const minPrice = event?.ticketTypes.length ? Math.min(...event.ticketTypes.map((t) => t.priceInPaise)) : null;
   const sponsors = event ? await sponsorsForEvent(event.id) : [];
-  // Note: sponsors depends on event.id, so it cannot be parallelized with the initial fetch.
+  const heroImg = featured.map((v) => primaryLogo(v.assets)).find(Boolean) ?? null;
 
   return (
     <div>
-      {/* Hero */}
-      <section className="bg-hero text-[#EDE6DA]">
-        <Container className="flex flex-col items-center gap-6 py-24 text-center sm:py-32">
-          <span className="rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.15em] text-gold-300">
-            {event?.location ?? "Vadodara"} · Curated night market
-          </span>
-          <h1 className="max-w-3xl font-display text-5xl font-semibold leading-[1.05] text-balance sm:text-7xl">
-            The city&apos;s most <span className="text-gold-300">curated</span> night market
-          </h1>
-          <p className="max-w-xl text-lg text-[#C9BDA8] text-pretty">
-            An evening of handpicked brands, gourmet food, and live music — the warm, grown-up
-            alternative to the usual mela. Come for the finds, stay for the night.
-          </p>
-          {event && (
-            <p className="text-sm font-medium text-[#C9BDA8]">
-              {fmtDate(event.startsAt)} · {event.location}
+      {/* ============ HERO (cabecera--home) — navy / light-blue ============ */}
+      <section className="gama-1 bg-1 paint relative flex min-h-[100svh] items-center overflow-hidden">
+        <div className="wrapper grid w-full items-center gap-[var(--space-3xl)] py-[var(--space-5xl)] lg:grid-cols-2">
+          <Reveal stagger>
+            <span className="f-paragraph-small f-bold t-upper" style={{ letterSpacing: "0.18em" }}>
+              {event?.location ?? "Vadodara"} · Curated night market
+            </span>
+            <h1 className="f-exat mt-[var(--space-md)]" style={{ fontSize: "var(--h133)", lineHeight: 1.0 }}>
+              The city&apos;s most curated night market
+            </h1>
+            <p className="f-paragraph mt-[var(--space-lg)] max-w-[34ch] opacity-80">
+              An evening of handpicked brands, gourmet food, and live music — the warm, grown-up
+              alternative to the usual mela.
             </p>
-          )}
-          {event && <Countdown target={event.startsAt.toISOString()} />}
-          <div className="mt-2 flex flex-wrap justify-center gap-3">
-            <Button asChild className="h-12 px-7 text-base shadow-glow">
-              <Link href="/events">
-                Get your tickets <ArrowRight className="size-4" />
-              </Link>
-            </Button>
-            <Button asChild className="h-12 bg-white/10 px-7 text-base text-white hover:bg-white/20">
-              <Link href="/vendors">Meet the brands</Link>
-            </Button>
-          </div>
-          {minPrice != null && (
-            <p className="text-xs text-[#9c907c]">Tickets from {formatPaise(minPrice)} · QR delivered to your phone</p>
-          )}
-        </Container>
+            {event && (
+              <p className="f-paragraph-small f-bold mt-[var(--space-lg)] t-upper" style={{ letterSpacing: "0.12em" }}>
+                {fmtDate(event.startsAt)} · {event.location}
+              </p>
+            )}
+            {event && <div className="mt-[var(--space-md)]"><Countdown target={event.startsAt.toISOString()} /></div>}
+            <div className="mt-[var(--space-xl)] flex flex-wrap items-center gap-[var(--space-lg)]">
+              <Btn href="/events">Tickets</Btn>
+              <Btn href="/vendors">Brands</Btn>
+              {minPrice != null && (
+                <span className="f-paragraph-small opacity-70">from {formatPaise(minPrice)}</span>
+              )}
+            </div>
+          </Reveal>
+
+          <Reveal className="hidden lg:block">
+            <div className="svg svg--form11 mx-auto w-[80%]">
+              {heroImg ? (
+                <Image src={heroImg} alt="" fill className="svg__img" sizes="40vw" priority />
+              ) : (
+                <div className="svg__bg" />
+              )}
+            </div>
+          </Reveal>
+        </div>
       </section>
 
-      {/* Attractions */}
-      <Section>
-        <div className="mx-auto max-w-2xl text-center">
-          <h2 className="font-display text-3xl font-semibold sm:text-4xl text-balance">What&apos;s waiting inside</h2>
-          <p className="mt-3 text-muted-foreground text-pretty">
-            One evening, four reasons to clear your calendar.
-          </p>
+      {/* ============ MANIFESTO (mod-text--big) — cream / ink ============ */}
+      <section className="paint py-[var(--space-5xl)]">
+        <div className="wrapper">
+          <Reveal>
+            <p
+              className="f-exat max-w-[18ch]"
+              style={{ fontSize: "var(--h100)", lineHeight: 1.05, textIndent: "2em" }}
+            >
+              One unforgettable evening a year — set to a warm fairy-light glow.
+            </p>
+          </Reveal>
         </div>
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {ATTRACTIONS.map((a) => (
-            <div key={a.title} className="card-hover rounded-2xl border border-border bg-card p-6 shadow-sm">
-              <span className="grid size-11 place-items-center rounded-xl bg-primary/10 text-primary">
-                <a.icon className="size-5" />
-              </span>
-              <h3 className="mt-4 font-display text-lg font-semibold">{a.title}</h3>
-              <p className="mt-1.5 text-sm text-muted-foreground text-pretty">{a.body}</p>
-            </div>
-          ))}
-        </div>
-      </Section>
+      </section>
 
-      {/* Featured brands */}
+      {/* ============ SERVICES — servicios--anima (pinned horizontal) ============ */}
+      <PinnedServices />
+
+      {/* ============ BRANDS (proyectos) — navy / pink, masked cards ============ */}
       {featured.length > 0 && (
-        <section className="border-y border-border bg-card/40">
-          <Container className="py-16">
+        <section className="gama-2 surface-2 paint py-[var(--space-5xl)]">
+          <div className="wrapper">
             <div className="flex items-end justify-between gap-4">
-              <div>
-                <h2 className="font-display text-3xl font-semibold sm:text-4xl">The brands</h2>
-                <p className="mt-2 text-muted-foreground">A handpicked lineup of independent makers.</p>
-              </div>
-              <Link href="/vendors" className="shrink-0 text-sm font-medium text-primary hover:underline">
-                See all →
-              </Link>
+              <h2 className="f-exat" style={{ fontSize: "var(--h76)", lineHeight: 1.05 }}>The brands</h2>
+              <Link href="/vendors" data-cursor className="f-paragraph-small f-bold t-upper">See all →</Link>
             </div>
-            <div className="mt-8 grid grid-cols-3 gap-4 sm:grid-cols-6">
-              {featured.map((v) => {
-                const logo = primaryLogo(v.assets);
-                return (
-                  <Link key={v.id} href={`/vendors/${v.id}`} className="group">
-                    <div className="card-hover relative aspect-square overflow-hidden rounded-2xl border border-border bg-muted shadow-sm">
-                      {logo ? (
-                        <Image src={logo} alt={v.brandName} fill className="object-cover" sizes="(max-width:640px) 33vw, 17vw" />
-                      ) : (
-                        <div className="grid size-full place-items-center font-display text-2xl text-muted-foreground">
-                          {v.brandName.charAt(0)}
-                        </div>
-                      )}
-                    </div>
-                    <p className="mt-2 truncate text-center text-xs text-muted-foreground group-hover:text-primary">
-                      {v.brandName}
-                    </p>
-                  </Link>
-                );
-              })}
+            <div className="mt-[var(--space-3xl)]">
+              <BrandsCarousel
+                brands={featured.map((v) => ({ id: v.id, brandName: v.brandName, logo: primaryLogo(v.assets) ?? null }))}
+              />
             </div>
-          </Container>
+          </div>
         </section>
       )}
 
-      {/* Sponsors */}
-      {sponsors.length > 0 && (
-        <Section>
-          <SponsorStrip sponsors={sponsors} />
-        </Section>
+      {/* ============ SPONSORS marquee (clientes) — dark-green / green ============ */}
+      {(sponsors.length > 0 || brands.length > 4) && (
+        <section className="gama-1 bg-2 paint overflow-hidden py-[var(--space-4xl)]">
+          <Marquee speed={28}>
+            {(sponsors.length ? sponsors.map((s) => s.name) : brands.map((b) => b.brandName)).map((name, i) => (
+              <span key={`${name}-${i}`} className="f-exat px-[var(--space-3xl)]" style={{ fontSize: "var(--h60)" }}>
+                {name}
+              </span>
+            ))}
+          </Marquee>
+        </section>
       )}
 
-      {/* Upcoming event CTA */}
+      {/* ============ CIERRE CTA — dark-red / green ============ */}
       {event && (
-        <Section>
-          <div className="relative overflow-hidden rounded-3xl border border-border bg-hero px-6 py-14 text-center text-[#EDE6DA] shadow-lg">
-            <div className="relative mx-auto flex max-w-xl flex-col items-center gap-4">
-              <span className="text-xs font-medium uppercase tracking-[0.15em] text-gold-300">Up next</span>
-              <h2 className="font-display text-3xl font-semibold sm:text-4xl text-balance">{event.name}</h2>
-              <p className="text-[#C9BDA8]">{fmtDate(event.startsAt)} · {event.location}</p>
-              {minPrice != null && <p className="text-lg font-medium">Tickets from {formatPaise(minPrice)}</p>}
-              <Button asChild className="mt-2 h-12 px-7 text-base shadow-glow">
-                <Link href={`/events/${event.slug}`}>
-                  Get tickets <ArrowRight className="size-4" />
-                </Link>
-              </Button>
-            </div>
+        <section className="gama-3 bg-3 paint flex min-h-[80svh] items-center py-[var(--space-5xl)]">
+          <div className="wrapper text-center">
+            <Reveal>
+              <span className="f-paragraph-small f-bold t-upper" style={{ letterSpacing: "0.18em" }}>Up next</span>
+              <h2 className="f-exat mx-auto mt-[var(--space-md)] max-w-[16ch]" style={{ fontSize: "var(--h133)", lineHeight: 1.0 }}>
+                {event.name}
+              </h2>
+              <p className="f-paragraph mt-[var(--space-lg)]">
+                {fmtDate(event.startsAt)} · {event.location}
+                {minPrice != null && <> · from {formatPaise(minPrice)}</>}
+              </p>
+              <div className="mt-[var(--space-2xl)] flex justify-center">
+                <Btn href={`/events/${event.slug}`}>Get tickets</Btn>
+              </div>
+            </Reveal>
           </div>
-        </Section>
+        </section>
       )}
 
-      {/* FAQ */}
-      <Container className="max-w-3xl pb-24">
-        <h2 className="font-display text-3xl font-semibold sm:text-4xl">Good to know</h2>
-        <div className="mt-6 space-y-3">
-          {[
-            ["When is it?", "An evening event — gates open in the late afternoon and we go into the night, the weekend before Diwali."],
-            ["How do I get in?", "Book a ticket online and we'll send a QR code to your phone. Show it at the gate — that's all there is to it."],
-            ["Can I get a refund?", "All sales are final, so pick your date with confidence. No refunds."],
-            ["Is there food?", "Plenty. A full food court with the city's best cafés, bakers, and street food."],
-          ].map(([q, a]) => (
-            <details key={q} className="group rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40">
-              <summary className="cursor-pointer list-none font-medium">{q}</summary>
-              <p className="mt-2 text-sm text-muted-foreground text-pretty">{a}</p>
-            </details>
-          ))}
+      {/* ============ FAQ — cream / ink ============ */}
+      <section className="paint py-[var(--space-5xl)]">
+        <div className="wrapper max-w-[60rem]">
+          <h2 className="f-exat" style={{ fontSize: "var(--h60)", lineHeight: 1.05 }}>Good to know</h2>
+          <div className="mt-[var(--space-2xl)]">
+            {[
+              ["When is it?", "An evening event — gates open in the late afternoon and we go into the night, the weekend before Diwali."],
+              ["How do I get in?", "Book online and we'll send a QR code to your phone. Show it at the gate — that's it."],
+              ["Can I get a refund?", "All sales are final, so pick your date with confidence. No refunds."],
+              ["Is there food?", "Plenty. A full food court with the city's best cafés, bakers, and street food."],
+            ].map(([q, a]) => (
+              <details key={q} className="group py-[var(--space-lg)]" style={{ borderTop: "1px solid var(--color)" }}>
+                <summary className="f-exat cursor-pointer list-none" style={{ fontSize: "var(--h32)" }}>{q}</summary>
+                <p className="f-paragraph mt-[var(--space-sm)] opacity-80">{a}</p>
+              </details>
+            ))}
+          </div>
         </div>
-      </Container>
+      </section>
     </div>
   );
 }

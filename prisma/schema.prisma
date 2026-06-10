@@ -101,8 +101,10 @@ enum VendorApproval {
 }
 
 enum BookingStatus {
-  HELD
-  PENDING
+  RESERVED // vendor picked a stall during onboarding; held while the application is open
+  HELD // short live-payment hold (legacy ticket-style)
+  PENDING_PAYMENT // admin approved + confirmed the stall; awaiting vendor payment (payBy window)
+  PENDING // legacy: payment captured, awaiting admin verification
   BOOKED
   REJECTED
   CANCELLED
@@ -450,13 +452,22 @@ model VendorProfile {
   userId           String         @unique
   user             User           @relation(fields: [userId], references: [id])
   brandName        String
+  registeredName   String? // legal/registered business name (vs public brand name)
   category         String?
+  productCategory  String? // structured dropdown taxonomy
+  products         String? // free text — what they sell
   description      String?
   website          String?
+  instagram        String?
+  contactPerson    String?
+  whatsapp         String?
+  city             String?
   socials          Json?
   approvalStatus   VendorApproval @default(SUBMITTED)
   verifiedCallById String?
   verifiedAt       DateTime?
+  callbackNote     String? // admin note logged on the verification call-back
+  callbackAt       DateTime?
   createdAt        DateTime       @default(now())
 
   kyc      VendorKyc?
@@ -494,7 +505,10 @@ model VendorContract {
   vendorProfileId String         @unique
   vendorProfile   VendorProfile  @relation(fields: [vendorProfileId], references: [id], onDelete: Cascade)
   status          ContractStatus @default(SENT)
-  url             String?
+  url             String? // Cloudinary URL of the generated, e-signed PDF
+  version         String? // contract template version signed
+  signerName      String? // typed legal name at signing
+  signerIp        String? // captured at signing (audit trail)
   signedAt        DateTime?
 }
 
@@ -510,6 +524,7 @@ model Booking {
   adminDetails    Json?
   status          BookingStatus  @default(HELD)
   gatewayOrderId  String?        @unique
+  payBy           DateTime? // deadline to pay after admin approval (RESERVED→PENDING_PAYMENT window)
   payment         Payment?
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
