@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { isAllowedImage, type UploadableAssetKind } from "@/lib/assets";
+import { cld } from "@/lib/cloudinary-url";
 import {
   deleteAssetAction,
   getUploadSignatureAction,
@@ -86,7 +87,7 @@ export function AssetUploader({
           {items.map((a) => (
             <div key={a.id} className="relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={a.url} alt="" className="size-20 rounded-md border border-border object-cover" />
+              <img src={cld(a.url, 160)} alt={`${a.kind.toLowerCase()} asset preview`} className="size-20 rounded-md border border-border object-cover" />
               <button
                 type="button"
                 aria-label="Remove"

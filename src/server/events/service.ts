@@ -1,4 +1,5 @@
 import "server-only";
+import { unstable_cache } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { db } from "@/server/db";
 import { withAudit } from "@/server/audit";
@@ -46,12 +47,29 @@ async function uniqueSlug(name: string): Promise<string> {
   return slug;
 }
 
-export function listPublished() {
-  return db.event.findMany({
-    where: { status: { in: ["PUBLISHED", "LIVE"] } },
-    orderBy: { startsAt: "asc" },
-    include: { ticketTypes: { orderBy: { priceInPaise: "asc" } } },
-  });
+/* Public DISPLAY reads are cached 60s (owner-approved staleness). unstable_cache JSON-serializes,
+   so Date fields come back as strings on cache hits — revive the ones consumers use.
+   Checkout/hold/fulfilment paths query the DB directly and never read through this cache. */
+const reviveEvent = <T extends { startsAt: Date; endsAt: Date; updatedAt: Date }>(e: T): T => ({
+  ...e,
+  startsAt: new Date(e.startsAt),
+  endsAt: new Date(e.endsAt),
+  updatedAt: new Date(e.updatedAt),
+});
+
+const listPublishedCached = unstable_cache(
+  () =>
+    db.event.findMany({
+      where: { status: { in: ["PUBLISHED", "LIVE"] } },
+      orderBy: { startsAt: "asc" },
+      include: { ticketTypes: { orderBy: { priceInPaise: "asc" } } },
+    }),
+  ["events:published"],
+  { revalidate: 60, tags: ["events"] },
+);
+
+export async function listPublished() {
+  return (await listPublishedCached()).map(reviveEvent);
 }
 
 export function listAllForAdmin() {
@@ -193,16 +211,32 @@ export function saveEventMap(session: Session, eventId: string, layout: Designer
   });
 }
 
-export function getBySlug(slug: string) {
-  return db.event.findUnique({
-    where: { slug },
-    include: {
-      ticketTypes: { orderBy: { priceInPaise: "asc" } },
-      schedule: { orderBy: { startsAt: "asc" } },
-      stalls: { orderBy: { label: "asc" } },
-      mapLayout: { select: { layoutJson: true } },
-    },
-  });
+const getBySlugCached = unstable_cache(
+  (slug: string) =>
+    db.event.findUnique({
+      where: { slug },
+      include: {
+        ticketTypes: { orderBy: { priceInPaise: "asc" } },
+        schedule: { orderBy: { startsAt: "asc" } },
+        stalls: { orderBy: { label: "asc" } },
+        mapLayout: { select: { layoutJson: true } },
+      },
+    }),
+  ["events:by-slug"],
+  { revalidate: 60, tags: ["events"] },
+);
+
+export async function getBySlug(slug: string) {
+  const e = await getBySlugCached(slug);
+  if (!e) return null;
+  return {
+    ...reviveEvent(e),
+    schedule: e.schedule.map((s) => ({
+      ...s,
+      startsAt: new Date(s.startsAt),
+      endsAt: s.endsAt ? new Date(s.endsAt) : null,
+    })),
+  };
 }
 
 export function createEvent(session: Session, input: CreateEventInput) {

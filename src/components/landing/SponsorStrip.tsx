@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { cld } from "@/lib/cloudinary-url";
 
 type Sponsor = { id: string; name: string; tier: string; logoUrl: string | null };
 
@@ -26,7 +27,7 @@ export function SponsorStrip({ sponsors, className }: { sponsors: Sponsor[]; cla
             <div className="mt-[var(--space-md)] flex flex-wrap items-center justify-center gap-[var(--space-lg)]">
               {sponsors.filter((s) => s.tier === tier).map((s) =>
                 s.logoUrl ? (
-                  <Image key={s.id} src={s.logoUrl} alt={s.name} title={s.name} width={160} height={64} className={`${tier === "TITLE" ? "h-16" : "h-10"} w-auto object-contain`} />
+                  <Image key={s.id} src={cld(s.logoUrl, 320)} alt={s.name} title={s.name} width={160} height={64} className={`${tier === "TITLE" ? "h-16" : "h-10"} w-auto object-contain`} />
                 ) : (
                   <span
                     key={s.id}

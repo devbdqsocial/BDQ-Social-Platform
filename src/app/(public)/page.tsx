@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { listPublished } from "@/server/events/service";
 import { listApprovedVendors } from "@/server/vendors/service";
-import { sponsorsForEvent } from "@/server/sponsors/service";
+import { sponsorsForEventPublic } from "@/server/sponsors/service";
 import { primaryLogo } from "@/lib/vendor-assets";
 import { formatPaise } from "@/lib/utils";
 import { Countdown } from "@/components/landing/Countdown";
@@ -33,7 +33,7 @@ export default async function LandingPage() {
   const event = events[0];
   const featured = brands.slice(0, 6);
   const minPrice = event?.ticketTypes.length ? Math.min(...event.ticketTypes.map((t) => t.priceInPaise)) : null;
-  const sponsors = event ? await sponsorsForEvent(event.id) : [];
+  const sponsors = event ? await sponsorsForEventPublic(event.id) : [];
   const heroImg = featured.map((v) => primaryLogo(v.assets)).find(Boolean) ?? null;
 
   return (

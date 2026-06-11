@@ -1,4 +1,5 @@
 import "server-only";
+import { unstable_cache } from "next/cache";
 import { db } from "@/server/db";
 import { withAudit } from "@/server/audit";
 import type { Session } from "@/server/auth/guard";
@@ -32,6 +33,15 @@ export async function sponsorsForEvent(eventId: string): Promise<SponsorWithFina
 }
 
 export const listSponsors = sponsorsForEvent;
+
+/** Public placements (landing/event pages): cached 60s. Admin tables use the uncached
+ *  sponsorsForEvent/listSponsors so edits show immediately. paidAt/createdAt aren't
+ *  consumed publicly, so no Date revival is needed across the cache boundary. */
+export const sponsorsForEventPublic = unstable_cache(
+  (eventId: string) => sponsorsForEvent(eventId),
+  ["sponsors:public"],
+  { revalidate: 60, tags: ["sponsors"] },
+);
 
 export function createSponsor(
   session: Session,

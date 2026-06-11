@@ -1,4 +1,5 @@
 import "server-only";
+import { unstable_cache } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { db } from "@/server/db";
 import { decryptNullable, encryptNullable } from "@/lib/crypto-field";
@@ -25,20 +26,28 @@ export async function getProfile(userId: string) {
 }
 
 // ── Public brand directory (read-only, no auth) ───────────────────────────────
-export function listApprovedVendors() {
-  return db.vendorProfile.findMany({
-    where: { approvalStatus: "APPROVED" },
-    orderBy: { brandName: "asc" },
-    include: { assets: { select: { kind: true, url: true } } },
-  });
-}
+// Cached 60s for display; no Date fields are consumed downstream, so no revival needed.
+// Vendor-portal reads/mutations and ownership checks query the DB directly.
+export const listApprovedVendors = unstable_cache(
+  () =>
+    db.vendorProfile.findMany({
+      where: { approvalStatus: "APPROVED" },
+      orderBy: { brandName: "asc" },
+      include: { assets: { select: { kind: true, url: true } } },
+    }),
+  ["vendors:approved"],
+  { revalidate: 60, tags: ["vendors"] },
+);
 
-export function getApprovedVendor(id: string) {
-  return db.vendorProfile.findFirst({
-    where: { id, approvalStatus: "APPROVED" },
-    include: { assets: { select: { kind: true, url: true } } },
-  });
-}
+export const getApprovedVendor = unstable_cache(
+  (id: string) =>
+    db.vendorProfile.findFirst({
+      where: { id, approvalStatus: "APPROVED" },
+      include: { assets: { select: { kind: true, url: true } } },
+    }),
+  ["vendors:approved-one"],
+  { revalidate: 60, tags: ["vendors"] },
+);
 
 export async function addAsset(
   userId: string,

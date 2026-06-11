@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getBySlug } from "@/server/events/service";
-import { sponsorsForEvent } from "@/server/sponsors/service";
+import { sponsorsForEventPublic } from "@/server/sponsors/service";
 import { fmtDateFull, fmtTime, fmtDayLabel } from "@/lib/date-formats";
 import { BookingFloorPlan } from "@/components/map/BookingFloorPlan";
 import { TicketCheckout } from "@/components/tickets/TicketCheckout";
@@ -38,7 +38,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
   }));
 
   const mapCanvas = (event.mapLayout?.layoutJson as { canvas?: { widthFt: number; heightFt: number } } | null)?.canvas;
-  const sponsors = await sponsorsForEvent(event.id);
+  const sponsors = await sponsorsForEventPublic(event.id);
   const soldOut = event.ticketTypes.length > 0 && event.ticketTypes.every((t) => t.soldQty >= t.totalQty);
   const theme = (event.theme as { primary?: string; accent?: string } | null) ?? null;
   const themeStyle = theme ? ({ "--primary": theme.primary, "--accent": theme.accent } as React.CSSProperties) : undefined;
