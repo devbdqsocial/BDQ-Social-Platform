@@ -27,7 +27,10 @@ function resolveZone(req: NextRequest): Zone {
     if (pathname.startsWith("/admin") || pathname === "/admin") {
       return "admin";
     }
-    if (pathname.startsWith("/vendor") || pathname === "/vendor") {
+    // Exact segment match only: "/vendors" (public brands) and "/vendor-terms" etc. are
+    // PUBLIC pages — a bare startsWith("/vendor") used to capture them, persist a
+    // zone=vendor cookie, and 404 every later public route in dev.
+    if (pathname === "/vendor" || pathname.startsWith("/vendor/")) {
       return "vendor";
     }
   }

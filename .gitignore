@@ -58,6 +58,7 @@ vitest.server-only.stub.ts
 playwright.config.ts
 /e2e/
 /coverage/
+/test-results/
 
 # audit & internal docs
 AUDIT-REPORT.md
