@@ -53,7 +53,7 @@ export function PinnedServices() {
             />
             <div className="wrapper relative grid items-center gap-[var(--space-3xl)] lg:grid-cols-[1.3fr_1fr]">
               <div>
-                <span className="kicker opacity-60">{s.n} / 04</span>
+                <span className="kicker opacity-75">{s.n} / 04</span>
                 <h2 className="f-exat mt-[var(--space-sm)]" style={{ fontSize: "var(--h235)", lineHeight: 0.95 }}>
                   {s.title}
                 </h2>

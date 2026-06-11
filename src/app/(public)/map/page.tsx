@@ -12,7 +12,7 @@ export default function MapPage() {
   return (
     <section className="paint py-[var(--space-4xl)]">
       <div className="wrapper">
-        <span className="f-paragraph-small f-bold t-upper opacity-50" style={{ letterSpacing: "0.18em" }}>The venue</span>
+        <span className="f-paragraph-small f-bold t-upper opacity-70" style={{ letterSpacing: "0.18em" }}>The venue</span>
         <h1 className="f-exat mt-[var(--space-sm)]" style={{ fontSize: "var(--h76)", lineHeight: 1.05 }}>
           Take a look around
         </h1>

@@ -30,7 +30,7 @@ export default function VendorSignupPage() {
         {/* right — phone OTP signup */}
         <div className="flex items-center justify-center p-[var(--space-2xl)]" style={{ background: "#F4F2EC", color: "#14141A" }}>
           <div className="w-full max-w-md">
-            <span className="f-paragraph-small f-bold t-upper opacity-50" style={{ letterSpacing: "0.18em" }}>New vendor</span>
+            <span className="f-paragraph-small f-bold t-upper opacity-70" style={{ letterSpacing: "0.18em" }}>New vendor</span>
             <h2 className="f-exat mt-[var(--space-sm)]" style={{ fontSize: "var(--h60)", lineHeight: 1.0 }}>Become a vendor</h2>
             <p className="f-paragraph mt-[var(--space-md)] opacity-70">
               Start with your phone number — we&apos;ll text you a one-time code, then walk you through the rest.
@@ -38,7 +38,7 @@ export default function VendorSignupPage() {
             <div className="mt-[var(--space-2xl)]">
               <PhoneLogin vendorSignup zone="vendor" redirectTo="/vendor/onboarding" />
             </div>
-            <p className="f-paragraph-small mt-[var(--space-lg)] opacity-60">
+            <p className="f-paragraph-small mt-[var(--space-lg)] opacity-75">
               Already registered?{" "}
               <Link href="/vendor/login?zone=vendor" className="underline">Sign in</Link>
             </p>

@@ -122,7 +122,7 @@
   --secondary: #868EFF;
   --secondary-foreground: #0B0B14;
   --muted: #ECEAE2;
-  --muted-foreground: #5B5B66;
+  --muted-foreground: #52525C; /* darkened for 4.5:1 on cream at text-xs */
   --accent: #868EFF;
   --accent-foreground: #0B0B14;
   --destructive: #C0392B;

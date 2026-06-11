@@ -16,7 +16,7 @@ export default function VendorLoginPage() {
         {/* right — phone-OTP form on cream */}
         <div className="flex items-center justify-center p-[var(--space-2xl)]" style={{ background: "#F4F2EC", color: "#14141A" }}>
           <div className="w-full max-w-md">
-            <span className="f-paragraph-small f-bold t-upper opacity-50" style={{ letterSpacing: "0.18em" }}>Vendor sign in</span>
+            <span className="f-paragraph-small f-bold t-upper opacity-70" style={{ letterSpacing: "0.18em" }}>Vendor sign in</span>
             <h2 className="f-exat mt-[var(--space-sm)] lg:hidden" style={{ fontSize: "var(--h60)", lineHeight: 1.0 }}>Sell with us</h2>
             <p className="f-paragraph mt-[var(--space-md)] opacity-70">
               Sign in with your phone number to set up your brand and book a stall.

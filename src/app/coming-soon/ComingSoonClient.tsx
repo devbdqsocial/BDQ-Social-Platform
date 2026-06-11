@@ -56,7 +56,7 @@ export function ComingSoonClient({ count }: { count: number }) {
 
   return (
     <div className="rpa gama-1 bg-1 paint relative flex min-h-[100svh] items-center justify-center overflow-hidden">
-      <div className="wrapper w-full max-w-[64rem] py-[var(--space-5xl)] text-center">
+      <main id="main" className="wrapper w-full max-w-[64rem] py-[var(--space-5xl)] text-center">
         <span className="f-paragraph-small f-bold t-upper" style={{ letterSpacing: "0.2em" }}>
           Vadodara&apos;s most anticipated social experience
         </span>
@@ -72,7 +72,7 @@ export function ComingSoonClient({ count }: { count: number }) {
           {units.map((u) => (
             <div key={u.label} className="text-center">
               <div className="f-exat tabular-nums" style={{ fontSize: "var(--h100)", lineHeight: 1 }}>{pad(u.value)}</div>
-              <div className="f-paragraph-small f-bold t-upper opacity-60" style={{ letterSpacing: "0.14em" }}>{u.label}</div>
+              <div className="f-paragraph-small f-bold t-upper opacity-75" style={{ letterSpacing: "0.14em" }}>{u.label}</div>
             </div>
           ))}
         </div>
@@ -125,13 +125,13 @@ export function ComingSoonClient({ count }: { count: number }) {
         )}
 
         {count > 0 && status !== "success" && (
-          <p className="f-paragraph-small mt-[var(--space-2xl)] opacity-60">
+          <p className="f-paragraph-small mt-[var(--space-2xl)] opacity-75">
             Join {count.toLocaleString()} others already on the waitlist
           </p>
         )}
-      </div>
+      </main>
 
-      <div className="f-paragraph-small absolute bottom-[var(--space-lg)] opacity-50">
+      <div className="f-paragraph-small absolute bottom-[var(--space-lg)] opacity-70">
         © {new Date().getFullYear()} BDQ Social
       </div>
     </div>

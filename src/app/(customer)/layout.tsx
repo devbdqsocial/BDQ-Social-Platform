@@ -9,7 +9,7 @@ export default async function CustomerLayout({ children }: { children: React.Rea
     <div className="rpa flex min-h-dvh flex-col">
       <MotionProviders />
       <PublicHeader signedIn={!!session} />
-      <div id="main" className="flex-1 pb-16 sm:pb-0">{children}</div>
+      <main id="main" className="flex-1 pb-16 sm:pb-0">{children}</main>
       <CustomerTabBar />
     </div>
   );

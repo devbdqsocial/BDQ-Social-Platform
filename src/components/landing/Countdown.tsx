@@ -33,7 +33,7 @@ export function Countdown({ target }: { target: string }) {
           style={{ border: "1px solid color-mix(in srgb, currentColor 35%, transparent)" }}
         >
           <div className="f-exat tabular-nums" style={{ fontSize: "var(--h42)", lineHeight: 1 }}>{pad(v)}</div>
-          <div className="kicker mt-[var(--space-xs)] opacity-60">{label}</div>
+          <div className="kicker mt-[var(--space-xs)] opacity-75">{label}</div>
         </div>
       ))}
     </div>

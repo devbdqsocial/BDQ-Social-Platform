@@ -16,7 +16,7 @@ export default function CustomerLoginPage() {
       {/* right — the phone-OTP form on cream */}
       <div className="paint flex items-center justify-center p-[var(--space-2xl)]">
         <div className="w-full max-w-md">
-          <span className="kicker opacity-50">Sign in</span>
+          <span className="kicker opacity-70">Sign in</span>
           <h2 className="f-exat mt-[var(--space-sm)] lg:hidden" style={{ fontSize: "var(--h60)", lineHeight: 1.0 }}>Welcome in</h2>
           <p className="f-paragraph mt-[var(--space-md)] opacity-70">
             Sign in with your phone number to book tickets and find them again later.
@@ -24,7 +24,7 @@ export default function CustomerLoginPage() {
           <div className="mt-[var(--space-2xl)]">
             <PhoneLogin redirectTo="/dashboard" />
           </div>
-          <p className="f-paragraph-small mt-[var(--space-lg)] opacity-50">
+          <p className="f-paragraph-small mt-[var(--space-lg)] opacity-70">
             We&apos;ll text you a one-time code. No passwords to remember.
           </p>
         </div>

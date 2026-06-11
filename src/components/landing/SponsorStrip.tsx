@@ -22,7 +22,7 @@ export function SponsorStrip({ sponsors, className }: { sponsors: Sponsor[]; cla
       <div className="mt-[var(--space-xl)] space-y-[var(--space-xl)]">
         {tiers.map((tier) => (
           <div key={tier}>
-            <p className="kicker text-center opacity-50">{TIER_LABEL[tier] ?? "Partners"}</p>
+            <p className="kicker text-center opacity-70">{TIER_LABEL[tier] ?? "Partners"}</p>
             <div className="mt-[var(--space-md)] flex flex-wrap items-center justify-center gap-[var(--space-lg)]">
               {sponsors.filter((s) => s.tier === tier).map((s) =>
                 s.logoUrl ? (

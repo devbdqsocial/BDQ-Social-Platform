@@ -22,17 +22,18 @@ const description = "Vadodara's premium curated lifestyle festival & night marke
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: { default: "Event Portal", template: "%s · Event Portal" },
+  title: { default: "BDQ Social — Curated Night Market, Vadodara", template: "%s · BDQ Social" },
   description,
+  keywords: ["night market", "Vadodara", "festival", "indie brands", "live music", "BDQ Social"],
   icons: { icon: "/icon.svg" },
   openGraph: {
     type: "website",
-    siteName: "Event Portal",
-    title: "Event Portal",
+    siteName: "BDQ Social",
+    title: "BDQ Social — Curated Night Market, Vadodara",
     description,
     locale: "en_IN",
   },
-  twitter: { card: "summary_large_image", title: "Event Portal", description },
+  twitter: { card: "summary_large_image", title: "BDQ Social", description },
 };
 
 export const viewport: Viewport = { themeColor: "#01065B" };

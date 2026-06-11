@@ -21,7 +21,7 @@ export default async function CustomerDashboardPage() {
   return (
     <section className="paint py-[var(--space-5xl)]">
       <div className="wrapper max-w-[62rem]">
-        <span className="kicker opacity-50">Your wallet</span>
+        <span className="kicker opacity-70">Your wallet</span>
         <h1 className="f-exat mt-[var(--space-sm)]" style={{ fontSize: "var(--h76)", lineHeight: 1.0 }}>Tickets</h1>
         <p className="f-paragraph mt-[var(--space-sm)] opacity-70">Show the QR code at the gate — that&apos;s your way in.</p>
 
@@ -55,7 +55,7 @@ export default async function CustomerDashboardPage() {
                       <span className={used ? "badge-rpa badge-rpa--muted" : "badge-rpa"}>
                         {used ? "Checked in" : "Valid"}
                       </span>
-                      <span className="f-paragraph-small opacity-50">#{t.id.slice(0, 8)}</span>
+                      <span className="f-paragraph-small opacity-70">#{t.id.slice(0, 8)}</span>
                     </div>
                   </div>
                   {/* eslint-disable-next-line @next/next/no-img-element */}

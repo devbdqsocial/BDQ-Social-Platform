@@ -13,7 +13,7 @@ export default async function PublicLayout({ children }: { children: React.React
       <PublicHeader signedIn={!!session} />
 
       {/* pb gives room for the mobile tab bar */}
-      <div id="main" className="flex-1 pb-16 sm:pb-0">{children}</div>
+      <main id="main" className="flex-1 pb-16 sm:pb-0">{children}</main>
 
       <footer className="gama-1 bg-1 paint relative flex min-h-[100svh] flex-col justify-between overflow-hidden">
         {/* top: brand blurb + nav columns */}
@@ -34,7 +34,7 @@ export default async function PublicLayout({ children }: { children: React.React
               ["Legal", [["Privacy", "/privacy"], ["Terms", "/terms"], ["Refunds", "/refunds"], ["Shipping", "/shipping"], ["Vendor terms", "/vendor-terms"]]],
             ].map(([heading, items]) => (
               <nav key={heading as string} className="f-paragraph-small f-bold flex flex-col gap-[var(--space-sm)]">
-                <span className="kicker opacity-50">{heading as string}</span>
+                <span className="kicker opacity-70">{heading as string}</span>
                 {(items as [string, string][]).map(([label, href]) => (
                   <Link key={href} href={href} data-cursor className="opacity-80 transition-opacity hover:opacity-100">
                     {label}
@@ -55,7 +55,7 @@ export default async function PublicLayout({ children }: { children: React.React
 
         {/* bottom: legal + lang */}
         <div className="wrapper flex items-end justify-between pb-[var(--space-lg)]">
-          <span className="f-paragraph-small opacity-60">
+          <span className="f-paragraph-small opacity-75">
             All sales are final · © {new Date().getFullYear()} BDQ Social
           </span>
           <span className="f-paragraph-small f-bold t-upper" style={{ letterSpacing: "0.14em" }}>EN</span>

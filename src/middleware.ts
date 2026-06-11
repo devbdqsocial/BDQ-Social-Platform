@@ -12,7 +12,8 @@ import { strictCsp } from "@/lib/csp";
 type Zone = "public" | "vendor" | "admin";
 
 // Policy/contact pages stay reachable even in coming-soon mode (Razorpay verification + legal access).
-const ALWAYS_PUBLIC = ["/privacy", "/terms", "/refunds", "/shipping", "/contact", "/about", "/vendor-terms", "/unsubscribe"];
+// "/offline" is precached by sw.js — rewriting it to coming-soon would poison the offline cache.
+const ALWAYS_PUBLIC = ["/privacy", "/terms", "/refunds", "/shipping", "/contact", "/about", "/vendor-terms", "/unsubscribe", "/offline"];
 
 function resolveZone(req: NextRequest): Zone {
   const override = req.nextUrl.searchParams.get("zone");
@@ -279,5 +280,9 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|assets|favicon.ico|manifest.webmanifest|icon).*)"],
+  // sw.js/robots.txt/sitemap.xml must bypass zone routing — the coming-soon rewrite was serving
+  // them as HTML (sw registration MIME error + invalid robots.txt in production audits).
+  matcher: [
+    "/((?!api|_next/static|_next/image|assets|favicon.ico|manifest.webmanifest|icon|sw\\.js|robots\\.txt|sitemap\\.xml).*)",
+  ],
 };
