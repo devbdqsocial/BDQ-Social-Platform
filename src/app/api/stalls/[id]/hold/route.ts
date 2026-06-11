@@ -1,3 +1,4 @@
+import { rejectCrossOrigin } from "@/lib/origin";
 import { NextResponse } from "next/server";
 import { getSession } from "@/server/auth/guard";
 import { holdStall, StallUnavailableError } from "@/server/bookings/service";
@@ -6,6 +7,9 @@ import { enforceRateLimit } from "@/lib/ratelimit";
 export const runtime = "nodejs";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const cross = rejectCrossOrigin(req);
+  if (cross) return cross;
+
   const limited = await enforceRateLimit(req, "hold", 30, 10 * 60 * 1000);
   if (limited) return limited;
 

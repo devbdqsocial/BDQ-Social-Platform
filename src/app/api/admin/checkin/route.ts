@@ -1,3 +1,4 @@
+import { rejectCrossOrigin } from "@/lib/origin";
 import { NextResponse } from "next/server";
 import { AuthError, requireCheckin } from "@/server/auth/guard";
 import { checkinSchema } from "@/server/schemas";
@@ -7,6 +8,9 @@ import { enforceRateLimit } from "@/lib/ratelimit";
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
+  const cross = rejectCrossOrigin(req);
+  if (cross) return cross;
+
   // generous — legit gate scanning is high-volume
   const limited = await enforceRateLimit(req, "checkin", 600, 10 * 60 * 1000);
   if (limited) return limited;

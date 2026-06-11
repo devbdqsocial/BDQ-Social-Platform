@@ -13,8 +13,9 @@ export async function GET(req: Request) {
   const limited = await enforceRateLimit(req, "export-audit", 5, 60 * 60 * 1000);
   if (limited) return limited;
 
+  let session;
   try {
-    await requireSuperAdminOnly();
+    session = await requireSuperAdminOnly();
   } catch {
     return new Response("Forbidden", { status: 403 });
   }
@@ -34,6 +35,24 @@ export async function GET(req: Request) {
     skip,
     take: 500,
     include: { actor: { select: { name: true, email: true } } },
+  });
+
+  // Exports of the audit trail are themselves audited (who exported what, when).
+  await db.auditLog.create({
+    data: {
+      actorId: session.userId,
+      role: session.role,
+      action: "EXPORT",
+      entity: "AuditLog",
+      after: {
+        rows: rows.length,
+        skip,
+        entity: sp.get("entity") ?? null,
+        action: sp.get("action") ?? null,
+        from: sp.get("from") ?? null,
+        to: sp.get("to") ?? null,
+      },
+    },
   });
 
   const csv = toCsv(

@@ -120,6 +120,7 @@ export async function fulfillOrder(
   gatewayOrderId: string,
   paymentId: string,
   fees?: GatewayFees,
+  paidAmountPaise?: number | null,
 ): Promise<{ issued: number }> {
   const order = await db.order.findUnique({
     where: { gatewayOrderId },
@@ -127,6 +128,20 @@ export async function fulfillOrder(
   });
   if (!order) return { issued: 0 };
   if (order.status === "PAID") return { issued: order.tickets.length };
+
+  // Defence in depth: a (signature-valid) webhook whose captured amount doesn't match what we
+  // charged must never issue tickets. Audited for ops follow-up; reconcile cron stays the net.
+  if (paidAmountPaise != null && paidAmountPaise !== order.total) {
+    await db.auditLog.create({
+      data: {
+        action: "REJECT",
+        entity: "Payment",
+        entityId: paymentId,
+        after: { reason: "AMOUNT_MISMATCH", gatewayOrderId, expectedPaise: order.total, paidPaise: paidAmountPaise },
+      },
+    });
+    return { issued: 0 };
+  }
 
   const items = (order.items as OrderItemInput[] | null) ?? [];
   const exp = ticketTokenExpiry(order.event.endsAt);

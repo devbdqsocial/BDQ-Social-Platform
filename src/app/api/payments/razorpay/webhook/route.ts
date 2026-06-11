@@ -27,7 +27,7 @@ export async function POST(req: Request) {
   let evt: {
     event?: string;
     payload?: {
-      payment?: { entity?: { id?: string; order_id?: string; fee?: number | null; tax?: number | null } };
+      payment?: { entity?: { id?: string; order_id?: string; amount?: number | null; fee?: number | null; tax?: number | null } };
       order?: { entity?: { id?: string } };
     };
   };
@@ -43,12 +43,14 @@ export async function POST(req: Request) {
     const paymentId = payment?.id ?? (gatewayOrderId ? `order_${gatewayOrderId}` : undefined);
     // Razorpay reports its fee + tax (in paise) on the payment entity; capture for net-revenue accounting.
     const fees = { feePaise: payment?.fee ?? null, taxPaise: payment?.tax ?? null };
+    // Defence in depth: the captured amount must match what we charged (verified inside fulfilment).
+    const paidAmountPaise = typeof payment?.amount === "number" ? payment.amount : null;
     if (gatewayOrderId && paymentId) {
       try {
         // dispatch: a Razorpay order maps to either a ticket Order or a stall Booking
         const order = await db.order.findUnique({ where: { gatewayOrderId }, select: { id: true } });
-        if (order) await fulfillOrder(gatewayOrderId, paymentId, fees);
-        else await fulfillStallBooking(gatewayOrderId, paymentId, fees);
+        if (order) await fulfillOrder(gatewayOrderId, paymentId, fees, paidAmountPaise);
+        else await fulfillStallBooking(gatewayOrderId, paymentId, fees, paidAmountPaise);
       } catch (e) {
         // Always 2xx so Razorpay does not retry; the reconcile cron is the safety net.
         logError("webhook.razorpay.fulfil", e, { gatewayOrderId, paymentId });

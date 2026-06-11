@@ -1,3 +1,4 @@
+import { rejectCrossOrigin } from "@/lib/origin";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/server/db";
@@ -19,6 +20,9 @@ const FAIL = NextResponse.json({ ok: false, error: { code: "UNAUTHENTICATED" } }
 
 /** Admin/staff sign-in: email + password + TOTP. Generic failures (no user enumeration). */
 export async function POST(req: Request) {
+  const cross = rejectCrossOrigin(req);
+  if (cross) return cross;
+
   const limited = await enforceRateLimit(req, "admin-auth", 10, 10 * 60 * 1000);
   if (limited) return limited;
 

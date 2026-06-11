@@ -92,6 +92,7 @@ export async function fulfillStallBooking(
   gatewayOrderId: string,
   paymentId: string,
   fees?: GatewayFees,
+  paidAmountPaise?: number | null,
 ): Promise<{ ok: boolean }> {
   const booking = await db.booking.findUnique({ where: { gatewayOrderId } });
   if (!booking) return { ok: false };
@@ -106,6 +107,19 @@ export async function fulfillStallBooking(
       include: { stallType: { select: { priceInPaise: true } } },
     });
     const amount = stall ? await stallPrice(stall) : 0;
+
+    // Defence in depth: captured amount must match the stall price we charged.
+    if (paidAmountPaise != null && paidAmountPaise !== amount) {
+      await tx.auditLog.create({
+        data: {
+          action: "REJECT",
+          entity: "Payment",
+          entityId: paymentId,
+          after: { reason: "AMOUNT_MISMATCH", gatewayOrderId, bookingId: booking.id, expectedPaise: amount, paidPaise: paidAmountPaise },
+        },
+      });
+      return;
+    }
 
     await tx.booking.update({ where: { id: booking.id }, data: { status: approved ? "BOOKED" : "PENDING" } });
     await tx.stall.update({ where: { id: booking.stallId }, data: { status: approved ? "BOOKED" : "PENDING" } });

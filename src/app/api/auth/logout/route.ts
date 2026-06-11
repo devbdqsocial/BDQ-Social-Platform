@@ -1,10 +1,14 @@
+import { rejectCrossOrigin } from "@/lib/origin";
 import { NextResponse } from "next/server";
 import { getSession } from "@/server/auth/guard";
 import { clearSession, revokeSessions } from "@/server/auth/session";
 
 export const runtime = "nodejs";
 
-export async function POST() {
+export async function POST(req: Request) {
+  const cross = rejectCrossOrigin(req);
+  if (cross) return cross;
+
   // For privileged accounts, bump tokenVersion so logout invalidates every device, not just this cookie.
   const session = await getSession();
   if (session && session.role !== "CUSTOMER") {

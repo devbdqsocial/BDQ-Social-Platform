@@ -1,3 +1,4 @@
+import { rejectCrossOrigin } from "@/lib/origin";
 import { NextResponse } from "next/server";
 import { getSession } from "@/server/auth/guard";
 import { createOrderSchema } from "@/server/schemas";
@@ -7,6 +8,9 @@ import { enforceRateLimit } from "@/lib/ratelimit";
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
+  const cross = rejectCrossOrigin(req);
+  if (cross) return cross;
+
   const limited = await enforceRateLimit(req, "orders", 20, 10 * 60 * 1000);
   if (limited) return limited;
 

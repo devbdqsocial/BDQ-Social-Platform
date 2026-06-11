@@ -1,8 +1,9 @@
+import { rejectCrossOrigin } from "@/lib/origin";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { verifyFirebaseIdToken } from "@/lib/firebase-verify";
 import { db } from "@/server/db";
-import { createSession } from "@/server/auth/session";
+import { createSession, revokeSessions } from "@/server/auth/session";
 import { enforceRateLimit } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
@@ -17,6 +18,9 @@ const bodySchema = z.object({
 
 /** Exchange a Firebase ID token for an app session. New accounts are always CUSTOMER. */
 export async function POST(req: Request) {
+  const cross = rejectCrossOrigin(req);
+  if (cross) return cross;
+
   const limited = await enforceRateLimit(req, "auth", 30, 10 * 60 * 1000);
   if (limited) return limited;
 
@@ -59,6 +63,9 @@ export async function POST(req: Request) {
     }
     if (user.role !== "VENDOR") {
       user = await db.user.update({ where: { id: user.id }, data: { role: "VENDOR" } });
+      // Role changed: kill any outstanding sessions issued with the old claims.
+      // createSession below reads the bumped tokenVersion, so this login stays valid.
+      await revokeSessions(user.id);
     }
     await db.auditLog.create({
       data: { actorId: user.id, role: user.role, action: "CREATE", entity: "VendorProfile", entityId: user.id, after: { selfSignup: true } },
