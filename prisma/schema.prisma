@@ -409,6 +409,7 @@ model Payment {
   createdAt    DateTime       @default(now())
 
   @@index([orderId])
+  @@index([createdAt]) // reconciliation/date-range queries
 }
 
 model Coupon {
@@ -601,6 +602,7 @@ model Lead {
   createdAt       DateTime      @default(now())
 
   @@index([vendorProfileId])
+  @@index([eventId])
 }
 
 // ──────────────────────────── DELIVERY / AUDIT ─────────────────
