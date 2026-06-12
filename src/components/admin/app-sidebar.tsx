@@ -21,11 +21,10 @@ export function AppSidebar({ allowed, user }: { allowed: string[]; user: { name:
   const groups: NavGroup[] = NAV_GROUPS
     .map((g) => ({ ...g, items: g.items.filter((i) => allow.has(i.section)) }))
     .filter((g) => g.items.length > 0);
-  const normalizedPathname = pathname.startsWith("/admin")
-    ? pathname.replace(/^\/admin/, "") || "/"
-    : pathname;
   const isActive = (href: string) =>
-    href === "/dashboard" ? normalizedPathname === "/dashboard" : normalizedPathname === href || normalizedPathname.startsWith(`${href}/`);
+    href === "/admin/dashboard"
+      ? pathname === "/admin/dashboard" || pathname === "/admin"
+      : pathname === href || pathname.startsWith(`${href}/`);
   const groupActive = (g: NavGroup) => g.items.some((i) => isActive(i.href));
   // Single-open accordion: opening one group collapses the others. Defaults to the active route's group.
   const [openGroup, setOpenGroup] = useState<string | null>(() => groups.find(groupActive)?.label ?? null);
@@ -33,7 +32,7 @@ export function AppSidebar({ allowed, user }: { allowed: string[]; user: { name:
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="gap-3 px-3 py-4 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-3">
-        <Link href="/dashboard" className="flex items-center gap-2.5 px-1.5 py-1 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
+        <Link href="/admin/dashboard" className="flex items-center gap-2.5 px-1.5 py-1 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
           {/* Logo Placeholder: Replace <Command /> with <img src="/logo.png" className="size-5" /> in the future */}
           <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground ring-1 ring-sidebar-border">
             <Command className="size-4" />

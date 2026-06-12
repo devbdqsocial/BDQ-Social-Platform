@@ -121,7 +121,7 @@ The RPA em-spacing ramp (`--space-xs … --space-5xl`, `globals.css:208-210`) is
 spacing vocabulary for customer surfaces; Tailwind's 4px ladder is the single vocabulary for
 admin. Both already exist — the rebuild only enforces exclusivity:
 
-- Customer/vendor surfaces: `p-[var(--space-*)]` / `gap-[var(--space-*)]` only.
+- Customer/vendor surfaces: `p-[var(--space-…)]` / `gap-[var(--space-…)]` only.
 - Admin: Tailwind numerics only (`p-4 sm:p-6` page gutter as in `admin/(console)/layout.tsx:51`).
 - Section rhythm (customer): hero `py-[--space-5xl]`, standard section `py-[--space-5xl]`,
   compressed band `py-[--space-4xl]` — exactly the three used on the landing page; no new values.

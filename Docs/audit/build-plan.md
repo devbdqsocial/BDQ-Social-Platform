@@ -69,17 +69,20 @@
       (skips cleanly when unset). Verify: job listed as skipped in workflow run. ✓
 
 **R0.2 Middleware diet** (6h) — architecture §2, changes DR-2
-- [ ] a. Delete `mapAdminPath` + `getPrettyPath` + both rewrite/redirect blocks from
+- [x] a. Delete `mapAdminPath` + `getPrettyPath` + both rewrite/redirect blocks from
       `src/middleware.ts` (lines ~57-271); keep zone resolution, CSP nonce, coming-soon gate.
-- [ ] b. Delete `adminRedirects` from `next.config.ts:24-34` and its `redirects()` usage.
-- [ ] c. Sweep pretty hrefs → physical `/admin/...` paths: `components/admin/nav-config.ts`
-      (all `href:` values), `breadcrumbs.tsx`, `command-palette.tsx`, `user-menu.tsx`,
-      `notifications-bell.tsx`, admin `login/page.tsx` redirect, server-side notification
-      hrefs: `server/cron/tasks.ts` (`/finance/pnl`), `server/notifications/admin.ts` callers
-      (grep `href: "/` in `src/server` + `src/components/admin`).
-- [ ] d. Verify: `grep -r "mapAdminPath\|getPrettyPath" src` = 0; dev server: every nav leaf
-      + event-switcher + bell links resolve (e2e crawl or manual click-through, list checked
-      pages in PR); admin login → `/admin/dashboard`.
+      ✓ replaced with generic `/admin` prefix rewrite (mirrors vendor zone); 289→123 lines.
+- [x] b. Delete `adminRedirects` from `next.config.ts:24-34` and its `redirects()` usage. ✓
+- [x] c. Sweep pretty hrefs → physical `/admin/...` paths. ✓ nav-config (40 hrefs, nested
+      physical), app-sidebar (active-state + brand link), AdminLoginForm push, (console)
+      page redirect, profile Settings link, sponsors form action, cron tasks `/finance/pnl`.
+      search-actions + notify hrefs were already physical; breadcrumbs derive from pathname.
+- [x] d. Verify: greps = 0 ✓; dev probe of /, /admin, /admin/dashboard, /admin/login,
+      /admin/venue/maps, /admin/tickets/orders, /admin/finance/pnl, /vendor/login, /events
+      → all 200 ✓; typecheck + lint green ✓.
+      **Found & fixed en route:** Tailwind v4 scans non-gitignored files as class sources —
+      `consistency.md`'s literal `p-[var(--space-*)]` 500'd every dev render. Fix: `@source
+      not` for Docs/scripts/e2e in `globals.css` + de-fanged the doc literal.
 
 **R0.3 `action()` pipeline** (10h) — architecture §3
 - [ ] a. Create `src/server/action.ts`: `action(opts)(handler)` composing auth → zod parse →

@@ -1,6 +1,12 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Docs are full of class-like literals (e.g. `p-[var(--space-*)]`) that Tailwind v4's
+   auto source scan treats as candidates — one invalid token 500s every dev render. */
+@source not "../../Docs";
+@source not "../../scripts";
+@source not "../../e2e";
+
 @custom-variant dark (&:is(.dark *));
 
 /* Collapsible (sidebar group) expand/collapse animation. */

@@ -92,7 +92,7 @@ export async function sendFinanceDigest() {
     type: "FINANCE_DIGEST",
     title: `Finance digest — ${event.name}`,
     body: `Net profit ${formatPaise(pnl.netProfit)} · margin ${(pnl.marginPct * 100).toFixed(1)}%`,
-    href: "/finance/pnl",
+    href: "/admin/finance/pnl",
     eventId: event.id,
   });
 

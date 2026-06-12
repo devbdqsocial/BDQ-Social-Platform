@@ -20,19 +20,6 @@ const securityHeaders = [
 const apiCsp = { key: "Content-Security-Policy", value: enforcedCsp };
 const devCsp = { key: "Content-Security-Policy-Report-Only", value: enforcedCsp };
 
-// Admin IA route moves (old → new). Keep base + wildcard so dynamic sub-routes (e.g. comps/[id]) follow.
-const adminRedirects = [
-  ["/admin/map", "/admin/venue/maps"],
-  ["/admin/venue/map", "/admin/venue/maps"],
-  ["/admin/coupons", "/admin/tickets/coupons"],
-  ["/admin/comps", "/admin/tickets/comps"],
-  ["/admin/checkin", "/admin/ops/checkin"],
-  ["/admin/staff", "/admin/ops/staff"],
-  ["/admin/sponsors", "/admin/growth/sponsors"],
-  ["/admin/waitlist", "/admin/growth/waitlist"],
-  ["/admin/audit", "/admin/system/audit"],
-];
-
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [{ protocol: "https", hostname: "res.cloudinary.com" }],
@@ -49,12 +36,6 @@ const nextConfig: NextConfig = {
           { source: "/api/:path*", headers: [apiCsp] },
         ]
       : [{ source: "/:path*", headers: [...securityHeaders, devCsp] }];
-  },
-  async redirects() {
-    return adminRedirects.flatMap(([from, to]) => [
-      { source: from, destination: to, permanent: false },
-      { source: `${from}/:path*`, destination: `${to}/:path*`, permanent: false },
-    ]);
   },
 };
 

@@ -89,7 +89,7 @@ export default async function AdminProfilePage() {
                 Access convenience fees, database backup tools, and platform settings.
               </p>
               <Button asChild variant="outline" className="w-full text-xs h-9">
-                <Link href="/settings">Go to Global Settings</Link>
+                <Link href="/admin/system/settings">Go to Global Settings</Link>
               </Button>
             </CardContent>
           </Card>
