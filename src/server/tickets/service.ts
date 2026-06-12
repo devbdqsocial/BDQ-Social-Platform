@@ -146,6 +146,7 @@ export async function fulfillOrder(
   const items = (order.items as OrderItemInput[] | null) ?? [];
   const exp = ticketTokenExpiry(order.event.endsAt);
 
+  let oversold = false;
   await db.$transaction(async (tx) => {
     // idempotency guard: bail if this payment was already recorded
     const existing = await tx.payment.findUnique({ where: { gatewayRef: paymentId } });
@@ -165,7 +166,37 @@ export async function fulfillOrder(
       },
     });
 
-    // Build all ticket rows first, then insert in one batch + per-type soldQty bump.
+    // Oversell guard (build-plan R1.1 / security §3.1): creation-time capacity checks don't
+    // reserve, so concurrent PENDING orders can both pay. The conditional UPDATE makes the DB
+    // the referee — soldQty can never exceed totalQty. All-or-nothing; compensated on shortfall.
+    const reserved: OrderItemInput[] = [];
+    let shortfallTypeId: string | null = null;
+    for (const it of items) {
+      const n = await tx.$executeRaw`UPDATE "TicketType" SET "soldQty" = "soldQty" + ${it.qty} WHERE "id" = ${it.ticketTypeId} AND "soldQty" + ${it.qty} <= "totalQty"`;
+      if (n === 0) {
+        shortfallTypeId = it.ticketTypeId;
+        break;
+      }
+      reserved.push(it);
+    }
+    if (shortfallTypeId) {
+      for (const r of reserved) {
+        await tx.$executeRaw`UPDATE "TicketType" SET "soldQty" = "soldQty" - ${r.qty} WHERE "id" = ${r.ticketTypeId}`;
+      }
+      // Money stays CAPTURED (no-refund rule; ops resolves manually) — but never issue tickets.
+      await tx.auditLog.create({
+        data: {
+          action: "REJECT",
+          entity: "Order",
+          entityId: order.id,
+          after: { reason: "OVERSOLD", gatewayOrderId, paymentId, ticketTypeId: shortfallTypeId },
+        },
+      });
+      oversold = true;
+      return;
+    }
+
+    // Build all ticket rows first, then insert in one batch.
     const ticketRows: { id: string; orderId: string; ticketTypeId: string; qrToken: string }[] = [];
     for (const it of items) {
       for (let i = 0; i < it.qty; i++) {
@@ -174,11 +205,6 @@ export async function fulfillOrder(
       }
     }
     await tx.ticket.createMany({ data: ticketRows });
-    await Promise.all(
-      items.map((it) =>
-        tx.ticketType.update({ where: { id: it.ticketTypeId }, data: { soldQty: { increment: it.qty } } }),
-      ),
-    );
 
     // Record the coupon redemption (per-user-limit ledger) and bump the global usedCount under a
     // conditional guard so it can never exceed maxUses. The Payment.gatewayRef idempotency check
@@ -190,6 +216,23 @@ export async function fulfillOrder(
       await tx.$executeRaw`UPDATE "Coupon" SET "usedCount" = "usedCount" + 1 WHERE "id" = ${order.couponId} AND ("maxUses" IS NULL OR "usedCount" < "maxUses")`;
     }
   });
+
+  if (oversold) {
+    logError("fulfillOrder.oversold", new Error("OVERSOLD"), { orderId: order.id, gatewayOrderId, paymentId });
+    try {
+      const { notify } = await import("@/server/notifications/admin");
+      await notify({
+        type: "OVERSOLD",
+        title: "Paid order has no inventory",
+        body: `Order ${order.id.slice(0, 8)} captured payment but tickets were sold out — resolve manually.`,
+        href: `/admin/tickets/orders/${order.id}`,
+        eventId: order.eventId,
+      });
+    } catch (e) {
+      logError("fulfillOrder.oversold.notify", e, { orderId: order.id });
+    }
+    return { issued: 0 };
+  }
 
   // best-effort delivery via the notification outbox — failures never fail fulfilment
   try {

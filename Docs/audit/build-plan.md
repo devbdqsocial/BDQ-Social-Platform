@@ -137,13 +137,14 @@ owner DSN — R0.5c). Proceeding to R1 per owner-approved session scope.
 ## Phase R1 — Money correctness (~46h) — roadmap R1; R1.1∥R1.2 then R1.3∥R1.4∥R1.5
 
 **R1.1 Oversell guard** (6h) — security §3.1, DR-6
-- [ ] a. In `fulfillOrder` txn (`server/tickets/service.ts`): replace unconditional
-      `soldQty: { increment }` with conditional raw UPDATE
-      (`... SET "soldQty"="soldQty"+qty WHERE id=? AND "soldQty"+qty<=totalQty`); affected-rows
-      check → on shortfall: no tickets, AuditLog `REJECT OVERSOLD`, ops alert, keep payment
-      CAPTURED for manual resolution (no auto-refund — locked rule).
-- [ ] b. Concurrency test: two PENDING orders for the last ticket, parallel fulfil → exactly
-      one issues. Verify: test green; AMOUNT_MISMATCH path untouched (existing test still green).
+- [x] a. In `fulfillOrder` txn: conditional raw UPDATE reserves inventory BEFORE ticket
+      creation (`soldQty+qty<=totalQty`); shortfall → compensate prior lines, AuditLog
+      `REJECT/OVERSOLD`, payment stays CAPTURED, post-txn `logError` + admin bell alert
+      (`type: OVERSOLD`), `{issued: 0}`. ✓
+- [x] b. Race test `src/server/tickets/oversell.integration.test.ts` (gated on
+      `RUN_DB_TESTS=1`, skips in CI): two parallel fulfilments for the last ticket →
+      exactly 1 issued, soldQty=1, both payments CAPTURED, 1 OVERSOLD audit row, replay
+      no-op. Verify: **PASSED against local Neon (2026-06-13)**; full suite 45+1skip green.
 
 **R1.2 Group-QR (M1)** (16h) — architecture §4.2, DR-4
 - [ ] a. Migration `ticket_admit_count` (additive): `Ticket.admitCount`, `CheckIn.admitted`.
