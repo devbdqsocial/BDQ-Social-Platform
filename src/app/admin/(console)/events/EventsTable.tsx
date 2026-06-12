@@ -7,6 +7,7 @@ import { DataTable } from "@/components/data-table/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { publishEventAction, archiveEventAction, unarchiveEventAction } from "./actions";
+import { ActionForm } from "@/components/admin/action-form";
 
 type Row = Awaited<ReturnType<typeof listAllForAdmin>>[number];
 
@@ -40,27 +41,27 @@ const columns: ColumnDef<Row>[] = [
       if (isPast) {
         if (status === "ARCHIVED") {
           return (
-            <form action={unarchiveEventAction}>
+            <ActionForm action={unarchiveEventAction} success="Event unarchived">
               <input type="hidden" name="id" value={row.original.id} />
               <Button type="submit" variant="outline" size="sm">Unarchive</Button>
-            </form>
+            </ActionForm>
           );
         } else {
           return (
-            <form action={archiveEventAction}>
+            <ActionForm action={archiveEventAction} success="Event archived">
               <input type="hidden" name="id" value={row.original.id} />
               <Button type="submit" variant="outline" className="text-destructive hover:bg-destructive/10" size="sm">Archive</Button>
-            </form>
+            </ActionForm>
           );
         }
       }
       
       if (!isLive(status) && status !== "ARCHIVED") {
         return (
-          <form action={publishEventAction}>
+          <ActionForm action={publishEventAction} success="Event published">
             <input type="hidden" name="id" value={row.original.id} />
             <Button type="submit" variant="outline" size="sm">Publish</Button>
-          </form>
+          </ActionForm>
         );
       }
       

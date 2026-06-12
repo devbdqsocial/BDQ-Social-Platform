@@ -14,15 +14,9 @@ export function NewVendorForm() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     startTransition(async () => {
-      try {
-        await createVendorAction(formData);
-      } catch (err) {
-        if (err instanceof Error) {
-          toast.error(err.message);
-        } else {
-          toast.error("An unexpected error occurred.");
-        }
-      }
+      // Success path redirects to the new vendor (NEXT_REDIRECT propagates through the framework).
+      const res = await createVendorAction(formData);
+      if (res && !res.ok) toast.error(res.error.message ?? "Something went wrong. Please try again.");
     });
   };
 

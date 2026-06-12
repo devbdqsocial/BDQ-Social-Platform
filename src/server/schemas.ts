@@ -9,6 +9,10 @@ const paise = z.number().int().nonnegative();
 const ft = z.number().positive();
 const id = z.string().min(1);
 
+/** Common action() inputs for id-only / id+flag mutations (publish, archive, toggle…). */
+export const idActionSchema = z.object({ id });
+export const idActiveSchema = z.object({ id, active: z.boolean() });
+
 export const createEventSchema = z.object({
   name: z.string().min(2),
   description: z.string().optional(),

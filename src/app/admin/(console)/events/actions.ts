@@ -1,15 +1,28 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireSuperAdmin } from "@/server/auth/guard";
+import { action } from "@/server/action";
 import { createEvent, publishEvent } from "@/server/events/service";
 import { archiveEvent, unarchiveEvent } from "@/server/events/archive-service";
-import { createEventSchema } from "@/server/schemas";
-import { parseOrThrow } from "@/lib/validation";
+import { createEventSchema, idActionSchema } from "@/server/schemas";
+import type { Result } from "@/lib/result";
 
-export async function createEventAction(formData: FormData): Promise<void> {
-  const session = await requireSuperAdmin();
-  const data = parseOrThrow(createEventSchema, {
+// Pilot of the action() pipeline (build-plan R0.3). Services audit internally (withAudit),
+// so no audit meta here. "ADMIN" = SUPER_ADMIN + ADMIN (matches the old requireSuperAdmin gate).
+
+const create = action({ auth: "ADMIN", input: createEventSchema, handler: (s, d) => createEvent(s, d) });
+const publish = action({ auth: "ADMIN", input: idActionSchema, handler: (s, d) => publishEvent(s, d.id) });
+const archive = action({ auth: "ADMIN", input: idActionSchema, handler: (s, d) => archiveEvent(s, d.id) });
+const unarchive = action({ auth: "ADMIN", input: idActionSchema, handler: (s, d) => unarchiveEvent(s, d.id) });
+
+function revalidateEvents() {
+  revalidatePath("/admin/events");
+  revalidatePath("/admin/events/past");
+  revalidatePath("/events");
+}
+
+export async function createEventAction(formData: FormData): Promise<Result<unknown>> {
+  const res = await create({
     name: formData.get("name"),
     description: formData.get("description") || undefined,
     location: formData.get("location") || undefined,
@@ -17,30 +30,24 @@ export async function createEventAction(formData: FormData): Promise<void> {
     endsAt: formData.get("endsAt"),
     capacity: formData.get("capacity") ? Number(formData.get("capacity")) : undefined,
   });
-  await createEvent(session, data);
-  revalidatePath("/admin/events");
-  revalidatePath("/events");
+  if (res.ok) revalidateEvents();
+  return res;
 }
 
-export async function publishEventAction(formData: FormData) {
-  const session = await requireSuperAdmin();
-  await publishEvent(session, String(formData.get("id")));
-  revalidatePath("/admin/events");
-  revalidatePath("/events");
+export async function publishEventAction(formData: FormData): Promise<Result<unknown>> {
+  const res = await publish({ id: String(formData.get("id")) });
+  if (res.ok) revalidateEvents();
+  return res;
 }
 
-export async function archiveEventAction(formData: FormData) {
-  const session = await requireSuperAdmin();
-  await archiveEvent(session, String(formData.get("id")));
-  revalidatePath("/admin/events");
-  revalidatePath("/admin/events/past");
-  revalidatePath("/events");
+export async function archiveEventAction(formData: FormData): Promise<Result<unknown>> {
+  const res = await archive({ id: String(formData.get("id")) });
+  if (res.ok) revalidateEvents();
+  return res;
 }
 
-export async function unarchiveEventAction(formData: FormData) {
-  const session = await requireSuperAdmin();
-  await unarchiveEvent(session, String(formData.get("id")));
-  revalidatePath("/admin/events");
-  revalidatePath("/admin/events/past");
-  revalidatePath("/events");
+export async function unarchiveEventAction(formData: FormData): Promise<Result<unknown>> {
+  const res = await unarchive({ id: String(formData.get("id")) });
+  if (res.ok) revalidateEvents();
+  return res;
 }

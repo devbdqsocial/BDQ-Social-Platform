@@ -5,6 +5,7 @@ import { Field } from "@/components/ui/field";
 import { Input, Textarea } from "@/components/ui/input";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { PageHeader } from "@/components/ui/page-header";
+import { ActionForm } from "@/components/admin/action-form";
 import { createEventAction } from "../actions";
 
 export const metadata: Metadata = { title: "Create event" };
@@ -16,7 +17,7 @@ export default async function NewEventPage() {
     <div className="space-y-6">
       <PageHeader title="Create event" description="Add the basics now — tickets, schedule, and the event layout come next." />
 
-      <form action={createEventAction} className="space-y-6">
+      <ActionForm action={createEventAction} success="Event created" resetOnSuccess className="space-y-6">
         <div className="space-y-1">
           <h2 className="text-lg font-semibold tracking-tight">Add an event</h2>
           <p className="text-sm text-muted-foreground">You can add ticket types and prices on the next screen.</p>
@@ -44,7 +45,7 @@ export default async function NewEventPage() {
           </Field>
           <Button type="submit" className="w-fit">Add event</Button>
         </div>
-      </form>
+      </ActionForm>
     </div>
   );
 }

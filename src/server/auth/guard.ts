@@ -131,7 +131,7 @@ export class AuthError extends Error {
   }
 }
 
-function can(session: Session, need: Role | Permission): boolean {
+export function can(session: Session, need: Role | Permission): boolean {
   if (session.role === "SUPER_ADMIN") return true;
   if (need === "SUPER_ADMIN") return false;
   if (session.role === "ADMIN") return true;

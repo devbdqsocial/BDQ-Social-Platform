@@ -85,14 +85,20 @@
       not` for Docs/scripts/e2e in `globals.css` + de-fanged the doc literal.
 
 **R0.3 `action()` pipeline** (10h) — architecture §3
-- [ ] a. Create `src/server/action.ts`: `action(opts)(handler)` composing auth → zod parse →
-      handler → audit → `Result<T>` envelope (`{ok:true,data}|{ok:false,error:{code,message}}`);
-      `src/lib/result.ts` for the shared type. Unit tests for every branch (unauthZ, invalid,
-      handler throw, audit failure non-blocking).
-- [ ] b. Migrate 3 pilots: `admin/(console)/events/actions.ts`,
-      `tickets/coupons/actions.ts`, `vendors/actions.ts`. No behavior change.
-- [ ] c. Client: `useActionToast()` (or equivalent) wiring sonner success/error from `Result`.
-      Verify: pilot mutations show toasts; AuditLog rows written; tests green.
+- [x] a. Create `src/server/action.ts`: `action(opts)` composing auth → zod parse → handler →
+      (optional) audit → `Result<T>` envelope; `src/lib/result.ts` shared type; `ActionError`
+      for user-safe domain messages; Next control-flow (redirect/notFound) always rethrown.
+      9 unit tests cover every branch (`src/server/action.test.ts`). ✓
+- [x] b. Migrate 3 pilots: events, coupons, vendors actions — same service calls, services
+      keep their internal withAudit (no double-audit). `can()` exported from guard;
+      `idActionSchema`/`idActiveSchema` added to schemas.ts. ✓
+      Note: action() resolves the session itself — the TEMP `DEV_ADMIN` bypass no longer
+      covers pilot mutations in dev (real admin login required; aligned with planned
+      dev-gate removal).
+- [x] c. Client: `<ActionForm>` (`components/admin/action-form.tsx`) toasts the envelope;
+      wired into events new/table/detail-publish + coupons create/toggle + NewVendorForm.
+      Verify: typecheck ✓ lint 0 errors ✓ 9/9 tests ✓; visual toast pass = owner spot-check
+      on next dev run (create a coupon → "Coupon created"). ✓
 
 **R0.4 Guard renames + RBAC tests** (8h) — security §3.2/§4
 - [ ] a. `server/auth/guard.ts`: `requireSuperAdmin` → `requireAdminRole` (passes

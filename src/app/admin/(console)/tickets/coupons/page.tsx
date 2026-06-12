@@ -8,6 +8,7 @@ import { Field } from "@/components/ui/field";
 import { Input, Select } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/page-header";
+import { ActionForm } from "@/components/admin/action-form";
 import { saveCouponAction, toggleCouponAction } from "./actions";
 
 export const metadata: Metadata = { title: "Coupons" };
@@ -23,7 +24,7 @@ export default async function CouponsPage() {
     <div className="space-y-8">
       <PageHeader title="Coupons" description="Create promo codes. Discounts apply at checkout (best single discount wins — they don't stack)." />
 
-      <form action={saveCouponAction} className="space-y-6">
+      <ActionForm action={saveCouponAction} success="Coupon created" resetOnSuccess className="space-y-6">
         <div className="space-y-1">
           <h2 className="text-lg font-semibold tracking-tight">New coupon</h2>
           <p className="text-sm text-muted-foreground">Codes are case-sensitive and must be unique.</p>
@@ -67,7 +68,7 @@ export default async function CouponsPage() {
           </label>
           <Button type="submit" className="w-fit sm:col-span-2">Create coupon</Button>
         </div>
-      </form>
+      </ActionForm>
 
       <div className="space-y-3">
         <h2 className="font-display text-lg font-semibold">All coupons ({coupons.length})</h2>
@@ -92,11 +93,11 @@ export default async function CouponsPage() {
                       {window ? ` · ${window}` : ""}
                     </p>
                   </div>
-                  <form action={toggleCouponAction}>
+                  <ActionForm action={toggleCouponAction} success="Coupon updated">
                     <input type="hidden" name="id" value={c.id} />
                     <input type="hidden" name="active" value={String(!c.active)} />
                     <Button type="submit" variant="ghost" size="sm">{c.active ? "Turn off" : "Turn on"}</Button>
-                  </form>
+                  </ActionForm>
                 </li>
               );
             })}

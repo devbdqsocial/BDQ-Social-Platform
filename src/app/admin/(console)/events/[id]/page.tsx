@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { publishEventAction } from "../actions";
+import { ActionForm } from "@/components/admin/action-form";
 import { addTicketTypeAction, deleteTicketTypeAction, addScheduleItemAction, deleteScheduleItemAction, setEventThemeAction, updateEventAction } from "./actions";
 import { DeleteEventButton } from "./DeleteEventButton";
 
@@ -47,10 +48,10 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
           <Button asChild variant="outline" size="sm"><Link href={`/admin/events/${event.id}/map`}>Edit layout</Link></Button>
           <Button asChild variant="ghost" size="sm"><Link href={`/events/${event.slug}`}>View public page</Link></Button>
           {!isLive(event.status) && (
-            <form action={publishEventAction}>
+            <ActionForm action={publishEventAction} success="Event published">
               <input type="hidden" name="id" value={event.id} />
               <Button type="submit" size="sm">Publish</Button>
-            </form>
+            </ActionForm>
           )}
         </div>
       </div>
