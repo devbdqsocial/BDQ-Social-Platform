@@ -27,6 +27,9 @@ const schema = z.object({
   // AES-256-GCM key (base64, 32 bytes) for KYC field encryption. Required once KYC is collected.
   KYC_ENC_KEY: z.string().optional(),
   CRON_SECRET: z.string().optional(),
+  // Error monitoring (Sentry) — optional; instrumentation is fully inert when unset.
+  SENTRY_DSN: z.string().optional(),
+  NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
   // TESTING ONLY: comma-list of admin emails allowed to sign in without TOTP. Empty in real prod.
   ADMIN_NO_2FA_EMAILS: z.string().optional(),
   NEXT_PUBLIC_FIREBASE_PROJECT_ID: z.string().optional(),
