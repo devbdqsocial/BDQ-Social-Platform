@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
-import { requireSuperAdmin } from "@/server/auth/guard";
+import { requireAdminRole } from "@/server/auth/guard";
 import { getActiveEvent } from "@/server/admin/event-context";
 import { getOpsSnapshot } from "@/server/ops/tasks";
 import { PageHeader } from "@/components/ui/page-header";
@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 const time = (d: Date) => new Intl.DateTimeFormat("en-IN", { timeStyle: "short", timeZone: "Asia/Kolkata" }).format(d);
 
 export default async function LiveMonitorPage() {
-  await requireSuperAdmin();
+  await requireAdminRole();
   const { active } = await getActiveEvent();
   const { live, recentCheckins } = await getOpsSnapshot(active?.id);
 

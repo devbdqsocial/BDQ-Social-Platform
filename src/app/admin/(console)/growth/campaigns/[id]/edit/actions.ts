@@ -1,12 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireSuperAdmin } from "@/server/auth/guard";
+import { requireAdminRole } from "@/server/auth/guard";
 import { updateCampaign, sendCampaign } from "@/server/campaigns/service";
 import { db } from "@/server/db";
 
 export async function updateCampaignAction(id: string, formData: FormData): Promise<{ success: boolean; error?: string }> {
-  const session = await requireSuperAdmin();
+  const session = await requireAdminRole();
   try {
     const rawContacts = formData.get("customContacts");
     let parsedContacts = null;
@@ -37,7 +37,7 @@ export async function updateCampaignAction(id: string, formData: FormData): Prom
 }
 
 export async function publishCampaignAction(id: string): Promise<{ success: boolean; error?: string }> {
-  const session = await requireSuperAdmin();
+  const session = await requireAdminRole();
   try {
     await sendCampaign(session, id);
     revalidatePath(`/admin/growth/campaigns/${id}/edit`);
@@ -53,7 +53,7 @@ export async function publishCampaignAction(id: string): Promise<{ success: bool
  * Business Intent: Provide admin UI with live delivery log data and stats updates for charting.
  */
 export async function getCampaignProgressAction(id: string) {
-  await requireSuperAdmin();
+  await requireAdminRole();
   try {
     const campaign = await db.campaign.findUnique({
       where: { id },

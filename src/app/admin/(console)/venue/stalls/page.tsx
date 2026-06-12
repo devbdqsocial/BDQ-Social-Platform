@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireSuperAdmin } from "@/server/auth/guard";
+import { requireAdminRole } from "@/server/auth/guard";
 import { getActiveEvent } from "@/server/admin/event-context";
 import { listStallsForEvent } from "@/server/map/admin-service";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 export const metadata: Metadata = { title: "Stall inventory" };
 
 export default async function StallInventoryPage() {
-  await requireSuperAdmin();
+  await requireAdminRole();
   const { active } = await getActiveEvent();
   const stalls = active ? await listStallsForEvent(active.id) : [];
 

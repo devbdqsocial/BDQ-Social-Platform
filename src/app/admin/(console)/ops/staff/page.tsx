@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { requireSuperAdmin } from "@/server/auth/guard";
+import { requireAdminRole } from "@/server/auth/guard";
 import { listStaff } from "@/server/staff/service";
 import { STAFF_PRESETS, STAFF_PRESET_KEYS } from "@/lib/staff-presets";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ export const metadata: Metadata = { title: "Staff" };
  * - An ADMIN can only create and manage standard staff presets and cannot see or select the ADMIN option.
  */
 export default async function AdminStaffPage() {
-  const session = await requireSuperAdmin();
+  const session = await requireAdminRole();
   const staff = await listStaff();
 
   const isSuperAdmin = session.role === "SUPER_ADMIN";

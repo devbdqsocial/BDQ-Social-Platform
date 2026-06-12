@@ -101,12 +101,14 @@
       on next dev run (create a coupon → "Coupon created"). ✓
 
 **R0.4 Guard renames + RBAC tests** (8h) — security §3.2/§4
-- [ ] a. `server/auth/guard.ts`: `requireSuperAdmin` → `requireAdminRole` (passes
-      SUPER_ADMIN+ADMIN), `requireSuperAdminOnly` → `requireSuperAdmin` (strict). Update ALL
-      call sites (grep both old names to zero).
-- [ ] b. New `src/server/auth/rbac.test.ts`: matrix from security.md §4 — every
-      role×section/action expectation, incl. new sections (content, addons, concierge).
-      Verify: `grep -r "requireSuperAdminOnly" src` = 0; matrix tests green.
+- [x] a. `server/auth/guard.ts`: `requireSuperAdmin` → `requireAdminRole` (passes
+      SUPER_ADMIN+ADMIN), `requireSuperAdminOnly` → `requireSuperAdmin` (strict). All 40+
+      call sites swept; the strict guard is now used ONLY by the audit viewer + audit
+      export (exactly security §4). ✓ grep = 0.
+- [x] b. New `src/server/auth/rbac.test.ts`: 8 matrix tests over `can()` +
+      `canAccessSection()` (role caps, every staff preset atom, SUPER_ADMIN-only sections
+      closed to full-atom staff, ADMIN denied audit). Content/addons/concierge sections get
+      rows when they exist (R5.4). Verify: 8/8 green ✓ typecheck ✓ lint 0 errors ✓.
 
 **R0.5 Sentry** (6h) — security §3.3
 - [ ] a. Add `@sentry/nextjs` (authorized dep), `instrumentation.ts` + config; no-op when

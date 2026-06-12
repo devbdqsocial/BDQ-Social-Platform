@@ -8,7 +8,7 @@ import { createEventSchema, idActionSchema } from "@/server/schemas";
 import type { Result } from "@/lib/result";
 
 // Pilot of the action() pipeline (build-plan R0.3). Services audit internally (withAudit),
-// so no audit meta here. "ADMIN" = SUPER_ADMIN + ADMIN (matches the old requireSuperAdmin gate).
+// so no audit meta here. "ADMIN" = SUPER_ADMIN + ADMIN (old requireSuperAdmin semantics).
 
 const create = action({ auth: "ADMIN", input: createEventSchema, handler: (s, d) => createEvent(s, d) });
 const publish = action({ auth: "ADMIN", input: idActionSchema, handler: (s, d) => publishEvent(s, d.id) });

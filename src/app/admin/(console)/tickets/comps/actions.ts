@@ -1,11 +1,11 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { requireSuperAdmin } from "@/server/auth/guard";
+import { requireAdminRole } from "@/server/auth/guard";
 import { generateComps } from "@/server/comps/service";
 
 export async function generateCompsAction(formData: FormData): Promise<void> {
-  const session = await requireSuperAdmin();
+  const session = await requireAdminRole();
   const ticketTypeId = String(formData.get("ticketTypeId") || "");
   const qty = Math.max(1, Math.min(200, Number(formData.get("qty") || 1)));
   if (!ticketTypeId) throw new Error("Pick a ticket type.");

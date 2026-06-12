@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { requireSuperAdmin } from "@/server/auth/guard";
+import { requireAdminRole } from "@/server/auth/guard";
 import { getActiveEvent } from "@/server/admin/event-context";
 import { listPaymentsForEvent } from "@/server/finance/service";
 import { PageHeader } from "@/components/ui/page-header";
@@ -8,7 +8,7 @@ import { PaymentsTable } from "./PaymentsTable";
 export const metadata: Metadata = { title: "Payments" };
 
 export default async function PaymentsPage() {
-  await requireSuperAdmin();
+  await requireAdminRole();
   const { active } = await getActiveEvent();
   const payments = active ? await listPaymentsForEvent(active.id) : [];
 

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { requireSuperAdmin } from "@/server/auth/guard";
+import { requireAdminRole } from "@/server/auth/guard";
 import { listSettlements, getSettlementSummary } from "@/server/finance/settlements";
 import { formatPaise } from "@/lib/utils";
 import { KpiCard } from "@/components/charts/kpi-card";
@@ -17,7 +17,7 @@ const fmtDate = (d: Date) =>
 const today = () => new Date().toISOString().slice(0, 10);
 
 export default async function SettlementsPage() {
-  await requireSuperAdmin();
+  await requireAdminRole();
   const [summary, settlements] = await Promise.all([getSettlementSummary(), listSettlements()]);
 
   return (

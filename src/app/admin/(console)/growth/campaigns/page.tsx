@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireSuperAdmin } from "@/server/auth/guard";
+import { requireAdminRole } from "@/server/auth/guard";
 import { listCampaigns, getCampaignSettings } from "@/server/campaigns/service";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
@@ -16,7 +16,7 @@ interface PageProps {
 }
 
 export default async function CampaignsPage({ searchParams }: PageProps) {
-  await requireSuperAdmin();
+  await requireAdminRole();
   const campaigns = await listCampaigns();
   const settings = await getCampaignSettings();
   

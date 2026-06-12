@@ -2,13 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireSuperAdmin } from "@/server/auth/guard";
+import { requireAdminRole } from "@/server/auth/guard";
 import { addScheduleItem, addTicketType, deleteEvent, deleteScheduleItem, deleteTicketType, setEventTheme, updateEvent } from "@/server/events/service";
 import { createEventSchema, eventThemeSchema, scheduleItemSchema, ticketTypeSchema } from "@/server/schemas";
 import { parseOrThrow } from "@/lib/validation";
 
 export async function addTicketTypeAction(formData: FormData): Promise<void> {
-  const session = await requireSuperAdmin();
+  const session = await requireAdminRole();
   const eventId = String(formData.get("eventId"));
   const earlyRupees = formData.get("earlyRupees");
   const data = parseOrThrow(ticketTypeSchema, {
@@ -24,7 +24,7 @@ export async function addTicketTypeAction(formData: FormData): Promise<void> {
 }
 
 export async function deleteTicketTypeAction(formData: FormData): Promise<void> {
-  const session = await requireSuperAdmin();
+  const session = await requireAdminRole();
   const eventId = String(formData.get("eventId"));
   await deleteTicketType(session, String(formData.get("id")));
   revalidatePath(`/admin/events/${eventId}`);
@@ -37,7 +37,7 @@ function revalidateEvent(eventId: string) {
 }
 
 export async function addScheduleItemAction(formData: FormData): Promise<void> {
-  const session = await requireSuperAdmin();
+  const session = await requireAdminRole();
   const eventId = String(formData.get("eventId"));
   const data = parseOrThrow(scheduleItemSchema, {
     startsAt: formData.get("startsAt"),
@@ -51,13 +51,13 @@ export async function addScheduleItemAction(formData: FormData): Promise<void> {
 }
 
 export async function deleteScheduleItemAction(formData: FormData): Promise<void> {
-  const session = await requireSuperAdmin();
+  const session = await requireAdminRole();
   await deleteScheduleItem(session, String(formData.get("id")));
   revalidateEvent(String(formData.get("eventId")));
 }
 
 export async function updateEventAction(formData: FormData): Promise<void> {
-  const session = await requireSuperAdmin();
+  const session = await requireAdminRole();
   const eventId = String(formData.get("eventId"));
   const data = parseOrThrow(createEventSchema, {
     name: formData.get("name"),
@@ -72,7 +72,7 @@ export async function updateEventAction(formData: FormData): Promise<void> {
 }
 
 export async function deleteEventAction(formData: FormData): Promise<void> {
-  const session = await requireSuperAdmin();
+  const session = await requireAdminRole();
   const eventId = String(formData.get("eventId"));
   await deleteEvent(session, eventId);
   revalidatePath("/admin/events");
@@ -82,7 +82,7 @@ export async function deleteEventAction(formData: FormData): Promise<void> {
 }
 
 export async function setEventThemeAction(formData: FormData): Promise<void> {
-  const session = await requireSuperAdmin();
+  const session = await requireAdminRole();
   const eventId = String(formData.get("eventId"));
   const data = parseOrThrow(eventThemeSchema, {
     primary: formData.get("primary") || "",

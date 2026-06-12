@@ -65,10 +65,11 @@ export async function requireVendor(): Promise<Session> {
 }
 
 /**
- * Require SUPER_ADMIN (e.g. events, map, staff management — staff can never reach these).
+ * Require a console ADMIN-level role: SUPER_ADMIN or ADMIN (staff can never reach these).
+ * Renamed from the misleading `requireSuperAdmin` (build-plan R0.4 / security §3.2).
  * Dev gate: DEV_ADMIN → super-admin.
  */
-export async function requireSuperAdmin(): Promise<Session> {
+export async function requireAdminRole(): Promise<Session> {
   const s = await getSession();
   if (s && (s.role === "SUPER_ADMIN" || s.role === "ADMIN")) return s;
 
@@ -80,9 +81,10 @@ export async function requireSuperAdmin(): Promise<Session> {
 }
 
 /**
- * Require SUPER_ADMIN role strictly (e.g. system audit logs).
+ * Require the SUPER_ADMIN role strictly (e.g. system audit logs).
+ * Renamed from `requireSuperAdminOnly` (build-plan R0.4) — the name now means what it says.
  */
-export async function requireSuperAdminOnly(): Promise<Session> {
+export async function requireSuperAdmin(): Promise<Session> {
   const s = await getSession();
   if (s && s.role === "SUPER_ADMIN") return s;
 

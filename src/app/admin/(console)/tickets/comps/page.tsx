@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireSuperAdmin } from "@/server/auth/guard";
+import { requireAdminRole } from "@/server/auth/guard";
 import { listEventsWithTicketTypes, listCompBatches } from "@/server/comps/service";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
@@ -14,7 +14,7 @@ const fmt = (d: Date) =>
   new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(d);
 
 export default async function CompsPage() {
-  await requireSuperAdmin();
+  await requireAdminRole();
   const [events, batches] = await Promise.all([listEventsWithTicketTypes(), listCompBatches()]);
   const hasTypes = events.some((e) => e.ticketTypes.length > 0);
 

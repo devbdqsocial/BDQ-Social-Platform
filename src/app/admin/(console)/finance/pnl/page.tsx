@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { requireSuperAdmin } from "@/server/auth/guard";
+import { requireAdminRole } from "@/server/auth/guard";
 import { getEventPnl, getExpensesByVendor } from "@/server/finance/pnl";
 import { getReceivables, getCashByRecorder } from "@/server/finance/receivables";
 import { getActiveEvent } from "@/server/admin/event-context";
@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic"; // always fresh — finance figures chan
 const pct = (r: number | null) => (r == null ? "—" : `${(r * 100).toFixed(1)}%`);
 
 export default async function PnlPage() {
-  await requireSuperAdmin();
+  await requireAdminRole();
   const { active } = await getActiveEvent();
   if (!active) {
     return (

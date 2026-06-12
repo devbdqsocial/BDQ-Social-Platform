@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { requireSuperAdmin } from "@/server/auth/guard";
+import { requireAdminRole } from "@/server/auth/guard";
 import { getCampaign } from "@/server/campaigns/service";
 import { PageHeader } from "@/components/ui/page-header";
 import { CampaignBuilder, CampaignType } from "./CampaignBuilder";
@@ -8,7 +8,7 @@ import { CampaignBuilder, CampaignType } from "./CampaignBuilder";
 export const metadata: Metadata = { title: "Edit Campaign" };
 
 export default async function EditCampaignPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireSuperAdmin();
+  await requireAdminRole();
   const { id } = await params;
   const campaign = await getCampaign(id).catch(() => notFound());
 

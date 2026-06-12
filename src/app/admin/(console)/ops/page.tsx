@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { requireSuperAdmin } from "@/server/auth/guard";
+import { requireAdminRole } from "@/server/auth/guard";
 import { db } from "@/server/db";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/page-header";
@@ -20,7 +20,7 @@ function Stat({ label, value, bad }: { label: string; value: string | number; ba
 }
 
 export default async function OpsPage() {
-  await requireSuperAdmin();
+  await requireAdminRole();
   const now = new Date();
   const fifteenAgo = new Date(now.getTime() - 15 * 60 * 1000);
 

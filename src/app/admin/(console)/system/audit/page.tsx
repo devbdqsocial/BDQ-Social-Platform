@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireSuperAdminOnly } from "@/server/auth/guard";
+import { requireSuperAdmin } from "@/server/auth/guard";
 import { listAuditLogs, auditFilterOptions } from "@/server/audit-log";
 import { Field } from "@/components/ui/field";
 import { Input, Select } from "@/components/ui/input";
@@ -19,7 +19,7 @@ const fmt = (d: Date) =>
 const roleVariant = (r: string | null) => (r === "SUPER_ADMIN" ? "gold" : r === "STAFF" ? "primary" : "neutral");
 
 export default async function AuditPage({ searchParams }: { searchParams: Promise<SP> }) {
-  await requireSuperAdminOnly();
+  await requireSuperAdmin();
   const sp = await searchParams;
   const filters = { entity: sp.entity, action: sp.action, from: sp.from, to: sp.to };
   const page = Number(sp.page ?? "1") || 1;

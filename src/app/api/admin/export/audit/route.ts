@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { requireSuperAdminOnly } from "@/server/auth/guard";
+import { requireSuperAdmin } from "@/server/auth/guard";
 import { db } from "@/server/db";
 import { toCsv } from "@/lib/csv";
 import { parseSkip } from "@/lib/utils";
@@ -15,7 +15,7 @@ export async function GET(req: Request) {
 
   let session;
   try {
-    session = await requireSuperAdminOnly();
+    session = await requireSuperAdmin();
   } catch {
     return new Response("Forbidden", { status: 403 });
   }

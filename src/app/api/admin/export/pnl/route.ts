@@ -1,4 +1,4 @@
-import { requireSuperAdmin } from "@/server/auth/guard";
+import { requireAdminRole } from "@/server/auth/guard";
 import { getEventPnl } from "@/server/finance/pnl";
 import { toCsv } from "@/lib/csv";
 import { enforceRateLimit } from "@/lib/ratelimit";
@@ -14,7 +14,7 @@ export async function GET(req: Request) {
   if (limited) return limited;
 
   try {
-    await requireSuperAdmin();
+    await requireAdminRole();
   } catch {
     return new Response("Forbidden", { status: 403 });
   }

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireSuperAdmin } from "@/server/auth/guard";
+import { requireAdminRole } from "@/server/auth/guard";
 import { getByIdForAdmin } from "@/server/events/service";
 import { ensureStallTypes } from "@/server/map/stall-types";
 import { listTemplates } from "@/server/map/templates";
@@ -14,7 +14,7 @@ import { saveMapAction, getMapUploadSignatureAction } from "./actions";
 export const metadata: Metadata = { title: "Event layout" };
 
 export default async function EventMapPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireSuperAdmin();
+  await requireAdminRole();
   const { id } = await params;
   const event = await getByIdForAdmin(id);
   if (!event) notFound();

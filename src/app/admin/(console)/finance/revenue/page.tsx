@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { requireSuperAdmin } from "@/server/auth/guard";
+import { requireAdminRole } from "@/server/auth/guard";
 import { getActiveEvent } from "@/server/admin/event-context";
 import { getAnalytics } from "@/server/analytics/service";
 import { formatPaise } from "@/lib/utils";
@@ -12,7 +12,7 @@ import { RevenueAreaChart } from "@/components/charts/dashboard-charts";
 export const metadata: Metadata = { title: "Revenue" };
 
 export default async function RevenuePage() {
-  await requireSuperAdmin();
+  await requireAdminRole();
   const { active } = await getActiveEvent();
   const a = await getAnalytics(active?.id);
   const k = a.kpis;

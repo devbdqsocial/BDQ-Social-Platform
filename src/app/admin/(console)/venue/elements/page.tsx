@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { MapElement } from "@prisma/client";
-import { requireSuperAdmin } from "@/server/auth/guard";
+import { requireAdminRole } from "@/server/auth/guard";
 import { ensureElementDefaults } from "@/server/map/elements";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,7 +32,7 @@ function ElementFields({ el }: { el?: MapElement }) {
 }
 
 export default async function MapElementsPage() {
-  await requireSuperAdmin();
+  await requireAdminRole();
   const elements = await ensureElementDefaults();
 
   return (

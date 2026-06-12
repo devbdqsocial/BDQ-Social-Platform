@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { requireSuperAdmin } from "@/server/auth/guard";
+import { requireAdminRole } from "@/server/auth/guard";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input, Textarea } from "@/components/ui/input";
@@ -11,7 +11,7 @@ import { createEventAction } from "../actions";
 export const metadata: Metadata = { title: "Create event" };
 
 export default async function NewEventPage() {
-  await requireSuperAdmin();
+  await requireAdminRole();
 
   return (
     <div className="space-y-6">

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireSuperAdmin } from "@/server/auth/guard";
+import { requireAdminRole } from "@/server/auth/guard";
 import { getByIdForAdmin } from "@/server/events/service";
 import { listMaps } from "@/server/map/maps";
 import { formatPaise } from "@/lib/utils";
@@ -25,7 +25,7 @@ const dayKey = (d: Date) => new Intl.DateTimeFormat("en-CA", { dateStyle: "full"
 const timeOnly = (d: Date) => new Intl.DateTimeFormat("en-IN", { timeStyle: "short", timeZone: "Asia/Kolkata" }).format(d);
 
 export default async function AdminEventEditor({ params }: { params: Promise<{ id: string }> }) {
-  await requireSuperAdmin();
+  await requireAdminRole();
   const { id } = await params;
   const [event, maps] = await Promise.all([getByIdForAdmin(id), listMaps()]);
   if (!event) notFound();

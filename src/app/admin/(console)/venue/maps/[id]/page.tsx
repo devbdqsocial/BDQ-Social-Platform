@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireSuperAdmin } from "@/server/auth/guard";
+import { requireAdminRole } from "@/server/auth/guard";
 import { getMap } from "@/server/map/maps";
 import { ensureElementDefaults } from "@/server/map/elements";
 import type { CanvasMeta, EditorElement, PaletteStallType } from "@/lib/map/designer-ops";
@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: "Map" };
 const fmt = (n: number) => new Intl.NumberFormat("en-IN").format(Math.round(n));
 
 export default async function MapDesignerPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireSuperAdmin();
+  await requireAdminRole();
   const { id } = await params;
   const map = await getMap(id);
   if (!map) notFound();

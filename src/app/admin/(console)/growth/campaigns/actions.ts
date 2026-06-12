@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireSuperAdmin } from "@/server/auth/guard";
+import { requireAdminRole } from "@/server/auth/guard";
 import { createCampaign, sendCampaign, CampaignSendError, pauseCampaign, resumeCampaign, cancelCampaign, updateSystemSetting, CampaignInput } from "@/server/campaigns/service";
 import { campaignSchema } from "@/server/schemas";
 import { parseOrThrow } from "@/lib/validation";
@@ -9,7 +9,7 @@ import { parseOrThrow } from "@/lib/validation";
 import { redirect } from "next/navigation";
 
 export async function createCampaignAction(formData: FormData): Promise<void> {
-  const session = await requireSuperAdmin();
+  const session = await requireAdminRole();
   const data = parseOrThrow(campaignSchema, {
     name: formData.get("name"),
     channel: formData.get("channel"),
@@ -20,7 +20,7 @@ export async function createCampaignAction(formData: FormData): Promise<void> {
 }
 
 export async function sendCampaignAction(formData: FormData): Promise<void> {
-  const session = await requireSuperAdmin();
+  const session = await requireAdminRole();
   try {
     await sendCampaign(session, String(formData.get("id")));
   } catch (e) {
@@ -36,7 +36,7 @@ export async function sendCampaignAction(formData: FormData): Promise<void> {
  * Side Effects: Mutates SystemSetting schema row, triggers path revalidation.
  */
 export async function updateSettingAction(formData: FormData): Promise<void> {
-  const session = await requireSuperAdmin();
+  const session = await requireAdminRole();
   const key = String(formData.get("key"));
   const value = String(formData.get("value"));
   if (!key) throw new Error("Key is required");
@@ -50,7 +50,7 @@ export async function updateSettingAction(formData: FormData): Promise<void> {
  * Side Effects: Revalidates paths, mutates campaign status.
  */
 export async function pauseCampaignAction(campaignId: string): Promise<{ success: boolean; error?: string }> {
-  const session = await requireSuperAdmin();
+  const session = await requireAdminRole();
   try {
     await pauseCampaign(session, campaignId);
     revalidatePath(`/admin/growth/campaigns/${campaignId}/edit`);
@@ -67,7 +67,7 @@ export async function pauseCampaignAction(campaignId: string): Promise<{ success
  * Side Effects: Revalidates paths, mutates campaign status.
  */
 export async function resumeCampaignAction(campaignId: string): Promise<{ success: boolean; error?: string }> {
-  const session = await requireSuperAdmin();
+  const session = await requireAdminRole();
   try {
     await resumeCampaign(session, campaignId);
     revalidatePath(`/admin/growth/campaigns/${campaignId}/edit`);
@@ -84,7 +84,7 @@ export async function resumeCampaignAction(campaignId: string): Promise<{ succes
  * Side Effects: Revalidates paths, aborts queued outbox entries, mutates status.
  */
 export async function cancelCampaignAction(campaignId: string): Promise<{ success: boolean; error?: string }> {
-  const session = await requireSuperAdmin();
+  const session = await requireAdminRole();
   try {
     await cancelCampaign(session, campaignId);
     revalidatePath(`/admin/growth/campaigns/${campaignId}/edit`);

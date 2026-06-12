@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireSuperAdmin } from "@/server/auth/guard";
+import { requireAdminRole } from "@/server/auth/guard";
 import { listMaps } from "@/server/map/maps";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "Maps" };
 const fmt = (n: number) => new Intl.NumberFormat("en-IN").format(Math.round(n));
 
 export default async function MapsPage() {
-  await requireSuperAdmin();
+  await requireAdminRole();
   const maps = await listMaps();
 
   return (

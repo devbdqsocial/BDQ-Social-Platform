@@ -1,13 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireSuperAdmin } from "@/server/auth/guard";
+import { requireAdminRole } from "@/server/auth/guard";
 import { saveElement, deleteElement } from "@/server/map/elements";
 import { mapElementSchema } from "@/server/schemas";
 import { parseOrThrow } from "@/lib/validation";
 
 export async function saveElementAction(formData: FormData): Promise<void> {
-  const session = await requireSuperAdmin();
+  const session = await requireAdminRole();
   const id = formData.get("id") ? String(formData.get("id")) : undefined;
   const data = parseOrThrow(mapElementSchema, {
     name: formData.get("name"),
@@ -22,7 +22,7 @@ export async function saveElementAction(formData: FormData): Promise<void> {
 }
 
 export async function deleteElementAction(formData: FormData): Promise<void> {
-  const session = await requireSuperAdmin();
+  const session = await requireAdminRole();
   await deleteElement(session, String(formData.get("id")));
   revalidatePath("/admin/venue/elements");
 }

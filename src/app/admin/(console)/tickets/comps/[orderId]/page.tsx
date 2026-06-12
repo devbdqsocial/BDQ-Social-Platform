@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireSuperAdmin } from "@/server/auth/guard";
+import { requireAdminRole } from "@/server/auth/guard";
 import { getCompOrder } from "@/server/comps/service";
 import { toQrDataUrl } from "@/lib/qr-token";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ const fmt = (d: Date) =>
   new Intl.DateTimeFormat("en-IN", { dateStyle: "full", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(d);
 
 export default async function CompSheetPage({ params }: { params: Promise<{ orderId: string }> }) {
-  await requireSuperAdmin();
+  await requireAdminRole();
   const { orderId } = await params;
   const order = await getCompOrder(orderId);
   if (!order) notFound();

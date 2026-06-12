@@ -2,14 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireSuperAdmin } from "@/server/auth/guard";
+import { requireAdminRole } from "@/server/auth/guard";
 import { createMap, saveMapLayout, attachMapToEvent } from "@/server/map/maps";
 import { validateLayout } from "@/lib/map/designer-ops";
 
 const M_TO_FT = 3.28084;
 
 export async function createMapAction(formData: FormData): Promise<void> {
-  const session = await requireSuperAdmin();
+  const session = await requireAdminRole();
   const name = String(formData.get("name") || "").trim();
   if (name.length < 2) throw new Error("Name the map");
   const unit = formData.get("unit") === "M" ? "M" : "FT";
@@ -31,7 +31,7 @@ export async function createMapAction(formData: FormData): Promise<void> {
 }
 
 export async function saveMapLayoutAction(mapId: string, layout: unknown): Promise<void> {
-  const session = await requireSuperAdmin();
+  const session = await requireAdminRole();
   const res = validateLayout(layout);
   if (!res.ok) throw new Error(res.error);
   await saveMapLayout(session, mapId, res.layout);
@@ -39,7 +39,7 @@ export async function saveMapLayoutAction(mapId: string, layout: unknown): Promi
 }
 
 export async function attachMapAction(eventId: string, mapId: string): Promise<void> {
-  const session = await requireSuperAdmin();
+  const session = await requireAdminRole();
   await attachMapToEvent(session, eventId, mapId);
   revalidatePath(`/admin/events/${eventId}`);
   revalidatePath("/events");

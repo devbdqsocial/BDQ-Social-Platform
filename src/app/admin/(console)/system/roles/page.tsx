@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireSuperAdmin, type Permission } from "@/server/auth/guard";
+import { requireAdminRole, type Permission } from "@/server/auth/guard";
 import { listStaff } from "@/server/staff/service";
 import { STAFF_PRESETS, STAFF_PRESET_KEYS } from "@/lib/staff-presets";
 import { Button } from "@/components/ui/button";
@@ -28,7 +28,7 @@ const permLabel = (p: string) => PERMS.find((x) => x.key === p)?.label ?? p;
  * - SUPER_ADMINs see all teammates and can promote/demote teammates between STAFF and ADMIN roles.
  */
 export default async function RolesPage() {
-  const session = await requireSuperAdmin();
+  const session = await requireAdminRole();
   const isSuperAdmin = session.role === "SUPER_ADMIN";
   
   // Filter active staff: standard ADMIN users are restricted from viewing or editing other ADMINs.

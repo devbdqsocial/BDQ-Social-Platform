@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
-import { requireSuperAdmin } from "@/server/auth/guard";
+import { requireAdminRole } from "@/server/auth/guard";
 import { saveEventMap } from "@/server/events/service";
 import { saveStallType, deleteStallType } from "@/server/map/stall-types";
 import { saveAsTemplate, applyTemplate } from "@/server/map/templates";
@@ -12,12 +12,12 @@ import { validateLayout } from "@/lib/map/designer-ops";
 import { signUpload, type UploadSignature } from "@/lib/cloudinary";
 
 export async function getMapUploadSignatureAction(): Promise<UploadSignature> {
-  await requireSuperAdmin();
+  await requireAdminRole();
   return signUpload("bdq/maps");
 }
 
 export async function saveMapAction(eventId: string, layout: unknown): Promise<void> {
-  const session = await requireSuperAdmin();
+  const session = await requireAdminRole();
   const res = validateLayout(layout);
   if (!res.ok) throw new Error(res.error);
   await saveEventMap(session, eventId, res.layout);
@@ -26,7 +26,7 @@ export async function saveMapAction(eventId: string, layout: unknown): Promise<v
 }
 
 export async function saveStallTypeAction(formData: FormData): Promise<void> {
-  const session = await requireSuperAdmin();
+  const session = await requireAdminRole();
   const eventId = String(formData.get("eventId"));
   const id = formData.get("id") ? String(formData.get("id")) : undefined;
   const data = parseOrThrow(stallTypeSchema, {
@@ -49,21 +49,21 @@ export async function saveStallTypeAction(formData: FormData): Promise<void> {
 }
 
 export async function deleteStallTypeAction(formData: FormData): Promise<void> {
-  const session = await requireSuperAdmin();
+  const session = await requireAdminRole();
   const eventId = String(formData.get("eventId"));
   await deleteStallType(session, String(formData.get("id")));
   revalidatePath(`/admin/events/${eventId}/map`);
 }
 
 export async function saveTemplateAction(eventId: string, name: string): Promise<void> {
-  const session = await requireSuperAdmin();
+  const session = await requireAdminRole();
   if (name.trim().length < 2) throw new Error("Name the template");
   await saveAsTemplate(session, eventId, name.trim());
   revalidatePath(`/admin/events/${eventId}/map`);
 }
 
 export async function applyTemplateAction(eventId: string, templateId: string): Promise<void> {
-  const session = await requireSuperAdmin();
+  const session = await requireAdminRole();
   if (!templateId) throw new Error("Choose a template");
   await applyTemplate(session, eventId, templateId);
   revalidatePath(`/admin/events/${eventId}/map`);

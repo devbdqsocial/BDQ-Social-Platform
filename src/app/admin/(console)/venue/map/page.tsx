@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { requireSuperAdmin } from "@/server/auth/guard";
+import { requireAdminRole } from "@/server/auth/guard";
 import { MapDesignerLoader } from "@/components/map/MapDesignerLoader";
 
 export const metadata: Metadata = { title: "Event layout" };
 
 export default async function AdminMapPage() {
-  await requireSuperAdmin();
+  await requireAdminRole();
   return (
     <div>
       <header className="mb-4">

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { requireSuperAdmin } from "@/server/auth/guard";
+import { requireAdminRole } from "@/server/auth/guard";
 import { listCoupons } from "@/server/coupons/admin-service";
 import { listAllForAdmin } from "@/server/events/service";
 import { formatPaise } from "@/lib/utils";
@@ -17,7 +17,7 @@ const fmtDate = (d: Date | null) =>
   d ? new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeZone: "Asia/Kolkata" }).format(d) : null;
 
 export default async function CouponsPage() {
-  await requireSuperAdmin();
+  await requireAdminRole();
   const [coupons, events] = await Promise.all([listCoupons(), listAllForAdmin()]);
 
   return (

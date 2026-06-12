@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireSuperAdmin } from "@/server/auth/guard";
+import { requireAdminRole } from "@/server/auth/guard";
 import { addSettlement, setSettlementStatus } from "@/server/finance/settlements";
 import { settlementSchema } from "@/server/schemas";
 import { parseOrThrow } from "@/lib/validation";
@@ -9,7 +9,7 @@ import { parseOrThrow } from "@/lib/validation";
 const PATH = "/admin/finance/settlements";
 
 export async function addSettlementAction(formData: FormData): Promise<void> {
-  const session = await requireSuperAdmin();
+  const session = await requireAdminRole();
   const data = parseOrThrow(settlementSchema, {
     gatewayRef: formData.get("gatewayRef"),
     amountPaise: Math.round(Number(formData.get("amountRupees")) * 100),
@@ -22,7 +22,7 @@ export async function addSettlementAction(formData: FormData): Promise<void> {
 }
 
 export async function toggleSettlementAction(formData: FormData): Promise<void> {
-  const session = await requireSuperAdmin();
+  const session = await requireAdminRole();
   const status = String(formData.get("status")) as "RECONCILED" | "UNMATCHED";
   await setSettlementStatus(session, String(formData.get("id")), status);
   revalidatePath(PATH);
