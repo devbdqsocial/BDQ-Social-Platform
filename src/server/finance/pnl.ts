@@ -127,12 +127,12 @@ export async function getEventPnl(eventId: string): Promise<Pnl> {
         where: { eventId, status: { in: ["APPROVED", "PAID"] } },
         _sum: { amountPaise: true },
       }),
-      db.ticket.count({ where: { order: { eventId }, isComp: false } }),
+      db.ticket.aggregate({ _sum: { admitCount: true }, where: { order: { eventId }, isComp: false } }).then((a) => a._sum.admitCount ?? 0),
       db.ticket.findMany({
         where: { order: { eventId }, isComp: true },
         select: { ticketType: { select: { priceInPaise: true } } },
       }),
-      db.ticket.count({ where: { order: { eventId }, status: "CHECKED_IN" } }),
+      db.checkIn.aggregate({ _sum: { admitted: true }, where: { direction: "IN", ticket: { order: { eventId } } } }).then((a) => a._sum.admitted ?? 0),
       db.order.findMany({ where: paidWhere, select: { userId: true }, distinct: ["userId"] }),
     ]);
 

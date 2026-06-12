@@ -41,6 +41,9 @@ export default async function CompsPage() {
           <Field label="How many">
             <Input type="number" name="qty" min={1} max={200} defaultValue={1} required />
           </Field>
+          <label className="flex items-center gap-2 self-end pb-2 text-sm">
+            <input type="checkbox" name="group" className="size-4" /> One group QR (admits everyone together)
+          </label>
           <Field label="Recipient name" hint="Optional — printed on the sheet.">
             <Input name="holderName" placeholder="Sponsor / guest name" />
           </Field>

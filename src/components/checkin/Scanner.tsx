@@ -6,7 +6,15 @@ import { Button } from "@/components/ui/button";
 import { addToQueue, loadQueue, removeFromQueue, saveQueue, type QueuedScan } from "@/lib/scan-queue";
 
 type ResultKind = "VALID" | "ALREADY_USED" | "INVALID" | "QUEUED";
-type Result = { result: ResultKind; holder?: string | null; ticketType?: string; event?: string };
+type Result = {
+  result: ResultKind;
+  holder?: string | null;
+  ticketType?: string;
+  event?: string;
+  admitted?: number;
+  remaining?: number;
+  admitCount?: number;
+};
 
 const BANNER: Record<ResultKind, { bg: string; fg: string; label: string }> = {
   VALID: { bg: "var(--success)", fg: "#fff", label: "VALID — checked in" },
@@ -151,10 +159,15 @@ export function Scanner() {
           className="rounded-xl p-6 text-center"
           style={{ backgroundColor: BANNER[result.result].bg, color: BANNER[result.result].fg }}
         >
-          <p className="font-display text-2xl font-semibold">{BANNER[result.result].label}</p>
+          <p className="font-display text-2xl font-semibold">
+            {result.result === "VALID" && (result.admitted ?? 1) > 1
+              ? `VALID — ADMIT ${result.admitted}`
+              : BANNER[result.result].label}
+          </p>
           {result.result === "VALID" && (
             <p className="mt-1 text-sm opacity-90">
               {result.ticketType} · {result.holder ?? "Guest"} · {result.event}
+              {(result.remaining ?? 0) > 0 && ` · ${result.remaining} more can still enter on this QR`}
             </p>
           )}
         </div>

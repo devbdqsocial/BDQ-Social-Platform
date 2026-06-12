@@ -211,14 +211,12 @@ export async function fulfillOrder(
       return;
     }
 
-    // Build all ticket rows first, then insert in one batch.
-    const ticketRows: { id: string; orderId: string; ticketTypeId: string; qrToken: string }[] = [];
-    for (const it of items) {
-      for (let i = 0; i < it.qty; i++) {
-        const id = randomUUID();
-        ticketRows.push({ id, orderId: order.id, ticketTypeId: it.ticketTypeId, qrToken: signTicketToken(id, undefined, exp) });
-      }
-    }
+    // Group-QR (R1.2/M1): ONE ticket per order line — a single QR admits the whole group
+    // (admitCount = qty). Check-in admits partially until the count is exhausted.
+    const ticketRows = items.map((it) => {
+      const id = randomUUID();
+      return { id, orderId: order.id, ticketTypeId: it.ticketTypeId, qrToken: signTicketToken(id, undefined, exp), admitCount: it.qty };
+    });
     await tx.ticket.createMany({ data: ticketRows });
 
     // Record the coupon redemption (per-user-limit ledger) and bump the global usedCount under a

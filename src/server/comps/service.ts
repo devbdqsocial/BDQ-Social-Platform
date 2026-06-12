@@ -18,6 +18,8 @@ export interface CompInput {
   holderName?: string;
   holderPhone?: string;
   holderEmail?: string;
+  /** Group comp (R1.2): ONE QR that admits `qty` people, instead of qty individual QRs. */
+  group?: boolean;
 }
 
 /** Issue `qty` comp tickets under a zero-value order. Returns the order id. */
@@ -48,7 +50,8 @@ export async function generateComps(session: Session, input: CompInput): Promise
             items: [{ ticketTypeId: input.ticketTypeId, qty: input.qty }] as Prisma.InputJsonValue,
           },
         });
-        for (let i = 0; i < input.qty; i++) {
+        const rows = input.group && input.qty > 1 ? [input.qty] : Array.from({ length: input.qty }, () => 1);
+        for (const admitCount of rows) {
           const id = randomUUID();
           await tx.ticket.create({
             data: {
@@ -56,6 +59,7 @@ export async function generateComps(session: Session, input: CompInput): Promise
               orderId: order.id,
               ticketTypeId: input.ticketTypeId,
               isComp: true,
+              admitCount,
               qrToken: signTicketToken(id, undefined, exp),
               holderName: input.holderName,
               holderPhone: input.holderPhone,

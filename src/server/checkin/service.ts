@@ -1,4 +1,5 @@
 import "server-only";
+import { Prisma } from "@prisma/client";
 import { db } from "@/server/db";
 import { verifyTicketToken } from "@/lib/qr-token";
 import { classifyScan, type ScanResult } from "@/lib/checkin";
@@ -8,97 +9,149 @@ export interface CheckInResponse {
   holder?: string | null;
   ticketType?: string;
   event?: string;
+  /** Group-QR (R1.2): people admitted by THIS scan / still outstanding / ticket total. */
+  admitted?: number;
+  remaining?: number;
+  admitCount?: number;
 }
 
-function ok(ticket: { holderName: string | null; holderPhone: string | null; ticketType: { name: string }; order: { event: { name: string } } }): CheckInResponse {
+type TicketWithMeta = {
+  id: string;
+  status: string;
+  admitCount: number;
+  holderName: string | null;
+  holderPhone: string | null;
+  ticketType: { name: string };
+  order: { event: { name: string } };
+};
+
+const TICKET_INCLUDE = {
+  ticketType: { select: { name: true } },
+  order: { include: { event: { select: { name: true } } } },
+} as const;
+
+function ok(ticket: TicketWithMeta, admitted: number, remaining: number): CheckInResponse {
   return {
     result: "VALID",
     holder: ticket.holderName ?? ticket.holderPhone ?? null,
     ticketType: ticket.ticketType.name,
     event: ticket.order.event.name,
+    admitted,
+    remaining,
+    admitCount: ticket.admitCount,
   };
 }
 
+async function admittedSoFar(tx: Prisma.TransactionClient | typeof db, ticketId: string): Promise<number> {
+  const agg = await tx.checkIn.aggregate({ _sum: { admitted: true }, where: { ticketId, direction: "IN" } });
+  return agg._sum.admitted ?? 0;
+}
+
 /**
- * Validate a scanned QR and check the ticket in once. Re-scan → ALREADY_USED; bad/unknown → INVALID.
- * Offline-sync safe: a re-sent scan with the same `clientScanId` returns its original VALID result
- * (not ALREADY_USED), so draining a queue twice is harmless.
+ * Validate a scanned QR and admit people against the ticket's `admitCount` (group-QR, R1.2).
+ * Default admits everyone still outstanding; `admitRequested` allows partial admits
+ * ("3 of us now, 2 later"). The ticket flips to CHECKED_IN only when fully admitted; until
+ * then re-scans stay VALID for the remainder. Fully-admitted re-scan → ALREADY_USED.
+ * Offline-sync safe: a re-sent scan with the same `clientScanId` returns its original VALID
+ * result, so draining a queue twice is harmless.
  */
 export async function checkInByToken(
   staffUserId: string,
   qrToken: string,
   gate?: string,
   clientScanId?: string,
+  admitRequested?: number,
 ): Promise<CheckInResponse> {
   // idempotency: this exact scan already succeeded → return the original VALID
   if (clientScanId) {
     const prior = await db.checkIn.findUnique({
       where: { clientScanId },
-      include: { ticket: { include: { ticketType: { select: { name: true } }, order: { include: { event: { select: { name: true } } } } } } },
+      include: { ticket: { include: TICKET_INCLUDE } },
     });
-    if (prior) return ok(prior.ticket);
+    if (prior) {
+      const done = await admittedSoFar(db, prior.ticketId);
+      return ok(prior.ticket, prior.admitted, Math.max(0, prior.ticket.admitCount - done));
+    }
   }
 
   const v = verifyTicketToken(qrToken);
   if (!v.valid || !v.ticketId) return { result: "INVALID" };
 
-  const ticket = await db.ticket.findUnique({
-    where: { id: v.ticketId },
-    include: {
-      ticketType: { select: { name: true } },
-      order: { include: { event: { select: { name: true } } } },
-    },
-  });
+  try {
+    return await db.$transaction(async (tx) => {
+      // Serialize concurrent scans of the SAME ticket (two gates, one group QR).
+      await tx.$queryRaw`SELECT "id" FROM "Ticket" WHERE "id" = ${v.ticketId} FOR UPDATE`;
 
-  const result = classifyScan(ticket?.status ?? null);
-  if (!ticket || result !== "VALID") return { result };
+      const ticket = await tx.ticket.findUnique({ where: { id: v.ticketId }, include: TICKET_INCLUDE });
+      const classified = classifyScan(ticket?.status ?? null);
+      if (!ticket || classified === "INVALID") return { result: "INVALID" as ScanResult };
 
-  // conditional update guards against a concurrent double scan
-  const upd = await db.ticket.updateMany({
-    where: { id: ticket.id, status: "VALID" },
-    data: { status: "CHECKED_IN" },
-  });
-  if (upd.count === 0) return { result: "ALREADY_USED" };
+      const done = await admittedSoFar(tx, ticket.id);
+      const outstanding = ticket.admitCount - done;
+      if (classified === "ALREADY_USED" || outstanding <= 0) return { result: "ALREADY_USED" as ScanResult };
 
-  await db.checkIn.create({ data: { ticketId: ticket.id, scannedById: staffUserId, gate, direction: "IN", clientScanId } });
-
-  return ok(ticket);
+      const admit = Math.max(1, Math.min(admitRequested ?? outstanding, outstanding));
+      await tx.checkIn.create({
+        data: { ticketId: ticket.id, scannedById: staffUserId, gate, direction: "IN", clientScanId, admitted: admit },
+      });
+      if (done + admit >= ticket.admitCount) {
+        await tx.ticket.update({ where: { id: ticket.id }, data: { status: "CHECKED_IN" } });
+      }
+      return ok(ticket, admit, ticket.admitCount - done - admit);
+    });
+  } catch (e) {
+    // Unique clientScanId race (same offline scan synced twice concurrently) → return the original.
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002" && clientScanId) {
+      const prior = await db.checkIn.findUnique({
+        where: { clientScanId },
+        include: { ticket: { include: TICKET_INCLUDE } },
+      });
+      if (prior) {
+        const done = await admittedSoFar(db, prior.ticketId);
+        return ok(prior.ticket, prior.admitted, Math.max(0, prior.ticket.admitCount - done));
+      }
+    }
+    throw e;
+  }
 }
 
-export function liveCheckedIn(eventId?: string) {
-  return db.ticket.count({
-    where: { status: "CHECKED_IN", ...(eventId ? { order: { eventId } } : {}) },
+/** Live people-in count (group-QR aware: sums admitted heads, not ticket rows). */
+export async function liveCheckedIn(eventId?: string): Promise<number> {
+  const agg = await db.checkIn.aggregate({
+    _sum: { admitted: true },
+    where: { direction: "IN", ...(eventId ? { ticket: { order: { eventId } } } : {}) },
   });
+  return agg._sum.admitted ?? 0;
 }
 
-/** Live attendance snapshot for an event (powers the gate capacity board). */
+/** Live attendance snapshot for an event (powers the gate capacity board). Heads, not rows. */
 export async function capacitySnapshot(eventId: string) {
-  const [event, checkedIn, sold, types] = await Promise.all([
+  const [event, checkedIn, soldAgg, types, grouped, admittedByType] = await Promise.all([
     db.event.findUnique({ where: { id: eventId }, select: { name: true, capacity: true } }),
-    db.ticket.count({ where: { status: "CHECKED_IN", order: { eventId } } }),
-    db.ticket.count({ where: { order: { eventId } } }),
+    liveCheckedIn(eventId),
+    db.ticket.aggregate({ _sum: { admitCount: true }, where: { order: { eventId } } }),
     db.ticketType.findMany({ where: { eventId }, select: { id: true, name: true }, orderBy: { priceInPaise: "asc" } }),
+    db.ticket.groupBy({
+      by: ["ticketTypeId"],
+      where: { order: { eventId } },
+      _sum: { admitCount: true },
+    }),
+    db.$queryRaw<{ ticketTypeId: string; admitted: bigint }[]>`
+      SELECT t."ticketTypeId", COALESCE(SUM(c."admitted"), 0) AS admitted
+      FROM "CheckIn" c
+      JOIN "Ticket" t ON t."id" = c."ticketId"
+      JOIN "Order" o ON o."id" = t."orderId"
+      WHERE o."eventId" = ${eventId} AND c."direction" = 'IN'
+      GROUP BY t."ticketTypeId"`,
   ]);
 
-  // Single aggregation replaces N×2 COUNT queries.
-  const grouped = await db.ticket.groupBy({
-    by: ["ticketTypeId", "status"],
-    where: { order: { eventId } },
-    _count: { _all: true },
-  });
+  const soldMap = new Map(grouped.map((g) => [g.ticketTypeId, g._sum.admitCount ?? 0]));
+  const inMap = new Map(admittedByType.map((r) => [r.ticketTypeId, Number(r.admitted)]));
+  const byType = types.map((t) => ({
+    name: t.name,
+    sold: soldMap.get(t.id) ?? 0,
+    checkedIn: inMap.get(t.id) ?? 0,
+  }));
 
-  const countMap = new Map<string, { sold: number; checkedIn: number }>();
-  for (const row of grouped) {
-    const entry = countMap.get(row.ticketTypeId) ?? { sold: 0, checkedIn: 0 };
-    entry.sold += row._count._all;
-    if (row.status === "CHECKED_IN") entry.checkedIn += row._count._all;
-    countMap.set(row.ticketTypeId, entry);
-  }
-
-  const byType = types.map((t) => {
-    const c = countMap.get(t.id) ?? { sold: 0, checkedIn: 0 };
-    return { name: t.name, sold: c.sold, checkedIn: c.checkedIn };
-  });
-
-  return { event: event?.name ?? null, capacity: event?.capacity ?? null, checkedIn, sold, byType };
+  return { event: event?.name ?? null, capacity: event?.capacity ?? null, checkedIn, sold: soldAgg._sum.admitCount ?? 0, byType };
 }

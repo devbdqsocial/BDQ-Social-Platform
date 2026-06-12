@@ -70,10 +70,11 @@ export default async function CustomerDashboardPage({ searchParams }: { searchPa
                     <p className="f-paragraph-small mt-[var(--space-xs)] opacity-70">
                       {t.ticketType.name} · {fmt(t.order.event.startsAt)}
                     </p>
-                    <div className="mt-[var(--space-md)] flex items-center gap-[var(--space-md)]">
+                    <div className="mt-[var(--space-md)] flex flex-wrap items-center gap-[var(--space-md)]">
                       <span className={used ? "badge-rpa badge-rpa--muted" : "badge-rpa"}>
                         {used ? "Checked in" : "Valid"}
                       </span>
+                      {t.admitCount > 1 && <span className="badge-rpa">Admits {t.admitCount}</span>}
                       <span className="f-paragraph-small opacity-70">#{t.id.slice(0, 8)}</span>
                     </div>
                   </div>

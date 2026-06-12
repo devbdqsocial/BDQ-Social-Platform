@@ -25,8 +25,8 @@ export async function getDashboard(eventId?: string, rangeDays: number | null = 
     db.stall.count({ where: { status: "HELD", holdUntil: { lte: soon }, ...ev } }),
     db.order.count({ where: { ...ev, status: "FAILED", createdAt: { gte: since } } }),
     db.order.aggregate({ where: rangePaid, _sum: { total: true }, _count: { _all: true } }),
-    db.ticket.count({ where: { ...ticketEv, ...(rangeSince ? { createdAt: { gte: rangeSince } } : {}) } }),
-    db.checkIn.count({ where: { direction: "IN", ...checkInEv, ...(rangeSince ? { scannedAt: { gte: rangeSince } } : {}) } }),
+    db.ticket.aggregate({ _sum: { admitCount: true }, where: { ...ticketEv, ...(rangeSince ? { createdAt: { gte: rangeSince } } : {}) } }).then((a) => a._sum.admitCount ?? 0),
+    db.checkIn.aggregate({ _sum: { admitted: true }, where: { direction: "IN", ...checkInEv, ...(rangeSince ? { scannedAt: { gte: rangeSince } } : {}) } }).then((a) => a._sum.admitted ?? 0),
   ]);
 
   const vendorPipeline = { SUBMITTED: 0, UNDER_REVIEW: 0, APPROVED: 0, REJECTED: 0 } as Record<string, number>;

@@ -34,8 +34,8 @@ export async function getAnalytics(eventId?: string) {
     vendorContracts,
   ] = await Promise.all([
     db.order.aggregate({ where: paidWhere, _sum: { total: true, discount: true }, _count: { _all: true } }),
-    db.ticket.count({ where: ticketWhere }),
-    db.ticket.count({ where: { ...ticketWhere, status: "CHECKED_IN" } }),
+    db.ticket.aggregate({ _sum: { admitCount: true }, where: ticketWhere }).then((a) => a._sum.admitCount ?? 0),
+    db.checkIn.aggregate({ _sum: { admitted: true }, where: { direction: "IN", ticket: ticketWhere } }).then((a) => a._sum.admitted ?? 0),
     db.order.groupBy({ by: ["status"], where: orderWhere, _count: { _all: true } }),
     db.order.findMany({ where: { ...paidWhere, createdAt: { gte: since } }, select: { createdAt: true, total: true } }),
     db.order.findMany({ where: paidWhere, select: { userId: true, utm: true } }),

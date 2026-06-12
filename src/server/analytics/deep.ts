@@ -81,10 +81,10 @@ export async function getSalesHeatmapForecast(eventId?: string) {
   since.setDate(since.getDate() - 13);
   const [orders, recentTickets, event] = await Promise.all([
     db.order.findMany({ where: orderWhere, select: { createdAt: true, total: true } }),
-    db.ticket.count({ where: { isComp: false, createdAt: { gte: since }, ...(eventId ? { order: { eventId } } : {}) } }),
+    db.ticket.aggregate({ _sum: { admitCount: true }, where: { isComp: false, createdAt: { gte: since }, ...(eventId ? { order: { eventId } } : {}) } }).then((a) => a._sum.admitCount ?? 0),
     eventId ? db.event.findUnique({ where: { id: eventId }, select: { capacity: true } }) : Promise.resolve(null),
     ]);
-  const sold = await db.ticket.count({ where: { isComp: false, ...(eventId ? { order: { eventId } } : {}) } });
+  const sold = (await db.ticket.aggregate({ _sum: { admitCount: true }, where: { isComp: false, ...(eventId ? { order: { eventId } } : {}) } }))._sum.admitCount ?? 0;
   const capacity = event?.capacity ?? null;
   const ratePerDay = recentTickets / 14;
   const remaining = capacity != null ? Math.max(0, capacity - sold) : null;
@@ -166,9 +166,9 @@ export async function getProductMargin(eventId?: string) {
 export async function getAttendance(eventId?: string) {
   const ticketWhere = eventId ? { order: { eventId } } : {};
   const [sold, checkedIn, gates] = await Promise.all([
-    db.ticket.count({ where: { ...ticketWhere, isComp: false } }),
-    db.ticket.count({ where: { ...ticketWhere, status: "CHECKED_IN" } }),
-    db.checkIn.groupBy({ by: ["gate"], where: { direction: "IN", ...(eventId ? { ticket: { order: { eventId } } } : {}) }, _count: { _all: true } }),
+    db.ticket.aggregate({ _sum: { admitCount: true }, where: { ...ticketWhere, isComp: false } }).then((a) => a._sum.admitCount ?? 0),
+    db.checkIn.aggregate({ _sum: { admitted: true }, where: { direction: "IN", ticket: ticketWhere } }).then((a) => a._sum.admitted ?? 0),
+    db.checkIn.groupBy({ by: ["gate"], where: { direction: "IN", ...(eventId ? { ticket: { order: { eventId } } } : {}) }, _sum: { admitted: true } }),
   ]);
   return {
     sold,
@@ -176,7 +176,7 @@ export async function getAttendance(eventId?: string) {
     noShow: Math.max(0, sold - checkedIn),
     noShowRate: sold ? Math.max(0, sold - checkedIn) / sold : 0,
     attendanceRate: sold ? checkedIn / sold : 0,
-    gates: gates.map((g) => ({ gate: g.gate ?? "General Gate", count: g._count._all })).sort((a, b) => b.count - a.count),
+    gates: gates.map((g) => ({ gate: g.gate ?? "General Gate", count: g._sum.admitted ?? 0 })).sort((a, b) => b.count - a.count),
   };
 }
 

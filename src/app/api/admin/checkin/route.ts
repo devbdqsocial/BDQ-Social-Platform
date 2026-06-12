@@ -30,6 +30,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: { code: "VALIDATION" } }, { status: 422 });
   }
 
-  const data = await checkInByToken(session.userId, body.qrToken, body.gate, body.clientScanId);
+  const data = await checkInByToken(session.userId, body.qrToken, body.gate, body.clientScanId, body.admit);
   return NextResponse.json({ ok: true, data });
 }

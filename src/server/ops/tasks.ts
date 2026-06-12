@@ -21,8 +21,8 @@ export async function getOpsSnapshot(eventId?: string) {
     db.waitlist.count({ where: { ...ev } }),
     db.ticketType.findMany({ where: eventId ? { eventId } : {}, select: { soldQty: true, totalQty: true } }),
     db.stall.groupBy({ by: ["status"], where: { kind: "STALL", ...ev }, _count: { _all: true } }),
-    db.ticket.count({ where: ticketEv }),
-    db.checkIn.count({ where: { direction: "IN", scannedAt: { gte: startToday }, ...checkInEv } }),
+    db.ticket.aggregate({ _sum: { admitCount: true }, where: ticketEv }).then((a) => a._sum.admitCount ?? 0),
+    db.checkIn.aggregate({ _sum: { admitted: true }, where: { direction: "IN", scannedAt: { gte: startToday }, ...checkInEv } }).then((a) => a._sum.admitted ?? 0),
     db.order.count({ where: { ...ev, status: "PAID", createdAt: { gte: startToday } } }),
     db.checkIn.findMany({
       where: { ...checkInEv },

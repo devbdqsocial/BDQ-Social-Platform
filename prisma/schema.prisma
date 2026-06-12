@@ -384,6 +384,8 @@ model Ticket {
   qrToken      String       @unique
   status       TicketStatus @default(VALID)
   isComp       Boolean      @default(false)
+  /// Group-QR (M1): one ticket per order line; one QR admits the whole group.
+  admitCount   Int          @default(1)
   createdAt    DateTime     @default(now())
 
   checkIns CheckIn[]
@@ -545,6 +547,8 @@ model CheckIn {
   scannedBy    User             @relation("ScannedBy", fields: [scannedById], references: [id])
   gate         String?
   direction    CheckInDirection @default(IN)
+  /// Group-QR (M1): people admitted by THIS scan (partial admits sum to Ticket.admitCount).
+  admitted     Int              @default(1)
   clientScanId String?          @unique
   scannedAt    DateTime         @default(now())
 

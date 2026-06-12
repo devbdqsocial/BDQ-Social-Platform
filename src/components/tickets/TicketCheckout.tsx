@@ -189,6 +189,9 @@ export function TicketCheckout({ eventId, ticketTypes }: { eventId: string; tick
         </button>
       </div>
       {err && <p role="alert" className="f-paragraph-small f-bold mt-[var(--space-md)]" style={{ color: "var(--red)" }}>{err}</p>}
+      {count > 1 && (
+        <p className="f-paragraph-small f-bold mt-[var(--space-md)]">One QR admits your whole group — keep it on one phone.</p>
+      )}
       <p className="f-paragraph-small mt-[var(--space-md)] opacity-75">
         Buying 6 or more? Bulk savings apply automatically. Secure payment via Razorpay.
       </p>

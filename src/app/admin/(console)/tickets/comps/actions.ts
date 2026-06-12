@@ -13,6 +13,7 @@ export async function generateCompsAction(formData: FormData): Promise<void> {
   const orderId = await generateComps(session, {
     ticketTypeId,
     qty,
+    group: formData.get("group") === "on",
     holderName: String(formData.get("holderName") || "").trim() || undefined,
     holderPhone: String(formData.get("holderPhone") || "").trim() || undefined,
     holderEmail: String(formData.get("holderEmail") || "").trim() || undefined,

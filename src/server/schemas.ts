@@ -130,6 +130,8 @@ export const checkinSchema = z.object({
   gate: z.string().optional(),
   direction: z.enum(["IN", "OUT"]).default("IN"),
   clientScanId: z.string().optional(),
+  /// Group-QR partial admit ("3 of us now") — default admits everyone outstanding.
+  admit: z.number().int().min(1).max(500).optional(),
 });
 
 /** Structured product-category taxonomy for the brand-details step. */

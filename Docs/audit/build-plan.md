@@ -147,15 +147,26 @@ owner DSN — R0.5c). Proceeding to R1 per owner-approved session scope.
       no-op. Verify: **PASSED against local Neon (2026-06-13)**; full suite 45+1skip green.
 
 **R1.2 Group-QR (M1)** (16h) — architecture §4.2, DR-4
-- [ ] a. Migration `ticket_admit_count` (additive): `Ticket.admitCount`, `CheckIn.admitted`.
-      **Apply to prod Neon (ep-dry-sunset) BEFORE merging dependent code.**
-- [ ] b. `fulfillOrder`: one ticket per order line with `admitCount=qty` (replaces qty×rows);
-      comps service same.
-- [ ] c. `checkInByToken`: admit flow returns `admitCount`; `CheckIn.admitted` recorded;
-      idempotency by `clientScanId` unchanged. Capacity/board queries → `sum(admitted)`.
-- [ ] d. Delivery: 1 QR per line; wallet shows "Admits N".
-      Verify: e2e buy-5 → one QR → scan admits 5 → board shows 5; webhook replay no-dup;
-      unit tests for partial-line orders (2×General+1×VIP → 2 tickets).
+- [x] a. Migration `20260613000000_ticket_admit_count` (additive) hand-authored per the repo's
+      drift-tolerant convention; applied + resolved on the DEV DB ✓.
+      **⚠ PROD GATE OPEN: apply to prod Neon (ep-dry-sunset) BEFORE any deploy of this code:**
+      `npx prisma migrate deploy` with prod `DATABASE_URL_DIRECT`, or run the migration.sql via
+      Neon console, then `npx prisma migrate resolve --applied 20260613000000_ticket_admit_count`.
+      (Vercel CLI not linked on this machine — owner action or provide prod URL.)
+- [x] b. `fulfillOrder`: one ticket per order line with `admitCount=qty` ✓; comps get a
+      "One group QR" checkbox → single ticket admitCount=qty ✓.
+- [x] c. `checkInByToken`: **partial admits** — `FOR UPDATE` serialization per ticket,
+      `CheckIn.admitted` per scan, ticket flips CHECKED_IN only when exhausted, clientScanId
+      idempotency incl. P2002 race path; `admit` param through schema+route. ALL head counts
+      converted to sums (capacitySnapshot, liveCheckedIn, ops snapshot, analytics overview/
+      attendance/velocity, P&L footfall, dashboard, gate throughput). ✓
+- [x] d. Delivery: outbox enqueues per ORDER (1 QR per line naturally) ✓; wallet "Admits N"
+      badge ✓; scanner shows "VALID — ADMIT N" + "N more can still enter" ✓; checkout group
+      note ("One QR admits your whole group") now shown at qty>1 ✓.
+      Verify: integration test `group-qr.integration.test.ts` **PASSED on real DB**: buy-5 →
+      1 ticket(admit 5) → admit 3 (+ status VALID) → admit 2 (CHECKED_IN) → 3rd scan
+      ALREADY_USED → scanA re-sync idempotent → board sold=5/in=5 → webhook replay no-dup.
+      Full suite 46f/183t + 2 DB-gated; build green.
 
 **R1.3 Booking-state collapse (M2)** (10h) — architecture §4.1
 - [ ] a. Code first (tolerant): map HELD→RESERVED, PENDING→PENDING_PAYMENT in services + admin
