@@ -2,13 +2,13 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, rebuild/main]
   pull_request:
-    branches: [main]
+    branches: [main, rebuild/main]
 
 jobs:
   ci:
-    name: Lint · Typecheck · Build
+    name: Lint · Typecheck · Test · Build
     runs-on: ubuntu-latest
     env:
       NODE_ENV: test
@@ -25,10 +25,29 @@ jobs:
       - run: npx prisma generate
       - run: npm run lint
       - run: npm run typecheck
+      - run: npm run test:run
       - run: npm run build
-      # Non-blocking advisory of known CVEs in production deps (tests run locally; test files and
-      # vitest config are gitignored. Native GitHub secret scanning + Dependabot alerts cover the rest
-      # — enable them in Settings → Code security).
-      - name: Dependency audit (advisory)
+      # Blocking gate on known CVEs in production deps (build-plan R0.1b).
+      - name: Dependency audit
         run: npm audit --omit=dev --audit-level=high
-        continue-on-error: true
+
+  e2e:
+    # Runs only when a test database is configured (build-plan R0.1c); skips cleanly otherwise.
+    name: E2E smoke
+    runs-on: ubuntu-latest
+    if: ${{ vars.E2E_ENABLED == 'true' }}
+    env:
+      NODE_ENV: test
+      DATABASE_URL: ${{ secrets.DATABASE_URL_TEST }}
+      SESSION_SECRET: test-secret-at-least-32-chars-long!!
+      CRON_SECRET: test-cron-secret-at-least-32-chars!!
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e

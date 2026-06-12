@@ -48,15 +48,7 @@ next-env.d.ts
 # Local idea/reference assets
 Idea/
 
-# test files
-**/*.test.ts
-**/*.test.tsx
-**/*.spec.ts
-**/*.spec.tsx
-vitest.config.ts
-vitest.server-only.stub.ts
-playwright.config.ts
-/e2e/
+# test artifacts (test SOURCE files are committed — build-plan R0.1)
 /coverage/
 /test-results/
 

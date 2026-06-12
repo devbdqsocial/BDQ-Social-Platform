@@ -58,8 +58,10 @@ disagree; file disagreement as a note in the PR description.
 
 ## Required behaviors (every package)
 
-- One package = one branch `rebuild/<id>-<slug>` = one PR. Commit messages:
-  `<area>(<pkg>): <what>` e.g. `map(R2.5.2): underlay calibration modal`.
+- One package = one verified commit **directly on `rebuild/main`** (owner amendment
+  2026-06-12: no PR ceremony while a single agent + owner work together; revisit if parallel
+  agents start). Commit messages: `<area>(<pkg>): <what>` e.g.
+  `map(R2.5.2): underlay calibration modal`.
 - Tests land **in the same PR** as the code they cover. Pure logic (pricing, scoring, geometry,
   schemas) always gets unit tests.
 - Close the loop on debt: if your package touches a file listed in design-debt.md, fix that
