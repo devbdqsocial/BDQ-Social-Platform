@@ -93,9 +93,9 @@ export function ZoneSidebar({
 
       {/* Mobile drawer */}
       {open && (
-        <div className="fixed inset-0 z-50 sm:hidden">
+        <div className="fixed inset-0 z-50 sm:hidden" role="dialog" aria-modal="true" aria-label="Navigation menu">
           <div className="absolute inset-0 bg-black/50" onClick={() => setOpen(false)} />
-          <div className="absolute inset-y-0 left-0 flex w-64 flex-col border-r border-sidebar-border bg-sidebar p-4 shadow-lg">
+          <div className="absolute inset-y-0 left-0 flex w-[min(16rem,85vw)] flex-col border-r border-sidebar-border bg-sidebar p-4 shadow-lg">
             <div className="mb-6 flex items-center justify-between">
               {brandMark}
               <button

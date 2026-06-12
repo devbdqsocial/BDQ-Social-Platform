@@ -27,16 +27,42 @@ export function MenuOverlay({
   onSignOut: () => void;
 }) {
   const nav = useRef<HTMLElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
 
+  // Scroll lock + Esc + focus management: trap Tab inside the dialog while open,
+  // move focus to the first link on open, and hand it back to the opener on close.
   useEffect(() => {
     if (!open) return;
+    const opener = document.activeElement as HTMLElement | null;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+
+    const focusables = () =>
+      Array.from(
+        panel.current?.querySelectorAll<HTMLElement>("a[href], button:not([disabled])") ?? [],
+      );
+    focusables()[0]?.focus();
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") return onClose();
+      if (e.key !== "Tab") return;
+      const items = focusables();
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
     window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = prev;
       window.removeEventListener("keydown", onKey);
+      opener?.focus();
     };
   }, [open, onClose]);
 
@@ -60,7 +86,12 @@ export function MenuOverlay({
   return (
     <div
       id="menu-overlay"
+      ref={panel}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Site menu"
       aria-hidden={!open}
+      inert={!open || undefined}
       className={cn(
         "fixed inset-0 z-[120] flex flex-col transition-[opacity,transform] duration-500 ease-[cubic-bezier(0.76,0,0.24,1)]",
         open ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-full opacity-0",

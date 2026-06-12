@@ -118,11 +118,11 @@ export function POSForm({ eventId, ticketTypes }: { eventId: string; ticketTypes
                     <p className="text-sm text-muted-foreground">₹{(t.priceInPaise / 100).toFixed(2)} &middot; {t.totalQty - t.soldQty} left</p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleRemove(t.id)} disabled={qty === 0}>
+                    <Button variant="outline" size="icon" aria-label={`Fewer ${t.name}`} className="relative h-8 w-8 after:absolute after:-inset-1.5" onClick={() => handleRemove(t.id)} disabled={qty === 0}>
                       <Minus className="size-4" />
                     </Button>
                     <span className="w-4 text-center font-medium">{qty}</span>
-                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleAdd(t.id)} disabled={disabledAdd}>
+                    <Button variant="outline" size="icon" aria-label={`More ${t.name}`} className="relative h-8 w-8 after:absolute after:-inset-1.5" onClick={() => handleAdd(t.id)} disabled={disabledAdd}>
                       <Plus className="size-4" />
                     </Button>
                   </div>

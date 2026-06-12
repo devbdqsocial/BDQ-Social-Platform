@@ -72,7 +72,8 @@ export default function MapCanvas({ layout, statuses, selected, onSelect }: Prop
     selected.has(label) ? "SELECTED" : statuses[label] ?? "AVAILABLE";
 
   const hovered = hover ? layout.elements.find((e) => e.kind === "stall" && e.label === hover) : null;
-  const btn = "grid size-8 place-items-center rounded-md border border-border bg-background/90 text-foreground shadow-sm hover:bg-muted";
+  // after:-inset-1.5 widens the touch hit area to ~44px without changing the visual size
+  const btn = "relative grid size-8 place-items-center rounded-md border border-border bg-background/90 text-foreground shadow-sm hover:bg-muted after:absolute after:-inset-1.5";
 
   const matchCount = useMemo(
     () => (q ? layout.elements.filter((e) => e.kind === "stall" && e.label.toLowerCase().includes(q)).length : 0),

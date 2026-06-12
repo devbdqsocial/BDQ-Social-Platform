@@ -17,7 +17,10 @@ export function CustomerTabBar() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-navy-500/95 backdrop-blur sm:hidden">
+    <nav
+      aria-label="Primary"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-navy-500/95 pb-[env(safe-area-inset-bottom)] backdrop-blur sm:hidden"
+    >
       <div className="mx-auto flex max-w-md items-stretch justify-around">
         {TABS.map((t) => {
           const active = t.exact ? pathname === t.href : pathname === t.href || pathname.startsWith(`${t.href}/`);
@@ -26,9 +29,10 @@ export function CustomerTabBar() {
             <Link
               key={t.href}
               href={t.href}
+              aria-current={active ? "page" : undefined}
               className={cn(
-                "flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition-colors",
-                active ? "text-lavender-400" : "text-cream-100/60 hover:text-cream-100",
+                "flex min-h-12 flex-1 flex-col items-center justify-center gap-1 py-2.5 text-xs font-medium transition-colors",
+                active ? "text-lavender-400" : "text-cream-100/70 hover:text-cream-100",
               )}
             >
               <Icon className="size-5" />

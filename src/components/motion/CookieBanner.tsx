@@ -2,8 +2,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
-// Slim one-line consent bar pinned to the bottom edge: ink bg, never covers content.
-// Shows once per device; sits below the customer tab bar's z-index on mobile.
+// Floating mini-pill consent (user-chosen style): one line, bottom-left, rounded ink pill.
+// Safe-area aware; shows once per device; sits clear of the mobile tab bar.
 export function CookieBanner() {
   const [show, setShow] = useState(false);
 
@@ -27,27 +27,42 @@ export function CookieBanner() {
     setShow(false);
   };
 
-  if (!show) return null;
-
-  return (
+  return show ? (
     <div
-      className="fixed inset-x-0 bottom-0 z-[80] flex flex-wrap items-center justify-center gap-x-[var(--space-xl)] gap-y-[var(--space-sm)] px-[var(--wrapper-padd)] py-[var(--space-md)] text-center"
-      style={{ background: "var(--ink, #14141A)", color: "#F4F2EC" }}
       role="dialog"
       aria-label="Cookie notice"
+      className="fixed left-[var(--space-lg)] z-[80] flex max-w-[calc(100vw-2*var(--space-lg))] items-center gap-[var(--space-md)] rounded-full py-[0.5em] pl-[1.1em] pr-[0.7em] shadow-[0_10px_30px_rgba(0,0,0,0.3)] bottom-[calc(var(--space-lg)+env(safe-area-inset-bottom,0px)+3.5rem)] sm:bottom-[calc(var(--space-lg)+env(safe-area-inset-bottom,0px))]"
+      style={{
+        background: "var(--ink, #14141A)",
+        color: "#F4F2EC",
+        fontSize: "var(--paragraph-small)",
+      }}
     >
-      <p className="f-paragraph-small opacity-90">
-        We use cookies to make the site work and to see what&apos;s popular.{" "}
-        <Link href="/privacy" className="underline" data-cursor>Privacy policy</Link>
+      <p className="whitespace-nowrap">
+        🍪 Cookies keep BDQ working ·{" "}
+        <Link href="/privacy" data-cursor className="underline opacity-80 hover:opacity-100">
+          Privacy
+        </Link>
       </p>
-      <div className="flex items-center gap-[var(--space-xl)]">
-        <button type="button" onClick={accept} data-cursor className="f-paragraph-small f-bold t-upper underline" style={{ letterSpacing: "0.12em" }}>
-          Accept
-        </button>
-        <button type="button" onClick={accept} data-cursor className="f-paragraph-small f-bold t-upper opacity-60" style={{ letterSpacing: "0.12em" }}>
-          Dismiss
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={accept}
+        data-cursor
+        className="f-bold t-upper underline underline-offset-2"
+        style={{ letterSpacing: "0.1em" }}
+      >
+        Accept
+      </button>
+      <button
+        type="button"
+        onClick={accept}
+        aria-label="Dismiss cookie notice"
+        data-cursor
+        className="grid size-[1.9em] shrink-0 place-items-center rounded-full"
+        style={{ background: "rgba(255,255,255,0.12)" }}
+      >
+        ✕
+      </button>
     </div>
-  );
+  ) : null;
 }

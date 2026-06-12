@@ -106,7 +106,7 @@ export function Scanner() {
     try {
       await scanner.start(
         { facingMode: "environment" },
-        { fps: 10, qrbox: 240 },
+        { fps: 10, qrbox: Math.min(240, Math.floor(window.innerWidth * 0.8)) },
         async (decoded) => {
           await stopCamera();
           await submit(decoded);
