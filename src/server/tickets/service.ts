@@ -28,18 +28,19 @@ export class CheckoutError extends Error {
 }
 
 /**
- * Validate a coupon for this user: window + global `maxUses` + `perUserLimit`. Per-user usage =
- * confirmed redemptions (CouponRedemption) + this user's live unexpired PENDING orders holding it,
- * so a user cannot stack the discount across parallel checkouts.
+ * Validate a coupon: window + global `maxUses` + `perUserLimit`. Per-user usage = confirmed
+ * redemptions (CouponRedemption) + the user's live unexpired PENDING orders holding it, so a
+ * user cannot stack the discount across parallel checkouts. Anonymous quotes (`userId: null`,
+ * R1.4 preview) skip the per-user count — it is re-checked with the real user at order creation.
  */
 async function resolveCoupon(
   eventId: string,
   code: string,
-  userId: string,
+  userId: string | null,
 ): Promise<AppliedCoupon & { id: string }> {
   const c = await db.coupon.findUnique({ where: { code } });
   const now = new Date();
-  const [redeemed, pending] = c
+  const [redeemed, pending] = c && userId
     ? await Promise.all([
         db.couponRedemption.count({ where: { couponId: c.id, userId } }),
         db.order.count({ where: { couponId: c.id, userId, status: "PENDING", expiresAt: { gt: now } } }),
@@ -49,12 +50,15 @@ async function resolveCoupon(
   return { id: c!.id, type: c!.type, value: c!.value, minOrder: c!.minOrder };
 }
 
-/** Create a PENDING order + a Razorpay order. No money moves until the webhook confirms payment. */
-export async function createTicketOrder(
-  userId: string,
+/**
+ * Price an order without creating anything (R1.4 coupon preview + reused by createTicketOrder).
+ * Validates event availability, line items, inventory headroom, and the coupon.
+ */
+export async function quoteTicketOrder(
   eventId: string,
   items: OrderItemInput[],
-  couponCode?: string,
+  couponCode: string | undefined,
+  userId: string | null,
 ) {
   if (!items.length) throw new CheckoutError("EMPTY");
 
@@ -81,6 +85,17 @@ export async function createTicketOrder(
     },
     coupon,
   );
+  return { event, coupon, pricing };
+}
+
+/** Create a PENDING order + a Razorpay order. No money moves until the webhook confirms payment. */
+export async function createTicketOrder(
+  userId: string,
+  eventId: string,
+  items: OrderItemInput[],
+  couponCode?: string,
+) {
+  const { coupon, pricing } = await quoteTicketOrder(eventId, items, couponCode, userId);
 
   // Paid checkout must never produce a zero/negative charge (e.g. a 100%-off coupon). Free
   // tickets are issued only via the admin comp flow, never here.
@@ -259,6 +274,15 @@ export async function fulfillOrder(
 
   const after = await db.ticket.count({ where: { orderId: order.id } });
   return { issued: after };
+}
+
+/** Live unexpired PENDING orders — powers the wallet "confirming payment" card (R1.4). */
+export function listPendingOrders(userId: string) {
+  return db.order.findMany({
+    where: { userId, status: "PENDING", expiresAt: { gt: new Date() } },
+    select: { id: true, total: true, createdAt: true, event: { select: { name: true } } },
+    orderBy: { createdAt: "desc" },
+  });
 }
 
 export function listUserTickets(userId: string) {

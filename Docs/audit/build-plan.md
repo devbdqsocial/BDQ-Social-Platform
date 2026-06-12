@@ -166,15 +166,26 @@ owner DSN — R0.5c). Proceeding to R1 per owner-approved session scope.
       booking-context hits (D23); cron expiry e2e green.
 
 **R1.4 Coupon UI + pending state** (8h) — customer-portal §3.10
-- [ ] a. `TicketCheckout`: coupon input (apply → server-priced total, "saves ₹X" line, error
-      copy per spec); passes `couponCode` to `/api/orders` (API already accepts it).
-- [ ] b. Wallet pending-payment state: order PAID-pending poll (5s, max 2min) with "payment
-      confirmed — tickets appearing" skeleton. Verify: e2e coupon purchase; delayed-webhook
-      test shows pending then ticket.
+- [x] a. `TicketCheckout`: underline coupon input + Apply → `quoteOrderAction` (new read-only
+      server action, rate-limited 15/10min per BUSINESS-RULES §8) → green "CODE applied — you
+      save ₹X" / spec error copy; re-quotes on qty change (350ms debounce); "best price wins"
+      line when another discount beats the code; `couponCode` sent to `/api/orders`.
+      Service refactor: `quoteTicketOrder()` extracted, `createTicketOrder` reuses it;
+      `resolveCoupon` tolerates anonymous quotes (per-user caps re-checked at creation). ✓
+- [x] b. Wallet pending state: checkout success now redirects `/tickets?paid=<orderId>`;
+      dashboard shows "Confirming payment — under a minute" card (pulsing QR skeleton,
+      aria-live) ONLY for that client-confirmed order while PENDING+unexpired, with 5s
+      AutoRefresh; `listPendingOrders()` added. Verify: typecheck/lint/tests green; coupon
+      UI confirmed rendering on /events/bdq-live in dev ✓. Full delayed-webhook e2e lands
+      with the R3.3 checkout e2e (noted).
+      Group note ("One QR admits your whole group") deliberately deferred to R1.2 — showing
+      it before group-QR exists would lie.
 
 **R1.5 `getHomeMode` + now/next** (6h) — customer-portal §3.1/3.3
-- [ ] a. Pure utils + queries (PRE/LIVE/POST mode; now/next per stage, IST edge tests,
-      open-ended `endsAt` = start+45m). Verify: unit tests incl. clock mocks.
+- [x] a. `src/lib/home-mode.ts`: `getHomeMode` (PRE/LIVE/POST; LIVE = startsAt−6h→endsAt+2h
+      gated on PUBLISHED/LIVE; POST 14d) + `resolveNowNext` (now = startsAt≤t<end, open-ended
+      = 45m; next = first per stage). 8 clock-mocked unit tests incl. exact boundaries.
+      Verify: 8/8 green ✓.
 
 **GATE R1:** all money tests green in CI (oversell, group-QR, replay, states, coupon).
 
@@ -358,3 +369,4 @@ pages · axe pass.
 | --- | --- | --- | --- | --- |
 | 2026-06-12 | blueprint session | docs 1-18 | blueprint complete | n/a |
 | 2026-06-13 | build session 1 (rules read) | P-0 + R0.1–R0.6 | done; R0 gate PASSED; R0.5c owner DSN pending; found+fixed Tailwind-scans-Docs dev 500 | typecheck/lint/test:run (45f/175t)/build all green |
+| 2026-06-13 | build session 1 (cont.) | R1.1 + R1.4 + R1.5 | done; oversell race PROVEN on real DB; coupon UI live; R1.2/R1.3 await owner go (M1/M2 prod migrations) | 46f/183t + 1 DB-gated; build 82 pages green |
