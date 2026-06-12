@@ -380,4 +380,5 @@ pages · axe pass.
 | --- | --- | --- | --- | --- |
 | 2026-06-12 | blueprint session | docs 1-18 | blueprint complete | n/a |
 | 2026-06-13 | build session 1 (rules read) | P-0 + R0.1–R0.6 | done; R0 gate PASSED; R0.5c owner DSN pending; found+fixed Tailwind-scans-Docs dev 500 | typecheck/lint/test:run (45f/175t)/build all green |
-| 2026-06-13 | build session 1 (cont.) | R1.1 + R1.4 + R1.5 | done; oversell race PROVEN on real DB; coupon UI live; R1.2/R1.3 await owner go (M1/M2 prod migrations) | 46f/183t + 1 DB-gated; build 82 pages green |
+| 2026-06-13 | build session 1 (cont.) | R1.1 + R1.4 + R1.5 | done; oversell race PROVEN on real DB; coupon UI live | 46f/183t + 1 DB-gated; build 82 pages green |
+| 2026-06-13 | build session 1 (cont.) | R1.2 (M1 dev) | done; group-QR proven on real DB (buy-5→1QR→3+2→board 5); **PROD GATE OPEN: M1 must hit prod Neon before deploy**; R1.3 = next session | 46f/183t + 2 DB-gated; build green |
