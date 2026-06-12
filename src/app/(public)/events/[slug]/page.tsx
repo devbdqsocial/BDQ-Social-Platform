@@ -54,7 +54,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
             {event.location && <span className="kicker">{event.location}</span>}
           </div>
           {event.description && (
-            <p className="f-paragraph mt-[var(--space-lg)] max-w-[52ch] opacity-80">{event.description}</p>
+            <p className="f-paragraph mt-[var(--space-lg)] max-w-[52ch]">{event.description}</p>
           )}
         </div>
       </section>

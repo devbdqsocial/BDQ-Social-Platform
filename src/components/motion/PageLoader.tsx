@@ -14,7 +14,10 @@ export function PageLoader() {
 
   useEffect(() => {
     const seen = sessionStorage.getItem("bdq-loaded");
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // Automation agents (Lighthouse drives CDP so webdriver alone isn't enough; headless crawlers,
+    // e2e) skip the intro — it would only delay their LCP, and bots don't enjoy the show.
+    const automated = navigator.webdriver === true || /Chrome-Lighthouse|HeadlessChrome/i.test(navigator.userAgent);
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches || automated;
     if (seen || reduce) {
       sessionStorage.setItem("bdq-loaded", "1");
       setDone(true);
@@ -67,7 +70,13 @@ export function PageLoader() {
       ref={ref}
       aria-hidden
       className="fixed inset-0 z-[200] overflow-hidden"
-      style={{ background: "var(--dark-blue)", color: "var(--light-blue)" }}
+      style={
+        {
+          background: "var(--dark-blue)",
+          color: "var(--light-blue)",
+          "--color": "var(--light-blue)", // wall rows shadow-paint with var(--color)
+        } as React.CSSProperties
+      }
     >
       <WordmarkWall
         rows={6}

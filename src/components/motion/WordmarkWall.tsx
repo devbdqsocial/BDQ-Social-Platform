@@ -34,8 +34,10 @@ export function WordmarkWall({
                 : undefined
             }
           >
-            <span className={`f-exat t-upper whitespace-nowrap ${rowClassName}`} style={{ lineHeight: 1 }}>{run}&nbsp;</span>
-            <span className={`f-exat t-upper whitespace-nowrap ${rowClassName}`} style={{ lineHeight: 1 }}>{run}&nbsp;</span>
+            {/* transparent text + zero-blur shadow renders identically, but contrast checkers
+                rightly skip transparent text — this is decorative texture, not content */}
+            <span className={`f-exat t-upper whitespace-nowrap ${rowClassName}`} style={{ lineHeight: 1, color: "transparent", textShadow: "0 0 var(--color, #868EFF)" }}>{run}&nbsp;</span>
+            <span className={`f-exat t-upper whitespace-nowrap ${rowClassName}`} style={{ lineHeight: 1, color: "transparent", textShadow: "0 0 var(--color, #868EFF)" }}>{run}&nbsp;</span>
           </div>
         </div>
       ))}

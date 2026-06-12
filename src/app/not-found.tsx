@@ -9,7 +9,7 @@ export default function NotFound() {
         <h1 className="f-exat mt-[var(--space-md)]" style={{ fontSize: "var(--h235)", lineHeight: 0.95 }}>
           404
         </h1>
-        <p className="f-paragraph mx-auto mt-[var(--space-lg)] max-w-[40ch] opacity-80">
+        <p className="f-paragraph mx-auto mt-[var(--space-lg)] max-w-[40ch]">
           This page doesn&apos;t exist — but the night market does.
         </p>
         <div className="mt-[var(--space-2xl)] flex justify-center">

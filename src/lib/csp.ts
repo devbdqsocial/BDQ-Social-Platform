@@ -1,10 +1,9 @@
 /**
- * Content-Security-Policy builder, shared by next.config.ts (enforced header) and middleware.ts
- * (the strict nonce policy, served Report-Only during staging). Edge-safe: pure string building.
+ * Content-Security-Policy builder. Edge-safe: pure string building.
  *
- * Migration path (see [[csp-nonce-deferred]]): today the ENFORCED policy keeps 'unsafe-inline' so
- * nothing breaks; the STRICT nonce policy runs Report-Only in production to surface what would break.
- * Once reports are clean, swap the enforced header to `strictCsp(nonce)` and drop this lenient one.
+ * Nonce migration COMPLETE: middleware enforces `strictCsp(nonce)` on every page in production.
+ * The lenient `enforcedCsp` remains only for /api responses (middleware-excluded) and as the
+ * dev Report-Only policy (HMR needs eval/inline). Violations report to /api/csp-report.
  */
 
 const REPORT = "report-uri /api/csp-report; report-to csp-endpoint";

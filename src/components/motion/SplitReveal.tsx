@@ -15,11 +15,13 @@ type Props = {
 // RPA masked text reveal: lines (or chars) rise from behind a clip. SplitText is imported lazily
 // INSIDE the effect so it only ever loads on the client (it touches `document` at module-load,
 // which crashes SSR). SSR renders the text fully visible; reduced-motion skips the animation.
+// A sr-only copy carries the accessible text; the split target is aria-hidden (SplitText's own
+// aria-label is prohibited on <p>/heading elements per ARIA).
 export function SplitReveal({ as: Tag = "h2", mode = "lines", className, style, children }: Props) {
   const ref = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    const el = ref.current;
+    const el = ref.current?.querySelector<HTMLElement>("[data-split-target]");
     if (!el) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
@@ -41,6 +43,7 @@ export function SplitReveal({ as: Tag = "h2", mode = "lines", className, style, 
         type: mode === "chars" ? "chars,lines" : "lines",
         mask: "lines",
         linesClass: "split-line",
+        aria: "none", // the sr-only sibling carries the accessible text
       }) as unknown as { lines: Element[]; chars: Element[]; revert: () => void };
 
       const targets = mode === "chars" ? split.chars : split.lines;
@@ -69,7 +72,10 @@ export function SplitReveal({ as: Tag = "h2", mode = "lines", className, style, 
 
   return (
     <Tag ref={ref as React.Ref<HTMLHeadingElement>} className={className} style={style}>
-      {children}
+      <span className="sr-only">{children}</span>
+      <span data-split-target aria-hidden className="block">
+        {children}
+      </span>
     </Tag>
   );
 }

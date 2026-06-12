@@ -57,7 +57,7 @@ export default async function VendorsPage() {
                       )}
                     </div>
                     <p className="f-paragraph-small f-bold mt-[var(--space-sm)] truncate">{v.brandName}</p>
-                    {v.category && <p className="f-paragraph-small truncate opacity-75">{v.category}</p>}
+                    {v.category && <p className="f-paragraph-small truncate">{v.category}</p>}
                   </Link>
                 );
               })}

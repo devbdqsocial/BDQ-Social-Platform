@@ -206,9 +206,9 @@ export function middleware(req: NextRequest) {
   const zone = resolveZone(req);
   const { pathname } = req.nextUrl;
 
-  // Per-request nonce → strict CSP, served Report-Only in production (staging the nonce migration;
-  // dev is left untouched to avoid HMR-eval noise). Setting the CSP request header makes Next stamp
-  // the nonce onto its own scripts.
+  // Per-request nonce → strict CSP, ENFORCED in production (nonce migration complete; dev is left
+  // untouched to avoid HMR-eval noise — next.config serves dev a lenient Report-Only policy).
+  // Setting the CSP request header makes Next stamp the nonce onto its own scripts.
   const isProd = process.env.NODE_ENV === "production";
   const nonce = isProd ? makeNonce() : "";
   const requestHeaders = new Headers(req.headers);
@@ -218,7 +218,7 @@ export function middleware(req: NextRequest) {
   }
   const opts = { request: { headers: requestHeaders } };
   const finalize = (res: NextResponse): NextResponse => {
-    if (isProd) res.headers.set("Content-Security-Policy-Report-Only", strictCsp(nonce));
+    if (isProd) res.headers.set("Content-Security-Policy", strictCsp(nonce));
     
     // Set/delete zone cookies locally to persist sidebar navigation transitions during local development
     const queryZone = req.nextUrl.searchParams.get("zone");

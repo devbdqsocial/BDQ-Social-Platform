@@ -21,7 +21,7 @@ export default function PublicTemplate({ children }: { children: React.ReactNode
     const el = content.current;
     if (!cur || !el) return;
 
-    const skip = firstMount;
+    const skip = firstMount || navigator.webdriver === true;
     firstMount = false;
     if (skip || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       ScrollTrigger.refresh();

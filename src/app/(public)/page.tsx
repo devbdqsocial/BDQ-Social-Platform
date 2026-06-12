@@ -49,7 +49,7 @@ export default async function LandingPage() {
               The city&apos;s most curated night market
             </SplitReveal>
             <Reveal stagger delay={0.2}>
-              <p className="f-paragraph mt-[var(--space-lg)] max-w-[34ch] opacity-80">
+              <p className="f-paragraph mt-[var(--space-lg)] max-w-[34ch]">
                 An evening of handpicked brands, gourmet food, and live music — the warm, grown-up
                 alternative to the usual mela.
               </p>
@@ -63,7 +63,7 @@ export default async function LandingPage() {
                 <Btn href="/events">Tickets</Btn>
                 <Btn href="/vendors">Brands</Btn>
                 {minPrice != null && (
-                  <span className="f-paragraph-small opacity-70">from {formatPaise(minPrice)}</span>
+                  <span className="f-paragraph-small">from {formatPaise(minPrice)}</span>
                 )}
               </div>
             </Reveal>

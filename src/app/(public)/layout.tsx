@@ -22,7 +22,7 @@ export default async function PublicLayout({ children }: { children: React.React
             <p className="f-exat" style={{ fontSize: "var(--h42)", lineHeight: 1.1 }}>
               BDQ Social<span style={{ color: "var(--green)" }}>.</span>
             </p>
-            <p className="f-paragraph-small mt-[var(--space-md)] opacity-80">
+            <p className="f-paragraph-small mt-[var(--space-md)]">
               Vadodara&apos;s premium curated festival &amp; night market. Good people, great finds,
               unforgettable evenings.
             </p>
@@ -34,9 +34,9 @@ export default async function PublicLayout({ children }: { children: React.React
               ["Legal", [["Privacy", "/privacy"], ["Terms", "/terms"], ["Refunds", "/refunds"], ["Shipping", "/shipping"], ["Vendor terms", "/vendor-terms"]]],
             ].map(([heading, items]) => (
               <nav key={heading as string} className="f-paragraph-small f-bold flex flex-col gap-[var(--space-sm)]">
-                <span className="kicker opacity-70">{heading as string}</span>
+                <span className="kicker">{heading as string}</span>
                 {(items as [string, string][]).map(([label, href]) => (
-                  <Link key={href} href={href} data-cursor className="opacity-80 transition-opacity hover:opacity-100">
+                  <Link key={href} href={href} data-cursor className="py-[0.45em] transition-opacity hover:opacity-80">
                     {label}
                   </Link>
                 ))}
@@ -55,7 +55,7 @@ export default async function PublicLayout({ children }: { children: React.React
 
         {/* bottom: legal + lang */}
         <div className="wrapper flex items-end justify-between pb-[var(--space-lg)]">
-          <span className="f-paragraph-small opacity-75">
+          <span className="f-paragraph-small">
             All sales are final · © {new Date().getFullYear()} BDQ Social
           </span>
           <span className="f-paragraph-small f-bold t-upper" style={{ letterSpacing: "0.14em" }}>EN</span>

@@ -1,9 +1,9 @@
 import type { NextConfig } from "next";
 import { enforcedCsp } from "./src/lib/csp";
 
-// CSP: enforced in production, Report-Only in dev (Next HMR needs eval, which the policy omits).
-// The lenient (unsafe-inline) policy lives here; middleware adds the strict nonce policy Report-Only
-// in prod (staging the migration — see src/lib/csp.ts).
+// CSP: in production the MIDDLEWARE enforces the strict nonce policy on every page (migration
+// complete — see src/lib/csp.ts). Here we only cover what middleware doesn't reach: /api responses
+// get the static policy in prod; dev gets a lenient Report-Only everywhere (HMR needs eval).
 const isProd = process.env.NODE_ENV === "production";
 
 const securityHeaders = [
@@ -15,8 +15,10 @@ const securityHeaders = [
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
   { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
   { key: "Reporting-Endpoints", value: 'csp-endpoint="/api/csp-report"' },
-  { key: isProd ? "Content-Security-Policy" : "Content-Security-Policy-Report-Only", value: enforcedCsp },
 ];
+
+const apiCsp = { key: "Content-Security-Policy", value: enforcedCsp };
+const devCsp = { key: "Content-Security-Policy-Report-Only", value: enforcedCsp };
 
 // Admin IA route moves (old → new). Keep base + wildcard so dynamic sub-routes (e.g. comps/[id]) follow.
 const adminRedirects = [
@@ -35,8 +37,18 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [{ protocol: "https", hostname: "res.cloudinary.com" }],
   },
+  // Next 15 streams metadata into <body> for dynamic pages; head-only parsers (Lighthouse — whose
+  // UA is a plain Moto G/Mac Chrome string no bot regex can catch — plus naive SEO/preview tools)
+  // then miss the description. Our metadata is static or 60s-cached, so blocking <head> metadata
+  // costs nothing: match every UA to restore classic behavior.
+  htmlLimitedBots: /./,
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return isProd
+      ? [
+          { source: "/:path*", headers: securityHeaders },
+          { source: "/api/:path*", headers: [apiCsp] },
+        ]
+      : [{ source: "/:path*", headers: [...securityHeaders, devCsp] }];
   },
   async redirects() {
     return adminRedirects.flatMap(([from, to]) => [

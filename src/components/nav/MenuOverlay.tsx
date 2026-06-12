@@ -125,7 +125,7 @@ export function MenuOverlay({
       <nav ref={nav} className="wrapper flex flex-1 flex-col justify-center gap-[var(--space-md)]">
         {links.map((l, i) => (
           <Link key={l.href} href={l.href} onClick={onClose} data-cursor className="group flex w-fit items-baseline gap-[var(--space-lg)]">
-            <span className="kicker opacity-70">{String(i + 1).padStart(2, "0")}</span>
+            <span className="kicker">{String(i + 1).padStart(2, "0")}</span>
             <span className="block overflow-hidden">
               <span
                 data-menu-label

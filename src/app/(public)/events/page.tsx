@@ -24,7 +24,7 @@ export default async function EventsPage() {
           <SplitReveal as="h1" className="f-exat mt-[var(--space-md)]" style={{ fontSize: "var(--h133)", lineHeight: 1.0 }}>
             Events &amp; tickets
           </SplitReveal>
-          <p className="f-paragraph mt-[var(--space-lg)] max-w-[44ch] opacity-80">
+          <p className="f-paragraph mt-[var(--space-lg)] max-w-[44ch]">
             Pick a date and grab your tickets before they go.
           </p>
         </div>

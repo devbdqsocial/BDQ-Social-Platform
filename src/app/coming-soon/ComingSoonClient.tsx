@@ -63,7 +63,7 @@ export function ComingSoonClient({ count }: { count: number }) {
         <h1 className="f-exat mx-auto mt-[var(--space-lg)] max-w-[18ch]" style={{ fontSize: "var(--h133)", lineHeight: 0.95 }}>
           The next great gathering is coming
         </h1>
-        <p className="f-paragraph mx-auto mt-[var(--space-lg)] max-w-[52ch] opacity-80">
+        <p className="f-paragraph mx-auto mt-[var(--space-lg)] max-w-[52ch]">
           Discover curated markets, live experiences, creators, food, music, and meaningful connections.
         </p>
 
@@ -72,7 +72,7 @@ export function ComingSoonClient({ count }: { count: number }) {
           {units.map((u) => (
             <div key={u.label} className="text-center">
               <div className="f-exat tabular-nums" style={{ fontSize: "var(--h100)", lineHeight: 1 }}>{pad(u.value)}</div>
-              <div className="f-paragraph-small f-bold t-upper opacity-75" style={{ letterSpacing: "0.14em" }}>{u.label}</div>
+              <div className="f-paragraph-small f-bold t-upper" style={{ letterSpacing: "0.14em" }}>{u.label}</div>
             </div>
           ))}
         </div>
@@ -81,7 +81,7 @@ export function ComingSoonClient({ count }: { count: number }) {
         {status === "success" ? (
           <div className="mx-auto mt-[var(--space-3xl)] max-w-[40rem] rounded-[var(--radius-lg)] border p-[var(--space-xl)]" style={{ borderColor: "var(--color)" }}>
             <p className="f-exat" style={{ fontSize: "var(--h42)" }}>You&apos;re on the list.</p>
-            <p className="f-paragraph-small mt-[var(--space-sm)] opacity-80">
+            <p className="f-paragraph-small mt-[var(--space-sm)]">
               We&apos;ll notify {submittedPhone || "you"} on WhatsApp the moment we go live.
             </p>
           </div>
@@ -125,13 +125,13 @@ export function ComingSoonClient({ count }: { count: number }) {
         )}
 
         {count > 0 && status !== "success" && (
-          <p className="f-paragraph-small mt-[var(--space-2xl)] opacity-75">
+          <p className="f-paragraph-small mt-[var(--space-2xl)]">
             Join {count.toLocaleString()} others already on the waitlist
           </p>
         )}
       </main>
 
-      <div className="f-paragraph-small absolute bottom-[var(--space-lg)] opacity-70">
+      <div className="f-paragraph-small absolute bottom-[var(--space-lg)]">
         © {new Date().getFullYear()} BDQ Social
       </div>
     </div>

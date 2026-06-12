@@ -39,7 +39,7 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
                 {v.brandName}
               </h1>
               {v.description && (
-                <p className="f-paragraph mt-[var(--space-lg)] max-w-[48ch] opacity-80">{v.description}</p>
+                <p className="f-paragraph mt-[var(--space-lg)] max-w-[48ch]">{v.description}</p>
               )}
               <div className="f-paragraph-small f-bold mt-[var(--space-lg)] flex gap-[var(--space-lg)]">
                 {v.website && (
