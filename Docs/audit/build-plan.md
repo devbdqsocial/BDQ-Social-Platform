@@ -429,10 +429,25 @@ build on it.
       yet); the vendor/print variants are complete, and the layer set follows the current view
       (enable Preview for the vendor lens). Verify: 57f/261t green; build OK; both designers 200;
       0err/10warn.
-- [ ] **R2.5.16 Entry-flow + ops polish + validation panel** (10h): entry objects w/ lanes,
-      throughput calc (`lib/map/throughput.ts`, tested), ops objects palette in ops mode (`O`),
-      validation drawer consolidating §4/§7/§8 checks + duplicate-label + unpriced-stall.
-      Verify: throughput math tests; ops PDF shows gates/medical/power; panel rows focus objects.
+- [x] **R2.5.16 Entry-flow + ops polish + validation panel** (10h) ✓ — **closes the map cluster.**
+      Three pure libs + tests: `throughput.ts` (5 scans/min/lane · 0.8 util · 60%-in-2h, the
+      kiosk constants single-sourced; `throughputReport`), `entry-ops.ts` (GATE/QUEUE_LANE/
+      SCAN_POINT/… + ops object factories, sizes, colours, `lanes`), `validation-report.ts`
+      (consolidates §4 boundary/obstacle errors + §7 pathway/exit warnings + duplicate-label +
+      unpriced-stall, each row carrying a `focusId`). `ops`/`entryFlow` moved from the passthrough
+      ref into reactive state with `addOps`/`addEntry`/`patchEntry` + drag; rendered in
+      `DesignerCanvas` (entry = lavender, ops = neutral, ops hidden in vendor preview) gated by the
+      `ops`/`entryflow` layers; Entry+/Ops+ palettes in the structure row. A `ValidationPanel`:
+      error/warning rows that **focus the object on click**, plus the throughput roll-up with
+      per-SCAN_POINT lane editing. The **ops PDF now shows gates/medical/power** (canvas renders
+      them — closes the R2.5.15 flag). **Flagged simplification:** "ops mode (`O`)" became an
+      always-available palette (placement is click-to-drop; a separate tool mode adds no value);
+      the per-object throughput inspector card is folded into the panel (entry objects aren't part
+      of the element-selection system). Verify: throughput + validation math tests green;
+      59f/271t; build OK; both designers 200; 0err/10warn.
+
+**R2.5 MAP CLUSTER COMPLETE** (R2.5.1–R2.5.16, minus the R2.5.5 owner-mandated refactor done
+mid-cluster). 16 packages, ~25 pure-lib test files, flagship designer feature-complete for V1.
 
 **GATE R2.5:** real Aarush Lawn underlay calibrated on staging (gate 3.15 dry-run) · designer
 60fps with 500-element fixture on mid Android (perf budget row) · all §14 acceptances green ·
@@ -561,3 +576,4 @@ pages · axe pass.
 | 2026-06-13 | build session 5 (cont.) | R2.5.13 (versions) | done; versions.ts (snapshot/diff/cap) + reactive versions state + save/restore(undoable)/delete/compare; VersionsPanel + dashed ghost overlay; round-trips via v2 | 55f/250t green; build OK; both designers 200 |
 | 2026-06-13 | build session 5 (cont.) | R2.5.14 (vendor preview + search) | done; Preview lens (hides underlay/sales/heatmap/ghost/validation) + search.ts (label/zone match) + search box, `/` shortcut, focusOn 1.5× pulse; **deferred:** ⌘K palette entries (cross-surface) | 56f/255t green; build OK; both designers 200 |
 | 2026-06-13 | build session 5 (cont.) | R2.5.15 (exports) | done; map-export.ts (naming/scale-bar/fit) + captureFullCanvas + MapPdf (react-pdf, title + 50ft bar) + Export dropdown (PNG 2× + vendor/ops/print PDF); **flagged:** ops-PDF content awaits R2.5.16 ops objects | 57f/261t green; build OK; both designers 200 |
+| 2026-06-13 | build session 5 (cont.) | R2.5.16 (entry-flow + ops + validation) | done; **R2.5 MAP CLUSTER COMPLETE** — throughput.ts + entry-ops.ts + validation-report.ts (+tests); ops/entryFlow reactive state + palettes + canvas render + drag; ValidationPanel (focus-on-click + throughput rollup + lane editor); ops-PDF flag closed; **flagged:** O-mode→palette, throughput card→panel | 59f/271t green; build OK; both designers 200 |

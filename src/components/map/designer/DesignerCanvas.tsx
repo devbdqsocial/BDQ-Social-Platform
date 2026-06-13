@@ -4,6 +4,7 @@ import { Group, Image as KonvaImage, Layer, Line, Rect, Stage, Text, Transformer
 import { ZONE_COLOR_HEX, polygonCentroid } from "@/lib/map/zones";
 import { TERRAIN_COLOR_HEX } from "@/lib/map/terrain";
 import { TIER_HEX } from "@/server/map/scoring";
+import { OPS_HEX, ENTRY_HEX } from "@/lib/map/entry-ops";
 import { snapToNeighbours, nudge } from "@/lib/map/designer-actions";
 import { useDesigner } from "./DesignerContext";
 
@@ -12,7 +13,7 @@ export function DesignerCanvas() {
   const d = useDesigner();
   const {
     width, height, scale, pxPerFt, tool, canvas, bgImg, calibrated, layers,
-    elements, zones, pathways, terrain, boundary, obstacles, drawing, guides, marquee,
+    elements, zones, pathways, terrain, boundary, obstacles, ops, entryFlow, drawing, guides, marquee,
     measureLine, measureDist, measureCursor, selectedIds, violationIds, fillFor,
     salesView, scores, heatFillFor, compareSnapshot, previewMode, pulseId,
     stageRef, trRef, toFt, zoom, patchBg, commit, setSelectedIds, setGuides,
@@ -193,6 +194,32 @@ export function DesignerCanvas() {
               draggable={tool === "select"}
               onDragEnd={(e) => d.setObstacles((arr) => arr.map((x) => (x.id === o.id ? { ...x, xFt: toFt(e.target.x()), yFt: toFt(e.target.y()) } : x)))}
             />
+          ))}
+
+          {/* entry-flow objects (§8) — gates/lanes/scan points; lavender family */}
+          {layers.entryflow.visible && entryFlow.map((o) => (
+            <Group key={o.id} listening={!layers.entryflow.locked}>
+              <Rect
+                x={o.xFt * pxPerFt} y={o.yFt * pxPerFt} width={o.widthFt * pxPerFt} height={o.heightFt * pxPerFt}
+                fill={ENTRY_HEX[o.type]} opacity={0.5} stroke="#01065B" strokeWidth={1} cornerRadius={2}
+                draggable={tool === "select" && !layers.entryflow.locked}
+                onDragEnd={(e) => d.setEntryFlow((arr) => arr.map((x) => (x.id === o.id ? { ...x, xFt: toFt(e.target.x()), yFt: toFt(e.target.y()) } : x)))}
+              />
+              {layers.labels.visible && <Text x={o.xFt * pxPerFt} y={o.yFt * pxPerFt + o.heightFt * pxPerFt / 2 - 4} width={o.widthFt * pxPerFt} align="center" text={o.lanes ? `${o.label} ×${o.lanes}` : o.label ?? ""} fontSize={7} fill="#01065B" listening={false} />}
+            </Group>
+          ))}
+
+          {/* ops objects (§8) — security/medical/power; muted neutrals (hidden in vendor preview) */}
+          {!previewMode && layers.ops.visible && ops.map((o) => (
+            <Group key={o.id} listening={!layers.ops.locked}>
+              <Rect
+                x={o.xFt * pxPerFt} y={o.yFt * pxPerFt} width={o.widthFt * pxPerFt} height={o.heightFt * pxPerFt}
+                fill={OPS_HEX[o.type]} opacity={0.55} stroke="#15120E" strokeWidth={1} cornerRadius={2}
+                draggable={tool === "select" && !layers.ops.locked}
+                onDragEnd={(e) => d.setOps((arr) => arr.map((x) => (x.id === o.id ? { ...x, xFt: toFt(e.target.x()), yFt: toFt(e.target.y()) } : x)))}
+              />
+              {layers.labels.visible && <Text x={o.xFt * pxPerFt} y={o.yFt * pxPerFt + o.heightFt * pxPerFt / 2 - 4} width={o.widthFt * pxPerFt} align="center" text={o.label ?? ""} fontSize={7} fill="#FFFFFF" listening={false} />}
+            </Group>
           ))}
 
           {guides.map((g, i) => <Line key={`g${i}`} points={g.points} stroke="#868EFF" strokeWidth={1} dash={[4, 4]} listening={false} />)}

@@ -6,9 +6,12 @@ import {
   duplicate, snapToGrid, DEFAULT_CANVAS,
   type CanvasMeta, type EditorElement, type PaletteStallType,
 } from "@/lib/map/designer-ops";
-import { ZONE_COLORS, type LayoutV2, type Obstacle, type Pathway, type TerrainPatch, type Zone, type ZoneColor } from "@/lib/map/layout-v2";
+import { ZONE_COLORS, type LayoutV2, type Obstacle, type Pathway, type TerrainPatch, type Zone, type ZoneColor, type OpsObject, type EntryFlowObject } from "@/lib/map/layout-v2";
+import { createOps, createEntry, type OpsType, type EntryType } from "@/lib/map/entry-ops";
 import type { TerrainType } from "@/lib/map/terrain";
 import { mapViolations, pathwayWarnings, MIN_PATH_WIDTH } from "@/lib/map/validation";
+import { validationReport } from "@/lib/map/validation-report";
+import { throughputReport } from "@/lib/map/throughput";
 import { alignElements, distributeElements, nudge, type AlignMode } from "@/lib/map/designer-actions";
 import { INFRA_COLOR, STALL_STATUS_COLORS } from "@/lib/stall-colors";
 import { pathLength, type Pt } from "@/lib/map/geometry";
@@ -103,10 +106,8 @@ export function useDesignerState({
   const [terrain, setTerrain] = useState<TerrainPatch[]>(initialLayout?.terrain ?? []);
   const [terrainType, setTerrainType] = useState<TerrainType>("GRASS");
   const [overrides, setOverrides] = useState<Set<string>>(new Set());
-  const passthrough = useRef({
-    ops: initialLayout?.ops ?? [],
-    entryFlow: initialLayout?.entryFlow ?? [],
-  });
+  const [ops, setOps] = useState<OpsObject[]>(initialLayout?.ops ?? []);
+  const [entryFlow, setEntryFlow] = useState<EntryFlowObject[]>(initialLayout?.entryFlow ?? []);
   const [versions, setVersions] = useState<VersionMeta[]>((initialLayout?.versions ?? []) as VersionMeta[]);
   const [compareId, setCompareId] = useState<string | null>(null);
 
@@ -166,6 +167,9 @@ export function useDesignerState({
   const violations = useMemo(() => mapViolations(elements, boundary, obstacles, overrides), [elements, boundary, obstacles, overrides]);
   const violationIds = useMemo(() => new Set(violations.map((v) => v.elementId)), [violations]);
   const pathWarnings = useMemo(() => pathwayWarnings(pathways, elements), [pathways, elements]);
+  // Consolidated validation drawer (§4/§7/§8 + dup-label + unpriced) + throughput rollup (R2.5.16)
+  const validation = useMemo(() => validationReport({ elements, boundary, obstacles, pathways, overrides }), [elements, boundary, obstacles, pathways, overrides]);
+  const throughput = useMemo(() => throughputReport(entryFlow, 0), [entryFlow]);
 
   const gridLines = useMemo(() => {
     let step = gridFt > 0 ? gridFt : 5;
@@ -267,10 +271,10 @@ export function useDesignerState({
     pathways: pathways.length,
     stalls: elements.filter((e) => e.kind === "stall").length,
     infra: elements.filter((e) => e.kind === "infra").length,
-    ops: passthrough.current.ops.length,
-    entryflow: passthrough.current.entryFlow.length,
+    ops: ops.length,
+    entryflow: entryFlow.length,
     labels: elements.length,
-  }), [bgImg, terrain, zones, pathways, elements]);
+  }), [bgImg, terrain, zones, pathways, elements, ops, entryFlow]);
 
   // transformer attaches to a single selection
   useEffect(() => {
@@ -305,6 +309,10 @@ export function useDesignerState({
     const label = type.charAt(0) + type.slice(1).toLowerCase().replace(/_/g, " ");
     setObstacles((o) => [...o, { id: `obs_${Date.now().toString(36)}`, type, xFt: 20, yFt: 20, widthFt: w, heightFt: h, rotation: 0, label }]);
   }, []);
+
+  const addOps = useCallback((type: OpsType) => setOps((o) => [...o, createOps(type)]), []);
+  const addEntry = useCallback((type: EntryType) => setEntryFlow((o) => [...o, createEntry(type)]), []);
+  const patchEntry = useCallback((id: string, p: Partial<EntryFlowObject>) => setEntryFlow((arr) => arr.map((e) => (e.id === id ? { ...e, ...p } : e))), []);
 
   const doAlign = useCallback((m: AlignMode) => { if (selectedIds.size > 1) commit(alignElements(elements, selectedIds, m)); }, [elements, selectedIds, commit]);
   const doDistribute = useCallback((axis: "h" | "v") => { if (selectedIds.size > 2) commit(distributeElements(elements, selectedIds, axis)); }, [elements, selectedIds, commit]);
@@ -468,7 +476,6 @@ export function useDesignerState({
   const buildLayoutV2 = useCallback((): LayoutV2 => {
     const g = ([1, 2, 5, 10] as number[]).includes(gridFt) ? (gridFt as 1 | 2 | 5 | 10) : 5;
     const bg = canvas.bgImage;
-    const pt = passthrough.current;
     return {
       v: 2,
       canvas: { widthFt: canvas.widthFt, heightFt: canvas.heightFt, gridFt: g, displayUnit: "FT" },
@@ -477,9 +484,9 @@ export function useDesignerState({
         : {}),
       boundary: boundary && boundary.length >= 3 ? { points: boundary } : undefined,
       obstacles, terrain, zones, pathways, elements,
-      ops: pt.ops, entryFlow: pt.entryFlow, layers, versions,
+      ops, entryFlow, layers, versions,
     };
-  }, [gridFt, canvas, boundary, obstacles, terrain, zones, pathways, elements, layers, versions]);
+  }, [gridFt, canvas, boundary, obstacles, terrain, zones, pathways, elements, ops, entryFlow, layers, versions]);
 
   const handleSave = useCallback(async () => {
     if (!eventId || !saveAction) return;
@@ -511,10 +518,12 @@ export function useDesignerState({
     // collections
     boundary, setBoundary, obstacles, setObstacles, addObstacle, zones, setZones, pathways, setPathways,
     terrain, setTerrain, terrainType, setTerrainType, overrides, setOverrides,
+    // ops + entry-flow objects (§8 / R2.5.16)
+    ops, setOps, addOps, entryFlow, setEntryFlow, addEntry, patchEntry,
     // layers
     layers, toggleLayerVisible, toggleLayerLock, setAllLayersVisible, layerCounts,
     // derived
-    violations, violationIds, pathWarnings, gridLines, fillFor,
+    violations, violationIds, pathWarnings, validation, throughput, gridLines, fillFor,
     // sales view (scoring §9.1) + price suggestions (§9.2) + heatmap (§9.3)
     salesView, setSalesView, scores, selectedScore, suggestion, applySuggestions,
     heatmapMode, setHeatmapMode, heatFillFor, heatmapBounds,

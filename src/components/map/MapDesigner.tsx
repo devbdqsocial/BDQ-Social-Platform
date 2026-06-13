@@ -12,6 +12,7 @@ import { DesignerSidePanels } from "./designer/DesignerSidePanels";
 import { LayersPanel } from "./designer/LayersPanel";
 import { HeatmapLegend } from "./designer/HeatmapLegend";
 import { VersionsPanel } from "./designer/VersionsPanel";
+import { ValidationPanel } from "./designer/ValidationPanel";
 import { DesignerInspector } from "./DesignerInspector";
 import { SummaryPanel } from "./SummaryPanel";
 import { BulkGridDialog } from "./BulkGridDialog";
@@ -64,6 +65,7 @@ export default function MapDesigner(props: MapDesignerProps = {}) {
           />
           <HeatmapLegend />
           <SummaryPanel elements={elements} stallTypes={stallTypes} zones={zones} venueSqFt={canvas.widthFt * canvas.heightFt} />
+          <ValidationPanel />
           <VersionsPanel />
           <DesignerSidePanels />
         </div>

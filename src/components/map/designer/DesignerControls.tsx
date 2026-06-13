@@ -4,10 +4,11 @@ import {
   ZoomIn, ZoomOut, Maximize, Undo2, Redo2, Hand, MousePointer2, Ruler, Spline, TreePine, Shapes, Route,
   AlignHorizontalJustifyStart, AlignHorizontalJustifyCenter, AlignHorizontalJustifyEnd,
   AlignVerticalJustifyStart, AlignVerticalJustifyCenter, AlignVerticalJustifyEnd,
-  AlignHorizontalSpaceBetween, AlignVerticalSpaceBetween, Grid2x2, Image as ImageIcon, Mountain, Gauge, Eye, Download,
+  AlignHorizontalSpaceBetween, AlignVerticalSpaceBetween, Grid2x2, Image as ImageIcon, Mountain, Gauge, Eye, Download, DoorOpen, Wrench,
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { EXPORT_VARIANTS, VARIANT_LABEL, type ExportVariant } from "@/lib/map/map-export";
+import { OPS_TYPES, ENTRY_TYPES, humanizeType } from "@/lib/map/entry-ops";
 import { downloadMapPdf } from "./MapPdf";
 import { createInfra, createStall, seedToEditor } from "@/lib/map/designer-ops";
 import type { Obstacle, Pathway } from "@/lib/map/layout-v2";
@@ -32,7 +33,7 @@ export function DesignerControls() {
     pathType, setPathType, addObstacle, duplicateSelected, terrainType, setTerrainType,
     salesView, setSalesView, heatmapMode, setHeatmapMode,
     previewMode, setPreviewMode, searchQuery, setSearchQuery, searchMatches, focusOn,
-    captureFullCanvas, mapName,
+    captureFullCanvas, mapName, addOps, addEntry,
   } = d;
 
   const exportPdf = async (v: ExportVariant) => {
@@ -216,6 +217,19 @@ export function DesignerControls() {
             {(["TREE", "POLE", "BUILDING", "WALL", "WATER_BODY"] as Obstacle["type"][]).map((t) => (
               <Button key={t} variant="ghost" size="sm" onClick={() => addObstacle(t)}>{t.charAt(0) + t.slice(1).toLowerCase().replace(/_/g, " ")}</Button>
             ))}
+            <span className="mx-1 h-6 w-px bg-border" />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild><Button variant="ghost" size="sm"><DoorOpen className="size-3.5" /> Entry +</Button></DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                {ENTRY_TYPES.map((t) => <DropdownMenuItem key={t} onClick={() => addEntry(t)}>{humanizeType(t)}</DropdownMenuItem>)}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild><Button variant="ghost" size="sm"><Wrench className="size-3.5" /> Ops +</Button></DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                {OPS_TYPES.map((t) => <DropdownMenuItem key={t} onClick={() => addOps(t)}>{humanizeType(t)}</DropdownMenuItem>)}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </>
         )}
       </div>
