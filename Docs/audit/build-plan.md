@@ -359,8 +359,13 @@ build on it.
       15%-opacity render under everything in `DesignerCanvas`, gated by the existing `terrain`
       layer. Closed-polygon draw reused the generalized path. No new component plumbing — exactly
       the architecture's promise. Verify: 51f/218t green; build OK; designer 200; 0err/10warn.
-- [ ] **R2.5.9 Align/distribute + bulk v2** (6h): 6 align + 2 distribute ops; bulk resize/
-      type/status/price. Verify: geometry tests on fixtures.
+- [x] **R2.5.9 Align/distribute + bulk v2** (6h) ✓ — the 6 align + 2 distribute ops already
+      shipped with the toolbar (R2.5.3/refactor); this added **bulk resize/type/status/price**: a
+      pure `bulkPatch(els, ids, patch)` in `designer-actions.ts`, a `BulkEditForm` in the
+      inspector's multi-select branch (only filled fields apply, one "Apply to N" through the
+      history `commit`), wired via `onBulkPatch`. New `designer-actions.test.ts` covers the
+      geometry on fixtures (align bbox math, distribute gap equalization, bulk patch isolation,
+      relabel ordering). Verify: 52f/225t green; build OK; designer 200; 0err/10warn.
 - [ ] **R2.5.10 Scoring engine** (8h): `server/map/scoring.ts` pure lib with §9.1 weight table
       + `describeStall`; Sales-view badges (`S` toggle). Verify: weight tests; badge tiers.
 - [ ] **R2.5.11 Price suggestions** (6h): §9.2 formula (`round50`, ±25% band), inspector chip +
@@ -500,3 +505,4 @@ pages · axe pass.
 | 2026-06-13 | build session 4 (cont.) | R2.5.7 (pathways) | done; open-polyline draw (P) + strips + min-width/blocked/exit warnings (non-blocking); persists via v2; **useDesignerState refactor debt growing — do next** | 51f/218t green; build OK; designer 200 |
 | 2026-06-13 | build session 5 | R2.5.5 refactor (owner-mandated) | done; MapDesigner 826→81 lines; useDesignerState single source of truth + DesignerContext + 4 components + LayersPanel; map-architecture-report.md; **debt cleared, ready for next 10 features** | 51f/218t (no test touched); build OK; both designers 200 |
 | 2026-06-13 | build session 5 (cont.) | R2.5.8 (terrain) | done; **first feature through the slice+panel pattern** — terrain.ts (6 types) + a hook slice + a controls palette + a 15%-opacity under-render gated by the terrain layer; no new plumbing, proving the refactor's promise | 51f/218t green; build OK; designer 200 |
+| 2026-06-13 | build session 5 (cont.) | R2.5.9 (align/distribute + bulk v2) | done; align/distribute pre-existed; added bulk resize/type/status/price (pure bulkPatch + inspector BulkEditForm) + first designer-actions.test.ts (align/distribute/bulk/relabel on fixtures) | 52f/225t green; build OK; designer 200 |

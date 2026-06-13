@@ -53,6 +53,11 @@ export function nudge(els: EditorElement[], ids: Set<string>, dxFt: number, dyFt
   return els.map((e) => (ids.has(e.id) ? { ...e, xFt: e.xFt + dxFt, yFt: e.yFt + dyFt } : e));
 }
 
+/** Apply one partial to every selected element (bulk resize/type/status/price). Empty fields skipped by the caller. */
+export function bulkPatch(els: EditorElement[], ids: Set<string>, patch: Partial<EditorElement>): EditorElement[] {
+  return els.map((e) => (ids.has(e.id) ? { ...e, ...patch } : e));
+}
+
 export function relabel(els: EditorElement[], ids: Set<string>, prefix: string, start: number): EditorElement[] {
   const ordered = els.filter((e) => ids.has(e.id));
   const labelById = new Map<string, string>();

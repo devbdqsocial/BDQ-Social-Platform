@@ -14,7 +14,7 @@ import { DesignerInspector } from "./DesignerInspector";
 import { SummaryPanel } from "./SummaryPanel";
 import { BulkGridDialog } from "./BulkGridDialog";
 import { CalibrationModal } from "./CalibrationModal";
-import { makeGrid, relabel } from "@/lib/map/designer-actions";
+import { makeGrid, relabel, bulkPatch } from "@/lib/map/designer-actions";
 
 export interface MapDesignerProps {
   eventId?: string;
@@ -51,7 +51,9 @@ export default function MapDesigner(props: MapDesignerProps = {}) {
           <DesignerInspector
             element={selected}
             multiCount={selectedIds.size}
+            stallTypes={stallTypes}
             onChange={(p) => selected && commit(patchOne(selected.id, p))}
+            onBulkPatch={(p) => { if (selectedIds.size) commit(bulkPatch(elements, selectedIds, p)); }}
             onRelabel={(prefix, start) => { if (selectedIds.size) commit(relabel(elements, selectedIds, prefix, start)); }}
           />
           <SummaryPanel elements={elements} stallTypes={stallTypes} zones={zones} venueSqFt={canvas.widthFt * canvas.heightFt} />

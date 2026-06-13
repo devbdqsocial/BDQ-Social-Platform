@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import type { EditorElement } from "@/lib/map/designer-ops";
+import type { EditorElement, PaletteStallType } from "@/lib/map/designer-ops";
 import { Button } from "@/components/ui/button";
 
 interface Props {
   element: EditorElement | null;
   multiCount: number;
+  stallTypes: PaletteStallType[];
   onChange: (patch: Partial<EditorElement>) => void;
+  onBulkPatch: (patch: Partial<EditorElement>) => void;
   onRelabel: (prefix: string, start: number) => void;
 }
 
@@ -37,14 +39,68 @@ function RelabelForm({ onRelabel }: { onRelabel: (prefix: string, start: number)
   );
 }
 
-export function DesignerInspector({ element, multiCount, onChange, onRelabel }: Props) {
+function BulkEditForm({ count, stallTypes, onBulkPatch }: { count: number; stallTypes: PaletteStallType[]; onBulkPatch: (patch: Partial<EditorElement>) => void }) {
+  const [w, setW] = useState("");
+  const [h, setH] = useState("");
+  const [typeId, setTypeId] = useState("");
+  const [status, setStatus] = useState("");
+  const [price, setPrice] = useState("");
+
+  const apply = () => {
+    const patch: Partial<EditorElement> = {};
+    if (w !== "" && Number(w) > 0) patch.widthFt = Number(w);
+    if (h !== "" && Number(h) > 0) patch.heightFt = Number(h);
+    if (typeId) {
+      const t = stallTypes.find((s) => s.id === typeId);
+      if (t) { patch.type = t.name; patch.stallTypeId = t.id; }
+    }
+    if (status) patch.status = status as EditorElement["status"];
+    if (price !== "") patch.priceInPaise = Math.round(Number(price) * 100);
+    if (Object.keys(patch).length === 0) return;
+    onBulkPatch(patch);
+    setW(""); setH(""); setTypeId(""); setStatus(""); setPrice("");
+  };
+
+  return (
+    <div className="space-y-2 border-t border-border pt-3">
+      <p className="text-xs font-medium text-muted-foreground">Bulk edit — only filled fields apply</p>
+      <div className="grid grid-cols-2 gap-2">
+        <label className="flex flex-col gap-1 text-xs text-muted-foreground">Width (ft)<input type="number" min={1} value={w} onChange={(e) => setW(e.target.value)} className={fieldCls} /></label>
+        <label className="flex flex-col gap-1 text-xs text-muted-foreground">Height (ft)<input type="number" min={1} value={h} onChange={(e) => setH(e.target.value)} className={fieldCls} /></label>
+      </div>
+      <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+        Type
+        <select value={typeId} onChange={(e) => setTypeId(e.target.value)} className={fieldCls}>
+          <option value="">— keep —</option>
+          {stallTypes.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+        </select>
+      </label>
+      <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+        Status
+        <select value={status} onChange={(e) => setStatus(e.target.value)} className={fieldCls}>
+          <option value="">— keep —</option>
+          <option value="AVAILABLE">Available</option>
+          <option value="BLOCKED">Blocked / reserved</option>
+        </select>
+      </label>
+      <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+        Price (₹) — admin-entered
+        <input type="number" min={0} step={1} value={price} placeholder="e.g. 15000" onChange={(e) => setPrice(e.target.value)} className={fieldCls} />
+      </label>
+      <Button size="sm" variant="outline" className="w-full" onClick={apply}>Apply to {count} selected</Button>
+    </div>
+  );
+}
+
+export function DesignerInspector({ element, multiCount, stallTypes, onChange, onBulkPatch, onRelabel }: Props) {
   if (multiCount > 1) {
     return (
       <aside className="space-y-3 rounded-xl border border-border bg-card p-4">
         <div>
           <h2 className="font-display text-lg font-semibold">{multiCount} selected</h2>
-          <p className="text-xs text-muted-foreground">Use the toolbar to align/distribute, arrow keys to nudge, or relabel below.</p>
+          <p className="text-xs text-muted-foreground">Align/distribute from the toolbar, arrow keys to nudge, or bulk-edit and relabel below.</p>
         </div>
+        <BulkEditForm count={multiCount} stallTypes={stallTypes} onBulkPatch={onBulkPatch} />
         <RelabelForm onRelabel={onRelabel} />
       </aside>
     );
