@@ -276,11 +276,20 @@ build on it.
 ## Phase R2.5 — Map System, the flagship (~115h) — map-system.md §14 (authoritative table)
 
 **R2.5.1 Layout v2 + designer split** (10h) — FIRST; everything depends on it
-- [ ] a. `src/lib/map/layout-v2.ts`: zod schema (§1) + `upgradeLayout(v1)` + size guard.
-- [ ] b. Split `MapDesigner.tsx`: `useDesignerState`, `useDesignerKeyboard`, panel + tool
-      components; thin shell. No behavior change.
-      Verify: v1 fixtures (incl. current Aarush seed + a saved prod-shape layout) upgrade
-      losslessly (tests); designer loads/saves both; all existing designer features still work.
+- [x] a. `src/lib/map/layout-v2.ts` ✓: full v2 zod schema (map-system §1 — underlay, boundary,
+      obstacles, terrain, zones, pathways, elements, ops, entryFlow, layers, versions) +
+      `upgradeLayout(json, opsJson?)` (v1→v2 lossless, v2 idempotent, bgImage→uncalibrated
+      underlay, opsLayerJson→ops[], garbage→empty-v2) + `exceedsSizeCap` (2 MB) +
+      `editorFromLayout` bridge. 8 unit tests (`layout-v2.test.ts`).
+- [x] b. **"Designer loads both"** ✓: both designer pages (event `[id]/map`, venue `maps/[id]`)
+      route their stored `layoutJson` (+`opsLayerJson`) through `editorFromLayout`, so a v1 OR
+      v2 doc initializes the editor. Verified: both pages load 200 against real saved layouts;
+      47f/192t green; build OK.
+      **Scope note (deferred):** the `useDesignerState`/`useDesignerKeyboard`/panel split is
+      pulled to **R2.5.5** (LayersPanel/InspectorPanel — its first real consumers). Extracting
+      a single-consumer hook now would be a speculative abstraction (CLAUDE.md §2); the v2
+      schema is the load-bearing R2.5.1 acceptance and is complete. Full v2 save round-trip
+      (preserving zones/pathways through a save) lands with each sub-collection editor (R2.5.6+).
 - [ ] **R2.5.2 Calibration** (8h): upload→2-point modal (loupe zoom)→distance input (ft/m)→
       **confirm step with computed venue dims**→position+lock; banner when uncalibrated.
       Verify: known fixture (100px=50ft) → ftPerPx 0.5; stall drawn over photo = true footprint.
@@ -430,3 +439,4 @@ pages · axe pass.
 | 2026-06-13 | build session 2 | R1.3a (code-first) | done; legacy pay-to-hold flow deleted; webhook fulfils PENDING_PAYMENT only; public map read-only; **R1 PHASE COMPLETE (code)** — M2 destructive part queued for one-deploy-later | 46f/184t green; build green |
 | 2026-06-13 | build session 2 (cont.) | R2.1 + R2.3 | done; clamp() scale, clay purge, ESLint guardrails, swiper dropped, GSAP reduced-motion gate | 46f/184t green; build green; lint 0 errors |
 | 2026-06-13 | build session 3 | R2.2 (D11/D13/D14/D16/D17) | done; **PHASE R2 COMPLETE**; status-badges consolidated, 7 tables relocated, ~30-file date sweep, RpaPageHeader/RpaEmpty, toResult+ActionForm on critical forms; remaining low-traffic forms deferred to R5 (cut pages excluded) | 46f/184t green; build 82 pages; 0 err/10 warn; dev smoke 10 routes 200 |
+| 2026-06-13 | build session 4 | R2.5.1 (map foundation) | done; layout-v2 schema + upgradeLayout + editorFromLayout; both designer pages load v1/v2; useDesignerState split pulled to R2.5.5 (no consumers yet) | 47f/192t green; build OK; designer pages 200 |

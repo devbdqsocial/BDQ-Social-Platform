@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import { requireAdminRole } from "@/server/auth/guard";
 import { getMap } from "@/server/map/maps";
 import { ensureElementDefaults } from "@/server/map/elements";
-import type { CanvasMeta, EditorElement, PaletteStallType } from "@/lib/map/designer-ops";
+import type { PaletteStallType } from "@/lib/map/designer-ops";
+import { editorFromLayout } from "@/lib/map/layout-v2";
 import { MapDesignerLoader } from "@/components/map/MapDesignerLoader";
 import { getMapUploadSignatureAction } from "../../../events/[id]/map/actions";
 import { saveMapLayoutAction } from "../actions";
@@ -24,9 +25,12 @@ export default async function MapDesignerPage({ params }: { params: Promise<{ id
     id: e.id, name: e.name, widthFt: e.widthFt, heightFt: e.heightFt, priceInPaise: 0, color: e.color, sellable: e.sellable,
   }));
 
-  const saved = map.layoutJson as { elements?: EditorElement[]; canvas?: CanvasMeta } | null;
-  const initialElements = saved?.elements ?? [];
-  const initialCanvas: CanvasMeta = saved?.canvas ?? { widthFt: map.widthFt, heightFt: map.heightFt, gridFt: map.gridFt };
+  // Load both v1 and v2 layout docs through the one upgrade path (build-plan R2.5.1).
+  const bridged = editorFromLayout(map.layoutJson);
+  const initialElements = bridged.elements;
+  const initialCanvas = bridged.elements.length || (map.layoutJson as { canvas?: unknown } | null)?.canvas
+    ? bridged.canvas
+    : { widthFt: map.widthFt, heightFt: map.heightFt, gridFt: map.gridFt };
 
   return (
     <div className="space-y-4">

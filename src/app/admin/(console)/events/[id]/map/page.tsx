@@ -5,7 +5,8 @@ import { requireAdminRole } from "@/server/auth/guard";
 import { getByIdForAdmin } from "@/server/events/service";
 import { ensureStallTypes } from "@/server/map/stall-types";
 import { listTemplates } from "@/server/map/templates";
-import { DEFAULT_CANVAS, type CanvasMeta, type EditorElement, type PaletteStallType } from "@/lib/map/designer-ops";
+import { type PaletteStallType } from "@/lib/map/designer-ops";
+import { editorFromLayout } from "@/lib/map/layout-v2";
 import { MapDesignerLoader } from "@/components/map/MapDesignerLoader";
 import { StallTypesManager } from "./StallTypesManager";
 import { TemplatesBar } from "./TemplatesBar";
@@ -30,9 +31,11 @@ export default async function EventMapPage({ params }: { params: Promise<{ id: s
     sellable: t.sellable,
   }));
 
-  const saved = event.mapLayout?.layoutJson as { elements?: EditorElement[]; canvas?: CanvasMeta } | null;
-  const initialElements = saved?.elements ?? [];
-  const initialCanvas = saved?.canvas ?? DEFAULT_CANVAS;
+  // Load both v1 and v2 layout docs through the one upgrade path (build-plan R2.5.1).
+  const { elements: initialElements, canvas: initialCanvas } = editorFromLayout(
+    event.mapLayout?.layoutJson,
+    event.mapLayout?.opsLayerJson,
+  );
 
   return (
     <div className="space-y-4">
