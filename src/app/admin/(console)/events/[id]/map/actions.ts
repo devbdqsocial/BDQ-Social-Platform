@@ -8,7 +8,7 @@ import { saveStallType, deleteStallType } from "@/server/map/stall-types";
 import { saveAsTemplate, applyTemplate } from "@/server/map/templates";
 import { stallTypeSchema } from "@/server/schemas";
 import { parseOrThrow } from "@/lib/validation";
-import { validateLayout } from "@/lib/map/designer-ops";
+import { upgradeLayout, exceedsSizeCap } from "@/lib/map/layout-v2";
 import { signUpload, type UploadSignature } from "@/lib/cloudinary";
 
 export async function getMapUploadSignatureAction(): Promise<UploadSignature> {
@@ -18,9 +18,10 @@ export async function getMapUploadSignatureAction(): Promise<UploadSignature> {
 
 export async function saveMapAction(eventId: string, layout: unknown): Promise<void> {
   const session = await requireAdminRole();
-  const res = validateLayout(layout);
-  if (!res.ok) throw new Error(res.error);
-  await saveEventMap(session, eventId, res.layout);
+  // Normalize v1 OR v2 input to v2 (upgradeLayout is the one load path); reject oversize.
+  const v2 = upgradeLayout(layout);
+  if (exceedsSizeCap(v2)) throw new Error("This layout is too large to save — delete old versions.");
+  await saveEventMap(session, eventId, v2);
   revalidatePath(`/admin/events/${eventId}/map`);
   revalidatePath("/events");
 }

@@ -302,9 +302,21 @@ build on it.
       `upgradeLayout`/`editorFromLayout` bridge it to/from the v2 underlay. Full v2 save
       migrates when zones/pathways need persisting (R2.5.6+).
       Verify: 48f/200t green; build OK; designer page 200; typecheck clean.
-- [ ] **R2.5.3 Boundary + obstacles** (8h): polygon pen (≥3 pts, vertex edit), obstacle palette
-      (TREE/POLE/BUILDING/WALL/WATER_BODY), out-of-bounds + overlap save-block w/ per-item
-      override. Verify: fixture violations block; override saves + recorded.
+- [x] **R2.5.3 Boundary + obstacles** (8h) ✓ — incl. the **v2-save migration** ("designer
+      holds v2"): `buildLayoutV2` assembles the full `LayoutV2` on save, round-tripping every
+      sub-collection (terrain/zones/pathways/ops/entryFlow/layers/versions untouched until
+      their packages). Actions (`saveMapAction`/`saveMapLayoutAction`) + services
+      (`saveEventMap`/`saveMapLayout`) + clone paths (`applyMapToEvent`/`applyTemplate`)
+      `upgradeLayout`→v2 + size-cap guard; Stall-row derivation reads `layout.elements`
+      unchanged; `initialLayout` flows from both pages. **Boundary pen** (`B`: click vertices,
+      first-point/Enter closes, Esc cancels, ≥3 pts) + **obstacle palette**
+      (TREE/POLE/BUILDING/WALL/WATER_BODY, draggable, list-delete). **Save-blocking validation**
+      (`lib/map/validation.ts` pure: ray-cast point-in-polygon + AABB intersect, 7 tests):
+      out-of-bounds / obstacle-overlap stalls get a red outline + validation-panel row; **Save
+      blocked** until fixed or per-stall **Override**; the audited saved layout records the
+      deliberate placement. Verify: 50f/211t green; build OK; both designers 200; v1 layouts
+      round-trip + preserve calibration. (Boundary/obstacles edited outside element-undo —
+      documented limitation.)
 - [x] **R2.5.4 Distance tool + measurements** (6h) ✓: `lib/map/geometry.ts` pure (shoelace
       `polygonArea`/`polygonPerimeter`, `pathLength`, `usedSqFt`, `occupancy`, ft/m formatters,
       4 tests). Designer: **distance tool** (`M`, click A→B multi-segment, dashed lavender
@@ -457,3 +469,4 @@ pages · axe pass.
 | 2026-06-13 | build session 4 | R2.5.1 (map foundation) | done; layout-v2 schema + upgradeLayout + editorFromLayout; both designer pages load v1/v2; useDesignerState split pulled to R2.5.5 (no consumers yet) | 47f/192t green; build OK; designer pages 200 |
 | 2026-06-13 | build session 4 (cont.) | R2.5.2 (calibration) | done; the "real map" — 2-point calibration → true-scale underlay; rides on extended v1 bgImage (no v2-save migration yet); confirm-step mis-calibration guard | 48f/200t green; build OK; designer 200 |
 | 2026-06-13 | build session 4 (cont.) | R2.5.4 (measurements) | done; geometry lib + distance tool (M) + status bar + occupancy; all computed/ephemeral, no persistence; R2.5.3 boundary/obstacles next (bundles the v2-save migration) | 49f/204t green; build OK; designer 200 |
+| 2026-06-13 | build session 4 (cont.) | R2.5.3 + v2-save migration | done; designer now persists full LayoutV2; boundary pen + obstacles + save-blocking validation/override; v1 layouts round-trip | 50f/211t green; build OK; both designers 200 |

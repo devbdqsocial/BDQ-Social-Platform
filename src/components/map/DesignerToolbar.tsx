@@ -4,11 +4,10 @@ import { Copy, Download, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   INFRA_TYPES,
-  validateLayout,
-  type DesignerLayout,
   type EditorElement,
   type PaletteStallType,
 } from "@/lib/map/designer-ops";
+import { upgradeLayout, type LayoutV2 } from "@/lib/map/layout-v2";
 import type { SeedInfraType } from "@/server/map/seed-aarush-lawn";
 
 interface Props {
@@ -24,7 +23,7 @@ interface Props {
   onDelete: () => void;
   onLoadTemplate: () => void;
   onClear: () => void;
-  getLayout: () => DesignerLayout;
+  getLayout: () => LayoutV2;
   onImport: (els: EditorElement[]) => void;
 }
 
@@ -44,9 +43,8 @@ export function DesignerToolbar(props: Props) {
     e.target.value = "";
     if (!file) return;
     try {
-      const res = validateLayout(JSON.parse(await file.text()));
-      if (res.ok) props.onImport(res.layout.elements);
-      else alert(`Invalid layout: ${res.error}`);
+      const v2 = upgradeLayout(JSON.parse(await file.text()));
+      props.onImport(v2.elements);
     } catch {
       alert("Could not read that file as JSON.");
     }

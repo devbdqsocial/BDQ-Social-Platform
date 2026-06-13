@@ -5,7 +5,7 @@ import { db } from "@/server/db";
 import { withAudit } from "@/server/audit";
 import type { Session } from "@/server/auth/guard";
 import { elementsToStallRows } from "@/lib/map/normalize";
-import type { DesignerLayout } from "@/lib/map/designer-ops";
+import type { LayoutV2 } from "@/lib/map/layout-v2";
 
 export interface TicketTypeInput {
   name: string;
@@ -157,7 +157,7 @@ export function getEventWithStalls(id: string) {
   });
 }
 
-export function saveEventMap(session: Session, eventId: string, layout: DesignerLayout) {
+export function saveEventMap(session: Session, eventId: string, layout: LayoutV2) {
   return withAudit(session, { action: "UPDATE", entity: "MapLayout", entityId: eventId }, async () => {
     const before = await db.mapLayout.findUnique({ where: { eventId }, select: { version: true } });
     return {

@@ -5,7 +5,7 @@ import { requireAdminRole } from "@/server/auth/guard";
 import { getMap } from "@/server/map/maps";
 import { ensureElementDefaults } from "@/server/map/elements";
 import type { PaletteStallType } from "@/lib/map/designer-ops";
-import { editorFromLayout } from "@/lib/map/layout-v2";
+import { editorFromLayout, upgradeLayout } from "@/lib/map/layout-v2";
 import { MapDesignerLoader } from "@/components/map/MapDesignerLoader";
 import { getMapUploadSignatureAction } from "../../../events/[id]/map/actions";
 import { saveMapLayoutAction } from "../actions";
@@ -49,6 +49,7 @@ export default async function MapDesignerPage({ params }: { params: Promise<{ id
         eventId={map.id}
         initialElements={initialElements}
         initialCanvas={initialCanvas}
+        initialLayout={upgradeLayout(map.layoutJson)}
         stallTypes={palette}
         saveAction={saveMapLayoutAction}
         uploadAction={getMapUploadSignatureAction}

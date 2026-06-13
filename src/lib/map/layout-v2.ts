@@ -10,6 +10,7 @@ import { elementSchema, type EditorElement } from "@/lib/map/designer-ops";
 export const LAYOUT_MAX_BYTES = 2 * 1024 * 1024; // 2 MB hard cap (map-system §1 size guard)
 export const VERSION_CAP = 10;
 
+export type Pt = [number, number];
 const point = z.tuple([z.number(), z.number()]);
 
 export const LAYER_IDS = [

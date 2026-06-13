@@ -4,20 +4,22 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type Konva from "konva";
 import { Image as KonvaImage, Layer, Line, Rect, Stage, Text, Transformer } from "react-konva";
 import {
-  ZoomIn, ZoomOut, Maximize, Undo2, Redo2, Hand, MousePointer2, Ruler,
+  ZoomIn, ZoomOut, Maximize, Undo2, Redo2, Hand, MousePointer2, Ruler, Spline, TreePine, TriangleAlert,
   AlignHorizontalJustifyStart, AlignHorizontalJustifyCenter, AlignHorizontalJustifyEnd,
   AlignVerticalJustifyStart, AlignVerticalJustifyCenter, AlignVerticalJustifyEnd,
   AlignHorizontalSpaceBetween, AlignVerticalSpaceBetween, Grid2x2, Image as ImageIcon,
 } from "lucide-react";
 import {
   DEFAULT_CANVAS, duplicate, createInfra, createStall, seedToEditor, snapToGrid,
-  validateLayout, type CanvasMeta, type DesignerLayout, type EditorElement, type PaletteStallType,
+  type CanvasMeta, type EditorElement, type PaletteStallType,
 } from "@/lib/map/designer-ops";
+import type { LayoutV2, Obstacle } from "@/lib/map/layout-v2";
 import {
   alignElements, distributeElements, nudge, relabel, makeGrid, snapToNeighbours, type AlignMode,
 } from "@/lib/map/designer-actions";
 import { INFRA_COLOR, STALL_STATUS_COLORS } from "@/lib/stall-colors";
 import { pathLength, fmtArea, fmtFt, type Pt } from "@/lib/map/geometry";
+import { mapViolations } from "@/lib/map/validation";
 import type { SeedInfraType } from "@/server/map/seed-aarush-lawn";
 import type { UploadSignature } from "@/lib/cloudinary";
 import { Button } from "@/components/ui/button";
@@ -32,15 +34,18 @@ export interface MapDesignerProps {
   eventId?: string;
   initialElements?: EditorElement[];
   initialCanvas?: CanvasMeta;
+  /** full upgraded layout — the designer round-trips its v2 sub-collections (boundary/zones/…). */
+  initialLayout?: LayoutV2;
   stallTypes?: PaletteStallType[];
-  saveAction?: (eventId: string, layout: DesignerLayout) => Promise<void>;
+  saveAction?: (eventId: string, layout: LayoutV2) => Promise<void>;
   uploadAction?: () => Promise<UploadSignature>;
 }
+
 
 const STORAGE_KEY = "bdq:designer:layout:v1";
 const fmtInt = (n: number) => new Intl.NumberFormat("en-IN").format(Math.round(n));
 
-export default function MapDesigner({ eventId, initialElements, initialCanvas, stallTypes = [], saveAction, uploadAction }: MapDesignerProps = {}) {
+export default function MapDesigner({ eventId, initialElements, initialCanvas, initialLayout, stallTypes = [], saveAction, uploadAction }: MapDesignerProps = {}) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
   const trRef = useRef<Konva.Transformer>(null);
@@ -66,11 +71,25 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, s
   const [gridFt, setGridFt] = useState(initialCanvas?.gridFt ?? 5);
   const [canvas, setCanvas] = useState<CanvasMeta>(initialCanvas ?? DEFAULT_CANVAS);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [tool, setTool] = useState<"select" | "pan" | "measure">("select");
+  const [tool, setTool] = useState<"select" | "pan" | "measure" | "boundary">("select");
   const [measurePts, setMeasurePts] = useState<Pt[]>([]); // distance-tool points, in feet (ephemeral)
   const [measureCursor, setMeasureCursor] = useState<Pt | null>(null);
   const [cursorFt, setCursorFt] = useState<Pt | null>(null);
+  // v2 sub-collections: boundary + obstacles are editable (R2.5.3); the rest round-trip untouched.
+  const [boundary, setBoundary] = useState<Pt[] | null>(initialLayout?.boundary?.points ?? null);
+  const [obstacles, setObstacles] = useState<Obstacle[]>(initialLayout?.obstacles ?? []);
+  const [overrides, setOverrides] = useState<Set<string>>(new Set()); // element ids allowed to fail boundary/obstacle checks
+  const passthrough = useRef({
+    terrain: initialLayout?.terrain ?? [],
+    zones: initialLayout?.zones ?? [],
+    pathways: initialLayout?.pathways ?? [],
+    ops: initialLayout?.ops ?? [],
+    entryFlow: initialLayout?.entryFlow ?? [],
+    layers: initialLayout?.layers ?? {},
+    versions: initialLayout?.versions ?? [],
+  });
   const [guides, setGuides] = useState<{ points: number[] }[]>([]);
+  const [drawingBoundary, setDrawingBoundary] = useState<Pt[] | null>(null); // in-progress boundary pen
   const [marquee, setMarquee] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [calibrating, setCalibrating] = useState(false);
@@ -118,6 +137,15 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, s
   };
   const calibrated = !!(canvas.bgImage && (canvas.bgImage.ftPerPx ?? 0) > 0);
 
+  const OBSTACLE_SIZES: Record<Obstacle["type"], [number, number]> = {
+    TREE: [6, 6], POLE: [2, 2], BUILDING: [20, 15], WALL: [20, 2], WATER_BODY: [20, 15],
+  };
+  const addObstacle = (type: Obstacle["type"]) => {
+    const [w, h] = OBSTACLE_SIZES[type];
+    const label = type.charAt(0) + type.slice(1).toLowerCase().replace(/_/g, " ");
+    setObstacles((o) => [...o, { id: `obs_${Date.now().toString(36)}`, type, xFt: 20, yFt: 20, widthFt: w, heightFt: h, rotation: 0, label }]);
+  };
+
   const colorById = useMemo(() => Object.fromEntries(stallTypes.map((t) => [t.id, t.color])), [stallTypes]);
   const fillFor = useCallback(
     (el: EditorElement): string => {
@@ -146,6 +174,9 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, s
 
   const selectedId = selectedIds.size === 1 ? [...selectedIds][0] : null;
   const selected = useMemo(() => elements.find((e) => e.id === selectedId) ?? null, [elements, selectedId]);
+
+  const violations = useMemo(() => mapViolations(elements, boundary, obstacles, overrides), [elements, boundary, obstacles, overrides]);
+  const violationIds = useMemo(() => new Set(violations.map((v) => v.elementId)), [violations]);
 
   const gridLines = useMemo(() => {
     let step = gridFt > 0 ? gridFt : 5;
@@ -222,10 +253,14 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, s
       if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); deleteSelected(); return; }
       if (!mod) {
         const k = e.key.toLowerCase();
-        if (k === "m") { setTool("measure"); return; }
-        if (k === "v") { setTool("select"); setMeasurePts([]); setMeasureCursor(null); return; }
-        if (k === "h") { setTool("pan"); setMeasurePts([]); setMeasureCursor(null); return; }
-        if (e.key === "Escape") { setMeasurePts([]); setMeasureCursor(null); setSelectedIds(new Set()); return; }
+        if (k === "m") { setTool("measure"); setDrawingBoundary(null); return; }
+        if (k === "b") { setTool("boundary"); setDrawingBoundary([]); return; }
+        if (k === "v") { setTool("select"); setMeasurePts([]); setMeasureCursor(null); setDrawingBoundary(null); return; }
+        if (k === "h") { setTool("pan"); setMeasurePts([]); setMeasureCursor(null); setDrawingBoundary(null); return; }
+        if (e.key === "Enter" && drawingBoundary && drawingBoundary.length >= 3) {
+          setBoundary(drawingBoundary); setDrawingBoundary(null); setTool("select"); return;
+        }
+        if (e.key === "Escape") { setMeasurePts([]); setMeasureCursor(null); setDrawingBoundary(null); setSelectedIds(new Set()); return; }
       }
       const step = e.shiftKey ? 10 : 1;
       const d = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
@@ -233,14 +268,40 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, s
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [elements, selectedIds, commit, undo, redo, deleteSelected, addElements]);
+  }, [elements, selectedIds, commit, undo, redo, deleteSelected, addElements, drawingBoundary]);
+
+  const buildLayoutV2 = (): LayoutV2 => {
+    const g = ([1, 2, 5, 10] as number[]).includes(gridFt) ? (gridFt as 1 | 2 | 5 | 10) : 5;
+    const bg = canvas.bgImage;
+    const pt = passthrough.current;
+    return {
+      v: 2,
+      canvas: { widthFt: canvas.widthFt, heightFt: canvas.heightFt, gridFt: g, displayUnit: "FT" },
+      ...(bg
+        ? {
+            underlay: {
+              url: bg.url, publicId: "", ftPerPx: bg.ftPerPx ?? 0,
+              offsetXFt: bg.offsetXFt ?? 0, offsetYFt: bg.offsetYFt ?? 0, rotationDeg: 0,
+              opacity: bg.opacity, locked: bg.locked ?? false,
+            },
+          }
+        : {}),
+      boundary: boundary && boundary.length >= 3 ? { points: boundary } : undefined,
+      obstacles,
+      terrain: pt.terrain, zones: pt.zones, pathways: pt.pathways,
+      elements,
+      ops: pt.ops, entryFlow: pt.entryFlow, layers: pt.layers, versions: pt.versions,
+    };
+  };
 
   const handleSave = async () => {
     if (!eventId || !saveAction) return;
+    if (violations.length > 0) {
+      setSaveStatus(`${violations.length} stall(s) cross the boundary or an obstacle — fix or override them first.`);
+      return;
+    }
     setSaving(true); setSaveStatus(null);
-    const res = validateLayout({ version: 1, canvas: { ...canvas, gridFt }, elements });
-    if (!res.ok) { setSaveStatus(res.error); setSaving(false); return; }
-    try { await saveAction(eventId, res.layout); setSaveStatus("Saved to event."); }
+    try { await saveAction(eventId, buildLayoutV2()); setSaveStatus("Saved to event."); }
     catch (err) { setSaveStatus(err instanceof Error ? err.message : "Save failed"); }
     finally { setSaving(false); }
   };
@@ -264,15 +325,32 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, s
   // marquee selection (select tool, empty-canvas drag) + distance tool (measure)
   const relPointer = () => stageRef.current?.getRelativePointerPosition() ?? null;
   const ptToFt = (p: { x: number; y: number }): Pt => [Math.round((p.x / pxPerFt) * 10) / 10, Math.round((p.y / pxPerFt) * 10) / 10];
-  const selectTool = (t: "select" | "pan" | "measure") => {
+  const selectTool = (t: "select" | "pan" | "measure" | "boundary") => {
     setTool(t);
     if (t !== "measure") { setMeasurePts([]); setMeasureCursor(null); }
+    if (t !== "boundary") setDrawingBoundary(null);
+    else setDrawingBoundary([]);
+  };
+  const finishBoundary = () => {
+    if (drawingBoundary && drawingBoundary.length >= 3) setBoundary(drawingBoundary);
+    setDrawingBoundary(null);
+    setTool("select");
   };
   const onStageMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
     if (e.target !== e.target.getStage()) return;
     const p = relPointer();
     if (!p) return;
     if (tool === "measure") { setMeasurePts((pts) => [...pts, ptToFt(p)]); return; }
+    if (tool === "boundary") {
+      const v = ptToFt(p);
+      // click near the first vertex (≤8 ft) closes the polygon
+      if (drawingBoundary && drawingBoundary.length >= 3) {
+        const [fx, fy] = drawingBoundary[0];
+        if (Math.hypot(v[0] - fx, v[1] - fy) <= 8) { finishBoundary(); return; }
+      }
+      setDrawingBoundary((pts) => [...(pts ?? []), v]);
+      return;
+    }
     if (tool !== "select") return;
     if (!(e.evt.shiftKey || e.evt.metaKey || e.evt.ctrlKey)) setSelectedIds(new Set());
     setMarquee({ x: p.x, y: p.y, w: 0, h: 0 });
@@ -281,6 +359,7 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, s
     const p = relPointer();
     if (p) setCursorFt(ptToFt(p));
     if (tool === "measure" && p) setMeasureCursor(ptToFt(p));
+    if (tool === "boundary" && p) setMeasureCursor(ptToFt(p)); // reuse cursor for the live boundary segment
     if (!marquee || !p) return;
     setMarquee((m) => (m ? { ...m, w: p.x - m.x, h: p.y - m.y } : m));
   };
@@ -366,7 +445,7 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, s
           onDelete={deleteSelected}
           onLoadTemplate={() => { reset(seedToEditor()); setSelectedIds(new Set()); }}
           onClear={() => { reset([]); setSelectedIds(new Set()); }}
-          getLayout={() => ({ version: 1 as const, canvas: { ...canvas, gridFt }, elements })}
+          getLayout={buildLayoutV2}
           onImport={(els) => { reset(els); setSelectedIds(new Set()); }}
         />
 
@@ -375,6 +454,7 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, s
           <Button variant={tool === "select" ? "secondary" : "ghost"} size="sm" className={iconBtn} title="Select (V)" onClick={() => selectTool("select")}><MousePointer2 className="size-4" /></Button>
           <Button variant={tool === "pan" ? "secondary" : "ghost"} size="sm" className={iconBtn} title="Pan (H)" onClick={() => selectTool("pan")}><Hand className="size-4" /></Button>
           <Button variant={tool === "measure" ? "secondary" : "ghost"} size="sm" className={iconBtn} title="Measure distance (M)" onClick={() => selectTool("measure")}><Ruler className="size-4" /></Button>
+          <Button variant={tool === "boundary" ? "secondary" : "ghost"} size="sm" className={iconBtn} title="Draw venue boundary (B)" onClick={() => selectTool("boundary")}><Spline className="size-4" /></Button>
           <span className="mx-1 h-6 w-px bg-border" />
           <Button variant="ghost" size="sm" className={iconBtn} title="Zoom out" onClick={() => zoom(0.8)}><ZoomOut className="size-4" /></Button>
           <span className="w-12 text-center text-xs text-muted-foreground">{Math.round(scale * 100)}%</span>
@@ -395,6 +475,30 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, s
           <span className="mx-1 h-6 w-px bg-border" />
           <Button variant="outline" size="sm" onClick={() => setBulkOpen(true)}><Grid2x2 className="size-4" /> Bulk grid</Button>
           <Button variant="outline" size="sm" onClick={exportPng}><ImageIcon className="size-4" /> PNG</Button>
+        </div>
+
+        {/* structure row — venue boundary + fixed obstacles (R2.5.3) */}
+        <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-border bg-card p-2 text-xs">
+          <span className="px-1 text-muted-foreground">Boundary:</span>
+          {tool === "boundary" ? (
+            <>
+              <span className="text-foreground">{(drawingBoundary?.length ?? 0)} pts — click the first point or Enter to close, Esc to cancel</span>
+              <Button variant="outline" size="sm" disabled={(drawingBoundary?.length ?? 0) < 3} onClick={finishBoundary}>Close</Button>
+            </>
+          ) : boundary ? (
+            <>
+              <span className="text-foreground">{boundary.length}-point polygon set</span>
+              <Button variant="ghost" size="sm" onClick={() => setBoundary(null)}>Clear</Button>
+              <Button variant="ghost" size="sm" onClick={() => selectTool("boundary")}>Redraw</Button>
+            </>
+          ) : (
+            <Button variant="ghost" size="sm" onClick={() => selectTool("boundary")}><Spline className="size-4" /> Draw boundary</Button>
+          )}
+          <span className="mx-1 h-6 w-px bg-border" />
+          <span className="px-1 text-muted-foreground"><TreePine className="inline size-3.5" /> Obstacle:</span>
+          {(["TREE", "POLE", "BUILDING", "WALL", "WATER_BODY"] as Obstacle["type"][]).map((t) => (
+            <Button key={t} variant="ghost" size="sm" onClick={() => addObstacle(t)}>{t.charAt(0) + t.slice(1).toLowerCase().replace(/_/g, " ")}</Button>
+          ))}
         </div>
 
         <div ref={wrapRef} className="overflow-hidden rounded-xl border border-border bg-card" style={{ touchAction: "none", maxHeight: "72vh" }}>
@@ -450,8 +554,8 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, s
                     height={el.heightFt * pxPerFt}
                     rotation={el.rotation}
                     fill={fillFor(el)}
-                    stroke={isSel ? "#D69A22" : "#352F26"}
-                    strokeWidth={isSel ? 2 : 1}
+                    stroke={violationIds.has(el.id) ? "#C0392B" : isSel ? "#D69A22" : "#352F26"}
+                    strokeWidth={violationIds.has(el.id) ? 2.5 : isSel ? 2 : 1}
                     cornerRadius={3}
                     opacity={el.kind === "infra" ? 0.85 : 1}
                     draggable={tool === "select"}
@@ -481,6 +585,26 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, s
               })}
               {elements.map((el) => (
                 <Text key={`t_${el.id}`} x={el.xFt * pxPerFt} y={el.yFt * pxPerFt + (el.heightFt * pxPerFt) / 2 - 4} width={el.widthFt * pxPerFt} align="center" text={el.label} fontSize={8} fill="#15120E" listening={false} />
+              ))}
+              {/* venue boundary polygon (set + in-progress) */}
+              {boundary && boundary.length >= 2 && (
+                <Line points={boundary.flatMap(([x, y]) => [x * pxPerFt, y * pxPerFt])} closed stroke="#01065B" strokeWidth={2} dash={[8, 5]} listening={false} />
+              )}
+              {drawingBoundary && drawingBoundary.length >= 1 && (
+                <Line
+                  points={[...drawingBoundary, ...(tool === "boundary" && measureCursor ? [measureCursor] : [])].flatMap(([x, y]) => [x * pxPerFt, y * pxPerFt])}
+                  stroke="#01065B" strokeWidth={2} dash={[8, 5]} listening={false}
+                />
+              )}
+              {/* fixed obstacles — draggable, muted brown */}
+              {obstacles.map((o) => (
+                <Rect
+                  key={o.id}
+                  x={o.xFt * pxPerFt} y={o.yFt * pxPerFt} width={o.widthFt * pxPerFt} height={o.heightFt * pxPerFt}
+                  fill="#7A5C43" opacity={0.55} stroke="#4E4639" strokeWidth={1} cornerRadius={2}
+                  draggable={tool === "select"}
+                  onDragEnd={(e) => setObstacles((arr) => arr.map((x) => (x.id === o.id ? { ...x, xFt: toFt(e.target.x()), yFt: toFt(e.target.y()) } : x)))}
+                />
               ))}
               {guides.map((g, i) => <Line key={`g${i}`} points={g.points} stroke="#868EFF" strokeWidth={1} dash={[4, 4]} listening={false} />)}
               {marquee && <Rect x={marquee.x} y={marquee.y} width={marquee.w} height={marquee.h} fill="#868EFF22" stroke="#868EFF" strokeWidth={1} listening={false} />}
@@ -526,6 +650,39 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, s
           onRelabel={(prefix, start) => { if (selectedIds.size) commit(relabel(elements, selectedIds, prefix, start)); }}
         />
         <SummaryPanel elements={elements} stallTypes={stallTypes} venueSqFt={canvas.widthFt * canvas.heightFt} />
+
+        {violations.length > 0 && (
+          <div className="space-y-2 rounded-xl border border-destructive/40 bg-destructive/5 p-4 text-sm">
+            <h2 className="flex items-center gap-1.5 font-display text-base font-semibold text-destructive">
+              <TriangleAlert className="size-4" /> {violations.length} placement issue{violations.length === 1 ? "" : "s"}
+            </h2>
+            <p className="text-xs text-muted-foreground">Fix these or override each to save.</p>
+            <ul className="space-y-1.5">
+              {violations.map((v) => (
+                <li key={v.elementId} className="flex items-center justify-between gap-2">
+                  <button type="button" className="truncate text-left hover:underline" onClick={() => setSelectedIds(new Set([v.elementId]))}>
+                    <span className="font-medium">{v.label}</span> <span className="text-muted-foreground">{v.detail}</span>
+                  </button>
+                  <Button variant="ghost" size="sm" onClick={() => setOverrides((s) => new Set(s).add(v.elementId))}>Override</Button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {obstacles.length > 0 && (
+          <div className="space-y-1.5 rounded-xl border border-border bg-card p-4 text-sm">
+            <h2 className="font-display text-base font-semibold">Obstacles ({obstacles.length})</h2>
+            <ul className="space-y-1">
+              {obstacles.map((o) => (
+                <li key={o.id} className="flex items-center justify-between gap-2">
+                  <span className="truncate">{o.label ?? o.type} <span className="text-xs text-muted-foreground">{o.widthFt}×{o.heightFt} ft</span></span>
+                  <Button variant="ghost" size="sm" onClick={() => setObstacles((arr) => arr.filter((x) => x.id !== o.id))}>Remove</Button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
 
       {bulkOpen && (

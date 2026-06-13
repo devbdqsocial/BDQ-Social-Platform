@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdminRole } from "@/server/auth/guard";
 import { createMap, saveMapLayout, attachMapToEvent } from "@/server/map/maps";
-import { validateLayout } from "@/lib/map/designer-ops";
+import { upgradeLayout, exceedsSizeCap } from "@/lib/map/layout-v2";
 
 const M_TO_FT = 3.28084;
 
@@ -32,9 +32,9 @@ export async function createMapAction(formData: FormData): Promise<void> {
 
 export async function saveMapLayoutAction(mapId: string, layout: unknown): Promise<void> {
   const session = await requireAdminRole();
-  const res = validateLayout(layout);
-  if (!res.ok) throw new Error(res.error);
-  await saveMapLayout(session, mapId, res.layout);
+  const v2 = upgradeLayout(layout);
+  if (exceedsSizeCap(v2)) throw new Error("This layout is too large to save — delete old versions.");
+  await saveMapLayout(session, mapId, v2);
   revalidatePath(`/admin/venue/maps/${mapId}`);
 }
 

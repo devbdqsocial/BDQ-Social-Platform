@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import { db } from "@/server/db";
 import { withAudit } from "@/server/audit";
 import type { Session } from "@/server/auth/guard";
-import { validateLayout, type CanvasMeta, type DesignerLayout, type EditorElement } from "@/lib/map/designer-ops";
+import { upgradeLayout, type LayoutV2 } from "@/lib/map/layout-v2";
 import { saveEventMap } from "@/server/events/service";
 
 /** Named, reusable maps (venue size + layout). Geometry stored in feet; attach to any event. */
@@ -53,7 +53,7 @@ export function createMap(session: Session, input: CreateMapInput) {
   }));
 }
 
-export function saveMapLayout(session: Session, mapId: string, layout: DesignerLayout) {
+export function saveMapLayout(session: Session, mapId: string, layout: LayoutV2) {
   return withAudit(session, { action: "UPDATE", entity: "EventMap", entityId: mapId }, async () => {
     const before = await db.eventMap.findUnique({ where: { id: mapId }, select: { name: true } });
     return {
@@ -81,13 +81,11 @@ export function attachMapToEvent(session: Session, eventId: string, mapId: strin
     run: async () => {
       const map = await db.eventMap.findUnique({ where: { id: mapId } });
       if (!map) throw new Error("Map not found");
-      const data = map.layoutJson as unknown as { canvas: CanvasMeta; elements: EditorElement[] };
+      const v2 = upgradeLayout(map.layoutJson);
       // catalog ids (MapElement) don't exist as per-event StallTypeDef — drop the link, keep geometry.
-      const elements = (data.elements ?? []).map((e) => ({ ...e, stallTypeId: undefined }));
-      const res = validateLayout({ version: 1, canvas: data.canvas, elements });
-      if (!res.ok) throw new Error(res.error);
+      const elements = v2.elements.map((e) => ({ ...e, stallTypeId: undefined }));
       await db.event.update({ where: { id: eventId }, data: { mapId } });
-      await saveEventMap(session, eventId, res.layout);
+      await saveEventMap(session, eventId, { ...v2, elements });
       return { result: { eventId, mapId }, after: { mapId } };
     },
   }));

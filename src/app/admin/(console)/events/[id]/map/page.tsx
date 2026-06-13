@@ -6,7 +6,7 @@ import { getByIdForAdmin } from "@/server/events/service";
 import { ensureStallTypes } from "@/server/map/stall-types";
 import { listTemplates } from "@/server/map/templates";
 import { type PaletteStallType } from "@/lib/map/designer-ops";
-import { editorFromLayout } from "@/lib/map/layout-v2";
+import { editorFromLayout, upgradeLayout } from "@/lib/map/layout-v2";
 import { MapDesignerLoader } from "@/components/map/MapDesignerLoader";
 import { StallTypesManager } from "./StallTypesManager";
 import { TemplatesBar } from "./TemplatesBar";
@@ -36,6 +36,7 @@ export default async function EventMapPage({ params }: { params: Promise<{ id: s
     event.mapLayout?.layoutJson,
     event.mapLayout?.opsLayerJson,
   );
+  const initialLayout = upgradeLayout(event.mapLayout?.layoutJson, event.mapLayout?.opsLayerJson);
 
   return (
     <div className="space-y-4">
@@ -59,6 +60,7 @@ export default async function EventMapPage({ params }: { params: Promise<{ id: s
         eventId={event.id}
         initialElements={initialElements}
         initialCanvas={initialCanvas}
+        initialLayout={initialLayout}
         stallTypes={palette}
         saveAction={saveMapAction}
         uploadAction={getMapUploadSignatureAction}

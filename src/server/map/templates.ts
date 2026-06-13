@@ -3,7 +3,8 @@ import { Prisma } from "@prisma/client";
 import { db } from "@/server/db";
 import { withAudit } from "@/server/audit";
 import type { Session } from "@/server/auth/guard";
-import { DEFAULT_CANVAS, validateLayout, type CanvasMeta, type EditorElement } from "@/lib/map/designer-ops";
+import { DEFAULT_CANVAS, type CanvasMeta, type EditorElement } from "@/lib/map/designer-ops";
+import { upgradeLayout } from "@/lib/map/layout-v2";
 import { saveEventMap } from "@/server/events/service";
 
 /** Reusable layout templates: snapshot an event's canvas + elements + stall types, clone onto another. */
@@ -55,13 +56,12 @@ export function applyTemplate(session: Session, eventId: string, templateId: str
         });
         if (st.id) idMap.set(st.id, row.id);
       }
-      const elements = (data.elements ?? []).map((el) => ({
+      const v2 = upgradeLayout(tpl.layoutJson);
+      const elements = v2.elements.map((el) => ({
         ...el,
         stallTypeId: el.stallTypeId ? idMap.get(el.stallTypeId) : undefined,
       }));
-      const res = validateLayout({ version: 1, canvas: data.canvas ?? DEFAULT_CANVAS, elements });
-      if (!res.ok) throw new Error(res.error);
-      await saveEventMap(session, eventId, res.layout);
+      await saveEventMap(session, eventId, { ...v2, elements });
       return { result: { eventId }, after: { templateId } };
     },
   }));
