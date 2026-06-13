@@ -12,6 +12,7 @@ import { mapViolations, pathwayWarnings, MIN_PATH_WIDTH } from "@/lib/map/valida
 import { alignElements, distributeElements, nudge, type AlignMode } from "@/lib/map/designer-actions";
 import { INFRA_COLOR, STALL_STATUS_COLORS } from "@/lib/stall-colors";
 import { pathLength, type Pt } from "@/lib/map/geometry";
+import { scoreLayout } from "@/server/map/scoring";
 import type { UploadSignature } from "@/lib/cloudinary";
 import { useHistory } from "../useHistory";
 
@@ -114,6 +115,7 @@ export function useDesignerState({
 
   // UI flags
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [salesView, setSalesView] = useState(false);
   const [calibrating, setCalibrating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
@@ -173,6 +175,10 @@ export function useDesignerState({
     },
     [colorById],
   );
+
+  // Sales view: stall scores (map-system §9.1). Recomputed only when geometry/zones/pathways change.
+  const scores = useMemo(() => scoreLayout(elements, zones, pathways), [elements, zones, pathways]);
+  const selectedScore = selected && selected.kind === "stall" ? scores.get(selected.id) ?? null : null;
 
   const calibrated = !!(canvas.bgImage && (canvas.bgImage.ftPerPx ?? 0) > 0);
   const measureLine = useMemo(() => [...measurePts, ...(tool === "measure" && measureCursor ? [measureCursor] : [])], [measurePts, tool, measureCursor]);
@@ -405,6 +411,8 @@ export function useDesignerState({
     layers, toggleLayerVisible, toggleLayerLock, setAllLayersVisible, layerCounts,
     // derived
     violations, violationIds, pathWarnings, gridLines, fillFor,
+    // sales view (scoring §9.1)
+    salesView, setSalesView, scores, selectedScore,
     // guides + marquee + handlers
     guides, setGuides, marquee, patchOne, onTransformEnd, onElementClick, onStageMouseDown, onStageMouseMove, onStageMouseUp,
     // element actions

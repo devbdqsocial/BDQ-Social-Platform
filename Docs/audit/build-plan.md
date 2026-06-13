@@ -366,8 +366,16 @@ build on it.
       history `commit`), wired via `onBulkPatch`. New `designer-actions.test.ts` covers the
       geometry on fixtures (align bbox math, distribute gap equalization, bulk patch isolation,
       relabel ordering). Verify: 52f/225t green; build OK; designer 200; 0err/10warn.
-- [ ] **R2.5.10 Scoring engine** (8h): `server/map/scoring.ts` pure lib with §9.1 weight table
-      + `describeStall`; Sales-view badges (`S` toggle). Verify: weight tests; badge tiers.
+- [x] **R2.5.10 Scoring engine** (8h) ✓ — `server/map/scoring.ts` pure lib: the §9.1 weight table
+      as spec constants (entrance 25 / anchor 20 / frontage 20 / corner 15 / visibility 10 / zone
+      10 = 100), `buildScoringContext` (classifies gates/anchors, ranks zones into price tertiles),
+      6 component scorers, `scoreStall`/`scoreLayout`, `describeStall` (≤3 strongest bullets,
+      shared with the vendor "why this stall" in §11), and `TIER_HEX`. Sales view: `salesView`
+      slice + `scores`/`selectedScore` selectors in the hook, a `Sales` toggle + `S` shortcut,
+      tier-coloured score badges per stall in `DesignerCanvas`, and a full breakdown
+      (tier · bullets · per-component bars) in the inspector. 10 scoring tests on fixtures (weights
+      sum, falloffs, corner/frontage/zone geometry, tier ordering). Verify: 53f/237t green; build
+      OK; both designers 200; 0err/10warn.
 - [ ] **R2.5.11 Price suggestions** (6h): §9.2 formula (`round50`, ±25% band), inspector chip +
       Apply (single/bulk/zone) through audited mutation. Verify: formula tests; AuditLog row
       per apply; **no auto-apply path exists** (grep).
@@ -506,3 +514,4 @@ pages · axe pass.
 | 2026-06-13 | build session 5 | R2.5.5 refactor (owner-mandated) | done; MapDesigner 826→81 lines; useDesignerState single source of truth + DesignerContext + 4 components + LayersPanel; map-architecture-report.md; **debt cleared, ready for next 10 features** | 51f/218t (no test touched); build OK; both designers 200 |
 | 2026-06-13 | build session 5 (cont.) | R2.5.8 (terrain) | done; **first feature through the slice+panel pattern** — terrain.ts (6 types) + a hook slice + a controls palette + a 15%-opacity under-render gated by the terrain layer; no new plumbing, proving the refactor's promise | 51f/218t green; build OK; designer 200 |
 | 2026-06-13 | build session 5 (cont.) | R2.5.9 (align/distribute + bulk v2) | done; align/distribute pre-existed; added bulk resize/type/status/price (pure bulkPatch + inspector BulkEditForm) + first designer-actions.test.ts (align/distribute/bulk/relabel on fixtures) | 52f/225t green; build OK; designer 200 |
+| 2026-06-13 | build session 5 (cont.) | R2.5.10 (scoring engine) | done; **sales-value cluster begins** — scoring.ts (§9.1 weight constants, 6 components, describeStall) + Sales view (S toggle, tier badges, inspector breakdown); 10 fixture tests | 53f/237t green; build OK; both designers 200 |

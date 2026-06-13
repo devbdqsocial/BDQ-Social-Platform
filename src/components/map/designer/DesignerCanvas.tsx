@@ -3,6 +3,7 @@
 import { Group, Image as KonvaImage, Layer, Line, Rect, Stage, Text, Transformer } from "react-konva";
 import { ZONE_COLOR_HEX, polygonCentroid } from "@/lib/map/zones";
 import { TERRAIN_COLOR_HEX } from "@/lib/map/terrain";
+import { TIER_HEX } from "@/server/map/scoring";
 import { snapToNeighbours, nudge } from "@/lib/map/designer-actions";
 import { useDesigner } from "./DesignerContext";
 
@@ -13,6 +14,7 @@ export function DesignerCanvas() {
     width, height, scale, pxPerFt, tool, canvas, bgImg, calibrated, layers,
     elements, zones, pathways, terrain, boundary, obstacles, drawing, guides, marquee,
     measureLine, measureDist, measureCursor, selectedIds, violationIds, fillFor,
+    salesView, scores,
     stageRef, trRef, toFt, zoom, patchBg, commit, setSelectedIds, setGuides,
     onStageMouseDown, onStageMouseMove, onStageMouseUp, onElementClick, onTransformEnd,
     finishDrawing, isDrawTool, isClosed,
@@ -114,6 +116,20 @@ export function DesignerCanvas() {
             const lid = el.kind === "infra" ? "infra" : "stalls";
             if (!layers[lid].visible) return null;
             return <Text key={`t_${el.id}`} x={el.xFt * pxPerFt} y={el.yFt * pxPerFt + (el.heightFt * pxPerFt) / 2 - 4} width={el.widthFt * pxPerFt} align="center" text={el.label} fontSize={8} fill="#15120E" listening={false} />;
+          })}
+
+          {/* Sales view (S): score badge per stall, tier-coloured (map-system §9.1) */}
+          {salesView && layers.stalls.visible && elements.map((el) => {
+            if (el.kind !== "stall") return null;
+            const sc = scores.get(el.id);
+            if (!sc) return null;
+            const bx = el.xFt * pxPerFt + 1, by = el.yFt * pxPerFt + 1;
+            return (
+              <Group key={`sc_${el.id}`} listening={false}>
+                <Rect x={bx} y={by} width={26} height={13} fill={TIER_HEX[sc.tier]} cornerRadius={2} opacity={0.92} />
+                <Text x={bx} y={by + 2} width={26} align="center" text={String(sc.total)} fontSize={9} fontStyle="bold" fill="#FFFFFF" />
+              </Group>
+            );
           })}
 
           {/* pathways — thick rounded strips (width = stroke); emergency = red dashed */}

@@ -4,7 +4,7 @@ import {
   ZoomIn, ZoomOut, Maximize, Undo2, Redo2, Hand, MousePointer2, Ruler, Spline, TreePine, Shapes, Route,
   AlignHorizontalJustifyStart, AlignHorizontalJustifyCenter, AlignHorizontalJustifyEnd,
   AlignVerticalJustifyStart, AlignVerticalJustifyCenter, AlignVerticalJustifyEnd,
-  AlignHorizontalSpaceBetween, AlignVerticalSpaceBetween, Grid2x2, Image as ImageIcon, Mountain,
+  AlignHorizontalSpaceBetween, AlignVerticalSpaceBetween, Grid2x2, Image as ImageIcon, Mountain, Gauge,
 } from "lucide-react";
 import { createInfra, createStall, seedToEditor } from "@/lib/map/designer-ops";
 import type { Obstacle, Pathway } from "@/lib/map/layout-v2";
@@ -27,6 +27,7 @@ export function DesignerControls() {
     tool, selectTool, zoom, scale, fit, undo, redo, canUndo, canRedo, doAlign, doDistribute,
     setBulkOpen, exportPng, drawing, isDrawTool, isClosed, finishDrawing, boundary, setBoundary,
     pathType, setPathType, addObstacle, duplicateSelected, terrainType, setTerrainType,
+    salesView, setSalesView,
   } = d;
 
   return (
@@ -122,6 +123,7 @@ export function DesignerControls() {
         <span className="mx-1 h-6 w-px bg-border" />
         <Button variant="outline" size="sm" onClick={() => setBulkOpen(true)}><Grid2x2 className="size-4" /> Bulk grid</Button>
         <Button variant="outline" size="sm" onClick={exportPng}><ImageIcon className="size-4" /> PNG</Button>
+        <Button variant={salesView ? "secondary" : "outline"} size="sm" title="Sales view — stall scores (S)" onClick={() => setSalesView((v) => !v)}><Gauge className="size-4" /> Sales</Button>
       </div>
 
       {/* structure row — boundary + zones + pathways + obstacles */}

@@ -11,7 +11,7 @@ import type { DesignerApi } from "./useDesignerState";
 export function useDesignerKeyboard(d: DesignerApi) {
   const {
     elements, selectedIds, setSelectedIds, undo, redo, commit, copySelected, pasteClipboard,
-    duplicateSelected, deleteSelected, nudgeSelected, selectTool,
+    duplicateSelected, deleteSelected, nudgeSelected, selectTool, setSalesView,
     setMeasurePts, setMeasureCursor, setDrawing, drawing, tool, finishDrawing, isClosed,
   } = d;
 
@@ -34,6 +34,7 @@ export function useDesignerKeyboard(d: DesignerApi) {
         if (k === "p") { selectTool("pathway"); return; }
         if (k === "v") { selectTool("select"); return; }
         if (k === "h") { selectTool("pan"); return; }
+        if (k === "s") { setSalesView((prev) => !prev); return; }
         if (e.key === "Enter" && drawing && drawing.length >= (isClosed(tool) ? 3 : 2)) { finishDrawing(drawing); return; }
         if (e.key === "Escape") { setMeasurePts([]); setMeasureCursor(null); setDrawing(null); setSelectedIds(new Set()); return; }
       }

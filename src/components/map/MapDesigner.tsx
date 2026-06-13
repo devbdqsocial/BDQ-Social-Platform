@@ -52,6 +52,7 @@ export default function MapDesigner(props: MapDesignerProps = {}) {
             element={selected}
             multiCount={selectedIds.size}
             stallTypes={stallTypes}
+            score={d.selectedScore}
             onChange={(p) => selected && commit(patchOne(selected.id, p))}
             onBulkPatch={(p) => { if (selectedIds.size) commit(bulkPatch(elements, selectedIds, p)); }}
             onRelabel={(prefix, start) => { if (selectedIds.size) commit(relabel(elements, selectedIds, prefix, start)); }}

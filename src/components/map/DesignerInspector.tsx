@@ -2,15 +2,45 @@
 
 import { useState } from "react";
 import type { EditorElement, PaletteStallType } from "@/lib/map/designer-ops";
+import { describeStall, TIER_HEX, type StallScore } from "@/server/map/scoring";
 import { Button } from "@/components/ui/button";
 
 interface Props {
   element: EditorElement | null;
   multiCount: number;
   stallTypes: PaletteStallType[];
+  score: StallScore | null;
   onChange: (patch: Partial<EditorElement>) => void;
   onBulkPatch: (patch: Partial<EditorElement>) => void;
   onRelabel: (prefix: string, start: number) => void;
+}
+
+function ScoreBreakdown({ score }: { score: StallScore }) {
+  const bullets = describeStall(score);
+  return (
+    <div className="space-y-2 border-t border-border pt-3">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-medium text-muted-foreground">Stall score</p>
+        <span className="rounded px-2 py-0.5 text-xs font-bold text-white" style={{ background: TIER_HEX[score.tier] }}>{score.total} · {score.tier}</span>
+      </div>
+      {bullets.length > 0 && (
+        <ul className="space-y-0.5 text-xs text-foreground">
+          {bullets.map((b, i) => <li key={i}>· {b}</li>)}
+        </ul>
+      )}
+      <div className="space-y-0.5">
+        {score.components.map((c) => (
+          <div key={c.key} className="flex items-center gap-2 text-[11px] text-muted-foreground">
+            <span className="w-16 capitalize">{c.key}</span>
+            <span className="h-1.5 flex-1 overflow-hidden rounded bg-muted">
+              <span className="block h-full bg-primary" style={{ width: `${(c.score / c.max) * 100}%` }} />
+            </span>
+            <span className="w-9 text-right tabular-nums">{Math.round(c.score)}/{c.max}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 const fieldCls = "h-9 rounded-md border border-border bg-background px-2 text-sm text-foreground";
@@ -92,7 +122,7 @@ function BulkEditForm({ count, stallTypes, onBulkPatch }: { count: number; stall
   );
 }
 
-export function DesignerInspector({ element, multiCount, stallTypes, onChange, onBulkPatch, onRelabel }: Props) {
+export function DesignerInspector({ element, multiCount, stallTypes, score, onChange, onBulkPatch, onRelabel }: Props) {
   if (multiCount > 1) {
     return (
       <aside className="space-y-3 rounded-xl border border-border bg-card p-4">
@@ -152,6 +182,7 @@ export function DesignerInspector({ element, multiCount, stallTypes, onChange, o
               <option value="BLOCKED">Blocked / reserved</option>
             </select>
           </label>
+          {score && <ScoreBreakdown score={score} />}
         </>
       )}
     </aside>
