@@ -15,6 +15,7 @@ import { pathLength, type Pt } from "@/lib/map/geometry";
 import { scoreLayout, suggestPaise } from "@/server/map/scoring";
 import { zoneOf } from "@/lib/map/zones";
 import { searchLayout } from "@/lib/map/search";
+import { exportFilename } from "@/lib/map/map-export";
 import { quintileBounds, heatmapFill, type HeatmapMode } from "@/lib/map/heatmap";
 import { diffStats, versionCapState, type VersionMeta, type VersionSnapshot } from "@/lib/map/versions";
 import type { UploadSignature } from "@/lib/cloudinary";
@@ -333,12 +334,27 @@ export function useDesignerState({
 
   const searchMatches = useMemo(() => searchLayout(searchQuery, elements, zones), [searchQuery, elements, zones]);
 
+  const mapName = eventMode ? "event-map" : "venue-map";
+
+  // Capture the WHOLE canvas (not just the viewport) regardless of zoom/pan, so exports and the
+  // PDF scale bar are deterministic (map-system §12 / R2.5.15).
+  const captureFullCanvas = useCallback((): { dataUrl: string; widthFt: number; heightFt: number } | null => {
+    const stage = stageRef.current;
+    if (!stage) return null;
+    const dataUrl = stage.toDataURL({
+      x: stage.x(), y: stage.y(),
+      width: canvas.widthFt * pxPerFt * scale, height: canvas.heightFt * pxPerFt * scale,
+      pixelRatio: 2 / scale,
+    });
+    return { dataUrl, widthFt: canvas.widthFt, heightFt: canvas.heightFt };
+  }, [canvas.widthFt, canvas.heightFt, pxPerFt, scale]);
+
   const exportPng = useCallback(() => {
-    const uri = stageRef.current?.toDataURL({ pixelRatio: 2 });
-    if (!uri) return;
+    const cap = captureFullCanvas();
+    if (!cap) return;
     const a = document.createElement("a");
-    a.href = uri; a.download = "event-layout.png"; a.click();
-  }, []);
+    a.href = cap.dataUrl; a.download = exportFilename("print", mapName, new Date(), "png"); a.click();
+  }, [captureFullCanvas, mapName]);
 
   const onUploadBg = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -507,6 +523,8 @@ export function useDesignerState({
     compareId, setCompareId, compareSnapshot, compareDiff,
     // vendor preview + search (§9.4 / §11 / R2.5.14)
     previewMode, setPreviewMode, pulseId, searchQuery, setSearchQuery, searchMatches, focusOn,
+    // exports (§12 / R2.5.15)
+    mapName, captureFullCanvas,
     // guides + marquee + handlers
     guides, setGuides, marquee, patchOne, onTransformEnd, onElementClick, onStageMouseDown, onStageMouseMove, onStageMouseUp,
     // element actions

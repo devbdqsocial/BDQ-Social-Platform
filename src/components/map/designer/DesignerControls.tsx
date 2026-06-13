@@ -4,8 +4,11 @@ import {
   ZoomIn, ZoomOut, Maximize, Undo2, Redo2, Hand, MousePointer2, Ruler, Spline, TreePine, Shapes, Route,
   AlignHorizontalJustifyStart, AlignHorizontalJustifyCenter, AlignHorizontalJustifyEnd,
   AlignVerticalJustifyStart, AlignVerticalJustifyCenter, AlignVerticalJustifyEnd,
-  AlignHorizontalSpaceBetween, AlignVerticalSpaceBetween, Grid2x2, Image as ImageIcon, Mountain, Gauge, Eye,
+  AlignHorizontalSpaceBetween, AlignVerticalSpaceBetween, Grid2x2, Image as ImageIcon, Mountain, Gauge, Eye, Download,
 } from "lucide-react";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { EXPORT_VARIANTS, VARIANT_LABEL, type ExportVariant } from "@/lib/map/map-export";
+import { downloadMapPdf } from "./MapPdf";
 import { createInfra, createStall, seedToEditor } from "@/lib/map/designer-ops";
 import type { Obstacle, Pathway } from "@/lib/map/layout-v2";
 import { TERRAIN_TYPES, terrainLabel, type TerrainType } from "@/lib/map/terrain";
@@ -29,7 +32,13 @@ export function DesignerControls() {
     pathType, setPathType, addObstacle, duplicateSelected, terrainType, setTerrainType,
     salesView, setSalesView, heatmapMode, setHeatmapMode,
     previewMode, setPreviewMode, searchQuery, setSearchQuery, searchMatches, focusOn,
+    captureFullCanvas, mapName,
   } = d;
+
+  const exportPdf = async (v: ExportVariant) => {
+    const cap = captureFullCanvas();
+    if (cap) await downloadMapPdf(v, cap, mapName);
+  };
 
   return (
     <>
@@ -141,7 +150,18 @@ export function DesignerControls() {
           )}
         </div>
         <Button variant="outline" size="sm" onClick={() => setBulkOpen(true)}><Grid2x2 className="size-4" /> Bulk grid</Button>
-        <Button variant="outline" size="sm" onClick={exportPng}><ImageIcon className="size-4" /> PNG</Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm"><Download className="size-4" /> Export</Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={exportPng}><ImageIcon className="mr-2 size-4" /> PNG (2×)</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            {EXPORT_VARIANTS.map((v) => (
+              <DropdownMenuItem key={v} onClick={() => exportPdf(v)}>{VARIANT_LABEL[v]} (PDF)</DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
         <Button variant={previewMode ? "secondary" : "outline"} size="sm" title="Vendor preview — hide admin layers" onClick={() => setPreviewMode((v) => !v)}><Eye className="size-4" /> Preview</Button>
         <Button variant={salesView ? "secondary" : "outline"} size="sm" title="Sales view — stall scores (S)" disabled={previewMode} onClick={() => setSalesView((v) => !v)}><Gauge className="size-4" /> Sales</Button>
         {salesView && (

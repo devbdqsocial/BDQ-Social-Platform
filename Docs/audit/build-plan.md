@@ -417,9 +417,18 @@ build on it.
       with the global palette; the in-designer search is complete and is the load-bearing half.
       Verify: preview hides admin layers; typing a stall label focuses+pulses it; 56f/255t green;
       build OK; both designers 200; 0err/10warn.
-- [ ] **R2.5.15 Exports** (8h): PNG 2×; PDF vendor/ops/print via `@react-pdf/renderer`
-      (existing dep) with title block + 50 ft scale bar from calibration; naming convention.
-      Verify: 4 artifacts from the seed map; scale bar measures correctly against ftPerPx.
+- [x] **R2.5.15 Exports** (8h) ✓ — pure `lib/map/map-export.ts` (naming convention
+      `bdq-map-{slug}-{variant}-{YYYYMMDD}.{ext}`, `scaleBarPoints`, `fitImageBox`) + 6 tests.
+      A `captureFullCanvas` store helper grabs the **whole** canvas regardless of zoom/pan (so
+      exports + scale bar are deterministic); `exportPng` now writes a 2× full-canvas PNG with the
+      naming convention. `MapPdf.tsx` builds an A4-landscape PDF via `@react-pdf/renderer` — title
+      block + the capture + a true-scale **50 ft bar** (from canvas feet, exact once calibrated) +
+      footer; an Export dropdown offers PNG + Vendor/Ops/Print PDFs. Scale bar correctness is
+      locked by `scaleBarPoints` tests; @react-pdf bundles clean (build + dev 200). **Flagged:**
+      the **ops** variant's gate/medical/power content lands with R2.5.16 (ops objects don't exist
+      yet); the vendor/print variants are complete, and the layer set follows the current view
+      (enable Preview for the vendor lens). Verify: 57f/261t green; build OK; both designers 200;
+      0err/10warn.
 - [ ] **R2.5.16 Entry-flow + ops polish + validation panel** (10h): entry objects w/ lanes,
       throughput calc (`lib/map/throughput.ts`, tested), ops objects palette in ops mode (`O`),
       validation drawer consolidating §4/§7/§8 checks + duplicate-label + unpriced-stall.
@@ -551,3 +560,4 @@ pages · axe pass.
 | 2026-06-13 | build session 5 (cont.) | R2.5.12 (revenue heatmap) | done; heatmap.ts (quintile ramp) + price/score heatmap mode + HeatmapLegend; occupancy/potential already in SummaryPanel; **partial-defer:** booked-vs-potential zone cards → console revenue view (no booked stalls at design time) | 54f/245t green; build OK; both designers 200 |
 | 2026-06-13 | build session 5 (cont.) | R2.5.13 (versions) | done; versions.ts (snapshot/diff/cap) + reactive versions state + save/restore(undoable)/delete/compare; VersionsPanel + dashed ghost overlay; round-trips via v2 | 55f/250t green; build OK; both designers 200 |
 | 2026-06-13 | build session 5 (cont.) | R2.5.14 (vendor preview + search) | done; Preview lens (hides underlay/sales/heatmap/ghost/validation) + search.ts (label/zone match) + search box, `/` shortcut, focusOn 1.5× pulse; **deferred:** ⌘K palette entries (cross-surface) | 56f/255t green; build OK; both designers 200 |
+| 2026-06-13 | build session 5 (cont.) | R2.5.15 (exports) | done; map-export.ts (naming/scale-bar/fit) + captureFullCanvas + MapPdf (react-pdf, title + 50ft bar) + Export dropdown (PNG 2× + vendor/ops/print PDF); **flagged:** ops-PDF content awaits R2.5.16 ops objects | 57f/261t green; build OK; both designers 200 |
