@@ -41,7 +41,7 @@
 | D31 | `components/motion` | swiper (1 consumer) + framer-motion (1 consumer) in deps | P2 | CSS scroll-snap + CSS transition; remove deps | R2.3 |
 | D32 | Event detail tabs | 237-line page with 7 inline tab sections (`admin/(console)/events/[id]/page.tsx`) | P2 | Routed sub-tabs (admin-portal §3) | R5.1 |
 | D33 | `MapDesigner.tsx` | 24KB monolith: state, keyboard, panels, tools in one file | P2 | Split per map-system §13 (`useDesignerState`, panels, tools) | R2.5.1 |
-| D34 | Designer bg image | Underlay renders unscaled (`canvas.bgImage` has no calibration) — drawn objects don't match the photo's real ground | P1 | 2-point calibration + ftPerPx + locked layer (map-system §2) | R2.5.2 |
+| D34 ✅ | Designer bg image | Underlay renders unscaled (`canvas.bgImage` has no calibration) — drawn objects don't match the photo's real ground | P1 | 2-point calibration + ftPerPx + locked layer (map-system §2) | R2.5.2 ✓ |
 | D35 | Vendor stall sheet | Shows only label/price — no zone, no distance, no "why this stall"; sells premium stalls on faith | P1 | Scoring-driven sheet per map-system §11 | R4.1 |
 | D36 | Map exports | PNG-only, single variant; no scale bar, no vendor/ops/print outputs | P2 | Export variants + scale bar (map-system §12) | R2.5.15 |
 

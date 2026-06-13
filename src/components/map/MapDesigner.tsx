@@ -24,6 +24,7 @@ import { DesignerToolbar } from "./DesignerToolbar";
 import { DesignerInspector } from "./DesignerInspector";
 import { SummaryPanel } from "./SummaryPanel";
 import { BulkGridDialog } from "./BulkGridDialog";
+import { CalibrationModal } from "./CalibrationModal";
 import { useHistory } from "./useHistory";
 
 export interface MapDesignerProps {
@@ -68,6 +69,7 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, s
   const [guides, setGuides] = useState<{ points: number[] }[]>([]);
   const [marquee, setMarquee] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [calibrating, setCalibrating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
   const [bgImg, setBgImg] = useState<HTMLImageElement | null>(null);
@@ -103,6 +105,14 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, s
       setSaveStatus("Image upload failed.");
     }
   };
+
+  const patchBg = (p: Partial<NonNullable<CanvasMeta["bgImage"]>>) =>
+    setCanvas((c) => (c.bgImage ? { ...c, bgImage: { ...c.bgImage, ...p } } : c));
+  const applyCalibration = (ftPerPx: number) => {
+    patchBg({ ftPerPx, offsetXFt: 0, offsetYFt: 0, locked: true });
+    setCalibrating(false);
+  };
+  const calibrated = !!(canvas.bgImage && (canvas.bgImage.ftPerPx ?? 0) > 0);
 
   const colorById = useMemo(() => Object.fromEntries(stallTypes.map((t) => [t.id, t.color])), [stallTypes]);
   const fillFor = useCallback(
@@ -300,12 +310,23 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, s
               <input ref={bgFileRef} type="file" accept="image/*" className="hidden" onChange={onUploadBg} />
               {canvas.bgImage && (
                 <>
+                  <Button type="button" variant={calibrated ? "outline" : "default"} size="sm" onClick={() => setCalibrating(true)}>
+                    {calibrated ? "Recalibrate" : "Calibrate"}
+                  </Button>
+                  {calibrated && (
+                    <Button type="button" variant="ghost" size="sm" onClick={() => patchBg({ locked: !canvas.bgImage?.locked })}>
+                      {canvas.bgImage.locked ? "Unlock position" : "Lock position"}
+                    </Button>
+                  )}
                   <label className="flex flex-col gap-1 text-xs text-muted-foreground">
                     Opacity
-                    <input type="range" min={0} max={1} step={0.1} value={canvas.bgImage.opacity}
-                      onChange={(e) => setCanvas((c) => (c.bgImage ? { ...c, bgImage: { ...c.bgImage, opacity: Number(e.target.value) } } : c))} />
+                    <input type="range" min={0.2} max={1} step={0.1} value={canvas.bgImage.opacity}
+                      onChange={(e) => patchBg({ opacity: Number(e.target.value) })} />
                   </label>
                   <Button type="button" variant="ghost" size="sm" onClick={() => setCanvas((c) => ({ ...c, bgImage: undefined }))}>Remove</Button>
+                  <p className="pb-1.5 text-xs" style={{ color: calibrated ? undefined : "var(--warning)" }}>
+                    {calibrated ? `1 px = ${(canvas.bgImage.ftPerPx ?? 0).toFixed(3)} ft` : "Not to scale — calibrate"}
+                  </p>
                 </>
               )}
             </div>
@@ -370,11 +391,30 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, s
           >
             <Layer listening={false}>
               <Rect x={0} y={0} width={width} height={height} fill="#FAFAFA" />
-              {bgImg && <KonvaImage image={bgImg} x={0} y={0} width={width} height={height} opacity={canvas.bgImage?.opacity ?? 0.5} />}
               {gridLines.map((l, i) => <Line key={i} points={l.points} stroke="#E5E7EB" strokeWidth={1} />)}
               {/* venue boundary box (the area to design inside) */}
               <Rect x={0} y={0} width={width} height={height} stroke="#94A3B8" strokeWidth={2} dash={[6, 4]} />
             </Layer>
+            {/* Underlay: full-canvas until calibrated, then true-scale (ftPerPx) at its offset;
+                draggable to position while unlocked. Own layer so it can listen when unlocked. */}
+            {bgImg && (
+              <Layer listening={calibrated && !canvas.bgImage?.locked}>
+                {calibrated ? (
+                  <KonvaImage
+                    image={bgImg}
+                    x={(canvas.bgImage?.offsetXFt ?? 0) * pxPerFt}
+                    y={(canvas.bgImage?.offsetYFt ?? 0) * pxPerFt}
+                    width={bgImg.naturalWidth * (canvas.bgImage!.ftPerPx ?? 0) * pxPerFt}
+                    height={bgImg.naturalHeight * (canvas.bgImage!.ftPerPx ?? 0) * pxPerFt}
+                    opacity={canvas.bgImage?.opacity ?? 0.7}
+                    draggable={!canvas.bgImage?.locked}
+                    onDragEnd={(e) => patchBg({ offsetXFt: toFt(e.target.x()), offsetYFt: toFt(e.target.y()) })}
+                  />
+                ) : (
+                  <KonvaImage image={bgImg} x={0} y={0} width={width} height={height} opacity={canvas.bgImage?.opacity ?? 0.5} />
+                )}
+              </Layer>
+            )}
             <Layer>
               {elements.map((el) => {
                 const isSel = selectedIds.has(el.id);
@@ -443,6 +483,15 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, s
           stallTypes={stallTypes}
           onClose={() => setBulkOpen(false)}
           onCreate={(type, opts) => { addElements(makeGrid(type, opts)); setBulkOpen(false); }}
+        />
+      )}
+
+      {calibrating && canvas.bgImage && (
+        <CalibrationModal
+          url={canvas.bgImage.url}
+          knownVenueFt={{ widthFt: canvas.widthFt, heightFt: canvas.heightFt }}
+          onApply={applyCalibration}
+          onClose={() => setCalibrating(false)}
         />
       )}
     </div>

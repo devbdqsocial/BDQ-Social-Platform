@@ -290,9 +290,18 @@ build on it.
       a single-consumer hook now would be a speculative abstraction (CLAUDE.md §2); the v2
       schema is the load-bearing R2.5.1 acceptance and is complete. Full v2 save round-trip
       (preserving zones/pathways through a save) lands with each sub-collection editor (R2.5.6+).
-- [ ] **R2.5.2 Calibration** (8h): upload→2-point modal (loupe zoom)→distance input (ft/m)→
-      **confirm step with computed venue dims**→position+lock; banner when uncalibrated.
-      Verify: known fixture (100px=50ft) → ftPerPx 0.5; stall drawn over photo = true footprint.
+- [x] **R2.5.2 Calibration** (8h) ✓: `lib/map/calibration.ts` pure math (`computeFtPerPx`,
+      `imageDimsFt`, `toFeet` ft/m, 6 tests incl. 100px=50ft→0.5) + `CalibrationModal`
+      (2-point click on the photo → distance+unit → **confirm step showing computed venue dims
+      vs known** [mis-calibration guard, failure-analysis #28] → apply) + designer Underlay
+      group (Calibrate/Recalibrate, Lock/Unlock, opacity 0.2–1, "1 px = X ft" / "Not to scale"
+      banner) + **true-scale canvas render** (calibrated → image natural-px × ftPerPx × pxPerFt
+      at offset, draggable-to-position while unlocked; uncalibrated → full-canvas fallback).
+      **Persistence (decision):** calibration rides on the extended v1 `bgImage`
+      (`{ftPerPx, offsetXFt, offsetYFt, locked}`) — save action/normalize untouched;
+      `upgradeLayout`/`editorFromLayout` bridge it to/from the v2 underlay. Full v2 save
+      migrates when zones/pathways need persisting (R2.5.6+).
+      Verify: 48f/200t green; build OK; designer page 200; typecheck clean.
 - [ ] **R2.5.3 Boundary + obstacles** (8h): polygon pen (≥3 pts, vertex edit), obstacle palette
       (TREE/POLE/BUILDING/WALL/WATER_BODY), out-of-bounds + overlap save-block w/ per-item
       override. Verify: fixture violations block; override saves + recorded.
@@ -440,3 +449,4 @@ pages · axe pass.
 | 2026-06-13 | build session 2 (cont.) | R2.1 + R2.3 | done; clamp() scale, clay purge, ESLint guardrails, swiper dropped, GSAP reduced-motion gate | 46f/184t green; build green; lint 0 errors |
 | 2026-06-13 | build session 3 | R2.2 (D11/D13/D14/D16/D17) | done; **PHASE R2 COMPLETE**; status-badges consolidated, 7 tables relocated, ~30-file date sweep, RpaPageHeader/RpaEmpty, toResult+ActionForm on critical forms; remaining low-traffic forms deferred to R5 (cut pages excluded) | 46f/184t green; build 82 pages; 0 err/10 warn; dev smoke 10 routes 200 |
 | 2026-06-13 | build session 4 | R2.5.1 (map foundation) | done; layout-v2 schema + upgradeLayout + editorFromLayout; both designer pages load v1/v2; useDesignerState split pulled to R2.5.5 (no consumers yet) | 47f/192t green; build OK; designer pages 200 |
+| 2026-06-13 | build session 4 (cont.) | R2.5.2 (calibration) | done; the "real map" — 2-point calibration → true-scale underlay; rides on extended v1 bgImage (no v2-save migration yet); confirm-step mis-calibration guard | 48f/200t green; build OK; designer 200 |

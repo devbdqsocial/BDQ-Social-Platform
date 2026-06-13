@@ -55,11 +55,24 @@ export const INFRA_TYPES: SeedInfraType[] = [
 
 export const DEFAULT_CANVAS = { widthFt: 230, heightFt: 160 };
 
+/**
+ * Ground-plan underlay. Calibration fields (R2.5.2) are optional so a pre-calibration image
+ * still loads; `ftPerPx > 0` means the image renders at true real-world scale (map-system §2).
+ */
+export interface BgImage {
+  url: string;
+  opacity: number;
+  ftPerPx?: number; // 0/undefined = uncalibrated (not to scale)
+  offsetXFt?: number; // image origin offset on the canvas, in feet
+  offsetYFt?: number;
+  locked?: boolean; // locked = not draggable (default once calibrated)
+}
+
 export interface CanvasMeta {
   widthFt: number;
   heightFt: number;
   gridFt?: number;
-  bgImage?: { url: string; opacity: number };
+  bgImage?: BgImage;
 }
 
 let seq = 0;
@@ -143,7 +156,16 @@ export const layoutSchema = z.object({
     widthFt: z.number().positive(),
     heightFt: z.number().positive(),
     gridFt: z.number().positive().optional(),
-    bgImage: z.object({ url: z.string(), opacity: z.number().min(0).max(1) }).optional(),
+    bgImage: z
+      .object({
+        url: z.string(),
+        opacity: z.number().min(0).max(1),
+        ftPerPx: z.number().nonnegative().optional(),
+        offsetXFt: z.number().optional(),
+        offsetYFt: z.number().optional(),
+        locked: z.boolean().optional(),
+      })
+      .optional(),
   }),
   elements: z.array(elementSchema),
 });

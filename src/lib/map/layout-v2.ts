@@ -147,7 +147,10 @@ export function upgradeLayout(json: unknown, opsJson?: unknown): LayoutV2 {
 
   // v1 doc (or anything with a canvas/elements shape)
   const v1 = (json ?? {}) as {
-    canvas?: { widthFt?: number; heightFt?: number; gridFt?: number; bgImage?: { url: string; opacity: number } };
+    canvas?: {
+      widthFt?: number; heightFt?: number; gridFt?: number;
+      bgImage?: { url: string; opacity: number; ftPerPx?: number; offsetXFt?: number; offsetYFt?: number; locked?: boolean };
+    };
     elements?: unknown;
   };
   const base = emptyV2(v1.canvas);
@@ -158,13 +161,17 @@ export function upgradeLayout(json: unknown, opsJson?: unknown): LayoutV2 {
   if (Array.isArray(v1.elements)) {
     base.elements = v1.elements.filter((e): e is EditorElement => elementSchema.safeParse(e).success);
   }
-  // v1 background image → uncalibrated underlay (ftPerPx 0 → designer shows "calibrate" warning).
-  if (v1.canvas?.bgImage?.url) {
+  // v1 background image → underlay, carrying calibration if the bgImage was already calibrated
+  // (R2.5.2 persists calibration on the v1 bgImage); ftPerPx 0 → designer shows "calibrate".
+  const bg = v1.canvas?.bgImage;
+  if (bg?.url) {
     base.underlay = underlaySchema.parse({
-      url: v1.canvas.bgImage.url,
-      opacity: v1.canvas.bgImage.opacity,
-      ftPerPx: 0,
-      locked: false,
+      url: bg.url,
+      opacity: bg.opacity,
+      ftPerPx: bg.ftPerPx ?? 0,
+      offsetXFt: bg.offsetXFt ?? 0,
+      offsetYFt: bg.offsetYFt ?? 0,
+      locked: bg.locked ?? false,
     });
   }
   base.ops = mergeOps(opsJson);
@@ -184,7 +191,12 @@ export function exceedsSizeCap(layout: LayoutV2): boolean {
  */
 export function editorFromLayout(json: unknown, opsJson?: unknown): {
   elements: EditorElement[];
-  canvas: { widthFt: number; heightFt: number; gridFt: number; bgImage?: { url: string; opacity: number } };
+  canvas: {
+    widthFt: number;
+    heightFt: number;
+    gridFt: number;
+    bgImage?: { url: string; opacity: number; ftPerPx?: number; offsetXFt?: number; offsetYFt?: number; locked?: boolean };
+  };
 } {
   const v2 = upgradeLayout(json, opsJson);
   return {
@@ -193,7 +205,18 @@ export function editorFromLayout(json: unknown, opsJson?: unknown): {
       widthFt: v2.canvas.widthFt,
       heightFt: v2.canvas.heightFt,
       gridFt: v2.canvas.gridFt,
-      ...(v2.underlay ? { bgImage: { url: v2.underlay.url, opacity: v2.underlay.opacity } } : {}),
+      ...(v2.underlay
+        ? {
+            bgImage: {
+              url: v2.underlay.url,
+              opacity: v2.underlay.opacity,
+              ftPerPx: v2.underlay.ftPerPx,
+              offsetXFt: v2.underlay.offsetXFt,
+              offsetYFt: v2.underlay.offsetYFt,
+              locked: v2.underlay.locked,
+            },
+          }
+        : {}),
     },
   };
 }
