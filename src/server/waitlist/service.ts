@@ -25,7 +25,7 @@ export function listWaitlist(eventId: string) {
 function waitlistHtml(eventName: string, url: string): string {
   return `<div style="font-family:sans-serif;max-width:480px"><h2>Good news — tickets are available</h2>
 <p>A spot just opened up for <strong>${eventName}</strong>. Grab yours before they're gone.</p>
-<p><a href="${url}" style="display:inline-block;background:#C2603B;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none">Get tickets</a></p></div>`;
+<p><a href="${url}" style="display:inline-block;background:#01065B;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none">Get tickets</a></p></div>`;
 }
 
 /** Email un-notified waitlisters that tickets are available, then mark them notified. Audited. */

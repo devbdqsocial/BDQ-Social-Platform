@@ -26,7 +26,7 @@ export function BrandsCarousel({ brands }: { brands: Brand[] }) {
                 <Image src={v.logo} alt={v.brandName} fill className="svg__img" sizes="33vw" />
               ) : (
                 <div className="svg__bg grid place-items-center">
-                  <span className="f-exat" style={{ fontSize: "var(--h60)", color: "var(--bgcolor)" }}>
+                  <span className="f-exat f-h60" style={{ color: "var(--bgcolor)" }}>
                     {v.brandName.charAt(0)}
                   </span>
                 </div>

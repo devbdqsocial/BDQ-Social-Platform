@@ -19,7 +19,7 @@ export default async function PublicLayout({ children }: { children: React.React
         {/* top: brand blurb + nav columns */}
         <div className="wrapper flex flex-col gap-[var(--space-2xl)] pt-[var(--space-4xl)] sm:flex-row sm:justify-between">
           <div className="max-w-[40ch]">
-            <p className="f-exat" style={{ fontSize: "var(--h42)", lineHeight: 1.1 }}>
+            <p className="f-exat f-h42">
               BDQ Social<span style={{ color: "var(--green)" }}>.</span>
             </p>
             <p className="f-paragraph-small mt-[var(--space-md)]">
@@ -48,7 +48,7 @@ export default async function PublicLayout({ children }: { children: React.React
         {/* signature wall + giant Let's talk */}
         <WordmarkWall rows={2} duration={26} rowClassName="f-h76" className="opacity-20" />
         <div className="wrapper py-[var(--space-2xl)]">
-          <Link href="/contact" data-cursor className="f-exat block w-fit" style={{ fontSize: "var(--h235)", lineHeight: 0.95 }}>
+          <Link href="/contact" data-cursor className="f-exat block w-fit f-h235">
             Let&apos;s talk
           </Link>
         </div>

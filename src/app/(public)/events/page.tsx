@@ -21,7 +21,7 @@ export default async function EventsPage() {
       <section className="gama-3 bg-1 paint flex min-h-[60svh] items-end py-[var(--space-5xl)]">
         <div className="wrapper">
           <span className="kicker">What&apos;s on</span>
-          <SplitReveal as="h1" className="f-exat mt-[var(--space-md)]" style={{ fontSize: "var(--h133)", lineHeight: 1.0 }}>
+          <SplitReveal as="h1" className="f-exat mt-[var(--space-md)] f-h133">
             Events &amp; tickets
           </SplitReveal>
           <p className="f-paragraph mt-[var(--space-lg)] max-w-[44ch]">
@@ -52,12 +52,12 @@ export default async function EventsPage() {
                     style={{ borderTop: "1px solid var(--color)" }}
                   >
                     <div>
-                      <h2 className="f-exat transition-opacity duration-300 group-hover:opacity-70" style={{ fontSize: "var(--h76)", lineHeight: 1.05 }}>{e.name}</h2>
+                      <h2 className="f-exat transition-opacity duration-300 group-hover:opacity-70 f-h76">{e.name}</h2>
                       <p className="f-paragraph mt-[var(--space-sm)] opacity-80">
                         {fmt(e.startsAt)}{e.location ? ` · ${e.location}` : ""}
                       </p>
                     </div>
-                    <span className="f-exat shrink-0" style={{ fontSize: "var(--h42)" }}>
+                    <span className="f-exat shrink-0 f-h42">
                       {from != null ? `from ${formatPaise(from)}` : "Tickets soon"}
                     </span>
                   </Link>

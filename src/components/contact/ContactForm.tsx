@@ -19,9 +19,12 @@ function Field({
 }) {
   const [focused, setFocused] = useState(false);
   const up = focused || value.length > 0;
+  // The floating label ANIMATES between two type sizes — a class can't tween.
+  /* eslint-disable no-restricted-syntax */
   const labelStyle = up
     ? { top: 0, fontSize: "var(--paragraph-small)", fontWeight: 700, fontFamily: "var(--f-inter)" }
     : { top: "var(--space-2xl)", fontSize: "var(--h42)", fontFamily: "var(--f-exat)" };
+  /* eslint-enable no-restricted-syntax */
   const inputCls = "f-exat w-full resize-none bg-transparent pb-[var(--space-md)] pt-[var(--space-2xl)] outline-none";
 
   return (
@@ -34,8 +37,8 @@ function Field({
           onChange={(e) => onChange(e.target.value)}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          className={inputCls}
-          style={{ fontSize: "var(--h42)", color: "var(--color)" }}
+          className={`${inputCls} f-h42`}
+          style={{ color: "var(--color)" }}
         />
       ) : (
         <input
@@ -45,8 +48,8 @@ function Field({
           onChange={(e) => onChange(e.target.value)}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          className={inputCls}
-          style={{ fontSize: "var(--h42)", color: "var(--color)" }}
+          className={`${inputCls} f-h42`}
+          style={{ color: "var(--color)" }}
         />
       )}
       <label htmlFor={id} className="pointer-events-none absolute left-0 origin-left transition-all duration-300" style={labelStyle}>

@@ -214,12 +214,23 @@ owner DSN — R0.5c). Proceeding to R1 per owner-approved session scope.
 ## Phase R2 — Design system (~38h, ∥ R1) — roadmap R2, design-system.md, consistency §8
 
 **R2.1 Tokens** (14h)
-- [ ] a. `globals.css`: clamp()-based RPA scale + 16px input floor; delete legacy gold/clay
-      aliases; z-scale per design-system §1.6; remove `!important`s; stall-color single source.
-- [ ] b. `BRAND_NAVY` const → `razorpay-checkout.ts:50` (kills `#C2603B`, D1).
-- [ ] c. ESLint rule banning inline `fontSize` styles + raw hex outside `globals.css`.
-      Verify: consistency §8 greps all zero (D1,D6,D7,D9,D10,D12,D22,D27 closed in
-      design-debt.md).
+- [x] a. `globals.css` ✓: `--fsize` = one clamp() (vw breakpoints removed; ≤950/≤576 display
+      overrides kept); 16px input floor on `.rpa` fields (iOS zoom guard); legacy gold/clay
+      alias block DELETED; `#mouse` z 99999999→100 (§1.6); admin font `!important`s dropped;
+      stall colors canonical in `lib/stall-colors.ts` (CSS tokens = documented mirror).
+- [x] b. `src/lib/brand.ts` (NAVY/LAVENDER/CREAM/INK) ✓; checkout modal uses BRAND_NAVY + name
+      "BDQ Social" (D1); ALL 12 `#C2603B` files purged — SELECTED stall → lavender, catalog/
+      designer defaults → #868EFF, icons/email/error/theme-default → navy; badge `pending`→
+      warning, `gold`→lavender (alias kill); 28 files codemodded `style={{fontSize}}`→`f-h*`
+      (3 duplicate-className fallouts fixed); vendor login/signup + CookieBanner hexes →
+      tokens.
+- [x] c. ESLint `no-restricted-syntax` ✓: bans inline `fontSize: var(--h*)` + raw hex in JSX
+      style props. Exemptions: stall-colors, brand.ts, OG/app-icon generators, global-error
+      (renders without globals.css); ContactForm animated label = inline eslint-disable —
+      the ONE sanctioned exception to consistency §8's zero-grep.
+      Verify: clay/gold greps 0 files ✓; fontSize grep = 1 (the sanctioned exception) ✓;
+      lint 0 errors ✓; 46f/184t ✓; build ✓. Owner visual spot-check pending (clamp() subtly
+      resizes RPA type between the old vw breakpoints).
 
 **R2.2 Component contracts** (16h)
 - [ ] a. `RpaPageHeader`, empty-state rollout, badge variant cleanup (D11).

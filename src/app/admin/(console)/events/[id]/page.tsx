@@ -212,7 +212,7 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
                 <CardDescription>White-label this event&apos;s public page. Leave blank to use the BDQ brand.</CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4 sm:grid-cols-2">
-                <Field label="Primary colour" hint="Buttons + accents. Hex like #C2603B."><Input name="primary" defaultValue={theme?.primary ?? ""} placeholder="#C2603B" /></Field>
+                <Field label="Primary colour" hint="Buttons + accents. Hex like #01065B."><Input name="primary" defaultValue={theme?.primary ?? ""} placeholder="#01065B" /></Field>
                 <Field label="Accent colour" hint="Highlights. Hex like #D69A22."><Input name="accent" defaultValue={theme?.accent ?? ""} placeholder="#D69A22" /></Field>
                 <Button type="submit" className="w-fit sm:col-span-2">Save theme</Button>
               </CardContent>

@@ -27,7 +27,7 @@ export default function AboutPage() {
       <section className="gama-1 bg-2 paint flex min-h-[70svh] items-end py-[var(--space-5xl)]">
         <div className="wrapper">
           <span className="f-paragraph-small f-bold t-upper" style={{ letterSpacing: "0.18em" }}>About</span>
-          <SplitReveal as="h1" className="f-exat mt-[var(--space-md)] max-w-[16ch]" style={{ fontSize: "var(--h133)", lineHeight: 1.0 }}>
+          <SplitReveal as="h1" className="f-exat mt-[var(--space-md)] max-w-[16ch] f-h133">
             The warm, grown-up night market
           </SplitReveal>
         </div>
@@ -36,7 +36,7 @@ export default function AboutPage() {
       <section className="paint py-[var(--space-5xl)]">
         <div className="wrapper">
           <Reveal>
-            <p className="f-exat max-w-[24ch]" style={{ fontSize: "var(--h76)", lineHeight: 1.08, textIndent: "2em" }}>
+            <p className="f-exat max-w-[24ch] f-h76" style={{ textIndent: "2em" }}>
               {LEGAL.brand} curates one unforgettable evening a year — indie brands, gourmet food, and
               live music, set to a warm fairy-light glow.
             </p>
@@ -49,12 +49,12 @@ export default function AboutPage() {
 
       <section className="gama-2 surface-1 paint py-[var(--space-5xl)]">
         <div className="wrapper">
-          <h2 className="f-exat" style={{ fontSize: "var(--h60)", lineHeight: 1.05 }}>What we&apos;re about</h2>
+          <h2 className="f-exat f-h60">What we&apos;re about</h2>
           <Reveal stagger className="mt-[var(--space-3xl)] grid gap-[var(--space-2xl)] sm:grid-cols-3">
             {WHAT.map(([title, body], i) => (
               <div key={title} className="pt-[var(--space-lg)]" style={{ borderTop: "1px solid var(--color)" }}>
-                <span className="f-exat" style={{ fontSize: "var(--h32)" }}>0{i + 1}</span>
-                <h3 className="f-exat mt-[var(--space-md)]" style={{ fontSize: "var(--h42)", lineHeight: 1.1 }}>{title}</h3>
+                <span className="f-exat f-h32">0{i + 1}</span>
+                <h3 className="f-exat mt-[var(--space-md)] f-h42">{title}</h3>
                 <p className="f-paragraph mt-[var(--space-sm)] opacity-80">{body}</p>
               </div>
             ))}
@@ -65,7 +65,7 @@ export default function AboutPage() {
       <section className="gama-3 bg-3 paint flex min-h-[70svh] items-center py-[var(--space-5xl)]">
         <div className="wrapper text-center">
           <Reveal>
-            <h2 className="f-exat mx-auto max-w-[18ch]" style={{ fontSize: "var(--h100)", lineHeight: 1.0 }}>
+            <h2 className="f-exat mx-auto max-w-[18ch] f-h100">
               Come for the finds, stay for the night.
             </h2>
             <div className="mt-[var(--space-2xl)] flex justify-center gap-[var(--space-lg)]">

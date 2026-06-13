@@ -60,7 +60,7 @@ export function ComingSoonClient({ count }: { count: number }) {
         <span className="f-paragraph-small f-bold t-upper" style={{ letterSpacing: "0.2em" }}>
           Vadodara&apos;s most anticipated social experience
         </span>
-        <h1 className="f-exat mx-auto mt-[var(--space-lg)] max-w-[18ch]" style={{ fontSize: "var(--h133)", lineHeight: 0.95 }}>
+        <h1 className="f-exat mx-auto mt-[var(--space-lg)] max-w-[18ch] f-h133">
           The next great gathering is coming
         </h1>
         <p className="f-paragraph mx-auto mt-[var(--space-lg)] max-w-[52ch]">
@@ -71,7 +71,7 @@ export function ComingSoonClient({ count }: { count: number }) {
         <div className="mt-[var(--space-3xl)] flex justify-center gap-[var(--space-xl)] sm:gap-[var(--space-3xl)]">
           {units.map((u) => (
             <div key={u.label} className="text-center">
-              <div className="f-exat tabular-nums" style={{ fontSize: "var(--h100)", lineHeight: 1 }}>{pad(u.value)}</div>
+              <div className="f-exat tabular-nums f-h100">{pad(u.value)}</div>
               <div className="f-paragraph-small f-bold t-upper" style={{ letterSpacing: "0.14em" }}>{u.label}</div>
             </div>
           ))}
@@ -80,7 +80,7 @@ export function ComingSoonClient({ count }: { count: number }) {
         {/* Form / success */}
         {status === "success" ? (
           <div className="mx-auto mt-[var(--space-3xl)] max-w-[40rem] rounded-[var(--radius-lg)] border p-[var(--space-xl)]" style={{ borderColor: "var(--color)" }}>
-            <p className="f-exat" style={{ fontSize: "var(--h42)" }}>You&apos;re on the list.</p>
+            <p className="f-exat f-h42">You&apos;re on the list.</p>
             <p className="f-paragraph-small mt-[var(--space-sm)]">
               We&apos;ll notify {submittedPhone || "you"} on WhatsApp the moment we go live.
             </p>
@@ -89,15 +89,14 @@ export function ComingSoonClient({ count }: { count: number }) {
           <form onSubmit={handleSubmit} className="mx-auto mt-[var(--space-3xl)] max-w-[42rem]">
             <div className="flex flex-col items-stretch justify-center gap-[var(--space-lg)] sm:flex-row sm:items-end">
               <div className="flex flex-1 items-end gap-[var(--space-sm)]" style={{ borderBottom: "1px solid var(--color)" }}>
-                <span className="f-exat pb-[var(--space-md)]" style={{ fontSize: "var(--h42)" }}>+91</span>
+                <span className="f-exat pb-[var(--space-md)] f-h42">+91</span>
                 <input
                   type="tel"
                   name="phone"
                   placeholder="98765 43210"
                   required
                   disabled={status === "loading"}
-                  className="f-exat w-full bg-transparent pb-[var(--space-md)] outline-none disabled:opacity-50"
-                  style={{ fontSize: "var(--h42)", color: "var(--color)" }}
+                  className="f-exat w-full bg-transparent pb-[var(--space-md)] outline-none disabled:opacity-50 f-h42" style={{ color: "var(--color)" }}
                 />
               </div>
               <button type="submit" disabled={status === "loading"} className="btn shrink-0 self-center sm:self-end" data-cursor>

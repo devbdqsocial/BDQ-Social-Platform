@@ -107,7 +107,7 @@ export function MenuOverlay({
       }
     >
       <div className="flex items-center justify-between px-[var(--wrapper-padd)] py-[var(--space-lg)]">
-        <Link href="/" onClick={onClose} data-cursor className="f-exat" style={{ fontSize: "var(--h32)", lineHeight: 1 }}>
+        <Link href="/" onClick={onClose} data-cursor className="f-exat f-h32">
           BDQ<span style={{ color: "var(--green)" }}>.</span>
         </Link>
         <button
@@ -129,8 +129,7 @@ export function MenuOverlay({
             <span className="block overflow-hidden">
               <span
                 data-menu-label
-                className="f-exat block transition-colors duration-300 group-hover:text-[var(--green)]"
-                style={{ fontSize: "var(--h100)", lineHeight: 1.05 }}
+                className="f-exat f-h100 block transition-colors duration-300 group-hover:text-[var(--green)]"
               >
                 {l.label}
               </span>

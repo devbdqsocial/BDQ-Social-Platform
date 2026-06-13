@@ -17,7 +17,7 @@ export interface StallTypeInput {
 const DEFAULTS: StallTypeInput[] = [
   { name: "Small 10×10", widthFt: 10, heightFt: 10, priceInPaise: 0, color: "#3FA66A", sellable: true },
   { name: "Standard 10×12", widthFt: 10, heightFt: 12, priceInPaise: 0, color: "#4F9379", sellable: true },
-  { name: "Premium 10×15", widthFt: 10, heightFt: 15, priceInPaise: 0, color: "#C2603B", sellable: true },
+  { name: "Premium 10×15", widthFt: 10, heightFt: 15, priceInPaise: 0, color: "#868EFF", sellable: true },
   { name: "Food 10×10", widthFt: 10, heightFt: 10, priceInPaise: 0, color: "#E07B2C", sellable: true },
 ];
 

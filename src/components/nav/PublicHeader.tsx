@@ -36,8 +36,7 @@ export function PublicHeader({ signedIn = false }: { signedIn?: boolean }) {
           <Link
             href="/"
             data-cursor
-            className="f-exat pointer-events-auto"
-            style={{ fontSize: "var(--h32)", lineHeight: 1 }}
+            className="f-exat f-h32 pointer-events-auto"
           >
             BDQ<span style={{ color: "var(--green)" }}>.</span>
           </Link>

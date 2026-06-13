@@ -79,13 +79,8 @@
   --color-cream-50: #FBFAF6;  --color-cream-100: #F4F2EC; --color-cream-200: #ECEAE2;
   --color-cream-300: #E4E2DA; --color-ink: #14141A;
 
-  /* Legacy ramp aliases → RPA hues. Transitional: keeps not-yet-rebuilt screens on-brand
-     (badge.tsx, landing, Countdown, customer dashboard). Removed as each is migrated. */
-  --color-gold-300: var(--color-lavender-400); --color-gold-500: var(--color-lavender-400);
-  --color-gold-700: var(--color-lavender-700);
-  --color-clay-500: var(--color-navy-500);     --color-clay-600: var(--color-navy-600);
-
-  /* map stall status (Docs/design.md §3.6) */
+  /* map stall status — CANONICAL source is src/lib/stall-colors.ts (konva needs literals);
+     these mirror it for the few CSS consumers. Change there first. */
   --color-stall-available: #3FA66A;
   --color-stall-held: #E8B23A;
   --color-stall-pending: #E07B2C;
@@ -201,8 +196,9 @@
   --f-bold: 700;
   --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  /* fluid root size for the RPA zone (RPA breakpoints; em tokens below scale off this) */
-  --fsize: 1.25vw;
+  /* fluid root size for the RPA zone (design-system §1.2: one clamp(), no vw breakpoints;
+     em tokens below scale off this) */
+  --fsize: clamp(0.875rem, 0.55rem + 0.9vw, 1.25rem);
   /* type scale — em (relative to --fsize when inside .rpa) */
   --paragraph-small: 0.75em; --paragraph: 1em;
   --h32: 1.3333em; --h42: 1.75em; --h60: 2.5em; --h76: 3.1667em;
@@ -216,11 +212,9 @@
   --space-4xl: 4em; --space-5xl: 6em;
   --grid-gap: 1.1667em; --wrapper-padd: var(--space-lg);
 }
-@media (max-width: 1366px) { :root { --fsize: 2.0vw; } }
-@media (max-width: 1024px) { :root { --fsize: 2.4vw; } }
-@media (max-width: 950px)  { :root { --fsize: 2.7vw; --h235: 6.25em; --h133: 4.1667em; --h100: 2.9166em; } }
-@media (max-width: 768px)  { :root { --fsize: 3.2vw; } }
-@media (max-width: 576px)  { :root { --fsize: 4.4vw; --h235: 3.3333em; --h133: 2.5em; --h76: 2.3333em; --h60: 1.9166em; } }
+/* Display-size overrides only — the base size is the clamp() above (design-system §1.2). */
+@media (max-width: 950px)  { :root { --h235: 6.25em; --h133: 4.1667em; --h100: 2.9166em; } }
+@media (max-width: 576px)  { :root { --h235: 3.3333em; --h133: 2.5em; --h76: 2.3333em; --h60: 1.9166em; } }
 
 /* The RPA zone: fluid base size + Inter + default section colors. Sections override via gama/bg. */
 .rpa {
@@ -232,6 +226,8 @@
   -webkit-font-smoothing: antialiased;
 }
 .rpa :is(h1, h2, h3, h4, h5, h6) { font-family: var(--f-exat); font-weight: var(--f-bold); line-height: 1.05; }
+/* iOS zoom guard: form fields never render below 16px (design-system §1.2 input floor). */
+.rpa :is(input, select, textarea) { font-size: max(1rem, 1em); }
 
 /* Color-section classes: set --bgcolor/--color; `.filter` tints imagery to the accent (verbatim). */
 .gama-1.bg-1 { --bgcolor: var(--dark-blue);  --color: var(--light-blue); }
@@ -284,9 +280,9 @@
 .rpa .col-10 { width: calc((99.9vw - var(--wrapper-padd)*2 - var(--grid-gap)*11)/12 * 10 + var(--grid-gap)*9); }
 .rpa .col-12 { width: 100%; }
 
-/* Custom cursor (#mouse) — mix-blend difference, follows via GSAP. */
+/* Custom cursor (#mouse) — mix-blend difference, follows via GSAP. z per design-system §1.6. */
 #mouse {
-  position: fixed; top: 0; left: 0; z-index: 99999999; pointer-events: none;
+  position: fixed; top: 0; left: 0; z-index: 100; pointer-events: none;
   width: 1.4rem; height: 1.4rem; mix-blend-mode: difference; will-change: transform;
   transition: width .33s var(--ease-bounce), height .33s var(--ease-bounce);
 }
@@ -467,9 +463,10 @@
     @apply bg-background text-foreground;
     font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   }
+  /* html.admin out-specifies the body rule above; no !important needed (design-system R2.1). */
   html.admin body,
   html.admin [data-radix-portal] * {
-    font-family: var(--font-geist), ui-sans-serif, system-ui, sans-serif !important;
+    font-family: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
   }
   h1, h2, h3, .font-display {
     font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
@@ -594,6 +591,6 @@
 /* Ensure command palette uses the admin sans-serif font */
 .admin [data-slot="command"],
 .admin [data-slot="command"] * {
-  font-family: var(--font-geist), ui-sans-serif, system-ui, sans-serif !important;
+  font-family: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
 }
 

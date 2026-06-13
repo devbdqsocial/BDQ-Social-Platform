@@ -17,7 +17,7 @@ export interface MapElementInput {
 const DEFAULTS: MapElementInput[] = [
   { name: "Small 10×10", kind: "STALL", widthFt: 10, heightFt: 10, color: "#3FA66A", sellable: true },
   { name: "Standard 10×12", kind: "STALL", widthFt: 10, heightFt: 12, color: "#4F9379", sellable: true },
-  { name: "Premium 10×15", kind: "STALL", widthFt: 10, heightFt: 15, color: "#C2603B", sellable: true },
+  { name: "Premium 10×15", kind: "STALL", widthFt: 10, heightFt: 15, color: "#868EFF", sellable: true },
   { name: "Food 10×10", kind: "STALL", widthFt: 10, heightFt: 10, color: "#E07B2C", sellable: true },
   { name: "Water stall 10×20", kind: "STALL", widthFt: 10, heightFt: 20, color: "#2C7A8C", sellable: true },
   { name: "Stage", kind: "INFRA", widthFt: 30, heightFt: 20, color: "#BCAE94", sellable: false },

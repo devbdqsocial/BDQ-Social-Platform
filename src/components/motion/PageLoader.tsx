@@ -96,8 +96,8 @@ export function PageLoader() {
         </div>
         <span
           data-loader-count
-          className="f-exat absolute inset-0 grid place-items-center"
-          style={{ color: "var(--dark-blue)", fontSize: "var(--h60)" }}
+          className="f-exat f-h60 absolute inset-0 grid place-items-center"
+          style={{ color: "var(--dark-blue)" }}
         >
           0%
         </span>

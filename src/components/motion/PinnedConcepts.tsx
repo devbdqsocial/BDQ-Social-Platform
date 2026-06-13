@@ -50,7 +50,7 @@ export function PinnedConcepts() {
         {STEPS.map((s) => (
           <div key={s.word} className={`concept-panel ${s.gama} paint`}>
             <div className="wrapper">
-              <h2 className="f-exat" style={{ fontSize: "var(--h235)", lineHeight: 0.95 }}>{s.word}</h2>
+              <h2 className="f-exat f-h235">{s.word}</h2>
               <p className="f-paragraph mx-auto mt-[var(--space-2xl)] max-w-[34ch] opacity-80">{s.body}</p>
             </div>
           </div>

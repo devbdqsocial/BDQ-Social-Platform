@@ -35,7 +35,7 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
               {v.category && (
                 <span className="f-paragraph-small f-bold t-upper" style={{ letterSpacing: "0.18em" }}>{v.category}</span>
               )}
-              <h1 className="f-exat mt-[var(--space-sm)]" style={{ fontSize: "var(--h133)", lineHeight: 0.95 }}>
+              <h1 className="f-exat mt-[var(--space-sm)] f-h133">
                 {v.brandName}
               </h1>
               {v.description && (
@@ -70,7 +70,7 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
       {products.length > 0 && (
         <section className="paint py-[var(--space-5xl)]">
           <div className="wrapper">
-            <h2 className="f-exat" style={{ fontSize: "var(--h60)", lineHeight: 1.05 }}>The goods</h2>
+            <h2 className="f-exat f-h60">The goods</h2>
             <Reveal stagger className="mt-[var(--space-3xl)] grid grid-cols-2 gap-[var(--grid-gap)] sm:grid-cols-3">
               {products.map((src, i) => (
                 <div key={i} className="svg svg--form2 w-full">
@@ -84,7 +84,7 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
 
       <section className="gama-3 bg-3 paint flex min-h-[60svh] items-center py-[var(--space-5xl)]">
         <div className="wrapper text-center">
-          <h2 className="f-exat mx-auto max-w-[18ch]" style={{ fontSize: "var(--h100)", lineHeight: 1.0 }}>
+          <h2 className="f-exat mx-auto max-w-[18ch] f-h100">
             Find {v.brandName} at the market.
           </h2>
           <div className="mt-[var(--space-2xl)] flex justify-center">

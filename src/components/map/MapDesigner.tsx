@@ -420,8 +420,8 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, s
               {elements.map((el) => (
                 <Text key={`t_${el.id}`} x={el.xFt * pxPerFt} y={el.yFt * pxPerFt + (el.heightFt * pxPerFt) / 2 - 4} width={el.widthFt * pxPerFt} align="center" text={el.label} fontSize={8} fill="#15120E" listening={false} />
               ))}
-              {guides.map((g, i) => <Line key={`g${i}`} points={g.points} stroke="#C2603B" strokeWidth={1} dash={[4, 4]} listening={false} />)}
-              {marquee && <Rect x={marquee.x} y={marquee.y} width={marquee.w} height={marquee.h} fill="#C2603B22" stroke="#C2603B" strokeWidth={1} listening={false} />}
+              {guides.map((g, i) => <Line key={`g${i}`} points={g.points} stroke="#868EFF" strokeWidth={1} dash={[4, 4]} listening={false} />)}
+              {marquee && <Rect x={marquee.x} y={marquee.y} width={marquee.w} height={marquee.h} fill="#868EFF22" stroke="#868EFF" strokeWidth={1} listening={false} />}
               <Transformer ref={trRef} rotateEnabled flipEnabled={false} ignoreStroke />
             </Layer>
           </Stage>

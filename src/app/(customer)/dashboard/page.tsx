@@ -29,13 +29,13 @@ export default async function CustomerDashboardPage({ searchParams }: { searchPa
       <div className="wrapper max-w-[62rem]">
         {confirming && <AutoRefresh seconds={5} />}
         <span className="kicker opacity-70">Your wallet</span>
-        <h1 className="f-exat mt-[var(--space-sm)]" style={{ fontSize: "var(--h76)", lineHeight: 1.0 }}>Tickets</h1>
+        <h1 className="f-exat mt-[var(--space-sm)] f-h76">Tickets</h1>
         <p className="f-paragraph mt-[var(--space-sm)] opacity-70">Show the QR code at the gate — that&apos;s your way in.</p>
 
         {confirming && (
           <div className="gama-1 bg-1 paint mt-[var(--space-2xl)] flex items-center gap-[var(--space-xl)] overflow-hidden rounded-[var(--radius-lg)] p-[var(--space-xl)]">
             <div className="min-w-0 flex-1">
-              <p className="f-exat" style={{ fontSize: "var(--h42)", lineHeight: 1.05 }}>{confirming.event.name}</p>
+              <p className="f-exat f-h42">{confirming.event.name}</p>
               <p className="f-paragraph-small mt-[var(--space-xs)] opacity-80" aria-live="polite">
                 Confirming payment — this takes under a minute.
               </p>
@@ -46,7 +46,7 @@ export default async function CustomerDashboardPage({ searchParams }: { searchPa
 
         {withQr.length === 0 && !confirming ? (
           <div className="mt-[var(--space-3xl)] p-[var(--space-2xl)] text-center" style={{ border: "1px dashed var(--color)" }}>
-            <p className="f-exat" style={{ fontSize: "var(--h42)", lineHeight: 1.05 }}>No tickets yet</p>
+            <p className="f-exat f-h42">No tickets yet</p>
             <p className="f-paragraph-small mt-[var(--space-sm)] opacity-70">
               Just paid? Your tickets land here the moment payment is confirmed.
             </p>
@@ -66,7 +66,7 @@ export default async function CustomerDashboardPage({ searchParams }: { searchPa
                   className="gama-1 bg-1 paint flex items-center gap-[var(--space-xl)] overflow-hidden rounded-[var(--radius-lg)] p-[var(--space-xl)]"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="f-exat" style={{ fontSize: "var(--h42)", lineHeight: 1.05 }}>{t.order.event.name}</p>
+                    <p className="f-exat f-h42">{t.order.event.name}</p>
                     <p className="f-paragraph-small mt-[var(--space-xs)] opacity-70">
                       {t.ticketType.name} · {fmt(t.order.event.startsAt)}
                     </p>

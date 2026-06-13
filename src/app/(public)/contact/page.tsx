@@ -11,7 +11,7 @@ export default function ContactPage() {
       <div className="wrapper">
         <Reveal>
           <span className="f-paragraph-small f-bold t-upper" style={{ letterSpacing: "0.18em" }}>Say hi</span>
-          <h1 className="f-exat mt-[var(--space-sm)]" style={{ fontSize: "var(--h133)", lineHeight: 0.95 }}>
+          <h1 className="f-exat mt-[var(--space-sm)] f-h133">
             Let&apos;s talk
           </h1>
         </Reveal>

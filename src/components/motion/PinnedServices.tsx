@@ -54,7 +54,7 @@ export function PinnedServices() {
             <div className="wrapper relative grid items-center gap-[var(--space-3xl)] lg:grid-cols-[1.3fr_1fr]">
               <div>
                 <span className="kicker">{s.n} / 04</span>
-                <h2 className="f-exat mt-[var(--space-sm)]" style={{ fontSize: "var(--h235)", lineHeight: 0.95 }}>
+                <h2 className="f-exat mt-[var(--space-sm)] f-h235">
                   {s.title}
                 </h2>
                 <p className="f-paragraph mt-[var(--space-lg)] max-w-[40ch]">{s.body}</p>
@@ -63,8 +63,8 @@ export function PinnedServices() {
               <div className="svg svg--form6 hidden w-[78%] justify-self-end lg:block">
                 <div className="svg__bg" />
                 <span
-                  className="svg__text f-exat grid place-items-center"
-                  style={{ fontSize: "var(--h133)", color: "var(--bgcolor)" }}
+                  className="svg__text f-exat f-h133 grid place-items-center"
+                  style={{ color: "var(--bgcolor)" }}
                 >
                   {s.n}
                 </span>

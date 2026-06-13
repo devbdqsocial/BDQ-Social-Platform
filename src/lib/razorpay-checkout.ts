@@ -1,5 +1,7 @@
 "use client";
 
+import { BRAND_NAVY } from "@/lib/brand";
+
 /** Client-side Razorpay Checkout loader + opener, shared by ticket and stall payment flows. */
 
 type RzpOptions = {
@@ -45,9 +47,9 @@ export async function openCheckout(opts: {
     amount: opts.amountPaise,
     currency: "INR",
     order_id: opts.razorpayOrderId,
-    name: "Event Portal",
+    name: "BDQ Social",
     description: opts.description,
-    theme: { color: "#C2603B" },
+    theme: { color: BRAND_NAVY },
     handler: opts.onSuccess,
     modal: { ondismiss: () => opts.onDismiss?.() },
   }).open();

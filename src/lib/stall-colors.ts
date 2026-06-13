@@ -12,7 +12,7 @@ export const STALL_STATUS_COLORS: Record<StallStatus, { fill: string; stroke: st
   PENDING: { fill: "#E07B2C", stroke: "#A44C2D", text: "#FFFFFF" },
   BOOKED: { fill: "#8C8576", stroke: "#6F6552", text: "#FFFFFF" },
   BLOCKED: { fill: "#4E4639", stroke: "#352F26", text: "#D9CDB8" },
-  SELECTED: { fill: "#C2603B", stroke: "#833B24", text: "#FFFFFF" },
+  SELECTED: { fill: "#6C75F5", stroke: "#4A53C8", text: "#FFFFFF" },
 };
 
 export const STATUS_LABEL: Record<StallStatus, string> = {

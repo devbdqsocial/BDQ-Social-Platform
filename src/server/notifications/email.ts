@@ -85,7 +85,7 @@ export async function buildReminderEmail(eventId: string): Promise<BuiltEmail | 
     html: `<div style="font-family:sans-serif;max-width:480px"><h2>${event.name} is almost here</h2>
 <p><strong>${when}</strong>${event.location ? ` · ${event.location}` : ""}</p>
 <p>Have your QR ticket ready at the gate.</p>
-<p><a href="${ticketsUrl}" style="display:inline-block;background:#C2603B;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none">View my tickets</a></p></div>`,
+<p><a href="${ticketsUrl}" style="display:inline-block;background:#01065B;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none">View my tickets</a></p></div>`,
     attachments: [],
   };
 }

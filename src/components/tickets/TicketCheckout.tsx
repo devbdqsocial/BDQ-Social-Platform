@@ -122,7 +122,7 @@ export function TicketCheckout({ eventId, ticketTypes }: { eventId: string; tick
             </div>
             <div className="flex items-center gap-[var(--space-md)]">
               <button type="button" aria-label={`Fewer ${t.name}`} data-cursor className="qty-btn" onClick={() => setQ(t.id, (qty[t.id] ?? 0) - 1)}>−</button>
-              <span className="f-exat w-[2ch] text-center" style={{ fontSize: "var(--h32)", lineHeight: 1 }}>{qty[t.id] ?? 0}</span>
+              <span className="f-exat w-[2ch] text-center f-h32">{qty[t.id] ?? 0}</span>
               <button type="button" aria-label={`More ${t.name}`} data-cursor className="qty-btn" onClick={() => setQ(t.id, (qty[t.id] ?? 0) + 1)}>+</button>
             </div>
           </li>
@@ -181,7 +181,7 @@ export function TicketCheckout({ eventId, ticketTypes }: { eventId: string; tick
 
       <div className="mt-[var(--space-lg)] flex flex-wrap items-end justify-between gap-[var(--space-lg)] pt-[var(--space-lg)]" style={{ borderTop: "1px solid var(--color)" }}>
         <div>
-          <p className="f-exat" style={{ fontSize: "var(--h60)", lineHeight: 1 }}>{formatPaise(total)}</p>
+          <p className="f-exat f-h60">{formatPaise(total)}</p>
           <p className="kicker mt-[var(--space-xs)] opacity-70">{count} ticket{count === 1 ? "" : "s"}</p>
         </div>
         <button type="button" className="btn" data-cursor disabled={!count || busy} onClick={buy}>

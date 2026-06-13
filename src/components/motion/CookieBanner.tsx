@@ -33,8 +33,8 @@ export function CookieBanner() {
       aria-label="Cookie notice"
       className="fixed left-[var(--space-lg)] z-[80] flex max-w-[calc(100vw-2*var(--space-lg))] items-center gap-[var(--space-md)] rounded-full py-[0.5em] pl-[1.1em] pr-[0.7em] shadow-[0_10px_30px_rgba(0,0,0,0.3)] bottom-[calc(var(--space-lg)+env(safe-area-inset-bottom,0px)+3.5rem)] sm:bottom-[calc(var(--space-lg)+env(safe-area-inset-bottom,0px))]"
       style={{
-        background: "var(--ink, #14141A)",
-        color: "#F4F2EC",
+        background: "var(--color-ink)",
+        color: "var(--color-cream-100)",
         fontSize: "var(--paragraph-small)",
       }}
     >

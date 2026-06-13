@@ -57,7 +57,7 @@ export default function PublicTemplate({ children }: { children: React.ReactNode
         className="fixed inset-0 z-[150] hidden place-items-center"
         style={{ background: "var(--dark-blue)", color: "var(--light-blue)" }}
       >
-        <span className="f-exat" style={{ fontSize: "var(--h60)" }}>
+        <span className="f-exat f-h60">
           BDQ<span style={{ color: "var(--green)" }}>.</span>
         </span>
       </div>

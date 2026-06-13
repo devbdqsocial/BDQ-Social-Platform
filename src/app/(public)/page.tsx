@@ -45,7 +45,7 @@ export default async function LandingPage() {
             <Reveal>
               <span className="kicker block">{event?.location ?? "Vadodara"} · Curated night market</span>
             </Reveal>
-            <SplitReveal as="h1" mode="chars" className="f-exat mt-[var(--space-md)] max-w-[14ch]" style={{ fontSize: "var(--h133)", lineHeight: 0.98 }}>
+            <SplitReveal as="h1" mode="chars" className="f-exat mt-[var(--space-md)] max-w-[14ch] f-h133">
               The city&apos;s most curated night market
             </SplitReveal>
             <Reveal stagger delay={0.2}>
@@ -111,8 +111,7 @@ export default async function LandingPage() {
         <div className="wrapper">
           <SplitReveal
             as="p"
-            className="f-exat max-w-[18ch]"
-            style={{ fontSize: "var(--h100)", lineHeight: 1.05, textIndent: "2em" }}
+            className="f-exat max-w-[18ch] f-h100" style={{ textIndent: "2em" }}
           >
             One unforgettable evening a year — set to a warm fairy-light glow.
           </SplitReveal>
@@ -127,7 +126,7 @@ export default async function LandingPage() {
         <section className="gama-2 surface-2 paint py-[var(--space-5xl)]">
           <div className="wrapper">
             <div className="flex items-end justify-between gap-4">
-              <SplitReveal as="h2" mode="chars" className="f-exat" style={{ fontSize: "var(--h133)", lineHeight: 1.0 }}>
+              <SplitReveal as="h2" mode="chars" className="f-exat f-h133">
                 The brands
               </SplitReveal>
               <Link href="/vendors" data-cursor className="kicker link-underline">See all →</Link>
@@ -147,7 +146,7 @@ export default async function LandingPage() {
           {[false, true].map((reverse) => (
             <Marquee key={String(reverse)} speed={reverse ? 36 : 28} reverse={reverse} className={reverse ? "mt-[var(--space-lg)] opacity-60" : ""}>
               {(sponsors.length ? sponsors.map((s) => s.name) : brands.map((b) => b.brandName)).map((name, i) => (
-                <span key={`${name}-${i}`} className="f-exat px-[var(--space-3xl)]" style={{ fontSize: "var(--h60)" }}>
+                <span key={`${name}-${i}`} className="f-exat px-[var(--space-3xl)] f-h60">
                   {name}
                 </span>
               ))}
@@ -168,7 +167,7 @@ export default async function LandingPage() {
           <div className="wrapper relative w-full text-center">
             <Reveal>
               <span className="kicker block">Up next</span>
-              <h2 className="f-exat mx-auto mt-[var(--space-md)] max-w-[16ch]" style={{ fontSize: "var(--h133)", lineHeight: 1.0 }}>
+              <h2 className="f-exat mx-auto mt-[var(--space-md)] max-w-[16ch] f-h133">
                 {event.name}
               </h2>
               <p className="f-paragraph mt-[var(--space-lg)]">
@@ -188,7 +187,7 @@ export default async function LandingPage() {
       {/* ============ FAQ — cream / ink ============ */}
       <section className="paint py-[var(--space-5xl)]">
         <div className="wrapper max-w-[60rem]">
-          <h2 className="f-exat" style={{ fontSize: "var(--h60)", lineHeight: 1.05 }}>Good to know</h2>
+          <h2 className="f-exat f-h60">Good to know</h2>
           <div className="mt-[var(--space-2xl)]">
             {[
               ["When is it?", "An evening event — gates open in the late afternoon and we go into the night, the weekend before Diwali."],
@@ -197,9 +196,9 @@ export default async function LandingPage() {
               ["Is there food?", "Plenty. A full food court with the city's best cafés, bakers, and street food."],
             ].map(([q, a]) => (
               <details key={q} className="group py-[var(--space-lg)]" style={{ borderTop: "1px solid var(--color)" }}>
-                <summary className="f-exat flex cursor-pointer list-none items-center justify-between gap-[var(--space-lg)]" style={{ fontSize: "var(--h60)", lineHeight: 1.05 }}>
+                <summary className="f-exat flex cursor-pointer list-none items-center justify-between gap-[var(--space-lg)] f-h60">
                   {q}
-                  <span aria-hidden className="shrink-0 transition-transform duration-300 group-open:rotate-45" style={{ fontSize: "var(--h42)" }}>+</span>
+                  <span aria-hidden className="shrink-0 transition-transform duration-300 group-open:rotate-45 f-h42">+</span>
                 </summary>
                 <p className="f-paragraph mt-[var(--space-md)] max-w-[52ch] opacity-80">{a}</p>
               </details>

@@ -107,7 +107,7 @@ export const waitlistSchema = z.object({
 
 const hexColor = z
   .string()
-  .regex(/^#[0-9a-fA-F]{6}$/, "Use a hex color like #C2603B")
+  .regex(/^#[0-9a-fA-F]{6}$/, "Use a hex color like #868EFF")
   .optional()
   .or(z.literal("").transform(() => undefined));
 
@@ -122,8 +122,6 @@ export const leadSchema = z
     consent: z.coerce.boolean().default(true),
   })
   .refine((d) => d.phone || d.email, { message: "Add a phone or email" });
-
-export const stallHoldSchema = z.object({ stallId: id });
 
 export const checkinSchema = z.object({
   qrToken: z.string().min(1),

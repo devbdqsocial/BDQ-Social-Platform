@@ -6,7 +6,7 @@ export default function NotFound() {
       {/* plain div: segment 404s render inside (public)/layout which already owns <main id="main"> */}
       <div className="wrapper py-[var(--space-5xl)] text-center">
         <p className="kicker">Lost in the market</p>
-        <h1 className="f-exat mt-[var(--space-md)]" style={{ fontSize: "var(--h235)", lineHeight: 0.95 }}>
+        <h1 className="f-exat mt-[var(--space-md)] f-h235">
           404
         </h1>
         <p className="f-paragraph mx-auto mt-[var(--space-lg)] max-w-[40ch]">

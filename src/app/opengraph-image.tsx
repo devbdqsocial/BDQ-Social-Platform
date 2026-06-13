@@ -25,7 +25,7 @@ export default function OpengraphImage() {
         </div>
         <div style={{ display: "flex", gap: 20, fontSize: 92, fontWeight: 700, marginTop: 24, lineHeight: 1.05 }}>
           <span>Event</span>
-          <span style={{ color: "#C2603B" }}>Portal</span>
+          <span style={{ color: "#01065B" }}>Portal</span>
         </div>
         <div style={{ fontSize: 38, marginTop: 24, color: "#C9BDA8" }}>
           The city&apos;s most curated events

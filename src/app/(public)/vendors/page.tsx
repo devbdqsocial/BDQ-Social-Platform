@@ -22,7 +22,7 @@ export default async function VendorsPage() {
       <section className="gama-2 surface-2 paint flex min-h-[60svh] items-end py-[var(--space-5xl)]">
         <div className="wrapper">
           <span className="f-paragraph-small f-bold t-upper" style={{ letterSpacing: "0.18em" }}>The lineup</span>
-          <SplitReveal as="h1" className="f-exat mt-[var(--space-md)]" style={{ fontSize: "var(--h133)", lineHeight: 1.0 }}>
+          <SplitReveal as="h1" className="f-exat mt-[var(--space-md)] f-h133">
             Meet the brands
           </SplitReveal>
           <p className="f-paragraph mt-[var(--space-lg)] max-w-[44ch] opacity-80">
@@ -50,7 +50,7 @@ export default async function VendorsPage() {
                         <Image src={logo} alt={v.brandName} fill className="svg__img" sizes="(max-width:768px) 50vw, 25vw" />
                       ) : (
                         <div className="svg__bg grid place-items-center">
-                          <span className="f-exat" style={{ fontSize: "var(--h60)", color: "var(--bgcolor)" }}>
+                          <span className="f-exat f-h60" style={{ color: "var(--bgcolor)" }}>
                             {v.brandName.charAt(0)}
                           </span>
                         </div>
