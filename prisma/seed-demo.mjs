@@ -445,7 +445,7 @@ async function main() {
   for (const t of cancelable) await db.ticket.update({ where: { id: t.id }, data: { status: "CANCELLED" } }).catch(() => {});
 
   // ── bookings (one active per stall) + payments ──
-  const bookingStatuses = ["BOOKED", "BOOKED", "BOOKED", "BOOKED", "BOOKED", "PENDING", "PENDING", "HELD"];
+  const bookingStatuses = ["BOOKED", "BOOKED", "BOOKED", "BOOKED", "BOOKED", "PENDING_PAYMENT", "PENDING_PAYMENT", "RESERVED"];
   let bSeq = 0;
   for (let i = 0; i < bookingStatuses.length; i++) {
     const ev = events[i % 2]; // ENDED + LIVE events

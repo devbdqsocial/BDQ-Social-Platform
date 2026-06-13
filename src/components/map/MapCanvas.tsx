@@ -10,13 +10,16 @@ import { INFRA_COLOR, STALL_STATUS_COLORS, STATUS_LABEL, type StallStatus } from
 interface Props {
   layout: RenderLayout;
   statuses: Record<string, StallStatus>;
-  selected: Set<string>;
-  onSelect: (label: string) => void;
+  /** Omit both for a read-only view (public event layout). */
+  selected?: Set<string>;
+  onSelect?: (label: string) => void;
 }
 
 const clampScale = (s: number) => Math.min(6, Math.max(0.4, s));
 
-export default function MapCanvas({ layout, statuses, selected, onSelect }: Props) {
+const NO_SELECTION: Set<string> = new Set();
+
+export default function MapCanvas({ layout, statuses, selected = NO_SELECTION, onSelect }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
   const pinch = useRef(0);
@@ -134,7 +137,7 @@ export default function MapCanvas({ layout, statuses, selected, onSelect }: Prop
 
             const status = statusOf(el.label);
             const c = STALL_STATUS_COLORS[status];
-            const clickable = status === "AVAILABLE" || status === "SELECTED";
+            const clickable = !!onSelect && (status === "AVAILABLE" || status === "SELECTED");
             const match = isMatch(el.label);
             const dimmed = availableOnly && status !== "AVAILABLE" && status !== "SELECTED";
 
@@ -144,8 +147,8 @@ export default function MapCanvas({ layout, statuses, selected, onSelect }: Prop
                 opacity={dimmed ? 0.2 : 1}
                 onMouseEnter={() => setHover(el.label)}
                 onMouseLeave={() => setHover((prev) => (prev === el.label ? null : prev))}
-                onClick={() => clickable && onSelect(el.label)}
-                onTap={() => clickable && onSelect(el.label)}
+                onClick={() => clickable && onSelect?.(el.label)}
+                onTap={() => clickable && onSelect?.(el.label)}
               >
                 <Rect
                   x={x}

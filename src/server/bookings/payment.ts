@@ -1,67 +1,21 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
 import { db } from "@/server/db";
 import { createRazorpayOrder, type GatewayFees } from "@/lib/razorpay";
-import { StallUnavailableError } from "@/server/bookings/service";
 
 /**
- * Vendor stall payment. Mirrors ticket checkout: create a Razorpay order, fulfil on the verified
- * webhook. A Booking(HELD) holds the stall during payment; the webhook advances it to PENDING
- * (paid, awaiting team-call verification); admin approval flips it to BOOKED.
+ * Vendor stall payment — approve-before-pay ONLY (booking collapse, build-plan R1.3 /
+ * architecture §4.1): RESERVED ──admin approves──► PENDING_PAYMENT ──webhook──► BOOKED.
+ * The legacy pay-to-hold flow (Booking HELD → PENDING) is removed; legacy rows are rejected
+ * to the audit log until the M2 data migration retires the enum values.
  */
 
 async function stallPrice(stall: { priceInPaise: number | null; stallType: { priceInPaise: number } | null }): Promise<number> {
   return stall.priceInPaise ?? stall.stallType?.priceInPaise ?? 0;
 }
 
-export async function createStallOrder(vendorProfileId: string, stallId: string) {
-  const stall = await db.stall.findUnique({
-    where: { id: stallId },
-    include: { stallType: { select: { priceInPaise: true } } },
-  });
-  if (!stall || stall.kind !== "STALL") throw new Error("Stall not found");
-  if (stall.status === "BOOKED" || stall.status === "BLOCKED" || stall.status === "PENDING") {
-    throw new StallUnavailableError();
-  }
-  const price = await stallPrice(stall);
-  if (price <= 0) throw new Error("This stall has no price set yet");
-
-  let booking;
-  try {
-    booking = await db.$transaction(async (tx) => {
-      const b = await tx.booking.create({
-        data: { eventId: stall.eventId, stallId, vendorProfileId, source: "VENDOR", status: "HELD" },
-      });
-      // hold without TTL while paying (avoids the cron freeing a stall mid-payment). Compare-and-set
-      // so we never hold a stall that has meanwhile been taken — defence beyond the partial unique
-      // index on Booking that ultimately guarantees one active booking per stall.
-      const held = await tx.stall.updateMany({
-        where: { id: stallId, status: { in: ["AVAILABLE", "HELD"] } },
-        data: { status: "HELD", holdUntil: null },
-      });
-      if (held.count === 0) throw new StallUnavailableError();
-      return b;
-    });
-  } catch (e) {
-    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") throw new StallUnavailableError();
-    throw e;
-  }
-
-  const rzp = await createRazorpayOrder(price, booking.id, { kind: "stall", bookingId: booking.id });
-  await db.booking.update({ where: { id: booking.id }, data: { gatewayOrderId: rzp.id } });
-
-  return {
-    bookingId: booking.id,
-    razorpayOrderId: rzp.id,
-    amountPaise: price,
-    keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? process.env.RAZORPAY_KEY_ID ?? "",
-  };
-}
-
 /**
- * Create a Razorpay order to PAY for an already-APPROVED stall (approve-before-pay flow). The admin
- * approval moved the booking to PENDING_PAYMENT + set payBy; this is the vendor paying within that
- * window. Distinct from the legacy `createStallOrder` (pay-to-hold).
+ * Create a Razorpay order to PAY for an already-APPROVED stall. The admin approval moved the
+ * booking to PENDING_PAYMENT + set payBy; this is the vendor paying within that window.
  */
 export async function createStallPaymentOrder(vendorProfileId: string, bookingId: string) {
   const booking = await db.booking.findUnique({
@@ -85,8 +39,9 @@ export async function createStallPaymentOrder(vendorProfileId: string, bookingId
 }
 
 /**
- * Idempotent fulfilment on the verified webhook. An approved booking (PENDING_PAYMENT) → BOOKED;
- * a legacy pay-to-hold booking (HELD) → PENDING (awaiting verification). Stall follows.
+ * Idempotent fulfilment on the verified webhook: PENDING_PAYMENT → BOOKED (stall follows).
+ * Any other status (incl. legacy HELD rows from the removed pay-to-hold flow) is rejected to
+ * the audit log for manual resolution — money is never silently dropped.
  */
 export async function fulfillStallBooking(
   gatewayOrderId: string,
@@ -97,8 +52,17 @@ export async function fulfillStallBooking(
   const booking = await db.booking.findUnique({ where: { gatewayOrderId } });
   if (!booking) return { ok: false };
   if (booking.status === "BOOKED") return { ok: true }; // already advanced
-  if (booking.status !== "HELD" && booking.status !== "PENDING_PAYMENT") return { ok: true };
-  const approved = booking.status === "PENDING_PAYMENT";
+  if (booking.status !== "PENDING_PAYMENT") {
+    await db.auditLog.create({
+      data: {
+        action: "REJECT",
+        entity: "Booking",
+        entityId: booking.id,
+        after: { reason: "UNEXPECTED_STATUS", status: booking.status, gatewayOrderId, paymentId },
+      },
+    });
+    return { ok: true }; // 2xx to the webhook; ops resolves via the audit trail
+  }
 
   await db.$transaction(async (tx) => {
     if (await tx.payment.findUnique({ where: { gatewayRef: paymentId } })) return;
@@ -121,8 +85,8 @@ export async function fulfillStallBooking(
       return;
     }
 
-    await tx.booking.update({ where: { id: booking.id }, data: { status: approved ? "BOOKED" : "PENDING" } });
-    await tx.stall.update({ where: { id: booking.stallId }, data: { status: approved ? "BOOKED" : "PENDING" } });
+    await tx.booking.update({ where: { id: booking.id }, data: { status: "BOOKED" } });
+    await tx.stall.update({ where: { id: booking.stallId }, data: { status: "BOOKED", holdUntil: null, holdUserId: null } });
     await tx.payment.create({
       data: {
         bookingId: booking.id,

@@ -7,13 +7,13 @@ import {
   canTransition,
 } from "./transitions";
 
-describe("state transitions", () => {
-  it("stall: legal path, no jump straight to BOOKED", () => {
+describe("state transitions (booking collapse, R1.3)", () => {
+  it("stall: reserve → booked path only; no jump straight to BOOKED", () => {
     expect(canTransition(STALL_TRANSITIONS, "AVAILABLE", "HELD")).toBe(true);
-    expect(canTransition(STALL_TRANSITIONS, "HELD", "PENDING")).toBe(true);
-    expect(canTransition(STALL_TRANSITIONS, "PENDING", "BOOKED")).toBe(true);
+    expect(canTransition(STALL_TRANSITIONS, "HELD", "BOOKED")).toBe(true);
+    expect(canTransition(STALL_TRANSITIONS, "HELD", "AVAILABLE")).toBe(true);
     expect(canTransition(STALL_TRANSITIONS, "AVAILABLE", "BOOKED")).toBe(false);
-    expect(canTransition(STALL_TRANSITIONS, "BOOKED", "PENDING")).toBe(false);
+    expect(canTransition(STALL_TRANSITIONS, "BOOKED", "HELD")).toBe(false);
   });
 
   it("order: PAID is terminal (no un-pay / no refund)", () => {
@@ -27,8 +27,17 @@ describe("state transitions", () => {
     expect(canTransition(TICKET_TRANSITIONS, "CHECKED_IN", "VALID")).toBe(false);
   });
 
-  it("booking: approve from PENDING; rejected is terminal", () => {
-    expect(canTransition(BOOKING_TRANSITIONS, "PENDING", "BOOKED")).toBe(true);
+  it("booking: RESERVED → PENDING_PAYMENT → BOOKED; payment only after approval", () => {
+    expect(canTransition(BOOKING_TRANSITIONS, "RESERVED", "PENDING_PAYMENT")).toBe(true);
+    expect(canTransition(BOOKING_TRANSITIONS, "PENDING_PAYMENT", "BOOKED")).toBe(true);
+    expect(canTransition(BOOKING_TRANSITIONS, "RESERVED", "BOOKED")).toBe(false); // call-back rule
+    expect(canTransition(BOOKING_TRANSITIONS, "RESERVED", "REJECTED")).toBe(true);
+    expect(canTransition(BOOKING_TRANSITIONS, "PENDING_PAYMENT", "CANCELLED")).toBe(true); // payBy lapse
+  });
+
+  it("booking: terminal states stay terminal", () => {
     expect(canTransition(BOOKING_TRANSITIONS, "REJECTED", "BOOKED")).toBe(false);
+    expect(canTransition(BOOKING_TRANSITIONS, "CANCELLED", "RESERVED")).toBe(false);
+    expect(canTransition(BOOKING_TRANSITIONS, "BOOKED", "CANCELLED")).toBe(true); // organizer cancel only
   });
 });

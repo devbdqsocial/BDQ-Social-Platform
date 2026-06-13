@@ -119,19 +119,16 @@
 **POST `/api/vendor/kyc`** — submit KYC (verify-only).
 - Body: `{ pan?, fssai?, gstin?, docUrls?:[] }` → 200 `{ ok, data:{ kycId } }`
 
-**POST `/api/stalls/:id/hold`** — place a selection hold.
-- Server: txn `if status=AVAILABLE → HELD, holdUntil=now+10m` (BUSINESS-RULES §2.2).
-- 200: `{ ok, data:{ stallId, status:"HELD", holdUntil } }`
-- Errors: `STALL_UNAVAILABLE`(already held/booked), `NOT_FOUND`
+**~~POST `/api/stalls/:id/hold` / `/release`~~** — REMOVED (booking collapse, rebuild R1.3).
+The public 10-minute select-to-hold flow is gone; stalls are reserved only through the vendor
+onboarding flow (`reserveStallAction` server action → `Booking(RESERVED)`).
 
-**POST `/api/bookings`** — book a held stall + start payment.
-- Body: `{ stallId, paymentMode:"ONLINE"|"OFFLINE" }`
-- Server: requires an active hold by this vendor; creates `Booking(PENDING)`; ONLINE → Razorpay
-  order; OFFLINE → awaits admin record.
-- 200 ONLINE: `{ ok, data:{ bookingId, razorpayOrderId, amount, key } }`
-- 200 OFFLINE: `{ ok, data:{ bookingId, status:"PENDING", mode:"OFFLINE" } }`
-- Errors: `STALL_UNAVAILABLE`(hold lost), `CONFLICT`, `PAYMENT_ERROR`
-- Fulfilment: same Razorpay webhook (§4) routes booking payments by `gatewayRef`.
+**Stall booking flow (current)** — approve-before-pay (architecture.md §4.1):
+- Vendor reserves on the layout → `Booking(RESERVED)`, stall held (no TTL, no payment).
+- Admin approves (team call-back, audited) → `Booking(PENDING_PAYMENT)` + `payBy` window.
+- Vendor pays (`createStallPaymentOrder` server action → Razorpay) → webhook (§4) fulfils
+  `PENDING_PAYMENT → BOOKED` idempotently by `gatewayRef`; stall → BOOKED.
+- `payBy` lapse or rejection → `CANCELLED`/`REJECTED`, stall freed (cron).
 
 **GET `/api/vendor/bookings`** → `Booking[]` with stall + status + payment.
 

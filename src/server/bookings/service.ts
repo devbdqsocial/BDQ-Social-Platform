@@ -1,12 +1,13 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
 import { db } from "@/server/db";
-import { holdExpiry } from "@/lib/booking-time";
 
 /**
- * Stall holds — the no-double-book core (project.md §7.7, BUSINESS-RULES §2.2).
- * Hold = atomic compare-and-set on Stall.status (a single Postgres UPDATE), so only one concurrent
- * caller can flip AVAILABLE→HELD. The `Booking` row + payment are created on commit (next slice).
+ * Stall reservations — the no-double-book core (project.md §7.7, BUSINESS-RULES §2.2).
+ * Atomic compare-and-set on Stall.status (a single Postgres UPDATE), so only one concurrent
+ * caller can take a stall; the Booking partial-unique index is the final guarantee.
+ * Booking collapse (R1.3): the public 10-min select-to-hold flow is removed — reservations
+ * happen only through the vendor flow (RESERVED → PENDING_PAYMENT → BOOKED).
  */
 
 export class StallUnavailableError extends Error {
@@ -16,26 +17,10 @@ export class StallUnavailableError extends Error {
   }
 }
 
-/** Atomically lock an AVAILABLE stall for this user. Throws if it isn't free. */
-export async function holdStall(userId: string, stallId: string): Promise<{ status: "HELD"; holdUntil: Date }> {
-  const holdUntil = holdExpiry();
-  const res = await db.stall.updateMany({
-    where: { id: stallId, status: "AVAILABLE" },
-    data: { status: "HELD", holdUntil, holdUserId: userId },
-  });
-  if (res.count === 0) throw new StallUnavailableError();
-  return { status: "HELD", holdUntil };
-}
-
-/** Release a held stall back to AVAILABLE (deselect). No-op unless this user owns the hold. */
-export async function releaseStall(userId: string, stallId: string): Promise<void> {
-  await db.stall.updateMany({
-    where: { id: stallId, status: "HELD", holdUserId: userId },
-    data: { status: "AVAILABLE", holdUntil: null, holdUserId: null },
-  });
-}
-
-/** Free expired holds (cron). Returns how many were released. */
+/**
+ * Free TTL'd stall holds (cron). Nothing creates TTL holds anymore (vendor reservations are
+ * open-ended); this sweep keeps tolerating legacy rows until the M2 data migration clears them.
+ */
 export async function releaseExpiredHolds(now: Date = new Date()): Promise<number> {
   const res = await db.stall.updateMany({
     where: { status: "HELD", holdUntil: { lt: now } },

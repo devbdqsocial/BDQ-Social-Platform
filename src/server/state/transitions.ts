@@ -1,17 +1,19 @@
 /**
- * Allowed state transitions (Docs/project.md §8, ARCHITECTURE §10). Pure guards used before any
- * DB write so illegal/inconsistent moves are rejected server-side. Mirrors the Prisma enums.
- * Notably: no path un-pays an order, no re-entry resets a CHECKED_IN ticket, and a stall cannot
- * jump straight to BOOKED (must pass through HELD/PENDING) — backstopped by the DB partial-unique.
+ * Allowed state transitions (Docs/audit/architecture.md §4.1 — booking collapse, R1.3). Pure
+ * guards used before any DB write so illegal/inconsistent moves are rejected server-side.
+ * Notably: no path un-pays an order, no re-entry resets a CHECKED_IN ticket, and the vendor
+ * flow cannot jump a stall straight to BOOKED — backstopped by the DB partial-unique index.
+ * (Admin direct booking is a separate audited path.)
  */
 
 type Transitions<T extends string> = Record<T, readonly T[]>;
 
-export type StallStatus = "AVAILABLE" | "HELD" | "PENDING" | "BOOKED" | "BLOCKED";
+// HELD remains the DB label for "reserved by a vendor application" until the M2 destructive
+// migration renames it to RESERVED; stall PENDING (paid-awaiting-verification) is retired.
+export type StallStatus = "AVAILABLE" | "HELD" | "BOOKED" | "BLOCKED";
 export const STALL_TRANSITIONS: Transitions<StallStatus> = {
-  AVAILABLE: ["HELD", "BLOCKED"],
-  HELD: ["PENDING", "AVAILABLE"], // pay/submit, or release/TTL-expire
-  PENDING: ["BOOKED", "AVAILABLE"], // approve, or reject/cancel
+  AVAILABLE: ["HELD", "BLOCKED"], // vendor reserves, or admin blocks
+  HELD: ["BOOKED", "AVAILABLE"], // vendor pays after approval, or reject/cancel/expiry
   BOOKED: ["AVAILABLE"], // organizer cancel
   BLOCKED: ["AVAILABLE"],
 };
@@ -31,11 +33,11 @@ export const TICKET_TRANSITIONS: Transitions<TicketStatus> = {
   CANCELLED: [],
 };
 
-export type BookingStatus = "HELD" | "PENDING" | "BOOKED" | "REJECTED" | "CANCELLED";
+export type BookingStatus = "RESERVED" | "PENDING_PAYMENT" | "BOOKED" | "REJECTED" | "CANCELLED";
 export const BOOKING_TRANSITIONS: Transitions<BookingStatus> = {
-  HELD: ["PENDING", "CANCELLED"],
-  PENDING: ["BOOKED", "REJECTED", "CANCELLED"],
-  BOOKED: ["CANCELLED"],
+  RESERVED: ["PENDING_PAYMENT", "REJECTED", "CANCELLED"], // admin approves / rejects, vendor cancels
+  PENDING_PAYMENT: ["BOOKED", "CANCELLED"], // webhook pays, or payBy window lapses
+  BOOKED: ["CANCELLED"], // organizer cancel
   REJECTED: [],
   CANCELLED: [],
 };

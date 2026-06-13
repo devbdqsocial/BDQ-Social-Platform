@@ -169,12 +169,21 @@ owner DSN — R0.5c). Proceeding to R1 per owner-approved session scope.
       Full suite 46f/183t + 2 DB-gated; build green.
 
 **R1.3 Booking-state collapse (M2)** (10h) — architecture §4.1
-- [ ] a. Code first (tolerant): map HELD→RESERVED, PENDING→PENDING_PAYMENT in services + admin
-      UI + cron (`release-holds`, payBy expiry). State-machine unit tests
-      (RESERVED→PENDING_PAYMENT→BOOKED, expiries, admin reject).
-- [ ] b. Migration `booking_states_collapse` (destructive: enum value drops) ships ONE deploy
-      after (a) is live. Verify: `grep -rn "\"HELD\"\|\"PENDING\"" src/server src/app` → 0
-      booking-context hits (D23); cron expiry e2e green.
+- [x] a. Code first (tolerant) ✓: legacy pay-to-hold flow REMOVED — deleted `createStallOrder`
+      + `createStallOrderAction` + orphan `VendorStallPay.tsx` + `/api/stalls/[id]/hold` +
+      `/release` routes + `holdStall`/`releaseStall`. `fulfillStallBooking` now fulfils ONLY
+      PENDING_PAYMENT→BOOKED; any other status → audit REJECT `UNEXPECTED_STATUS` (money never
+      silently dropped). Public event map is read-only ("Apply as a vendor" CTA); MapCanvas
+      gained an optional-select read-only mode. `transitions.ts` collapsed
+      (RESERVED→PENDING_PAYMENT→BOOKED; stall AVAILABLE→HELD→BOOKED with HELD=reserved label
+      until M2 renames it); 5 state-machine tests updated incl. "RESERVED→BOOKED forbidden"
+      (call-back rule). Cron `release-holds` kept as legacy-row sweep; `releaseExpiredPayWindows`
+      unchanged. seed-demo + API.md updated.
+- [ ] b. Migration `booking_states_collapse` (destructive: data-migrate legacy rows
+      HELD→RESERVED / PENDING→PENDING_PAYMENT, drop Booking enum values HELD+PENDING, rename
+      stall HELD→RESERVED + drop stall PENDING) ships ONE deploy after (a) is live in prod.
+      Verify (a): grep legacy booking states in src = 0 outside tolerance comments ✓;
+      46f/184t green ✓; build green ✓.
 
 **R1.4 Coupon UI + pending state** (8h) — customer-portal §3.10
 - [x] a. `TicketCheckout`: underline coupon input + Apply → `quoteOrderAction` (new read-only
@@ -381,4 +390,5 @@ pages · axe pass.
 | 2026-06-12 | blueprint session | docs 1-18 | blueprint complete | n/a |
 | 2026-06-13 | build session 1 (rules read) | P-0 + R0.1–R0.6 | done; R0 gate PASSED; R0.5c owner DSN pending; found+fixed Tailwind-scans-Docs dev 500 | typecheck/lint/test:run (45f/175t)/build all green |
 | 2026-06-13 | build session 1 (cont.) | R1.1 + R1.4 + R1.5 | done; oversell race PROVEN on real DB; coupon UI live | 46f/183t + 1 DB-gated; build 82 pages green |
-| 2026-06-13 | build session 1 (cont.) | R1.2 (M1 dev) | done; group-QR proven on real DB (buy-5→1QR→3+2→board 5); **PROD GATE OPEN: M1 must hit prod Neon before deploy**; R1.3 = next session | 46f/183t + 2 DB-gated; build green |
+| 2026-06-13 | build session 1 (cont.) | R1.2 (M1 dev) | done; group-QR proven on real DB (buy-5→1QR→3+2→board 5); **PROD GATE OPEN: M1 must hit prod Neon before deploy** | 46f/183t + 2 DB-gated; build green |
+| 2026-06-13 | build session 2 | R1.3a (code-first) | done; legacy pay-to-hold flow deleted; webhook fulfils PENDING_PAYMENT only; public map read-only; **R1 PHASE COMPLETE (code)** — M2 destructive part queued for one-deploy-later | 46f/184t green; build green |

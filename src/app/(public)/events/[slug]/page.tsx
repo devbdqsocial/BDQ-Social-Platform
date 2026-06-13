@@ -119,7 +119,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
             <div className="mt-[var(--space-4xl)]">
               <h2 className="f-exat" style={{ fontSize: "var(--h42)" }}>Event layout</h2>
               <p className="f-paragraph-small mb-[var(--space-lg)] mt-[var(--space-xs)] opacity-70">
-                Selling at the market? Browse live availability and tap an open stall to hold it.
+                Selling at the market? Browse live availability, then apply as a vendor to pick your spot.
               </p>
               <BookingFloorPlan stalls={mapStalls} canvas={mapCanvas} />
             </div>
