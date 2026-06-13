@@ -50,3 +50,35 @@ describe("map validation (R2.5.3)", () => {
     expect(mapViolations([stall("A", 999, 999)], null, [])).toHaveLength(0);
   });
 });
+
+import { pathwayWarnings, MIN_PATH_WIDTH } from "./validation";
+import type { Pathway } from "@/lib/map/layout-v2";
+
+const path = (type: Pathway["type"], widthFt: number, points: [number, number][]): Pathway => ({
+  id: `p-${type}`, type, widthFt, points,
+});
+
+describe("pathway warnings (R2.5.7)", () => {
+  it("flags under-minimum width per type", () => {
+    expect(MIN_PATH_WIDTH).toEqual({ MAIN: 20, SECONDARY: 12, EMERGENCY: 10 });
+    const w = pathwayWarnings([path("MAIN", 14, [[0, 0], [100, 0]])], []);
+    expect(w.some((x) => x.detail.includes("minimum 20 ft"))).toBe(true);
+    expect(pathwayWarnings([path("MAIN", 20, [[0, 0], [100, 0]])], [])).toHaveLength(0);
+  });
+
+  it("flags a stall sitting in the strip", () => {
+    const p = path("MAIN", 20, [[0, 0], [100, 0]]); // strip half-width 10 around y=0
+    const inStrip = stall("S", 45, -4); // center (50,1) → distance 1 < 10
+    expect(pathwayWarnings([p], [inStrip]).some((x) => x.detail.includes("blocked by stall S"))).toBe(true);
+    const clear = stall("C", 45, 40); // center (50,45) → far
+    expect(pathwayWarnings([p], [clear])).toHaveLength(0);
+  });
+
+  it("flags a fire exit not reachable from any path", () => {
+    const p = path("MAIN", 20, [[0, 0], [100, 0]]);
+    const exit = { ...stall("E", 50, 200), kind: "infra" as const, type: "FIRE_EXIT" };
+    expect(pathwayWarnings([p], [exit]).some((x) => x.detail.includes("emergency access"))).toBe(true);
+    const onPath = { ...stall("E2", 50, 5), kind: "infra" as const, type: "FIRE_EXIT" }; // center (55,10), edge dist 0
+    expect(pathwayWarnings([p], [onPath])).toHaveLength(0);
+  });
+});

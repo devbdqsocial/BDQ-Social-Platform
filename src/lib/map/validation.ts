@@ -1,5 +1,6 @@
 import type { EditorElement } from "@/lib/map/designer-ops";
-import type { Obstacle, Pt } from "@/lib/map/layout-v2";
+import type { Obstacle, Pathway, Pt } from "@/lib/map/layout-v2";
+import { pointToPolyline } from "@/lib/map/geometry";
 
 /**
  * Save-blocking layout checks (map-system.md §4, build-plan R2.5.3). Pure + DB-free. A stall must
@@ -66,6 +67,39 @@ export function mapViolations(
     const hit = obstacles.find((o) => rectsIntersect(r, rectOf(o)));
     if (hit) {
       out.push({ elementId: el.id, label: el.label, kind: "OBSTACLE", detail: `overlaps ${hit.label ?? hit.type.toLowerCase()}` });
+    }
+  }
+  return out;
+}
+
+/** Minimum widths by pathway type (map-system §7). */
+export const MIN_PATH_WIDTH: Record<Pathway["type"], number> = { MAIN: 20, SECONDARY: 12, EMERGENCY: 10 };
+
+export interface PathWarning {
+  id: string;
+  detail: string;
+}
+
+const centerPt = (e: { xFt: number; yFt: number; widthFt: number; heightFt: number }): Pt => [e.xFt + e.widthFt / 2, e.yFt + e.heightFt / 2];
+
+/**
+ * Non-blocking pathway checks (map-system §7): under-minimum width, a stall sitting in the
+ * strip, and emergency exits/gates not reachable from any path. Warnings never block the save.
+ */
+export function pathwayWarnings(pathways: Pathway[], elements: EditorElement[]): PathWarning[] {
+  const out: PathWarning[] = [];
+  const drawn = pathways.filter((p) => p.points.length >= 2);
+  for (const p of drawn) {
+    const min = MIN_PATH_WIDTH[p.type];
+    if (p.widthFt < min) out.push({ id: `w:${p.id}`, detail: `${p.type.toLowerCase()} path is ${p.widthFt} ft (minimum ${min} ft)` });
+    const blocker = elements.find((e) => e.kind === "stall" && pointToPolyline(centerPt(e), p.points) < p.widthFt / 2);
+    if (blocker) out.push({ id: `b:${p.id}:${blocker.id}`, detail: `path blocked by stall ${blocker.label}` });
+  }
+  if (drawn.length) {
+    for (const e of elements) {
+      if (e.kind !== "infra" || (e.type !== "FIRE_EXIT" && e.type !== "ENTRY")) continue;
+      const nearest = Math.min(...drawn.map((p) => pointToPolyline(centerPt(e), p.points) - p.widthFt / 2));
+      if (nearest > 10) out.push({ id: `x:${e.id}`, detail: `${e.label} isn't on a pathway — emergency access may be blocked` });
     }
   }
   return out;

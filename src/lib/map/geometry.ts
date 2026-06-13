@@ -40,6 +40,26 @@ export function pathLength(points: Pt[]): number {
   return p;
 }
 
+/** Shortest distance from a point to a line segment, in feet. */
+export function pointToSegment([px, py]: Pt, [ax, ay]: Pt, [bx, by]: Pt): number {
+  const dx = bx - ax;
+  const dy = by - ay;
+  const len2 = dx * dx + dy * dy;
+  if (len2 === 0) return Math.hypot(px - ax, py - ay); // degenerate segment
+  let t = ((px - ax) * dx + (py - ay) * dy) / len2;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+}
+
+/** Shortest distance from a point to an open polyline (min over its segments), in feet. */
+export function pointToPolyline(pt: Pt, line: Pt[]): number {
+  if (line.length === 0) return Infinity;
+  if (line.length === 1) return Math.hypot(pt[0] - line[0][0], pt[1] - line[0][1]);
+  let min = Infinity;
+  for (let i = 1; i < line.length; i++) min = Math.min(min, pointToSegment(pt, line[i - 1], line[i]));
+  return min;
+}
+
 /** Footprint of one rectangular element (rotation ignored — bounding footprint), sq ft. */
 export const elementArea = (el: { widthFt: number; heightFt: number }): number => el.widthFt * el.heightFt;
 

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type Konva from "konva";
 import { Group, Image as KonvaImage, Layer, Line, Rect, Stage, Text, Transformer } from "react-konva";
 import {
-  ZoomIn, ZoomOut, Maximize, Undo2, Redo2, Hand, MousePointer2, Ruler, Spline, TreePine, TriangleAlert, Shapes,
+  ZoomIn, ZoomOut, Maximize, Undo2, Redo2, Hand, MousePointer2, Ruler, Spline, TreePine, TriangleAlert, Shapes, Route,
   AlignHorizontalJustifyStart, AlignHorizontalJustifyCenter, AlignHorizontalJustifyEnd,
   AlignVerticalJustifyStart, AlignVerticalJustifyCenter, AlignVerticalJustifyEnd,
   AlignHorizontalSpaceBetween, AlignVerticalSpaceBetween, Grid2x2, Image as ImageIcon,
@@ -13,14 +13,14 @@ import {
   DEFAULT_CANVAS, duplicate, createInfra, createStall, seedToEditor, snapToGrid,
   type CanvasMeta, type EditorElement, type PaletteStallType,
 } from "@/lib/map/designer-ops";
-import { ZONE_COLORS, type LayoutV2, type Obstacle, type Zone, type ZoneColor } from "@/lib/map/layout-v2";
+import { ZONE_COLORS, type LayoutV2, type Obstacle, type Pathway, type Zone, type ZoneColor } from "@/lib/map/layout-v2";
 import { ZONE_COLOR_HEX, polygonCentroid } from "@/lib/map/zones";
+import { mapViolations, pathwayWarnings, MIN_PATH_WIDTH } from "@/lib/map/validation";
 import {
   alignElements, distributeElements, nudge, relabel, makeGrid, snapToNeighbours, type AlignMode,
 } from "@/lib/map/designer-actions";
 import { INFRA_COLOR, STALL_STATUS_COLORS } from "@/lib/stall-colors";
 import { pathLength, fmtArea, fmtFt, type Pt } from "@/lib/map/geometry";
-import { mapViolations } from "@/lib/map/validation";
 import type { SeedInfraType } from "@/server/map/seed-aarush-lawn";
 import type { UploadSignature } from "@/lib/cloudinary";
 import { Button } from "@/components/ui/button";
@@ -72,7 +72,8 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, i
   const [gridFt, setGridFt] = useState(initialCanvas?.gridFt ?? 5);
   const [canvas, setCanvas] = useState<CanvasMeta>(initialCanvas ?? DEFAULT_CANVAS);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [tool, setTool] = useState<"select" | "pan" | "measure" | "boundary" | "zone">("select");
+  const [tool, setTool] = useState<"select" | "pan" | "measure" | "boundary" | "zone" | "pathway">("select");
+  const [pathType, setPathType] = useState<Pathway["type"]>("MAIN");
   const [measurePts, setMeasurePts] = useState<Pt[]>([]); // distance-tool points, in feet (ephemeral)
   const [measureCursor, setMeasureCursor] = useState<Pt | null>(null);
   const [cursorFt, setCursorFt] = useState<Pt | null>(null);
@@ -80,10 +81,10 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, i
   const [boundary, setBoundary] = useState<Pt[] | null>(initialLayout?.boundary?.points ?? null);
   const [obstacles, setObstacles] = useState<Obstacle[]>(initialLayout?.obstacles ?? []);
   const [zones, setZones] = useState<Zone[]>(initialLayout?.zones ?? []);
+  const [pathways, setPathways] = useState<Pathway[]>(initialLayout?.pathways ?? []);
   const [overrides, setOverrides] = useState<Set<string>>(new Set()); // element ids allowed to fail boundary/obstacle checks
   const passthrough = useRef({
     terrain: initialLayout?.terrain ?? [],
-    pathways: initialLayout?.pathways ?? [],
     ops: initialLayout?.ops ?? [],
     entryFlow: initialLayout?.entryFlow ?? [],
     layers: initialLayout?.layers ?? {},
@@ -178,6 +179,7 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, i
 
   const violations = useMemo(() => mapViolations(elements, boundary, obstacles, overrides), [elements, boundary, obstacles, overrides]);
   const violationIds = useMemo(() => new Set(violations.map((v) => v.elementId)), [violations]);
+  const pathWarnings = useMemo(() => pathwayWarnings(pathways, elements), [pathways, elements]);
 
   const gridLines = useMemo(() => {
     let step = gridFt > 0 ? gridFt : 5;
@@ -257,9 +259,10 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, i
         if (k === "m") { setTool("measure"); setDrawing(null); return; }
         if (k === "b") { setTool("boundary"); setDrawing([]); return; }
         if (k === "z") { setTool("zone"); setDrawing([]); return; }
+        if (k === "p") { setTool("pathway"); setDrawing([]); return; }
         if (k === "v") { setTool("select"); setMeasurePts([]); setMeasureCursor(null); setDrawing(null); return; }
         if (k === "h") { setTool("pan"); setMeasurePts([]); setMeasureCursor(null); setDrawing(null); return; }
-        if (e.key === "Enter" && drawing && drawing.length >= 3) { finishPolygon(drawing); return; }
+        if (e.key === "Enter" && drawing && drawing.length >= (isClosed(tool) ? 3 : 2)) { finishDrawing(drawing); return; }
         if (e.key === "Escape") { setMeasurePts([]); setMeasureCursor(null); setDrawing(null); setSelectedIds(new Set()); return; }
       }
       const step = e.shiftKey ? 10 : 1;
@@ -268,7 +271,7 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, i
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-    // finishPolygon is recreated each render; the effect re-binds on drawing/tool/zones, so its
+    // finishDrawing is recreated each render; the effect re-binds on drawing/tool/zones, so its
     // closure is always fresh — including it would just thrash the listener.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [elements, selectedIds, commit, undo, redo, deleteSelected, addElements, drawing, tool, zones]);
@@ -291,7 +294,7 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, i
         : {}),
       boundary: boundary && boundary.length >= 3 ? { points: boundary } : undefined,
       obstacles,
-      terrain: pt.terrain, zones, pathways: pt.pathways,
+      terrain: pt.terrain, zones, pathways,
       elements,
       ops: pt.ops, entryFlow: pt.entryFlow, layers: pt.layers, versions: pt.versions,
     };
@@ -328,18 +331,22 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, i
   // marquee selection (select tool, empty-canvas drag) + distance tool (measure)
   const relPointer = () => stageRef.current?.getRelativePointerPosition() ?? null;
   const ptToFt = (p: { x: number; y: number }): Pt => [Math.round((p.x / pxPerFt) * 10) / 10, Math.round((p.y / pxPerFt) * 10) / 10];
-  const isPolyTool = (t: string) => t === "boundary" || t === "zone";
-  const selectTool = (t: "select" | "pan" | "measure" | "boundary" | "zone") => {
+  const isDrawTool = (t: string) => t === "boundary" || t === "zone" || t === "pathway";
+  const isClosed = (t: string) => t === "boundary" || t === "zone"; // pathway is an OPEN polyline
+  const selectTool = (t: typeof tool) => {
     setTool(t);
     if (t !== "measure") { setMeasurePts([]); setMeasureCursor(null); }
-    setDrawing(isPolyTool(t) ? [] : null);
+    setDrawing(isDrawTool(t) ? [] : null);
   };
-  const finishPolygon = (pts: Pt[]) => {
-    if (pts.length >= 3) {
+  const finishDrawing = (pts: Pt[]) => {
+    const minPts = isClosed(tool) ? 3 : 2;
+    if (pts.length >= minPts) {
       if (tool === "boundary") setBoundary(pts);
       else if (tool === "zone") {
         const color = ZONE_COLORS[zones.length % ZONE_COLORS.length] as ZoneColor;
         setZones((zs) => [...zs, { id: `zone_${Date.now().toString(36)}`, name: `Zone ${zs.length + 1}`, color, points: pts }]);
+      } else if (tool === "pathway") {
+        setPathways((ps) => [...ps, { id: `path_${Date.now().toString(36)}`, type: pathType, widthFt: MIN_PATH_WIDTH[pathType], points: pts }]);
       }
     }
     setDrawing(null);
@@ -350,12 +357,12 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, i
     const p = relPointer();
     if (!p) return;
     if (tool === "measure") { setMeasurePts((pts) => [...pts, ptToFt(p)]); return; }
-    if (isPolyTool(tool)) {
+    if (isDrawTool(tool)) {
       const v = ptToFt(p);
-      // click near the first vertex (≤8 ft) closes the polygon
-      if (drawing && drawing.length >= 3) {
+      // closed tools: click near the first vertex (≤8 ft) closes the polygon
+      if (isClosed(tool) && drawing && drawing.length >= 3) {
         const [fx, fy] = drawing[0];
-        if (Math.hypot(v[0] - fx, v[1] - fy) <= 8) { finishPolygon(drawing); return; }
+        if (Math.hypot(v[0] - fx, v[1] - fy) <= 8) { finishDrawing(drawing); return; }
       }
       setDrawing((pts) => [...(pts ?? []), v]);
       return;
@@ -367,7 +374,7 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, i
   const onStageMouseMove = () => {
     const p = relPointer();
     if (p) setCursorFt(ptToFt(p));
-    if ((tool === "measure" || isPolyTool(tool)) && p) setMeasureCursor(ptToFt(p));
+    if ((tool === "measure" || isDrawTool(tool)) && p) setMeasureCursor(ptToFt(p));
     if (!marquee || !p) return;
     setMarquee((m) => (m ? { ...m, w: p.x - m.x, h: p.y - m.y } : m));
   };
@@ -487,12 +494,12 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, i
 
         {/* structure row — venue boundary + zones + fixed obstacles (R2.5.3 / R2.5.6) */}
         <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-border bg-card p-2 text-xs">
-          {isPolyTool(tool) ? (
+          {isDrawTool(tool) ? (
             <>
               <span className="text-foreground">
-                Drawing {tool} · {(drawing?.length ?? 0)} pts — click the first point or Enter to close, Esc to cancel
+                Drawing {tool} · {(drawing?.length ?? 0)} pts — {isClosed(tool) ? "click the first point or Enter to close" : "double-click or Enter to finish"}, Esc to cancel
               </span>
-              <Button variant="outline" size="sm" disabled={(drawing?.length ?? 0) < 3} onClick={() => drawing && finishPolygon(drawing)}>Close</Button>
+              <Button variant="outline" size="sm" disabled={(drawing?.length ?? 0) < (isClosed(tool) ? 3 : 2)} onClick={() => drawing && finishDrawing(drawing)}>Finish</Button>
             </>
           ) : (
             <>
@@ -508,6 +515,14 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, i
               )}
               <span className="mx-1 h-6 w-px bg-border" />
               <Button variant="ghost" size="sm" onClick={() => selectTool("zone")}><Shapes className="size-4" /> Add zone (Z)</Button>
+              <span className="mx-1 h-6 w-px bg-border" />
+              <span className="px-1 text-muted-foreground"><Route className="inline size-3.5" /> Pathway:</span>
+              <select value={pathType} onChange={(e) => setPathType(e.target.value as Pathway["type"])} className="h-8 rounded-md border border-border bg-background px-1.5 text-xs">
+                <option value="MAIN">Main (20 ft)</option>
+                <option value="SECONDARY">Secondary (12 ft)</option>
+                <option value="EMERGENCY">Emergency (10 ft)</option>
+              </select>
+              <Button variant="ghost" size="sm" onClick={() => selectTool("pathway")}>Draw (P)</Button>
               <span className="mx-1 h-6 w-px bg-border" />
               <span className="px-1 text-muted-foreground"><TreePine className="inline size-3.5" /> Obstacle:</span>
               {(["TREE", "POLE", "BUILDING", "WALL", "WATER_BODY"] as Obstacle["type"][]).map((t) => (
@@ -529,7 +544,7 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, i
             onMouseDown={onStageMouseDown}
             onMouseMove={onStageMouseMove}
             onMouseUp={onStageMouseUp}
-            onDblClick={() => { if (tool === "measure") setMeasureCursor(null); }}
+            onDblClick={() => { if (tool === "measure") setMeasureCursor(null); else if (isDrawTool(tool) && drawing) finishDrawing(drawing); }}
           >
             <Layer listening={false}>
               <Rect x={0} y={0} width={width} height={height} fill="#FAFAFA" />
@@ -602,6 +617,18 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, i
               {elements.map((el) => (
                 <Text key={`t_${el.id}`} x={el.xFt * pxPerFt} y={el.yFt * pxPerFt + (el.heightFt * pxPerFt) / 2 - 4} width={el.widthFt * pxPerFt} align="center" text={el.label} fontSize={8} fill="#15120E" listening={false} />
               ))}
+              {/* pathways — thick rounded strips (the width IS the stroke); emergency = red dashed (R2.5.7) */}
+              {pathways.map((p) => p.points.length >= 2 && (
+                <Line
+                  key={p.id}
+                  points={p.points.flatMap(([x, y]) => [x * pxPerFt, y * pxPerFt])}
+                  stroke={p.type === "EMERGENCY" ? "#C0392B" : "#BCAE94"}
+                  strokeWidth={p.widthFt * pxPerFt}
+                  opacity={0.45} lineCap="round" lineJoin="round"
+                  dash={p.type === "EMERGENCY" ? [p.widthFt * pxPerFt * 0.8, p.widthFt * pxPerFt * 0.5] : undefined}
+                  listening={false}
+                />
+              ))}
               {/* zones — filled colored regions + centroid name label (R2.5.6) */}
               {zones.map((z) => {
                 const hex = ZONE_COLOR_HEX[z.color];
@@ -619,8 +646,9 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, i
               )}
               {drawing && drawing.length >= 1 && (
                 <Line
-                  points={[...drawing, ...(isPolyTool(tool) && measureCursor ? [measureCursor] : [])].flatMap(([x, y]) => [x * pxPerFt, y * pxPerFt])}
-                  stroke={tool === "zone" ? "#6C75F5" : "#01065B"} strokeWidth={2} dash={[8, 5]} listening={false}
+                  points={[...drawing, ...(isDrawTool(tool) && measureCursor ? [measureCursor] : [])].flatMap(([x, y]) => [x * pxPerFt, y * pxPerFt])}
+                  closed={isClosed(tool)}
+                  stroke={tool === "zone" ? "#6C75F5" : tool === "pathway" ? "#BCAE94" : "#01065B"} strokeWidth={2} dash={[8, 5]} listening={false}
                 />
               )}
               {/* fixed obstacles — draggable, muted brown */}
@@ -724,6 +752,38 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, i
                       />
                     ))}
                   </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {pathWarnings.length > 0 && (
+          <div className="space-y-1.5 rounded-xl border border-warning/40 bg-warning/5 p-4 text-sm">
+            <h2 className="flex items-center gap-1.5 font-display text-base font-semibold" style={{ color: "var(--warning)" }}>
+              <TriangleAlert className="size-4" /> {pathWarnings.length} pathway warning{pathWarnings.length === 1 ? "" : "s"}
+            </h2>
+            <p className="text-xs text-muted-foreground">Advisory — these don&apos;t block saving.</p>
+            <ul className="space-y-1 text-xs">
+              {pathWarnings.map((w) => <li key={w.id}>{w.detail}</li>)}
+            </ul>
+          </div>
+        )}
+
+        {pathways.length > 0 && (
+          <div className="space-y-1.5 rounded-xl border border-border bg-card p-4 text-sm">
+            <h2 className="font-display text-base font-semibold">Pathways ({pathways.length})</h2>
+            <ul className="space-y-1.5">
+              {pathways.map((p) => (
+                <li key={p.id} className="flex items-center gap-2">
+                  <span className="w-20 shrink-0 text-xs capitalize">{p.type.toLowerCase()}</span>
+                  <input
+                    type="number" min={4} max={40} value={p.widthFt}
+                    onChange={(e) => setPathways((ps) => ps.map((x) => (x.id === p.id ? { ...x, widthFt: Math.max(4, Math.min(40, Number(e.target.value))) } : x)))}
+                    className="h-8 w-20 rounded-md border border-border bg-background px-2 text-sm"
+                  />
+                  <span className="text-xs text-muted-foreground">ft</span>
+                  <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setPathways((ps) => ps.filter((x) => x.id !== p.id))}>Remove</Button>
                 </li>
               ))}
             </ul>

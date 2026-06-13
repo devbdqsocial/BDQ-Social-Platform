@@ -334,9 +334,15 @@ build on it.
       + centroid name label) → **zones list panel** (rename ≤24, recolor swatches, remove).
       **SummaryPanel "By zone" rollups**. Zones persist via the v2 save (moved into state).
       Verify: rollup fixtures exact; 51f/215t green; build OK; designer 200; 0err/10warn.
-- [ ] **R2.5.7 Pathways** (8h): polyline strips, MAIN/SECONDARY/EMERGENCY presets, min-width +
-      blocked + exit-reachability checks → validation entries. Verify: fixture layouts
-      raise/clear each rule.
+- [x] **R2.5.7 Pathways** (8h) ✓: open-polyline draw tool (`P` — generalized the polygon-draw to
+      open vs closed: pathway ends on double-click/Enter, no close-to-first), MAIN/SECONDARY/
+      EMERGENCY type presets (20/12/10 ft) with per-path width edit (4–40). Render as thick
+      rounded konva strips (width = stroke); EMERGENCY = red dashed. Geometry: `pointToSegment`/
+      `pointToPolyline` added (+ tests). **Non-blocking pathway warnings** (`validation.ts`
+      `pathwayWarnings` + 3 tests): under-minimum width, stall sitting in the strip, fire-exit/
+      gate not reachable from any path → amber advisory panel (warnings never block save).
+      Pathways persist via v2 (moved into state). Verify: 51f/218t green; build OK; designer
+      200; 0err/10warn.
 - [ ] **R2.5.8 Terrain** (4h): 6 patch types, render under zones. Verify: visual + export-safe.
 - [ ] **R2.5.9 Align/distribute + bulk v2** (6h): 6 align + 2 distribute ops; bulk resize/
       type/status/price. Verify: geometry tests on fixtures.
@@ -476,3 +482,4 @@ pages · axe pass.
 | 2026-06-13 | build session 4 (cont.) | R2.5.4 (measurements) | done; geometry lib + distance tool (M) + status bar + occupancy; all computed/ephemeral, no persistence; R2.5.3 boundary/obstacles next (bundles the v2-save migration) | 49f/204t green; build OK; designer 200 |
 | 2026-06-13 | build session 4 (cont.) | R2.5.3 + v2-save migration | done; designer now persists full LayoutV2; boundary pen + obstacles + save-blocking validation/override; v1 layouts round-trip | 50f/211t green; build OK; both designers 200 |
 | 2026-06-13 | build session 4 (cont.) | R2.5.6 (zones) | done; zone draw (Z, shared polygon path) + colored regions + centroid labels + rollups; persists via v2; useDesignerState split still pending | 51f/215t green; build OK; designer 200 |
+| 2026-06-13 | build session 4 (cont.) | R2.5.7 (pathways) | done; open-polyline draw (P) + strips + min-width/blocked/exit warnings (non-blocking); persists via v2; **useDesignerState refactor debt growing — do next** | 51f/218t green; build OK; designer 200 |
