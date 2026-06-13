@@ -325,8 +325,17 @@ build on it.
       distance); V/H/M tool shortcuts; **occupancy** in SummaryPanel (used sq ft + % of venue
       area — canvas W×H now, boundary area in R2.5.3). No persistence (all computed/ephemeral).
       Verify: geometry fixtures exact; 49f/204t green; build OK; designer 200.
-- [ ] **R2.5.5 Layers panel** (5h): 9 fixed layers, show/hide/lock (design-system §4.8).
-      Verify: hidden excluded from current-view export; locked unselectable.
+- [x] **R2.5.5 Layers panel + designer refactor** (5h→expanded) ✓ — owner-mandated architecture
+      refactor (the deferred `useDesignerState` extraction). `MapDesigner.tsx` **826→81 lines**
+      (orchestration only). New `components/map/designer/`: `useDesignerState` (single source of
+      truth — all state/selectors/actions), `DesignerContext` (provider + `useDesigner()`, no
+      prop-drill, `DesignerApi = ReturnType<...>`), `useDesignerKeyboard`, `DesignerCanvas`,
+      `DesignerControls`+`DesignerStatusBar`, `DesignerSidePanels`, **`LayersPanel`** (9 fixed
+      layers, show/hide/lock + live counts, Figma-style) wired to render gating (hidden layer
+      not drawn/exported; locked layer unselectable). Full report:
+      [map-architecture-report.md](map-architecture-report.md). Verify: typecheck ✓; 0err/10warn;
+      51f/218t (no test touched — pure structural move); build 82 pages; both designers 200,
+      no context/hydration errors; all behaviors preserved.
 - [x] **R2.5.6 Zones** (8h) ✓: `lib/map/zones.ts` pure (`zoneOf` by element CENTER, `zoneRollups`
       [stalls/sellable/Σ potential/area], `polygonCentroid`, `ZONE_COLOR_HEX` 8-swatch, 4 tests).
       Designer: **zone draw tool** (`Z` — generalized the boundary polygon-draw so both share one
@@ -483,3 +492,4 @@ pages · axe pass.
 | 2026-06-13 | build session 4 (cont.) | R2.5.3 + v2-save migration | done; designer now persists full LayoutV2; boundary pen + obstacles + save-blocking validation/override; v1 layouts round-trip | 50f/211t green; build OK; both designers 200 |
 | 2026-06-13 | build session 4 (cont.) | R2.5.6 (zones) | done; zone draw (Z, shared polygon path) + colored regions + centroid labels + rollups; persists via v2; useDesignerState split still pending | 51f/215t green; build OK; designer 200 |
 | 2026-06-13 | build session 4 (cont.) | R2.5.7 (pathways) | done; open-polyline draw (P) + strips + min-width/blocked/exit warnings (non-blocking); persists via v2; **useDesignerState refactor debt growing — do next** | 51f/218t green; build OK; designer 200 |
+| 2026-06-13 | build session 5 | R2.5.5 refactor (owner-mandated) | done; MapDesigner 826→81 lines; useDesignerState single source of truth + DesignerContext + 4 components + LayersPanel; map-architecture-report.md; **debt cleared, ready for next 10 features** | 51f/218t (no test touched); build OK; both designers 200 |
