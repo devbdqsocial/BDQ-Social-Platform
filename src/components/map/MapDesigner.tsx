@@ -53,8 +53,11 @@ export default function MapDesigner(props: MapDesignerProps = {}) {
             multiCount={selectedIds.size}
             stallTypes={stallTypes}
             score={d.selectedScore}
+            suggestion={d.suggestion}
+            salesView={d.salesView}
             onChange={(p) => selected && commit(patchOne(selected.id, p))}
             onBulkPatch={(p) => { if (selectedIds.size) commit(bulkPatch(elements, selectedIds, p)); }}
+            onApplySuggestions={d.applySuggestions}
             onRelabel={(prefix, start) => { if (selectedIds.size) commit(relabel(elements, selectedIds, prefix, start)); }}
           />
           <SummaryPanel elements={elements} stallTypes={stallTypes} zones={zones} venueSqFt={canvas.widthFt * canvas.heightFt} />

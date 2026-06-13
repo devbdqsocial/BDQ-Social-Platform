@@ -10,10 +10,15 @@ interface Props {
   multiCount: number;
   stallTypes: PaletteStallType[];
   score: StallScore | null;
+  suggestion: number | null;
+  salesView: boolean;
   onChange: (patch: Partial<EditorElement>) => void;
   onBulkPatch: (patch: Partial<EditorElement>) => void;
+  onApplySuggestions: (scope: "selected" | "zone") => void;
   onRelabel: (prefix: string, start: number) => void;
 }
+
+const fmtRupees = (paise: number) => `₹${(paise / 100).toLocaleString("en-IN")}`;
 
 function ScoreBreakdown({ score }: { score: StallScore }) {
   const bullets = describeStall(score);
@@ -122,7 +127,7 @@ function BulkEditForm({ count, stallTypes, onBulkPatch }: { count: number; stall
   );
 }
 
-export function DesignerInspector({ element, multiCount, stallTypes, score, onChange, onBulkPatch, onRelabel }: Props) {
+export function DesignerInspector({ element, multiCount, stallTypes, score, suggestion, salesView, onChange, onBulkPatch, onApplySuggestions, onRelabel }: Props) {
   if (multiCount > 1) {
     return (
       <aside className="space-y-3 rounded-xl border border-border bg-card p-4">
@@ -130,6 +135,16 @@ export function DesignerInspector({ element, multiCount, stallTypes, score, onCh
           <h2 className="font-display text-lg font-semibold">{multiCount} selected</h2>
           <p className="text-xs text-muted-foreground">Align/distribute from the toolbar, arrow keys to nudge, or bulk-edit and relabel below.</p>
         </div>
+        {salesView && (
+          <div className="space-y-2 border-t border-border pt-3">
+            <p className="text-xs font-medium text-muted-foreground">Apply price suggestions (§9.2)</p>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" className="flex-1" onClick={() => onApplySuggestions("selected")}>To {multiCount} selected</Button>
+              <Button size="sm" variant="outline" className="flex-1" onClick={() => onApplySuggestions("zone")}>To zone</Button>
+            </div>
+            <p className="text-[11px] text-muted-foreground">Sets each stall&apos;s price from its type base × score. You still Save to commit.</p>
+          </div>
+        )}
         <BulkEditForm count={multiCount} stallTypes={stallTypes} onBulkPatch={onBulkPatch} />
         <RelabelForm onRelabel={onRelabel} />
       </aside>
@@ -175,6 +190,12 @@ export function DesignerInspector({ element, multiCount, stallTypes, score, onCh
               onChange={(e) => onChange({ priceInPaise: e.target.value === "" ? undefined : Math.round(Number(e.target.value) * 100) })}
               className={fieldCls} />
           </label>
+          {suggestion != null && score && (
+            <div className="flex items-center justify-between gap-2 rounded-md border border-dashed border-border bg-muted/40 px-2 py-1.5">
+              <span className="text-xs text-muted-foreground">Suggested: <b className="text-foreground">{fmtRupees(suggestion)}</b> (score {score.total})</span>
+              <Button size="sm" variant="outline" className="h-7" onClick={() => onChange({ priceInPaise: suggestion })}>Apply</Button>
+            </div>
+          )}
           <label className="flex flex-col gap-1 text-xs text-muted-foreground">
             Status
             <select value={element.status ?? "AVAILABLE"} onChange={(e) => onChange({ status: e.target.value as EditorElement["status"] })} className={fieldCls}>

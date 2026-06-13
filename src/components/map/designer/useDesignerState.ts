@@ -12,7 +12,8 @@ import { mapViolations, pathwayWarnings, MIN_PATH_WIDTH } from "@/lib/map/valida
 import { alignElements, distributeElements, nudge, type AlignMode } from "@/lib/map/designer-actions";
 import { INFRA_COLOR, STALL_STATUS_COLORS } from "@/lib/stall-colors";
 import { pathLength, type Pt } from "@/lib/map/geometry";
-import { scoreLayout } from "@/server/map/scoring";
+import { scoreLayout, suggestPaise } from "@/server/map/scoring";
+import { zoneOf } from "@/lib/map/zones";
 import type { UploadSignature } from "@/lib/cloudinary";
 import { useHistory } from "../useHistory";
 
@@ -179,6 +180,27 @@ export function useDesignerState({
   // Sales view: stall scores (map-system §9.1). Recomputed only when geometry/zones/pathways change.
   const scores = useMemo(() => scoreLayout(elements, zones, pathways), [elements, zones, pathways]);
   const selectedScore = selected && selected.kind === "stall" ? scores.get(selected.id) ?? null : null;
+
+  // Price suggestions (§9.2): suggest = round50(typeBase × score factor); applied only on demand.
+  const stallBaseById = useMemo(() => Object.fromEntries(stallTypes.map((t) => [t.id, t.priceInPaise])), [stallTypes]);
+  const suggestFor = useCallback((el: EditorElement): number | null => {
+    const base = el.kind === "stall" && el.stallTypeId ? stallBaseById[el.stallTypeId] : undefined;
+    const sc = scores.get(el.id);
+    return base == null || !sc ? null : suggestPaise(base, sc.total);
+  }, [stallBaseById, scores]);
+  const suggestion = selected ? suggestFor(selected) : null;
+  const applySuggestions = useCallback((scope: "selected" | "zone") => {
+    let ids = selectedIds;
+    if (scope === "zone") {
+      const zoneIds = new Set([...selectedIds].map((id) => zoneOf(elements.find((e) => e.id === id)!, zones)?.id).filter(Boolean));
+      ids = new Set(elements.filter((e) => e.kind === "stall" && zoneIds.has(zoneOf(e, zones)?.id ?? "")).map((e) => e.id));
+    }
+    commit(elements.map((e) => {
+      if (e.kind !== "stall" || !ids.has(e.id)) return e;
+      const s = suggestFor(e);
+      return s == null ? e : { ...e, priceInPaise: s };
+    }));
+  }, [selectedIds, elements, zones, suggestFor, commit]);
 
   const calibrated = !!(canvas.bgImage && (canvas.bgImage.ftPerPx ?? 0) > 0);
   const measureLine = useMemo(() => [...measurePts, ...(tool === "measure" && measureCursor ? [measureCursor] : [])], [measurePts, tool, measureCursor]);
@@ -411,8 +433,8 @@ export function useDesignerState({
     layers, toggleLayerVisible, toggleLayerLock, setAllLayersVisible, layerCounts,
     // derived
     violations, violationIds, pathWarnings, gridLines, fillFor,
-    // sales view (scoring §9.1)
-    salesView, setSalesView, scores, selectedScore,
+    // sales view (scoring §9.1) + price suggestions (§9.2)
+    salesView, setSalesView, scores, selectedScore, suggestion, applySuggestions,
     // guides + marquee + handlers
     guides, setGuides, marquee, patchOne, onTransformEnd, onElementClick, onStageMouseDown, onStageMouseMove, onStageMouseUp,
     // element actions

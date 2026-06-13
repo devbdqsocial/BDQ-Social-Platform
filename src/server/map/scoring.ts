@@ -231,6 +231,18 @@ export function describeStall(score: StallScore): string[] {
     .map((c) => c.note);
 }
 
+/** Nearest ₹50 in paise (map-system §9.2). */
+export const round50 = (paise: number): number => Math.round(paise / 5000) * 5000;
+
+/**
+ * Suggested price for a stall (map-system §9.2): a 100-score stall suggests +25% over its type
+ * base, a 0-score −25%, linear through the base at score 50. **Never auto-applied** — admin
+ * accepts via [Apply]; the locked rule holds (admin enters/accepts every price).
+ */
+export function suggestPaise(basePaise: number, score: number): number {
+  return round50(basePaise * (1 + 0.5 * (score - 50) / 100));
+}
+
 /** Tailwind/Konva tier colours for Sales-view badges (map-system §9.1). */
 export const TIER_HEX: Record<ScoreTier, string> = {
   PREMIUM: "#868EFF",

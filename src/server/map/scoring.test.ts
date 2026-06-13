@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SCORE_WEIGHTS, buildScoringContext, scoreStall, scoreLayout, describeStall } from "./scoring";
+import { SCORE_WEIGHTS, buildScoringContext, scoreStall, scoreLayout, describeStall, round50, suggestPaise } from "./scoring";
 import type { EditorElement } from "@/lib/map/designer-ops";
 import type { Pathway, Zone } from "@/lib/map/layout-v2";
 
@@ -86,6 +86,27 @@ describe("zone premium", () => {
     expect(z(els[0])).toBe(SCORE_WEIGHTS.zone);
     expect(z(els[1])).toBe(SCORE_WEIGHTS.zone / 2);
     expect(z(els[2])).toBe(0);
+  });
+});
+
+describe("price suggestions (§9.2)", () => {
+  it("round50 snaps paise to the nearest ₹50", () => {
+    expect(round50(1234567)).toBe(1235000); // ₹12,345.67 → ₹12,350
+    expect(round50(1212400)).toBe(1210000); // ₹12,124 → ₹12,100
+  });
+
+  it("score 50 keeps the base; 100 is +25%; 0 is −25%", () => {
+    const base = 1000000; // ₹10,000
+    expect(suggestPaise(base, 50)).toBe(1000000);
+    expect(suggestPaise(base, 100)).toBe(1250000); // +25%
+    expect(suggestPaise(base, 0)).toBe(750000); // −25%
+  });
+
+  it("is monotonic in score and always a ₹50 multiple", () => {
+    const base = 1500000;
+    const lo = suggestPaise(base, 30), hi = suggestPaise(base, 84);
+    expect(hi).toBeGreaterThan(lo);
+    expect(hi % 5000).toBe(0);
   });
 });
 

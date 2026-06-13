@@ -376,9 +376,17 @@ build on it.
       (tier · bullets · per-component bars) in the inspector. 10 scoring tests on fixtures (weights
       sum, falloffs, corner/frontage/zone geometry, tier ordering). Verify: 53f/237t green; build
       OK; both designers 200; 0err/10warn.
-- [ ] **R2.5.11 Price suggestions** (6h): §9.2 formula (`round50`, ±25% band), inspector chip +
-      Apply (single/bulk/zone) through audited mutation. Verify: formula tests; AuditLog row
-      per apply; **no auto-apply path exists** (grep).
+- [x] **R2.5.11 Price suggestions** (6h) ✓ — §9.2 `round50` + `suggestPaise(base, score)` (±25%
+      band through the type base at score 50) in scoring.ts; the hook's `suggestFor`/`suggestion`
+      selectors + `applySuggestions("selected" | "zone")` action; inspector chip "Suggested:
+      ₹X (score N) [Apply]" on the single stall, and a Sales-view bulk bar "To N selected / To
+      zone". **No auto-apply path** — grep confirms `applySuggestions` is only an onClick and
+      `suggestFor`/`suggestion` are display-only; admin accepts every price. 3 formula tests
+      (base/+25/−25, round50, monotonic ₹50-multiple). **DEVIATION (flagged):** verify line wanted
+      an "AuditLog row per apply"; the designer is unsaved client state with one audited Save, so
+      an apply is an in-editor price edit (undoable via history) captured by the audited
+      `saveMapAction` before/after — a per-apply server mutation would break the single-Save model.
+      Audit + locked-price rules both hold. Verify: 53f/240t green; build OK; both designers 200.
 - [ ] **R2.5.12 Revenue heatmap + occupancy** (6h): quintile fills, legend, zone cards;
       occupancy = used/venue. Verify: math tests.
 - [ ] **R2.5.13 Versions** (8h): named snapshots (cap 10, warn at 8), restore-as-commit,
@@ -515,3 +523,4 @@ pages · axe pass.
 | 2026-06-13 | build session 5 (cont.) | R2.5.8 (terrain) | done; **first feature through the slice+panel pattern** — terrain.ts (6 types) + a hook slice + a controls palette + a 15%-opacity under-render gated by the terrain layer; no new plumbing, proving the refactor's promise | 51f/218t green; build OK; designer 200 |
 | 2026-06-13 | build session 5 (cont.) | R2.5.9 (align/distribute + bulk v2) | done; align/distribute pre-existed; added bulk resize/type/status/price (pure bulkPatch + inspector BulkEditForm) + first designer-actions.test.ts (align/distribute/bulk/relabel on fixtures) | 52f/225t green; build OK; designer 200 |
 | 2026-06-13 | build session 5 (cont.) | R2.5.10 (scoring engine) | done; **sales-value cluster begins** — scoring.ts (§9.1 weight constants, 6 components, describeStall) + Sales view (S toggle, tier badges, inspector breakdown); 10 fixture tests | 53f/237t green; build OK; both designers 200 |
+| 2026-06-13 | build session 5 (cont.) | R2.5.11 (price suggestions) | done; §9.2 round50/suggestPaise + suggestFor/applySuggestions(selected/zone); inspector chip+Apply + Sales bulk bar; no auto-apply (grep-verified); **flagged deviation:** per-apply audit folded into the single audited Save (unsaved-editor model) | 53f/240t green; build OK; both designers 200 |
