@@ -149,10 +149,9 @@ owner DSN — R0.5c). Proceeding to R1 per owner-approved session scope.
 **R1.2 Group-QR (M1)** (16h) — architecture §4.2, DR-4
 - [x] a. Migration `20260613000000_ticket_admit_count` (additive) hand-authored per the repo's
       drift-tolerant convention; applied + resolved on the DEV DB ✓.
-      **⚠ PROD GATE OPEN: apply to prod Neon (ep-dry-sunset) BEFORE any deploy of this code:**
-      `npx prisma migrate deploy` with prod `DATABASE_URL_DIRECT`, or run the migration.sql via
-      Neon console, then `npx prisma migrate resolve --applied 20260613000000_ticket_admit_count`.
-      (Vercel CLI not linked on this machine — owner action or provide prod URL.)
+      **✅ PROD GATE CLOSED (2026-06-14):** `migrate deploy` applied `…_ticket_admit_count` + the
+      lead/payment indexes to prod Neon (ep-dry-sunset); both DBs `migrate status` = up to date,
+      no drift. Plain `migrate deploy` worked (history in sync — no diff+execute needed).
 - [x] b. `fulfillOrder`: one ticket per order line with `admitCount=qty` ✓; comps get a
       "One group QR" checkbox → single ticket admitCount=qty ✓.
 - [x] c. `checkInByToken`: **partial admits** — `FOR UPDATE` serialization per ticket,
