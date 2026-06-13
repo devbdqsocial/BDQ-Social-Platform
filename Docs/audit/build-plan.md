@@ -239,10 +239,14 @@ owner DSN — R0.5c). Proceeding to R1 per owner-approved session scope.
       Verify: greps in the closed debt rows; visual diff pass on admin list pages.
 
 **R2.3 Motion diet** (8h)
-- [ ] a. BrandsCarousel → CSS scroll-snap (drop `swiper`); admin template transition → CSS
-      (drop `framer-motion`); reduced-motion JS gate in `lib/motion.ts`.
-      Verify: both deps gone from `package.json` (D31); landing motion visually intact;
-      `prefers-reduced-motion` kills GSAP timelines.
+- [x] a. DONE ✓ BrandsCarousel → pure CSS scroll-snap (server component now — zero JS,
+      peek widths mirror the old slidesPerView); `swiper` uninstalled. `framer-motion` was
+      already absent (admin template runs on tw-animate-css — pre-done). Reduced-motion JS
+      gate landed in `lib/gsap.ts` (central entry, not motion.ts — every GSAP consumer
+      imports it): globalTimeline timeScale 1000 + 1ms default duration collapses all tweens
+      while preserving end-states; `prefersReducedMotion()` exported for branching.
+      Verify: swiper gone from package.json (D31) ✓; 46f/184t ✓; build ✓; landing visual
+      spot-check = owner (carousel scroll feel changed from drag-inertia to native snap).
 
 **GATE R2:** token greps zero · deps removed · visual sign-off on landing + one admin page.
 
@@ -403,3 +407,4 @@ pages · axe pass.
 | 2026-06-13 | build session 1 (cont.) | R1.1 + R1.4 + R1.5 | done; oversell race PROVEN on real DB; coupon UI live | 46f/183t + 1 DB-gated; build 82 pages green |
 | 2026-06-13 | build session 1 (cont.) | R1.2 (M1 dev) | done; group-QR proven on real DB (buy-5→1QR→3+2→board 5); **PROD GATE OPEN: M1 must hit prod Neon before deploy** | 46f/183t + 2 DB-gated; build green |
 | 2026-06-13 | build session 2 | R1.3a (code-first) | done; legacy pay-to-hold flow deleted; webhook fulfils PENDING_PAYMENT only; public map read-only; **R1 PHASE COMPLETE (code)** — M2 destructive part queued for one-deploy-later | 46f/184t green; build green |
+| 2026-06-13 | build session 2 (cont.) | R2.1 + R2.3 | done; clamp() scale, clay purge, ESLint guardrails, swiper dropped, GSAP reduced-motion gate; **R2.2 (contracts) = next session**; owner visual spot-check wanted on RPA type + carousel | 46f/184t green; build green; lint 0 errors |

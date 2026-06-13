@@ -1,25 +1,21 @@
-"use client";
 import Image from "next/image";
 import Link from "next/link";
-import { Swiper, SwiperSlide } from "swiper/react";
-import "swiper/css";
 
 type Brand = { id: string; brandName: string; logo: string | null };
 
-// RPA mod-slider: draggable Swiper of masked brand cards (slidesPerView 1.35 → 3.5).
+/**
+ * RPA mod-slider as pure CSS scroll-snap (build-plan R2.3 — replaces swiper, the dep's only
+ * consumer). Peek widths mirror the old slidesPerView 1.35 / 2.5 / 3.5; native touch scrolling,
+ * zero JS shipped (no longer a client component).
+ */
 export function BrandsCarousel({ brands }: { brands: Brand[] }) {
   return (
-    <Swiper
-      slidesPerView={1.35}
-      spaceBetween={20}
-      loop={brands.length > 4}
-      breakpoints={{
-        640: { slidesPerView: 2.5, spaceBetween: 28 },
-        1024: { slidesPerView: 3.5, spaceBetween: 32 },
-      }}
+    <ul
+      className="-mx-[var(--wrapper-padd)] flex snap-x snap-mandatory gap-5 overflow-x-auto px-[var(--wrapper-padd)] pb-[var(--space-md)] sm:gap-7 lg:gap-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      aria-label="Featured brands"
     >
       {brands.map((v) => (
-        <SwiperSlide key={v.id}>
+        <li key={v.id} className="w-[74%] flex-none snap-start sm:w-[40%] lg:w-[28.5%]">
           <Link href={`/vendors/${v.id}`} data-cursor="view" className="block select-none">
             <div className="svg svg--form2 media-zoom media-tint w-full">
               {v.logo ? (
@@ -34,8 +30,8 @@ export function BrandsCarousel({ brands }: { brands: Brand[] }) {
             </div>
             <p className="f-paragraph-small f-bold mt-[var(--space-sm)] truncate">{v.brandName}</p>
           </Link>
-        </SwiperSlide>
+        </li>
       ))}
-    </Swiper>
+    </ul>
   );
 }
