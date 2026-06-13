@@ -14,6 +14,7 @@ import { INFRA_COLOR, STALL_STATUS_COLORS } from "@/lib/stall-colors";
 import { pathLength, type Pt } from "@/lib/map/geometry";
 import { scoreLayout, suggestPaise } from "@/server/map/scoring";
 import { zoneOf } from "@/lib/map/zones";
+import { quintileBounds, heatmapFill, type HeatmapMode } from "@/lib/map/heatmap";
 import type { UploadSignature } from "@/lib/cloudinary";
 import { useHistory } from "../useHistory";
 
@@ -117,6 +118,7 @@ export function useDesignerState({
   // UI flags
   const [bulkOpen, setBulkOpen] = useState(false);
   const [salesView, setSalesView] = useState(false);
+  const [heatmapMode, setHeatmapMode] = useState<HeatmapMode>("off");
   const [calibrating, setCalibrating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
@@ -201,6 +203,22 @@ export function useDesignerState({
       return s == null ? e : { ...e, priceInPaise: s };
     }));
   }, [selectedIds, elements, zones, suggestFor, commit]);
+
+  // Revenue/score heatmap (§9.3): quintile fill by price or score; bounds power the legend.
+  const heatmapValueOf = useCallback((el: EditorElement): number | null => {
+    if (el.kind !== "stall") return null;
+    return heatmapMode === "score" ? scores.get(el.id)?.total ?? null : el.priceInPaise ?? null;
+  }, [heatmapMode, scores]);
+  const heatmapBounds = useMemo(() => {
+    if (heatmapMode === "off") return [];
+    const vals = elements.map(heatmapValueOf).filter((v): v is number => v != null);
+    return vals.length ? quintileBounds(vals) : [];
+  }, [heatmapMode, elements, heatmapValueOf]);
+  const heatFillFor = useCallback((el: EditorElement): string | null => {
+    if (heatmapMode === "off") return null;
+    const v = heatmapValueOf(el);
+    return v == null ? "#E5E7EB" : heatmapFill(v, heatmapBounds);
+  }, [heatmapMode, heatmapValueOf, heatmapBounds]);
 
   const calibrated = !!(canvas.bgImage && (canvas.bgImage.ftPerPx ?? 0) > 0);
   const measureLine = useMemo(() => [...measurePts, ...(tool === "measure" && measureCursor ? [measureCursor] : [])], [measurePts, tool, measureCursor]);
@@ -433,8 +451,9 @@ export function useDesignerState({
     layers, toggleLayerVisible, toggleLayerLock, setAllLayersVisible, layerCounts,
     // derived
     violations, violationIds, pathWarnings, gridLines, fillFor,
-    // sales view (scoring §9.1) + price suggestions (§9.2)
+    // sales view (scoring §9.1) + price suggestions (§9.2) + heatmap (§9.3)
     salesView, setSalesView, scores, selectedScore, suggestion, applySuggestions,
+    heatmapMode, setHeatmapMode, heatFillFor, heatmapBounds,
     // guides + marquee + handlers
     guides, setGuides, marquee, patchOne, onTransformEnd, onElementClick, onStageMouseDown, onStageMouseMove, onStageMouseUp,
     // element actions

@@ -387,8 +387,16 @@ build on it.
       an apply is an in-editor price edit (undoable via history) captured by the audited
       `saveMapAction` before/after — a per-apply server mutation would break the single-Save model.
       Audit + locked-price rules both hold. Verify: 53f/240t green; build OK; both designers 200.
-- [ ] **R2.5.12 Revenue heatmap + occupancy** (6h): quintile fills, legend, zone cards;
-      occupancy = used/venue. Verify: math tests.
+- [x] **R2.5.12 Revenue heatmap + occupancy** (6h) ✓ — pure `lib/map/heatmap.ts` (5-step
+      cream→lavender ramp, percentile `quintileBounds`, `quintileIndex`/`heatmapFill`) + 5 tests.
+      A `heatmapMode` slice ("off"/"price"/"score") with `heatmapBounds` + `heatFillFor` selectors;
+      a Sales-view sub-toggle in the toolbar; stalls fill by quintile in `DesignerCanvas`
+      (unpriced/unscored = grey); a `HeatmapLegend` panel showing the ramp with its quintile
+      bounds (₹ for price, number for score). Occupancy (used/venue) + per-zone potential were
+      already folded into `SummaryPanel` (R2.5.4/R2.5.6). **Partial-defer (flagged):** "potential
+      vs **booked**" zone cards — booked counts live in the booking flow, not the layout designer
+      (no booked stalls exist at design time); deferred to the console revenue view where booking
+      data exists. Verify: 54f/245t green; build OK; both designers 200; 0err/10warn.
 - [ ] **R2.5.13 Versions** (8h): named snapshots (cap 10, warn at 8), restore-as-commit,
       compare (stat diff + ghost overlay). Verify: restore undoable; cap enforced.
 - [ ] **R2.5.14 Vendor preview + search** (6h): preview lens toggle; search/focus (`/`) +
@@ -524,3 +532,4 @@ pages · axe pass.
 | 2026-06-13 | build session 5 (cont.) | R2.5.9 (align/distribute + bulk v2) | done; align/distribute pre-existed; added bulk resize/type/status/price (pure bulkPatch + inspector BulkEditForm) + first designer-actions.test.ts (align/distribute/bulk/relabel on fixtures) | 52f/225t green; build OK; designer 200 |
 | 2026-06-13 | build session 5 (cont.) | R2.5.10 (scoring engine) | done; **sales-value cluster begins** — scoring.ts (§9.1 weight constants, 6 components, describeStall) + Sales view (S toggle, tier badges, inspector breakdown); 10 fixture tests | 53f/237t green; build OK; both designers 200 |
 | 2026-06-13 | build session 5 (cont.) | R2.5.11 (price suggestions) | done; §9.2 round50/suggestPaise + suggestFor/applySuggestions(selected/zone); inspector chip+Apply + Sales bulk bar; no auto-apply (grep-verified); **flagged deviation:** per-apply audit folded into the single audited Save (unsaved-editor model) | 53f/240t green; build OK; both designers 200 |
+| 2026-06-13 | build session 5 (cont.) | R2.5.12 (revenue heatmap) | done; heatmap.ts (quintile ramp) + price/score heatmap mode + HeatmapLegend; occupancy/potential already in SummaryPanel; **partial-defer:** booked-vs-potential zone cards → console revenue view (no booked stalls at design time) | 54f/245t green; build OK; both designers 200 |

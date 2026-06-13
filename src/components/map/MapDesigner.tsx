@@ -10,6 +10,7 @@ import { DesignerControls, DesignerStatusBar } from "./designer/DesignerControls
 import { DesignerCanvas } from "./designer/DesignerCanvas";
 import { DesignerSidePanels } from "./designer/DesignerSidePanels";
 import { LayersPanel } from "./designer/LayersPanel";
+import { HeatmapLegend } from "./designer/HeatmapLegend";
 import { DesignerInspector } from "./DesignerInspector";
 import { SummaryPanel } from "./SummaryPanel";
 import { BulkGridDialog } from "./BulkGridDialog";
@@ -60,6 +61,7 @@ export default function MapDesigner(props: MapDesignerProps = {}) {
             onApplySuggestions={d.applySuggestions}
             onRelabel={(prefix, start) => { if (selectedIds.size) commit(relabel(elements, selectedIds, prefix, start)); }}
           />
+          <HeatmapLegend />
           <SummaryPanel elements={elements} stallTypes={stallTypes} zones={zones} venueSqFt={canvas.widthFt * canvas.heightFt} />
           <DesignerSidePanels />
         </div>

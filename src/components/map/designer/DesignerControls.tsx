@@ -27,7 +27,7 @@ export function DesignerControls() {
     tool, selectTool, zoom, scale, fit, undo, redo, canUndo, canRedo, doAlign, doDistribute,
     setBulkOpen, exportPng, drawing, isDrawTool, isClosed, finishDrawing, boundary, setBoundary,
     pathType, setPathType, addObstacle, duplicateSelected, terrainType, setTerrainType,
-    salesView, setSalesView,
+    salesView, setSalesView, heatmapMode, setHeatmapMode,
   } = d;
 
   return (
@@ -124,6 +124,14 @@ export function DesignerControls() {
         <Button variant="outline" size="sm" onClick={() => setBulkOpen(true)}><Grid2x2 className="size-4" /> Bulk grid</Button>
         <Button variant="outline" size="sm" onClick={exportPng}><ImageIcon className="size-4" /> PNG</Button>
         <Button variant={salesView ? "secondary" : "outline"} size="sm" title="Sales view — stall scores (S)" onClick={() => setSalesView((v) => !v)}><Gauge className="size-4" /> Sales</Button>
+        {salesView && (
+          <>
+            <span className="ml-1 text-xs text-muted-foreground">Heatmap:</span>
+            {(["off", "price", "score"] as const).map((m) => (
+              <Button key={m} variant={heatmapMode === m ? "secondary" : "ghost"} size="sm" className="h-8 capitalize" onClick={() => setHeatmapMode(m)}>{m}</Button>
+            ))}
+          </>
+        )}
       </div>
 
       {/* structure row — boundary + zones + pathways + obstacles */}

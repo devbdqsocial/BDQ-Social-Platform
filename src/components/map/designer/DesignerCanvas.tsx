@@ -14,7 +14,7 @@ export function DesignerCanvas() {
     width, height, scale, pxPerFt, tool, canvas, bgImg, calibrated, layers,
     elements, zones, pathways, terrain, boundary, obstacles, drawing, guides, marquee,
     measureLine, measureDist, measureCursor, selectedIds, violationIds, fillFor,
-    salesView, scores,
+    salesView, scores, heatFillFor,
     stageRef, trRef, toFt, zoom, patchBg, commit, setSelectedIds, setGuides,
     onStageMouseDown, onStageMouseMove, onStageMouseUp, onElementClick, onTransformEnd,
     finishDrawing, isDrawTool, isClosed,
@@ -84,7 +84,7 @@ export function DesignerCanvas() {
                 width={el.widthFt * pxPerFt}
                 height={el.heightFt * pxPerFt}
                 rotation={el.rotation}
-                fill={fillFor(el)}
+                fill={heatFillFor(el) ?? fillFor(el)}
                 stroke={violationIds.has(el.id) ? "#C0392B" : isSel ? "#D69A22" : "#352F26"}
                 strokeWidth={violationIds.has(el.id) ? 2.5 : isSel ? 2 : 1}
                 cornerRadius={3}
