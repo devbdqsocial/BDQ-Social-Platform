@@ -1,35 +1,26 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { joinPlatformWaitlist } from "@/actions/waitlist";
+import { timeLeft, type TimeLeft } from "@/lib/countdown";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
-export function ComingSoonClient({ count }: { count: number }) {
+export function ComingSoonClient({ count, targetIso }: { count: number; targetIso: string | null }) {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
   const [interestedInStall, setInterestedInStall] = useState(false);
   const [submittedPhone, setSubmittedPhone] = useState("");
 
-  const targetDate = new Date("2026-10-01T12:00:00").getTime();
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  // Dynamic target from the next event (R3.1) — reuse the tested countdown lib, no hardcoded date.
+  const target = useMemo(() => (targetIso ? new Date(targetIso) : null), [targetIso]);
+  const [left, setLeft] = useState<TimeLeft | null>(() => (target ? timeLeft(target) : null));
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      const distance = targetDate - Date.now();
-      if (distance < 0) {
-        clearInterval(interval);
-        return;
-      }
-      setTimeLeft({
-        days: Math.floor(distance / 86400000),
-        hours: Math.floor((distance % 86400000) / 3600000),
-        minutes: Math.floor((distance % 3600000) / 60000),
-        seconds: Math.floor((distance % 60000) / 1000),
-      });
-    }, 1000);
+    if (!target) return;
+    const interval = setInterval(() => setLeft(timeLeft(target)), 1000);
     return () => clearInterval(interval);
-  }, [targetDate]);
+  }, [target]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -47,12 +38,14 @@ export function ComingSoonClient({ count }: { count: number }) {
     }
   };
 
-  const units = [
-    { label: "Days", value: timeLeft.days },
-    { label: "Hours", value: timeLeft.hours },
-    { label: "Mins", value: timeLeft.minutes },
-    { label: "Secs", value: timeLeft.seconds },
-  ];
+  const units = left
+    ? [
+        { label: "Days", value: left.days },
+        { label: "Hours", value: left.hours },
+        { label: "Mins", value: left.mins },
+        { label: "Secs", value: left.secs },
+      ]
+    : [];
 
   return (
     <div className="rpa gama-1 bg-1 paint relative flex min-h-[100svh] items-center justify-center overflow-hidden">
@@ -67,15 +60,17 @@ export function ComingSoonClient({ count }: { count: number }) {
           Discover curated markets, live experiences, creators, food, music, and meaningful connections.
         </p>
 
-        {/* Countdown */}
-        <div className="mt-[var(--space-3xl)] flex justify-center gap-[var(--space-xl)] sm:gap-[var(--space-3xl)]">
-          {units.map((u) => (
-            <div key={u.label} className="text-center">
-              <div className="f-exat tabular-nums f-h100">{pad(u.value)}</div>
-              <div className="f-paragraph-small f-bold t-upper" style={{ letterSpacing: "0.14em" }}>{u.label}</div>
-            </div>
-          ))}
-        </div>
+        {/* Countdown — only when there's an upcoming event still ahead */}
+        {left && !left.done && (
+          <div className="mt-[var(--space-3xl)] flex justify-center gap-[var(--space-xl)] sm:gap-[var(--space-3xl)]">
+            {units.map((u) => (
+              <div key={u.label} className="text-center">
+                <div className="f-exat tabular-nums f-h100">{pad(u.value)}</div>
+                <div className="f-paragraph-small f-bold t-upper" style={{ letterSpacing: "0.14em" }}>{u.label}</div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Form / success */}
         {status === "success" ? (

@@ -456,8 +456,15 @@ owner walks the designer once and signs off in the session log.
 
 ## Phase R3 — Customer surfaces (~96h, after R1+R2; R3.5 also needs R2.5) — roadmap R3
 
-- [ ] **R3.1 Coming-soon** (8h): "Poster" direction, dynamic countdown target (D8, D26).
-      Verify: Lighthouse ≥95; target from event/SystemSetting.
+- [x] **R3.1 Coming-soon** (8h) ✓ — the RPA "Poster" page already existed (gama/bg colour block,
+      Exat display, waitlist join + "exhibit my brand" intent, live count). R3.1 fixed the one real
+      gap: the countdown **target was hardcoded** (`2026-10-01`). Now `page.tsx` pulls the next
+      upcoming **published/live event's `startsAt`** via the shared `listPublished()` (same source
+      the landing uses) and passes `targetIso`; `ComingSoonClient` drives the units off the tested
+      `timeLeft` lib (dropped the duplicated inline interval math) and **hides the countdown when
+      there's no upcoming event** (graceful). Verify: target from event ✓ (no hardcode; grep
+      clean); page 200, heading+form render; 59f/271t green; build OK; 0err/10warn. **Lighthouse
+      ≥95 = staging/manual check** (page is SSR + one small client island; can't run LH here).
 - [ ] **R3.2 Landing rebuild** (20h): customer-portal/changes §6.2 section order, proof band,
       real-count bindings (D24, D25, D30), ISR. Verify: LCP ≤2.5s; no static-claims grep.
 - [ ] **R3.3 Event detail + checkout** (16h): sticky CTA, inline OTP sheet, skeleton (D18),
@@ -576,3 +583,5 @@ pages · axe pass.
 | 2026-06-13 | build session 5 (cont.) | R2.5.14 (vendor preview + search) | done; Preview lens (hides underlay/sales/heatmap/ghost/validation) + search.ts (label/zone match) + search box, `/` shortcut, focusOn 1.5× pulse; **deferred:** ⌘K palette entries (cross-surface) | 56f/255t green; build OK; both designers 200 |
 | 2026-06-13 | build session 5 (cont.) | R2.5.15 (exports) | done; map-export.ts (naming/scale-bar/fit) + captureFullCanvas + MapPdf (react-pdf, title + 50ft bar) + Export dropdown (PNG 2× + vendor/ops/print PDF); **flagged:** ops-PDF content awaits R2.5.16 ops objects | 57f/261t green; build OK; both designers 200 |
 | 2026-06-13 | build session 5 (cont.) | R2.5.16 (entry-flow + ops + validation) | done; **R2.5 MAP CLUSTER COMPLETE** — throughput.ts + entry-ops.ts + validation-report.ts (+tests); ops/entryFlow reactive state + palettes + canvas render + drag; ValidationPanel (focus-on-click + throughput rollup + lane editor); ops-PDF flag closed; **flagged:** O-mode→palette, throughput card→panel | 59f/271t green; build OK; both designers 200 |
+| 2026-06-14 | build session 6 | DB migrations + R2.5 audit | done; `migrate deploy` to local + **prod (ep-dry-sunset)** — ticket_admit_count (M1) + lead/payment indexes, both up-to-date (**M1 prod-gate CLOSED**); wrote map-audit.md (go/no-go: YES to start R3; flags O(n²) scoring/no-memo perf, throughput demand=0, no vendor surface yet) | both DBs synced; build green |
+| 2026-06-14 | build session 6 (cont.) | R3.1 (coming-soon) | done; **R3 begins** — countdown target now dynamic from next published event's startsAt (was hardcoded 2026-10-01), reuses tested timeLeft lib, hides gracefully with no event | 59f/271t green; build OK; coming-soon 200 |
