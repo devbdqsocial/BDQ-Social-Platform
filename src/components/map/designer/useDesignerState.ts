@@ -15,6 +15,7 @@ import { pathLength, type Pt } from "@/lib/map/geometry";
 import { scoreLayout, suggestPaise } from "@/server/map/scoring";
 import { zoneOf } from "@/lib/map/zones";
 import { quintileBounds, heatmapFill, type HeatmapMode } from "@/lib/map/heatmap";
+import { diffStats, versionCapState, type VersionMeta, type VersionSnapshot } from "@/lib/map/versions";
 import type { UploadSignature } from "@/lib/cloudinary";
 import { useHistory } from "../useHistory";
 
@@ -103,8 +104,9 @@ export function useDesignerState({
   const passthrough = useRef({
     ops: initialLayout?.ops ?? [],
     entryFlow: initialLayout?.entryFlow ?? [],
-    versions: initialLayout?.versions ?? [],
   });
+  const [versions, setVersions] = useState<VersionMeta[]>((initialLayout?.versions ?? []) as VersionMeta[]);
+  const [compareId, setCompareId] = useState<string | null>(null);
 
   // layers (visibility/lock) — reactive (R2.5.5 layers panel)
   const [layers, setLayers] = useState<Record<LayerId, LayerState>>(() => {
@@ -219,6 +221,35 @@ export function useDesignerState({
     const v = heatmapValueOf(el);
     return v == null ? "#E5E7EB" : heatmapFill(v, heatmapBounds);
   }, [heatmapMode, heatmapValueOf, heatmapBounds]);
+
+  // Versions (§9 / R2.5.13): named snapshots of the editable collections; cap 10, warn at 8.
+  const snapshotNow = useCallback((): VersionSnapshot => ({ elements, zones, pathways, terrain, obstacles, boundary }), [elements, zones, pathways, terrain, obstacles, boundary]);
+  const versionCap = versionCapState(versions.length);
+  const saveVersion = useCallback((name: string) => {
+    if (!versionCapState(versions.length).canSave) return;
+    const v: VersionMeta = { id: `ver_${Date.now().toString(36)}`, name: name.trim() || `Version ${versions.length + 1}`, createdAt: new Date().toISOString(), createdBy: "admin", data: snapshotNow() };
+    setVersions((vs) => [...vs, v]);
+  }, [versions.length, snapshotNow]);
+  const deleteVersion = useCallback((id: string) => {
+    setVersions((vs) => vs.filter((v) => v.id !== id));
+    setCompareId((c) => (c === id ? null : c));
+  }, []);
+  const restoreVersion = useCallback((id: string) => {
+    const v = versions.find((x) => x.id === id);
+    if (!v) return;
+    const snap = v.data as VersionSnapshot;
+    setZones(snap.zones ?? []);
+    setPathways(snap.pathways ?? []);
+    setTerrain(snap.terrain ?? []);
+    setObstacles(snap.obstacles ?? []);
+    setBoundary(snap.boundary ?? null);
+    commit(snap.elements ?? []); // elements ride the undo stack → restore is undoable
+  }, [versions, commit, setZones, setPathways, setTerrain, setObstacles, setBoundary]);
+  const compareSnapshot = useMemo<VersionSnapshot | null>(() => {
+    const v = compareId ? versions.find((x) => x.id === compareId) : null;
+    return v ? (v.data as VersionSnapshot) : null;
+  }, [compareId, versions]);
+  const compareDiff = useMemo(() => (compareSnapshot ? diffStats(compareSnapshot, snapshotNow()) : null), [compareSnapshot, snapshotNow]);
 
   const calibrated = !!(canvas.bgImage && (canvas.bgImage.ftPerPx ?? 0) > 0);
   const measureLine = useMemo(() => [...measurePts, ...(tool === "measure" && measureCursor ? [measureCursor] : [])], [measurePts, tool, measureCursor]);
@@ -413,9 +444,9 @@ export function useDesignerState({
         : {}),
       boundary: boundary && boundary.length >= 3 ? { points: boundary } : undefined,
       obstacles, terrain, zones, pathways, elements,
-      ops: pt.ops, entryFlow: pt.entryFlow, layers, versions: pt.versions,
+      ops: pt.ops, entryFlow: pt.entryFlow, layers, versions,
     };
-  }, [gridFt, canvas, boundary, obstacles, terrain, zones, pathways, elements, layers]);
+  }, [gridFt, canvas, boundary, obstacles, terrain, zones, pathways, elements, layers, versions]);
 
   const handleSave = useCallback(async () => {
     if (!eventId || !saveAction) return;
@@ -454,6 +485,9 @@ export function useDesignerState({
     // sales view (scoring §9.1) + price suggestions (§9.2) + heatmap (§9.3)
     salesView, setSalesView, scores, selectedScore, suggestion, applySuggestions,
     heatmapMode, setHeatmapMode, heatFillFor, heatmapBounds,
+    // versions (§9 / R2.5.13)
+    versions, versionCap, saveVersion, restoreVersion, deleteVersion,
+    compareId, setCompareId, compareSnapshot, compareDiff,
     // guides + marquee + handlers
     guides, setGuides, marquee, patchOne, onTransformEnd, onElementClick, onStageMouseDown, onStageMouseMove, onStageMouseUp,
     // element actions

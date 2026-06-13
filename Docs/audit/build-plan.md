@@ -397,8 +397,16 @@ build on it.
       vs **booked**" zone cards — booked counts live in the booking flow, not the layout designer
       (no booked stalls exist at design time); deferred to the console revenue view where booking
       data exists. Verify: 54f/245t green; build OK; both designers 200; 0err/10warn.
-- [ ] **R2.5.13 Versions** (8h): named snapshots (cap 10, warn at 8), restore-as-commit,
-      compare (stat diff + ghost overlay). Verify: restore undoable; cap enforced.
+- [x] **R2.5.13 Versions** (8h) ✓ — pure `lib/map/versions.ts` (`VersionSnapshot`, `versionStats`,
+      `diffStats`, `versionCapState` — **cap 10, warn at 8**) + 5 tests. `versions` moved from the
+      passthrough ref into reactive state; `saveVersion`/`deleteVersion`/`restoreVersion` +
+      `compareId`/`compareSnapshot`/`compareDiff` in the hook. **Restore is undoable** — it pushes
+      the snapshot's elements through the history `commit` (the other collections set directly,
+      per debt #3). A `VersionsPanel` (name → Save, per-row Restore/Compare/Delete, cap warning,
+      live diff "vs now: +N stalls · +₹X"), and a faint dashed **ghost overlay** of the compared
+      version in `DesignerCanvas`. Round-trips through `buildLayoutV2` (was already in the v2
+      schema). Verify: restore undoable (Ctrl+Z); cap blocks the 11th; 55f/250t green; build OK;
+      both designers 200; 0err/10warn.
 - [ ] **R2.5.14 Vendor preview + search** (6h): preview lens toggle; search/focus (`/`) +
       admin ⌘K entries. Verify: preview hides admin layers; "A12" zooms+pulses.
 - [ ] **R2.5.15 Exports** (8h): PNG 2×; PDF vendor/ops/print via `@react-pdf/renderer`
@@ -533,3 +541,4 @@ pages · axe pass.
 | 2026-06-13 | build session 5 (cont.) | R2.5.10 (scoring engine) | done; **sales-value cluster begins** — scoring.ts (§9.1 weight constants, 6 components, describeStall) + Sales view (S toggle, tier badges, inspector breakdown); 10 fixture tests | 53f/237t green; build OK; both designers 200 |
 | 2026-06-13 | build session 5 (cont.) | R2.5.11 (price suggestions) | done; §9.2 round50/suggestPaise + suggestFor/applySuggestions(selected/zone); inspector chip+Apply + Sales bulk bar; no auto-apply (grep-verified); **flagged deviation:** per-apply audit folded into the single audited Save (unsaved-editor model) | 53f/240t green; build OK; both designers 200 |
 | 2026-06-13 | build session 5 (cont.) | R2.5.12 (revenue heatmap) | done; heatmap.ts (quintile ramp) + price/score heatmap mode + HeatmapLegend; occupancy/potential already in SummaryPanel; **partial-defer:** booked-vs-potential zone cards → console revenue view (no booked stalls at design time) | 54f/245t green; build OK; both designers 200 |
+| 2026-06-13 | build session 5 (cont.) | R2.5.13 (versions) | done; versions.ts (snapshot/diff/cap) + reactive versions state + save/restore(undoable)/delete/compare; VersionsPanel + dashed ghost overlay; round-trips via v2 | 55f/250t green; build OK; both designers 200 |

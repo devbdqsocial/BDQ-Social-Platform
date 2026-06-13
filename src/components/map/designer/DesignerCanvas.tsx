@@ -14,7 +14,7 @@ export function DesignerCanvas() {
     width, height, scale, pxPerFt, tool, canvas, bgImg, calibrated, layers,
     elements, zones, pathways, terrain, boundary, obstacles, drawing, guides, marquee,
     measureLine, measureDist, measureCursor, selectedIds, violationIds, fillFor,
-    salesView, scores, heatFillFor,
+    salesView, scores, heatFillFor, compareSnapshot,
     stageRef, trRef, toFt, zoom, patchBg, commit, setSelectedIds, setGuides,
     onStageMouseDown, onStageMouseMove, onStageMouseUp, onElementClick, onTransformEnd,
     finishDrawing, isDrawTool, isClosed,
@@ -62,6 +62,14 @@ export function DesignerCanvas() {
         )}
 
         <Layer>
+          {/* compare ghost — the compared version's stalls, faint dashed (R2.5.13) */}
+          {compareSnapshot?.elements.map((el) => (
+            <Rect
+              key={`ghost_${el.id}`}
+              x={el.xFt * pxPerFt} y={el.yFt * pxPerFt} width={el.widthFt * pxPerFt} height={el.heightFt * pxPerFt}
+              rotation={el.rotation} stroke="#868EFF" strokeWidth={1} dash={[4, 3]} opacity={0.5} listening={false}
+            />
+          ))}
           {/* terrain — ground-texture polygons under everything (R2.5.8) */}
           {layers.terrain.visible && terrain.map((t) => (
             <Line
