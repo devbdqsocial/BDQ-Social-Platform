@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { fmtDateTime as fmt } from "@/lib/date-formats";
 import { requireAdminRole } from "@/server/auth/guard";
 import { db } from "@/server/db";
 import { Badge } from "@/components/ui/badge";
@@ -6,9 +7,6 @@ import { PageHeader } from "@/components/ui/page-header";
 
 export const metadata: Metadata = { title: "System" };
 export const dynamic = "force-dynamic";
-
-const fmt = (d: Date) =>
-  new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(d);
 
 function Stat({ label, value, bad }: { label: string; value: string | number; bad?: boolean }) {
   return (

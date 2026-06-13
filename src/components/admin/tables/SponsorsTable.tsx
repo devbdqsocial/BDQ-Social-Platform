@@ -8,17 +8,14 @@ import Link from "next/link";
 import { DataTable } from "@/components/data-table/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { deleteSponsorAction } from "./actions";
+import { deleteSponsorAction } from "@/app/admin/(console)/growth/sponsors/actions";
 import { formatPaise } from "@/lib/utils";
+import { SPONSOR_STATUS } from "@/lib/status-badges";
 
 type Row = SponsorWithFinance;
 const tierLabel = (t: string) => t.toLowerCase().replace(/_/g, " ");
 
-const STATUS_VARIANT = {
-  PROPOSED: "neutral",
-  SIGNED: "warning",
-  PAID: "success",
-} as const;
+
 
 interface SponsorsTableProps {
   sponsors: Row[];
@@ -70,8 +67,8 @@ export function SponsorsTable({ sponsors, hasFinance, activeEventId }: SponsorsT
           id: "status",
           header: "Payment Status",
           cell: ({ row }) => (
-            <Badge variant={STATUS_VARIANT[row.original.status] || "neutral"}>
-              {row.original.status}
+            <Badge variant={(SPONSOR_STATUS[row.original.status] ?? { variant: "neutral" }).variant}>
+              {(SPONSOR_STATUS[row.original.status]?.label ?? row.original.status)}
             </Badge>
           ),
         },

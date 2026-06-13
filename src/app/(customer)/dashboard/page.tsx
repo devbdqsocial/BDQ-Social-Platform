@@ -1,16 +1,15 @@
 import type { Metadata } from "next";
+import { fmtDateTime as fmt } from "@/lib/date-formats";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/server/auth/guard";
 import { listPendingOrders, listUserTickets } from "@/server/tickets/service";
 import { toQrDataUrl } from "@/lib/qr-token";
 import { AutoRefresh } from "@/components/admin/auto-refresh";
+import { RpaPageHeader, RpaEmpty } from "@/components/landing/RpaPageHeader";
 
 export const metadata: Metadata = { title: "Dashboard" };
 export const dynamic = "force-dynamic";
-
-const fmt = (d: Date) =>
-  new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(d);
 
 export default async function CustomerDashboardPage({ searchParams }: { searchParams: Promise<{ paid?: string }> }) {
   const session = await getSession();
@@ -28,9 +27,7 @@ export default async function CustomerDashboardPage({ searchParams }: { searchPa
     <section className="paint py-[var(--space-5xl)]">
       <div className="wrapper max-w-[62rem]">
         {confirming && <AutoRefresh seconds={5} />}
-        <span className="kicker opacity-70">Your wallet</span>
-        <h1 className="f-exat mt-[var(--space-sm)] f-h76">Tickets</h1>
-        <p className="f-paragraph mt-[var(--space-sm)] opacity-70">Show the QR code at the gate — that&apos;s your way in.</p>
+        <RpaPageHeader kicker="Your wallet" title="Tickets" lede="Show the QR code at the gate — that's your way in." />
 
         {confirming && (
           <div className="gama-1 bg-1 paint mt-[var(--space-2xl)] flex items-center gap-[var(--space-xl)] overflow-hidden rounded-[var(--radius-lg)] p-[var(--space-xl)]">
@@ -45,16 +42,16 @@ export default async function CustomerDashboardPage({ searchParams }: { searchPa
         )}
 
         {withQr.length === 0 && !confirming ? (
-          <div className="mt-[var(--space-3xl)] p-[var(--space-2xl)] text-center" style={{ border: "1px dashed var(--color)" }}>
-            <p className="f-exat f-h42">No tickets yet</p>
-            <p className="f-paragraph-small mt-[var(--space-sm)] opacity-70">
-              Just paid? Your tickets land here the moment payment is confirmed.
-            </p>
-            <div className="mt-[var(--space-lg)] flex justify-center">
-              <Link href="/events" className="btn" data-cursor>
-                <span className="btn__text">Find an event</span>
-              </Link>
-            </div>
+          <div className="mt-[var(--space-3xl)]">
+            <RpaEmpty
+              title="No tickets yet"
+              body="Just paid? Your tickets land here the moment payment is confirmed."
+              action={
+                <Link href="/events" className="btn" data-cursor>
+                  <span className="btn__text">Find an event</span>
+                </Link>
+              }
+            />
           </div>
         ) : (
           <div className="mt-[var(--space-3xl)] grid gap-[var(--space-lg)]">

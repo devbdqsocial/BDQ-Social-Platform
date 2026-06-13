@@ -1,3 +1,4 @@
+import { fmtDateFull } from "@/lib/date-formats";
 import { LEGAL } from "@/lib/legal";
 import { formatPaise } from "@/lib/utils";
 
@@ -95,7 +96,7 @@ export function agreementSections(ctx: AgreementContext): { heading: string; bod
       heading: "11. Acceptance",
       body: [
         ctx.signerName && ctx.signedAt
-          ? `Signed electronically by ${ctx.signerName} on ${new Intl.DateTimeFormat("en-IN", { dateStyle: "full", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(ctx.signedAt)}.`
+          ? `Signed electronically by ${ctx.signerName} on ${fmtDateFull(ctx.signedAt)}.`
           : "By typing your full legal name and confirming below, you agree to be bound by this Agreement.",
       ],
     },

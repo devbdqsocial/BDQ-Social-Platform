@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { requireAdminRole } from "@/server/auth/guard";
+import { fmtDate as fmtDateRaw } from "@/lib/date-formats";
 import { listCoupons } from "@/server/coupons/admin-service";
 import { listAllForAdmin } from "@/server/events/service";
 import { formatPaise } from "@/lib/utils";
@@ -13,8 +14,7 @@ import { saveCouponAction, toggleCouponAction } from "./actions";
 
 export const metadata: Metadata = { title: "Coupons" };
 
-const fmtDate = (d: Date | null) =>
-  d ? new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeZone: "Asia/Kolkata" }).format(d) : null;
+const fmtDate = (d: Date | null) => (d ? fmtDateRaw(d) : null);
 
 export default async function CouponsPage() {
   await requireAdminRole();

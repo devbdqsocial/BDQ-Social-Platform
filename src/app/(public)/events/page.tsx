@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { fmtDateTime as fmt } from "@/lib/date-formats";
 import Link from "next/link";
 import { CalendarDays } from "lucide-react";
 import { listPublished } from "@/server/events/service";
@@ -9,9 +10,6 @@ import { SplitReveal } from "@/components/motion/SplitReveal";
 
 export const metadata: Metadata = { title: "Events" };
 export const dynamic = "force-dynamic";
-
-const fmt = (d: Date) =>
-  new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(d);
 
 export default async function EventsPage() {
   const events = await listPublished();

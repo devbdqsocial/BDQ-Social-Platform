@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { fmtDateTime as fmt } from "@/lib/date-formats";
 import { requirePermission } from "@/server/auth/guard";
 import { getPaymentFailures } from "@/server/analytics/deep";
 import { getActiveEvent } from "@/server/admin/event-context";
@@ -10,7 +11,6 @@ import { PageHeader } from "@/components/ui/page-header";
 
 export const metadata: Metadata = { title: "Payment Failures" };
 const pct = (r: number) => `${(r * 100).toFixed(1)}%`;
-const fmt = (d: Date) => new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(d);
 
 export default async function FailuresPage() {
   await requirePermission("PAYMENT_VIEW");

@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { ActionForm } from "@/components/admin/action-form";
+import { fmtDateTime as fmt } from "@/lib/date-formats";
 import Link from "next/link";
 import { requireAdminRole } from "@/server/auth/guard";
 import { listEventsWithTicketTypes, listCompBatches } from "@/server/comps/service";
@@ -10,9 +12,6 @@ import { generateCompsAction } from "./actions";
 
 export const metadata: Metadata = { title: "Comp tickets" };
 
-const fmt = (d: Date) =>
-  new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(d);
-
 export default async function CompsPage() {
   await requireAdminRole();
   const [events, batches] = await Promise.all([listEventsWithTicketTypes(), listCompBatches()]);
@@ -22,7 +21,7 @@ export default async function CompsPage() {
     <div className="space-y-8">
       <PageHeader title="Comp tickets" description="Issue free VIP / sponsor / press tickets with real QR codes — no payment." />
 
-      <form action={generateCompsAction} className="space-y-6">
+      <ActionForm action={generateCompsAction} className="space-y-6">
         <div className="space-y-1">
           <h2 className="text-lg font-semibold tracking-tight">Issue comps</h2>
           <p className="text-sm text-muted-foreground">Tickets are generated instantly. Add an email to send them, or print the QR sheet.</p>
@@ -56,7 +55,7 @@ export default async function CompsPage() {
           <Button type="submit" className="w-fit sm:col-span-2" disabled={!hasTypes}>Generate</Button>
           {!hasTypes && <p className="text-xs text-muted-foreground sm:col-span-2">Add a ticket type to an event first.</p>}
         </div>
-      </form>
+      </ActionForm>
 
       <div className="space-y-3">
         <h2 className="font-display text-lg font-semibold">Recent comp batches</h2>

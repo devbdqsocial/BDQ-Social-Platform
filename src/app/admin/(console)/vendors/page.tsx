@@ -4,7 +4,7 @@ import { requirePermission } from "@/server/auth/guard";
 import { listVendors } from "@/server/vendors/admin-service";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
-import { VendorsTable } from "./VendorsTable";
+import { VendorsTable } from "@/components/admin/tables/VendorsTable";
 
 export const metadata: Metadata = { title: "Vendors" };
 

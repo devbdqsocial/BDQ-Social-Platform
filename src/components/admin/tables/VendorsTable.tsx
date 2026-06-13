@@ -8,15 +8,9 @@ import { DataTable } from "@/components/data-table/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/input";
 import { fmtDate } from "@/lib/date-formats";
+import { VENDOR_STATUS } from "@/lib/status-badges";
 
 type Row = Awaited<ReturnType<typeof listVendors>>[number];
-
-const STATUS: Record<string, { label: string; variant: "primary" | "warning" | "success" | "danger" }> = {
-  SUBMITTED: { label: "New", variant: "primary" },
-  UNDER_REVIEW: { label: "Reviewing", variant: "warning" },
-  APPROVED: { label: "Approved", variant: "success" },
-  REJECTED: { label: "Declined", variant: "danger" },
-};
 
 const columns: ColumnDef<Row>[] = [
   { accessorKey: "brandName", header: "Brand", cell: ({ row }) => <span className="font-medium">{row.original.brandName}</span> },
@@ -24,7 +18,7 @@ const columns: ColumnDef<Row>[] = [
   {
     id: "status", accessorFn: (r) => r.approvalStatus, header: "Status",
     cell: ({ row }) => {
-      const s = STATUS[row.original.approvalStatus];
+      const s = VENDOR_STATUS[row.original.approvalStatus];
       return s ? <Badge variant={s.variant}>{s.label}</Badge> : row.original.approvalStatus;
     },
   },

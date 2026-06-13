@@ -1,3 +1,4 @@
+import { fmtDateTime, fmtDateFull } from "@/lib/date-formats";
 import "server-only";
 import QRCode from "qrcode";
 import { db } from "@/server/db";
@@ -23,11 +24,7 @@ export async function buildTicketEmail(orderId: string): Promise<BuiltEmail | nu
   });
   if (!order || order.tickets.length === 0) return null;
 
-  const when = new Intl.DateTimeFormat("en-IN", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: "Asia/Kolkata",
-  }).format(order.event.startsAt);
+  const when = fmtDateTime(order.event.startsAt);
 
   const attachments = await Promise.all(
     order.tickets.map(async (t, i) => ({
@@ -77,7 +74,7 @@ export async function buildReminderEmail(eventId: string): Promise<BuiltEmail | 
   const event = await db.event.findUnique({ where: { id: eventId }, select: { name: true, location: true, startsAt: true } });
   if (!event) return null;
 
-  const when = new Intl.DateTimeFormat("en-IN", { dateStyle: "full", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(event.startsAt);
+  const when = fmtDateFull(event.startsAt);
   const ticketsUrl = `https://${process.env.APP_BASE_DOMAIN ?? "bdqsocial.com"}/tickets`;
 
   return {

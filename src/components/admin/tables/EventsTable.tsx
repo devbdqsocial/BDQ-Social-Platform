@@ -6,30 +6,17 @@ import type { listAllForAdmin } from "@/server/events/service";
 import { DataTable } from "@/components/data-table/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { publishEventAction, archiveEventAction, unarchiveEventAction } from "./actions";
+import { publishEventAction, archiveEventAction, unarchiveEventAction } from "@/app/admin/(console)/events/actions";
 import { ActionForm } from "@/components/admin/action-form";
+import { fmtDate } from "@/lib/date-formats";
+import { eventStatusBadge } from "@/lib/status-badges";
 
 type Row = Awaited<ReturnType<typeof listAllForAdmin>>[number];
-
-const isLive = (s: string) => s === "PUBLISHED" || s === "LIVE";
-const fmtDate = (d: Date) => new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeZone: "Asia/Kolkata" }).format(d);
-
-const getStatusLabel = (status: string) => {
-  if (status === "ARCHIVED") return "Archived";
-  if (isLive(status)) return "Live";
-  if (status === "ENDED") return "Ended";
-  return "Draft";
-};
-
-const getStatusVariant = (status: string): "success" | "neutral" => {
-  if (isLive(status)) return "success";
-  return "neutral";
-};
 
 const columns: ColumnDef<Row>[] = [
   { accessorKey: "name", header: "Event", cell: ({ row }) => <Link href={`/admin/events/${row.original.id}`} className="font-medium hover:underline">{row.original.name}</Link> },
   { id: "date", accessorFn: (r) => r.startsAt.getTime(), header: "Starts", cell: ({ row }) => <span className="text-muted-foreground">{fmtDate(row.original.startsAt)}</span> },
-  { id: "status", accessorFn: (r) => r.status, header: "Status", cell: ({ row }) => <Badge variant={getStatusVariant(row.original.status)}>{getStatusLabel(row.original.status)}</Badge> },
+  { id: "status", accessorFn: (r) => r.status, header: "Status", cell: ({ row }) => <Badge variant={eventStatusBadge(row.original.status).variant}>{eventStatusBadge(row.original.status).label}</Badge> },
   { id: "tickets", accessorFn: (r) => r._count.ticketTypes, header: "Ticket types" },
   { id: "orders", accessorFn: (r) => r._count.orders, header: "Orders" },
   {
@@ -56,7 +43,7 @@ const columns: ColumnDef<Row>[] = [
         }
       }
       
-      if (!isLive(status) && status !== "ARCHIVED") {
+      if (status !== "PUBLISHED" && status !== "LIVE" && status !== "ARCHIVED") {
         return (
           <ActionForm action={publishEventAction} success="Event published">
             <input type="hidden" name="id" value={row.original.id} />

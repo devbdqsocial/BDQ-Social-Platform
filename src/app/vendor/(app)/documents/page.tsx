@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { fmtDate as fmt } from "@/lib/date-formats";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireVendor } from "@/server/auth/guard";
@@ -11,8 +12,6 @@ import { Badge } from "@/components/ui/badge";
 
 export const metadata: Metadata = { title: "Documents" };
 export const dynamic = "force-dynamic";
-
-const fmt = (d: Date) => new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeZone: "Asia/Kolkata" }).format(d);
 
 const KYC_LABELS: Record<string, string> = { pan: "PAN card", fssai: "FSSAI licence", gst: "GST certificate", id: "Govt photo ID" };
 

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { fmtCompact as fmtDate } from "@/lib/date-formats";
 import { Clock, Ticket as TicketIcon, UserCheck, XCircle, CheckCircle2, FileText, AlertCircle } from "lucide-react";
 import { requireAdmin } from "@/server/auth/guard";
 import { getActiveEvent } from "@/server/admin/event-context";
@@ -13,8 +14,7 @@ import {
   RevenueAreaChart, TicketTypeBar, VendorPipelineBar, StallOccupancyDonut,
 } from "@/components/charts/dashboard-charts";
 
-const fmtDate = (d: Date) =>
-  new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata" }).format(d);
+
 
 const RANGE_DAYS: Record<string, number | null> = { today: 1, "7d": 7, "30d": 30, all: null };
 const RANGE_LABEL: Record<string, string> = { today: "today", "7d": "last 7 days", "30d": "last 30 days", all: "all time" };

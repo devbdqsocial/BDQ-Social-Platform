@@ -5,7 +5,7 @@ import { getActiveEvent } from "@/server/admin/event-context";
 import { listStallsForEvent } from "@/server/map/admin-service";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
-import { StallsTable } from "./StallsTable";
+import { StallsTable } from "@/components/admin/tables/StallsTable";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Stall inventory" };

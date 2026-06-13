@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { ActionForm } from "@/components/admin/action-form";
+import { fmtDateTime } from "@/lib/date-formats";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -75,7 +77,7 @@ export default async function AdminVendorDetail({ params }: { params: Promise<{ 
           </p>
           {v.callbackAt && (
             <p className="sm:col-span-2 text-xs text-muted-foreground">
-              Last call-back: {new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(v.callbackAt)}
+              Last call-back: {fmtDateTime(v.callbackAt)}
               {v.callbackNote ? ` — "${v.callbackNote}"` : ""}
             </p>
           )}
@@ -110,7 +112,7 @@ export default async function AdminVendorDetail({ params }: { params: Promise<{ 
           </CardHeader>
           <CardContent className="space-y-5">
             {/* Verification call-back log */}
-            <form action={logCallbackAction} className="space-y-2">
+            <ActionForm action={logCallbackAction} success="Call-back logged" className="space-y-2">
               <input type="hidden" name="id" value={v.id} />
               <Field label="Verification call-back note">
                 <textarea
@@ -121,11 +123,11 @@ export default async function AdminVendorDetail({ params }: { params: Promise<{ 
                 />
               </Field>
               <Button type="submit" variant="outline" size="sm">Log call-back</Button>
-            </form>
+            </ActionForm>
 
             {/* Approve-before-pay: confirm the vendor's reserved stall + open payment */}
             {reserved && (
-              <form action={approveForPaymentAction} className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
+              <ActionForm action={approveForPaymentAction} success="Approved — payment is now open to the vendor" className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
                 <input type="hidden" name="id" value={v.id} />
                 <span className="text-sm">
                   Reserved <strong>stall {reserved.stall.label}</strong> · {reserved.event.name}
@@ -134,10 +136,10 @@ export default async function AdminVendorDetail({ params }: { params: Promise<{ 
                   Approve &amp; open for payment
                 </Button>
                 {!signed && <span className="text-xs text-muted-foreground">Awaiting signed agreement</span>}
-              </form>
+              </ActionForm>
             )}
 
-            <form action={approveAction} className="flex flex-wrap items-end gap-3 border-t border-border pt-4">
+            <ActionForm action={approveAction} success="Vendor approved & stall assigned" className="flex flex-wrap items-end gap-3 border-t border-border pt-4">
               <input type="hidden" name="id" value={v.id} />
               <Field label="Assign a stall" className="min-w-56 flex-1">
                 <Select name="stallId" required>
@@ -148,12 +150,12 @@ export default async function AdminVendorDetail({ params }: { params: Promise<{ 
                 </Select>
               </Field>
               <Button type="submit">Approve &amp; assign</Button>
-            </form>
+            </ActionForm>
 
-            <form action={rejectAction}>
+            <ActionForm action={rejectAction} success="Application declined">
               <input type="hidden" name="id" value={v.id} />
               <Button type="submit" variant="ghost" size="sm">Decline application</Button>
-            </form>
+            </ActionForm>
           </CardContent>
         </Card>
       )}
@@ -169,7 +171,7 @@ export default async function AdminVendorDetail({ params }: { params: Promise<{ 
                 No stalls available yet — build the event layout first under Events → Event layout.
               </p>
             ) : (
-              <form action={assignStallAction} className="flex flex-wrap items-end gap-3">
+              <ActionForm action={assignStallAction} success="Stall assigned" className="flex flex-wrap items-end gap-3">
                 <input type="hidden" name="id" value={v.id} />
                 <Field label="Stall" className="min-w-56 flex-1">
                   <Select name="stallId" required>
@@ -180,7 +182,7 @@ export default async function AdminVendorDetail({ params }: { params: Promise<{ 
                   </Select>
                 </Field>
                 <Button type="submit">Assign stall</Button>
-              </form>
+              </ActionForm>
             )}
           </CardContent>
         </Card>

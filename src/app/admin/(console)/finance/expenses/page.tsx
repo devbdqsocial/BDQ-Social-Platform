@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { fmtDate } from "@/lib/date-formats";
 import { requirePermission } from "@/server/auth/guard";
 import { listExpenses, listVendorOptions } from "@/server/finance/expenses";
 import { listAllForAdmin } from "@/server/events/service";
@@ -15,8 +16,7 @@ import { saveExpenseAction, setExpenseStatusAction, deleteExpenseAction } from "
 export const metadata: Metadata = { title: "Expenses" };
 
 const STATUS_VARIANT = { DRAFT: "neutral", APPROVED: "warning", PAID: "success" } as const;
-const fmtDate = (d: Date) =>
-  new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeZone: "Asia/Kolkata" }).format(d);
+
 const today = () => new Date().toISOString().slice(0, 10);
 
 export default async function ExpensesPage() {

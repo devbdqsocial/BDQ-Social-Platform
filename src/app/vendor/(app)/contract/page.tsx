@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { fmtDateLong } from "@/lib/date-formats";
 import { requireVendor } from "@/server/auth/guard";
 import { getProfile } from "@/server/vendors/service";
 import { getOrCreateContract } from "@/server/vendors/contract";
@@ -47,7 +48,7 @@ export default async function VendorContractPage() {
 
       {signed ? (
         <p className="text-sm text-success">
-          Signed{contract.signedAt ? ` on ${new Intl.DateTimeFormat("en-IN", { dateStyle: "long", timeZone: "Asia/Kolkata" }).format(contract.signedAt)}` : ""}. Thank you!
+          Signed{contract.signedAt ? ` on ${fmtDateLong(contract.signedAt)}` : ""}. Thank you!
         </p>
       ) : (
         <form action={signContractAction} className="space-y-3">

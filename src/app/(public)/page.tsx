@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { fmtDateLong as fmtDate } from "@/lib/date-formats";
 import Link from "next/link";
 import { listPublished } from "@/server/events/service";
 import { listApprovedVendors } from "@/server/vendors/service";
@@ -15,9 +16,6 @@ import { PinnedServices } from "@/components/motion/PinnedServices";
 import { BrandsCarousel } from "@/components/motion/BrandsCarousel";
 
 export const dynamic = "force-dynamic";
-
-const fmtDate = (d: Date) =>
-  new Intl.DateTimeFormat("en-IN", { dateStyle: "long", timeZone: "Asia/Kolkata" }).format(d);
 
 // Angled RPA tab button.
 function Btn({ href, children }: { href: string; children: React.ReactNode }) {

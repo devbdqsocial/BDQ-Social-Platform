@@ -7,7 +7,7 @@ import { Field } from "@/components/ui/field";
 import { Input, Select } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
 import { createSponsorAction, updateSponsorAction } from "./actions";
-import { SponsorsTable } from "./SponsorsTable";
+import { SponsorsTable } from "@/components/admin/tables/SponsorsTable";
 
 export const metadata: Metadata = { title: "Sponsors" };
 export const dynamic = "force-dynamic";

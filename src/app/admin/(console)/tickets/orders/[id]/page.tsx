@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { fmtDateTime as fmt } from "@/lib/date-formats";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requirePermission } from "@/server/auth/guard";
@@ -8,7 +9,6 @@ import { Badge } from "@/components/ui/badge";
 
 export const metadata: Metadata = { title: "Order" };
 
-const fmt = (d: Date) => new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(d);
 const STATUS: Record<string, "success" | "warning" | "danger" | "neutral"> = { PAID: "success", PENDING: "warning", FAILED: "danger", EXPIRED: "neutral" };
 
 export default async function OrderDetail({ params }: { params: Promise<{ id: string }> }) {

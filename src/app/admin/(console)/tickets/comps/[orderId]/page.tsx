@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { fmtDateFull as fmt } from "@/lib/date-formats";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdminRole } from "@/server/auth/guard";
@@ -8,9 +9,6 @@ import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = { title: "Comp tickets" };
 export const dynamic = "force-dynamic";
-
-const fmt = (d: Date) =>
-  new Intl.DateTimeFormat("en-IN", { dateStyle: "full", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(d);
 
 export default async function CompSheetPage({ params }: { params: Promise<{ orderId: string }> }) {
   await requireAdminRole();

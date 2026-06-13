@@ -1,6 +1,7 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
+import { fmtDate as fmt } from "@/lib/date-formats";
 import type { listTicketsForEvent } from "@/server/tickets/admin-service";
 import { DataTable } from "@/components/data-table/data-table";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +13,6 @@ const STATUS: Record<string, { label: string; variant: "success" | "danger" | "n
   CHECKED_IN: { label: "Checked in", variant: "success" },
   CANCELLED: { label: "Cancelled", variant: "danger" },
 };
-const fmt = (d: Date) => new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeZone: "Asia/Kolkata" }).format(d);
 
 const columns: ColumnDef<Row>[] = [
   { id: "holder", accessorFn: (r) => `${r.holderName ?? r.order.user.name ?? ""} ${r.holderPhone ?? r.order.user.phone ?? ""}`, header: "Attendee", cell: ({ row }) => row.original.holderName ?? row.original.order.user.name ?? "—" },

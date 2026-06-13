@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { fmtDate } from "@/lib/date-formats";
 import { requireAdminRole } from "@/server/auth/guard";
 import { listSettlements, getSettlementSummary } from "@/server/finance/settlements";
 import { formatPaise } from "@/lib/utils";
@@ -12,8 +13,6 @@ import { addSettlementAction, toggleSettlementAction } from "./actions";
 
 export const metadata: Metadata = { title: "Settlements" };
 
-const fmtDate = (d: Date) =>
-  new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeZone: "Asia/Kolkata" }).format(d);
 const today = () => new Date().toISOString().slice(0, 10);
 
 export default async function SettlementsPage() {

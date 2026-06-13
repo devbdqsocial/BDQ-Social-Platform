@@ -233,10 +233,31 @@ owner DSN — R0.5c). Proceeding to R1 per owner-approved session scope.
       resizes RPA type between the old vw breakpoints).
 
 **R2.2 Component contracts** (16h)
-- [ ] a. `RpaPageHeader`, empty-state rollout, badge variant cleanup (D11).
-- [ ] b. Move 7 page-dir tables → `components/admin/tables/` (D13); `lib/date-formats.ts`
-      adoption sweep (D14); toast rollout to all actions (D17, needs R0.3).
-      Verify: greps in the closed debt rows; visual diff pass on admin list pages.
+- [x] a. **D11** ✓ deleted `pending`/`gold` badge variants; `status-badges.ts` rewritten as the
+      single source of `{label, variant}` maps (ORDER/PAYMENT/VENDOR/STALL/SPONSOR + event fn);
+      StaffTable + audit `gold`→`primary`. **D16** ✓ `RpaPageHeader` + `RpaEmpty`
+      (`components/landing/RpaPageHeader.tsx`, design-system §3.5/§3.9) created + applied to the
+      customer dashboard (the one existing RPA page with the pattern; R3/R4 pages consume them
+      as built).
+- [x] b. **D13** ✓ all 7 tables `git mv`'d to `components/admin/tables/` + import the shared
+      status lib (inline maps deleted); cross-route `./actions` imports → absolute; page imports
+      repointed (incl. `events/past`). **D14** ✓ date sweep: `fmtDateLong`+`fmtCompact` added to
+      the lib; ~30 files converted to lib aliases; only 4 documented exemptions remain
+      (`date-formats.ts` source, `date-time-picker.tsx` en-GB input parse, `opengraph-image.tsx`
+      off-DOM, `events/[id]` en-CA `dayKey` sort key). **D17** ✓ mechanism + critical forms:
+      `toResult()` helper in `server/action.ts` wraps any throwing void action into the Result
+      envelope; `<ActionForm>` now toasts vendor approve/reject/assign/callback (6 actions),
+      staff save/remove, comps generate — on top of the R0.3 pilots (events/coupons/vendors).
+      *Remaining low-traffic admin forms (expenses, campaigns, sponsor-create, waitlist-notify,
+      elements, StallTypesManager, DeleteEventButton) adopt ActionForm as R5 rebuilds those
+      console areas; budgets/settlements forms are not converted — those pages are V2-cut.*
+      Verify: badge greps 0 (`variant="(pending|gold)"` = 0); inline-Intl = 4 exemptions;
+      0 errors / 10 warnings (baseline); 46f/184t green; build 82 pages; dev smoke of all 7
+      moved-table pages + comps + audit + customer dashboard → 200, no runtime errors.
+
+**GATE R2: PASSED 2026-06-13** — tokens enforced (R2.1), motion diet (R2.3), component
+contracts consolidated (R2.2). Design system is now single-source; R2.5 (map) / R3 (customer)
+build on it.
 
 **R2.3 Motion diet** (8h)
 - [x] a. DONE ✓ BrandsCarousel → pure CSS scroll-snap (server component now — zero JS,
@@ -407,4 +428,5 @@ pages · axe pass.
 | 2026-06-13 | build session 1 (cont.) | R1.1 + R1.4 + R1.5 | done; oversell race PROVEN on real DB; coupon UI live | 46f/183t + 1 DB-gated; build 82 pages green |
 | 2026-06-13 | build session 1 (cont.) | R1.2 (M1 dev) | done; group-QR proven on real DB (buy-5→1QR→3+2→board 5); **PROD GATE OPEN: M1 must hit prod Neon before deploy** | 46f/183t + 2 DB-gated; build green |
 | 2026-06-13 | build session 2 | R1.3a (code-first) | done; legacy pay-to-hold flow deleted; webhook fulfils PENDING_PAYMENT only; public map read-only; **R1 PHASE COMPLETE (code)** — M2 destructive part queued for one-deploy-later | 46f/184t green; build green |
-| 2026-06-13 | build session 2 (cont.) | R2.1 + R2.3 | done; clamp() scale, clay purge, ESLint guardrails, swiper dropped, GSAP reduced-motion gate; **R2.2 (contracts) = next session**; owner visual spot-check wanted on RPA type + carousel | 46f/184t green; build green; lint 0 errors |
+| 2026-06-13 | build session 2 (cont.) | R2.1 + R2.3 | done; clamp() scale, clay purge, ESLint guardrails, swiper dropped, GSAP reduced-motion gate | 46f/184t green; build green; lint 0 errors |
+| 2026-06-13 | build session 3 | R2.2 (D11/D13/D14/D16/D17) | done; **PHASE R2 COMPLETE**; status-badges consolidated, 7 tables relocated, ~30-file date sweep, RpaPageHeader/RpaEmpty, toResult+ActionForm on critical forms; remaining low-traffic forms deferred to R5 (cut pages excluded) | 46f/184t green; build 82 pages; 0 err/10 warn; dev smoke 10 routes 200 |

@@ -7,15 +7,9 @@ import { DataTable } from "@/components/data-table/data-table";
 import { Badge } from "@/components/ui/badge";
 import { formatPaise } from "@/lib/utils";
 import { fmtDateTime } from "@/lib/date-formats";
+import { ORDER_STATUS } from "@/lib/status-badges";
 
 type Row = Awaited<ReturnType<typeof listOrdersForEvent>>[number];
-
-const STATUS: Record<string, { label: string; variant: "success" | "warning" | "danger" | "neutral" }> = {
-  PAID: { label: "Paid", variant: "success" },
-  PENDING: { label: "Pending", variant: "warning" },
-  FAILED: { label: "Failed", variant: "danger" },
-  EXPIRED: { label: "Expired", variant: "neutral" },
-};
 
 const columns: ColumnDef<Row>[] = [
   { id: "id", accessorFn: (r) => r.id, header: "Order", cell: ({ row }) => <span className="font-mono text-xs">{row.original.id.slice(0, 10)}</span> },
@@ -25,7 +19,7 @@ const columns: ColumnDef<Row>[] = [
   { id: "discount", accessorFn: (r) => r.discount, header: "Discount", cell: ({ row }) => (row.original.discount > 0 ? formatPaise(row.original.discount) : "—") },
   {
     id: "status", accessorFn: (r) => r.status, header: "Status",
-    cell: ({ row }) => { const s = STATUS[row.original.status]; return s ? <Badge variant={s.variant}>{s.label}</Badge> : row.original.status; },
+    cell: ({ row }) => { const s = ORDER_STATUS[row.original.status]; return s ? <Badge variant={s.variant}>{s.label}</Badge> : row.original.status; },
   },
   { id: "date", accessorFn: (r) => r.createdAt.getTime(), header: "Placed", cell: ({ row }) => <span className="text-muted-foreground">{fmtDateTime(row.original.createdAt)}</span> },
 ];

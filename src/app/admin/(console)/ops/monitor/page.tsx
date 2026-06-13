@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { fmtTime as time } from "@/lib/date-formats";
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { requireAdminRole } from "@/server/auth/guard";
 import { getActiveEvent } from "@/server/admin/event-context";
@@ -10,8 +11,6 @@ import { AutoRefresh } from "@/components/admin/auto-refresh";
 
 export const metadata: Metadata = { title: "Live Monitor" };
 export const dynamic = "force-dynamic";
-
-const time = (d: Date) => new Intl.DateTimeFormat("en-IN", { timeStyle: "short", timeZone: "Asia/Kolkata" }).format(d);
 
 export default async function LiveMonitorPage() {
   await requireAdminRole();

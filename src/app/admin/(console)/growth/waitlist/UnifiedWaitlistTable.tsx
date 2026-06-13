@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { notifyWaitlistAction } from "./actions";
+import { fmtDateTime } from "@/lib/date-formats";
 
 export type WaitlistEntry = {
   id: string;
@@ -28,8 +29,7 @@ type EventSummary = {
   name: string;
 };
 
-const fmt = (d: Date) =>
-  new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(new Date(d));
+const fmt = (d: Date) => fmtDateTime(new Date(d));
 
 export function UnifiedWaitlistTable({
   platformEntries,

@@ -1,6 +1,7 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
+import { fmtDate as fmt } from "@/lib/date-formats";
 import type { listCampaigns } from "@/server/campaigns/service";
 import { DataTable } from "@/components/data-table/data-table";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { sendCampaignAction } from "./actions";
 
 type Row = Awaited<ReturnType<typeof listCampaigns>>[number];
-const fmt = (d: Date) => new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeZone: "Asia/Kolkata" }).format(d);
 
 const columns: ColumnDef<Row>[] = [
   { accessorKey: "name", header: "Campaign", cell: ({ row }) => <span className="font-medium">{row.original.name}</span> },

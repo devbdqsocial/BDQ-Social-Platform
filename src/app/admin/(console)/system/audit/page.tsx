@@ -7,16 +7,16 @@ import { Input, Select } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/page-header";
+import { fmtDateTime } from "@/lib/date-formats";
 
 export const metadata: Metadata = { title: "Audit log" };
 export const dynamic = "force-dynamic";
 
 type SP = { entity?: string; action?: string; from?: string; to?: string; page?: string };
 
-const fmt = (d: Date) =>
-  new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(d);
+const fmt = fmtDateTime;
 
-const roleVariant = (r: string | null) => (r === "SUPER_ADMIN" ? "gold" : r === "STAFF" ? "primary" : "neutral");
+const roleVariant = (r: string | null) => (r === "SUPER_ADMIN" ? "primary" : r === "STAFF" ? "primary" : "neutral");
 
 export default async function AuditPage({ searchParams }: { searchParams: Promise<SP> }) {
   await requireSuperAdmin();

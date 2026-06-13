@@ -3,7 +3,7 @@ import { requireAdminRole } from "@/server/auth/guard";
 import { getActiveEvent } from "@/server/admin/event-context";
 import { listPaymentsForEvent } from "@/server/finance/service";
 import { PageHeader } from "@/components/ui/page-header";
-import { PaymentsTable } from "./PaymentsTable";
+import { PaymentsTable } from "@/components/admin/tables/PaymentsTable";
 
 export const metadata: Metadata = { title: "Payments" };
 

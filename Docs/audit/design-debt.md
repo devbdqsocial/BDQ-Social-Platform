@@ -18,13 +18,13 @@
 | D8 (C12) | Coming-soon | Inline letter-spacing ×3 duplicating `.kicker` | P1 | `.kicker` class | R3.1 |
 | D9 (C13) | `.rpa` root | `font-size: 1.25vw` breaks zoom/user font prefs (WCAG 1.4.4) | P0 | clamp() scale (design-system §1.2) + 16px input floor (mobile §1) | R2.1 |
 | D10 (C3) | `globals.css` | Legacy `gold-*`/`clay-*` alias block | P2 | Migrate consumers, delete aliases | R2.1 |
-| D11 | `ui/badge.tsx:14,16` | `pending` (clay) and `gold` variants reference dead ramps | P1 | Delete variants; map pending→warning, gold→primary in `status-badges.ts` | R2.2 |
+| D11 ✅ | `ui/badge.tsx:14,16` | `pending` (clay) and `gold` variants reference dead ramps | P1 | Delete variants; map pending→warning, gold→primary in `status-badges.ts` | R2.2 ✓ |
 | D12 (C15) | `lib/stall-colors.ts` | Stall hexes duplicated outside token file | P2 | Single exported constant from tokens (design-system §1.1) | R2.1 |
-| D13 (C6) | 7 admin tables in page dirs | `EventsTable` `VendorsTable` `OrdersTable` `PaymentsTable` `StaffTable` `SponsorsTable` `StallsTable` embedded in `app/admin/**` | P2 | Move to `components/admin/tables/`; share badges/dates libs | R2.2 |
-| D14 (C16) | 4+ files | Per-file `Intl.DateTimeFormat` despite `lib/date-formats.ts` (`(public)/page.tsx:19`, customer dashboard, vendor leads, ops monitor) | P1 | Import the lib everywhere; grep gate | R2.2 |
+| D13 (C6) ✅ | 7 admin tables in page dirs | `EventsTable` `VendorsTable` `OrdersTable` `PaymentsTable` `StaffTable` `SponsorsTable` `StallsTable` embedded in `app/admin/**` | P2 | Move to `components/admin/tables/`; share badges/dates libs | R2.2 ✓ |
+| D14 (C16) ✅ | 4+ files | Per-file `Intl.DateTimeFormat` despite `lib/date-formats.ts` (`(public)/page.tsx:19`, customer dashboard, vendor leads, ops monitor) | P1 | Import the lib everywhere; grep gate (4 documented exemptions) | R2.2 ✓ |
 | D15 (C9) | Vendor dashboard | Inline approval-status badge map duplicating `status-badges.ts` | P1 | Shared lib (page is rebuilt anyway) | R4.1 |
-| D16 (C7/C8) | Customer/vendor pages | Hand-rolled empty states + copy-pasted page-header stacks | P1 | `RpaPageHeader` + §3.9 empty pattern | R2.2 |
-| D17 (C22) | Admin console | `Toaster` mounted, zero `toast()` calls — actions give no feedback | P1 | Toast rule (design-system §4.6) wired in the `action()` pipeline client hook | R0.3 + R2.2 |
+| D16 (C7/C8) ✅ | Customer/vendor pages | Hand-rolled empty states + copy-pasted page-header stacks | P1 | `RpaPageHeader` + §3.9 empty pattern | R2.2 ✓ (component; R3/R4 pages consume) |
+| D17 (C22) 🔶 | Admin console | `Toaster` mounted, zero `toast()` calls — actions give no feedback | P1 | Toast rule (design-system §4.6) wired in the `action()` pipeline client hook | R0.3 + R2.2 ✓ mechanism + critical forms; low-traffic forms → R5 |
 | D18 (C21) | `(public)/events/[slug]`, vendor stall picker | No route `loading.tsx` on the two highest-stakes pages | P1 | Skeletons mirroring layout | R3.3 / R4.1 |
 | D19 (C19/C20) | Admin nav | POS + Settings pages orphaned (reachable, not in nav) | P1 | Final nav tree (admin-portal §1) | R5.1 |
 | D20 (C24) | QR `<img>` (dashboard, leads) | No width/height → CLS | P2 | Explicit dims | R3.4 / R4.1 |

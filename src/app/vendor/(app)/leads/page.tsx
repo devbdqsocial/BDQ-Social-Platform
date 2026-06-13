@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { fmtDateTime as fmt } from "@/lib/date-formats";
 import QRCode from "qrcode";
 import { requireVendor } from "@/server/auth/guard";
 import { getProfile } from "@/server/vendors/service";
@@ -13,8 +14,7 @@ export const dynamic = "force-dynamic";
 const domain = process.env.APP_BASE_DOMAIN;
 const origin = domain && !domain.includes("localhost") ? `https://${domain}` : "http://localhost:3000";
 
-const fmt = (d: Date) =>
-  new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(d);
+
 
 export default async function VendorLeadsPage() {
   const session = await requireVendor();

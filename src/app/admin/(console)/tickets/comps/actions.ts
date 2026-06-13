@@ -1,10 +1,13 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import type { Result } from "@/lib/result";
+import { toResult } from "@/server/action";
 import { requireAdminRole } from "@/server/auth/guard";
 import { generateComps } from "@/server/comps/service";
 
-export async function generateCompsAction(formData: FormData): Promise<void> {
+export async function generateCompsAction(formData: FormData): Promise<Result<null>> {
+  return toResult(async () => {
   const session = await requireAdminRole();
   const ticketTypeId = String(formData.get("ticketTypeId") || "");
   const qty = Math.max(1, Math.min(200, Number(formData.get("qty") || 1)));
@@ -20,4 +23,5 @@ export async function generateCompsAction(formData: FormData): Promise<void> {
   });
 
   redirect(`/admin/tickets/comps/${orderId}`);
+  });
 }

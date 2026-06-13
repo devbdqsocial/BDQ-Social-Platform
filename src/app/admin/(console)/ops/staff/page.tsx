@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ActionForm } from "@/components/admin/action-form";
 import { requireAdminRole } from "@/server/auth/guard";
 import { listStaff } from "@/server/staff/service";
 import { STAFF_PRESETS, STAFF_PRESET_KEYS } from "@/lib/staff-presets";
@@ -8,7 +9,7 @@ import { Input, Select } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { PageHeader } from "@/components/ui/page-header";
 import { saveStaffAction } from "./actions";
-import { StaffTable } from "./StaffTable";
+import { StaffTable } from "@/components/admin/tables/StaffTable";
 
 export const metadata: Metadata = { title: "Staff" };
 
@@ -29,7 +30,7 @@ export default async function AdminStaffPage() {
     <div className="space-y-8">
       <PageHeader title="Staff" description="Add teammates and choose what each one can do. They sign in at /admin/login with their email + password." />
 
-      <form action={saveStaffAction} className="space-y-6">
+      <ActionForm action={saveStaffAction} success="Teammate saved" resetOnSuccess className="space-y-6">
         <div className="space-y-1">
           <h2 className="text-lg font-semibold tracking-tight">Add or update a teammate</h2>
           <p className="text-sm text-muted-foreground">Using an email that already exists updates that person.</p>
@@ -56,7 +57,7 @@ export default async function AdminStaffPage() {
           </Field>
           <Button type="submit" className="w-fit sm:col-span-2">Save teammate</Button>
         </div>
-      </form>
+      </ActionForm>
 
       <div className="space-y-3">
         <h2 className="font-display text-lg font-semibold">Team ({staff.length})</h2>

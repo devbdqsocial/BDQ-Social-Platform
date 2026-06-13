@@ -27,6 +27,23 @@ export class ActionError extends Error {
 const isNextControlFlow = (e: unknown): boolean =>
   typeof e === "object" && e !== null && "digest" in e && String((e as { digest: unknown }).digest).startsWith("NEXT_");
 
+/**
+ * toResult — wrap an existing void/throwing server-action body so a form gets the Result
+ * envelope (build-plan R2.2 D17). The thrown Error message is user-facing by convention in
+ * these actions; redirect()/notFound() still propagate. Lets `<ActionForm>` toast any action
+ * without rewriting it onto the full `action()` pipeline.
+ */
+export async function toResult(run: () => Promise<void>): Promise<Result<null>> {
+  try {
+    await run();
+    return ok(null);
+  } catch (e) {
+    if (isNextControlFlow(e)) throw e;
+    if (e instanceof AuthError) return err(e.code);
+    return err("ACTION_FAILED", e instanceof Error ? e.message : "Something went wrong. Please try again.");
+  }
+}
+
 export function action<S extends z.ZodType, O>(opts: {
   auth: Role | Permission;
   input: S;

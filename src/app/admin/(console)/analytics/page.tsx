@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { fmtDateTime as fmtTime } from "@/lib/date-formats";
 import { requirePermission } from "@/server/auth/guard";
 import { getAnalytics } from "@/server/analytics/service";
 import { listAllForAdmin } from "@/server/events/service";
@@ -17,8 +18,6 @@ export const metadata: Metadata = { title: "Analytics" };
 export const dynamic = "force-dynamic";
 
 const pct = (n: number) => `${Math.round(n * 100)}%`;
-const fmtTime = (d: Date) =>
-  new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(d);
 
 export default async function AnalyticsPage({ searchParams }: { searchParams: Promise<{ eventId?: string }> }) {
   await requirePermission("PAYMENT_VIEW");

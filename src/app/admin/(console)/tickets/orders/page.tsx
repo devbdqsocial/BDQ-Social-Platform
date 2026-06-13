@@ -3,7 +3,7 @@ import { requirePermission } from "@/server/auth/guard";
 import { getActiveEvent } from "@/server/admin/event-context";
 import { listOrdersForEvent } from "@/server/tickets/admin-service";
 import { PageHeader } from "@/components/ui/page-header";
-import { OrdersTable } from "./OrdersTable";
+import { OrdersTable } from "@/components/admin/tables/OrdersTable";
 
 export const metadata: Metadata = { title: "Orders" };
 

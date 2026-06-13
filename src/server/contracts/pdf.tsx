@@ -1,3 +1,4 @@
+import { fmtDateFull } from "@/lib/date-formats";
 import "server-only";
 import { Document, Page, Text, View, StyleSheet, renderToBuffer } from "@react-pdf/renderer";
 import { LEGAL } from "@/lib/legal";
@@ -42,7 +43,7 @@ export async function renderVendorAgreementPdf(ctx: AgreementContext): Promise<B
             {ctx.signedAt ? (
               <Text style={styles.signLine}>
                 Date:{" "}
-                {new Intl.DateTimeFormat("en-IN", { dateStyle: "full", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(ctx.signedAt)}
+                {fmtDateFull(ctx.signedAt)}
               </Text>
             ) : null}
           </View>

@@ -1,29 +1,55 @@
-/** Shared status → Tailwind badge-class mappings for admin tables. */
+/**
+ * Status → Badge {label, variant} — the SINGLE source for admin status pills
+ * (design-system §4.2/§4.4, design-debt D11/D13). Tables import from here; never inline a
+ * status map. Variants match ui/badge.tsx exactly (no `pending`/`gold` — those were deleted).
+ */
 
-export const ORDER_STATUS_BADGE: Record<string, string> = {
-  PENDING: "bg-yellow-100 text-yellow-800",
-  PAID:    "bg-green-100 text-green-800",
-  EXPIRED: "bg-gray-100 text-gray-500",
-  REFUNDED: "bg-red-100 text-red-700",
+export type BadgeVariant = "neutral" | "primary" | "success" | "warning" | "danger";
+export interface StatusBadge {
+  label: string;
+  variant: BadgeVariant;
+}
+
+export const ORDER_STATUS: Record<string, StatusBadge> = {
+  PAID: { label: "Paid", variant: "success" },
+  PENDING: { label: "Pending", variant: "warning" },
+  FAILED: { label: "Failed", variant: "danger" },
+  EXPIRED: { label: "Expired", variant: "neutral" },
 };
 
-export const VENDOR_STATUS_BADGE: Record<string, string> = {
-  SUBMITTED:    "bg-blue-100 text-blue-800",
-  UNDER_REVIEW: "bg-yellow-100 text-yellow-800",
-  APPROVED:     "bg-green-100 text-green-800",
-  REJECTED:     "bg-red-100 text-red-700",
+export const PAYMENT_STATUS: Record<string, StatusBadge> = {
+  CAPTURED: { label: "Captured", variant: "success" },
+  CREATED: { label: "Created", variant: "warning" },
+  FAILED: { label: "Failed", variant: "danger" },
 };
 
-export const BOOKING_STATUS_BADGE: Record<string, string> = {
-  AVAILABLE: "bg-gray-100 text-gray-500",
-  HELD:      "bg-yellow-100 text-yellow-800",
-  PENDING:   "bg-blue-100 text-blue-800",
-  BOOKED:    "bg-green-100 text-green-800",
-  BLOCKED:   "bg-red-100 text-red-700",
+export const VENDOR_STATUS: Record<string, StatusBadge> = {
+  SUBMITTED: { label: "New", variant: "primary" },
+  UNDER_REVIEW: { label: "Reviewing", variant: "warning" },
+  APPROVED: { label: "Approved", variant: "success" },
+  REJECTED: { label: "Declined", variant: "danger" },
 };
 
-export const TICKET_STATUS_BADGE: Record<string, string> = {
-  VALID:       "bg-green-100 text-green-800",
-  CHECKED_IN:  "bg-blue-100 text-blue-800",
-  CANCELLED:   "bg-red-100 text-red-700",
+// HELD is the DB label for "reserved by a vendor application" until the M2 rename; PENDING
+// kept only for tolerance of any legacy rows until that migration lands (architecture §4.1).
+export const STALL_STATUS: Record<string, StatusBadge> = {
+  AVAILABLE: { label: "Available", variant: "success" },
+  HELD: { label: "Reserved", variant: "warning" },
+  BOOKED: { label: "Booked", variant: "primary" },
+  BLOCKED: { label: "Blocked", variant: "neutral" },
+  PENDING: { label: "Pending", variant: "warning" },
 };
+
+export const SPONSOR_STATUS: Record<string, StatusBadge> = {
+  PROPOSED: { label: "Proposed", variant: "neutral" },
+  SIGNED: { label: "Signed", variant: "warning" },
+  PAID: { label: "Paid", variant: "success" },
+};
+
+/** Event status collapses PUBLISHED+LIVE → "Live"; everything else is a single neutral label. */
+export function eventStatusBadge(status: string): StatusBadge {
+  if (status === "PUBLISHED" || status === "LIVE") return { label: "Live", variant: "success" };
+  if (status === "ARCHIVED") return { label: "Archived", variant: "neutral" };
+  if (status === "ENDED") return { label: "Ended", variant: "neutral" };
+  return { label: "Draft", variant: "neutral" };
+}

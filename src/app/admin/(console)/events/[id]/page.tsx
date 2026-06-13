@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { fmtTime } from "@/lib/date-formats";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdminRole } from "@/server/auth/guard";
@@ -22,7 +23,7 @@ export const metadata: Metadata = { title: "Edit event" };
 
 const isLive = (s: string) => s === "PUBLISHED" || s === "LIVE";
 const dayKey = (d: Date) => new Intl.DateTimeFormat("en-CA", { dateStyle: "full", timeZone: "Asia/Kolkata" }).format(d);
-const timeOnly = (d: Date) => new Intl.DateTimeFormat("en-IN", { timeStyle: "short", timeZone: "Asia/Kolkata" }).format(d);
+const timeOnly = fmtTime;
 
 export default async function AdminEventEditor({ params }: { params: Promise<{ id: string }> }) {
   await requireAdminRole();

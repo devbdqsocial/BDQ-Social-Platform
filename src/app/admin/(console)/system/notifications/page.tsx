@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { fmtDateTime as fmt } from "@/lib/date-formats";
 import Link from "next/link";
 import { requireAdmin } from "@/server/auth/guard";
 import { listNotifications } from "@/server/notifications/admin";
@@ -8,8 +9,6 @@ import { markAllReadAction } from "../../notification-actions";
 
 export const metadata: Metadata = { title: "Notifications" };
 export const dynamic = "force-dynamic";
-
-const fmt = (d: Date) => new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(d);
 
 export default async function NotificationsPage() {
   await requireAdmin();

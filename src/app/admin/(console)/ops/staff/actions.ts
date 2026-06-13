@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import type { Result } from "@/lib/result";
+import { toResult } from "@/server/action";
 import { requireAdminRole } from "@/server/auth/guard";
 import { upsertStaff, removeStaffAccess, StaffEmailTakenError } from "@/server/staff/service";
 import { isStaffPreset, type StaffPreset } from "@/lib/staff-presets";
@@ -12,7 +14,8 @@ import { isStaffPreset, type StaffPreset } from "@/lib/staff-presets";
  *
  * @throws {Error} If credentials or authorization boundaries are violated.
  */
-export async function saveStaffAction(formData: FormData): Promise<void> {
+export async function saveStaffAction(formData: FormData): Promise<Result<null>> {
+  return toResult(async () => {
   const session = await requireAdminRole();
   const email = String(formData.get("email") || "").trim();
   const preset = String(formData.get("preset") || "");
@@ -41,6 +44,7 @@ export async function saveStaffAction(formData: FormData): Promise<void> {
     throw e;
   }
   revalidatePath("/admin/ops/staff");
+  });
 }
 
 /**
@@ -50,9 +54,11 @@ export async function saveStaffAction(formData: FormData): Promise<void> {
  *
  * @throws {Error} If the action exceeds the caller's authorization level.
  */
-export async function removeStaffAction(formData: FormData): Promise<void> {
-  const session = await requireAdminRole();
-  await removeStaffAccess(session, String(formData.get("id")));
-  revalidatePath("/admin/ops/staff");
+export async function removeStaffAction(formData: FormData): Promise<Result<null>> {
+  return toResult(async () => {
+    const session = await requireAdminRole();
+    await removeStaffAccess(session, String(formData.get("id")));
+    revalidatePath("/admin/ops/staff");
+  });
 }
 

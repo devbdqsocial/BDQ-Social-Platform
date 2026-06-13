@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { fmtDate as fmt } from "@/lib/date-formats";
 import Link from "next/link";
 import { CalendarDays } from "lucide-react";
 import { requireVendor } from "@/server/auth/guard";
@@ -6,9 +7,6 @@ import { listPublished } from "@/server/events/service";
 import { EmptyState } from "@/components/ui/empty-state";
 
 export const metadata: Metadata = { title: "Book a stall" };
-
-const fmt = (d: Date) =>
-  new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeZone: "Asia/Kolkata" }).format(d);
 
 export default async function VendorEventsPage() {
   await requireVendor();

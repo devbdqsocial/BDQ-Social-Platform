@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { requireAdminRole } from "@/server/auth/guard";
 import { listAllForAdmin } from "@/server/events/service";
 import { PageHeader } from "@/components/ui/page-header";
-import { EventsTable } from "../EventsTable";
+import { EventsTable } from "@/components/admin/tables/EventsTable";
 
 export const metadata: Metadata = { title: "Past events" };
 
