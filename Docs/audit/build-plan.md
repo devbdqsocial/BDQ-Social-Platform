@@ -407,8 +407,16 @@ build on it.
       version in `DesignerCanvas`. Round-trips through `buildLayoutV2` (was already in the v2
       schema). Verify: restore undoable (Ctrl+Z); cap blocks the 11th; 55f/250t green; build OK;
       both designers 200; 0err/10warn.
-- [ ] **R2.5.14 Vendor preview + search** (6h): preview lens toggle; search/focus (`/`) +
-      admin ⌘K entries. Verify: preview hides admin layers; "A12" zooms+pulses.
+- [x] **R2.5.14 Vendor preview + search** (6h) ✓ — **Preview** toggle renders the canvas through
+      the vendor lens (§11): hides the underlay, score badges, heatmap fill, compare ghost, and
+      validation strokes, and disables Sales view — what-you-sell-is-what-they-see. **Search**:
+      pure `lib/map/search.ts` (`searchLayout` over stall/infra labels + zone names → focus
+      geometry) + 5 tests; a toolbar search box with a results dropdown, `/` shortcut to focus it,
+      and `focusOn` which centres the target at 1.5× and pulses it (lavender ring, 600 ms).
+      **Deferred (flagged):** the admin ⌘K command-palette entries — a cross-surface integration
+      with the global palette; the in-designer search is complete and is the load-bearing half.
+      Verify: preview hides admin layers; typing a stall label focuses+pulses it; 56f/255t green;
+      build OK; both designers 200; 0err/10warn.
 - [ ] **R2.5.15 Exports** (8h): PNG 2×; PDF vendor/ops/print via `@react-pdf/renderer`
       (existing dep) with title block + 50 ft scale bar from calibration; naming convention.
       Verify: 4 artifacts from the seed map; scale bar measures correctly against ftPerPx.
@@ -542,3 +550,4 @@ pages · axe pass.
 | 2026-06-13 | build session 5 (cont.) | R2.5.11 (price suggestions) | done; §9.2 round50/suggestPaise + suggestFor/applySuggestions(selected/zone); inspector chip+Apply + Sales bulk bar; no auto-apply (grep-verified); **flagged deviation:** per-apply audit folded into the single audited Save (unsaved-editor model) | 53f/240t green; build OK; both designers 200 |
 | 2026-06-13 | build session 5 (cont.) | R2.5.12 (revenue heatmap) | done; heatmap.ts (quintile ramp) + price/score heatmap mode + HeatmapLegend; occupancy/potential already in SummaryPanel; **partial-defer:** booked-vs-potential zone cards → console revenue view (no booked stalls at design time) | 54f/245t green; build OK; both designers 200 |
 | 2026-06-13 | build session 5 (cont.) | R2.5.13 (versions) | done; versions.ts (snapshot/diff/cap) + reactive versions state + save/restore(undoable)/delete/compare; VersionsPanel + dashed ghost overlay; round-trips via v2 | 55f/250t green; build OK; both designers 200 |
+| 2026-06-13 | build session 5 (cont.) | R2.5.14 (vendor preview + search) | done; Preview lens (hides underlay/sales/heatmap/ghost/validation) + search.ts (label/zone match) + search box, `/` shortcut, focusOn 1.5× pulse; **deferred:** ⌘K palette entries (cross-surface) | 56f/255t green; build OK; both designers 200 |

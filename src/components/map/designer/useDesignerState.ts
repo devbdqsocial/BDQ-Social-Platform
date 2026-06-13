@@ -14,6 +14,7 @@ import { INFRA_COLOR, STALL_STATUS_COLORS } from "@/lib/stall-colors";
 import { pathLength, type Pt } from "@/lib/map/geometry";
 import { scoreLayout, suggestPaise } from "@/server/map/scoring";
 import { zoneOf } from "@/lib/map/zones";
+import { searchLayout } from "@/lib/map/search";
 import { quintileBounds, heatmapFill, type HeatmapMode } from "@/lib/map/heatmap";
 import { diffStats, versionCapState, type VersionMeta, type VersionSnapshot } from "@/lib/map/versions";
 import type { UploadSignature } from "@/lib/cloudinary";
@@ -121,6 +122,9 @@ export function useDesignerState({
   const [bulkOpen, setBulkOpen] = useState(false);
   const [salesView, setSalesView] = useState(false);
   const [heatmapMode, setHeatmapMode] = useState<HeatmapMode>("off");
+  const [previewMode, setPreviewMode] = useState(false); // vendor lens (§11)
+  const [pulseId, setPulseId] = useState<string | null>(null); // search focus highlight
+  const [searchQuery, setSearchQuery] = useState("");
   const [calibrating, setCalibrating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
@@ -316,6 +320,19 @@ export function useDesignerState({
   const fit = useCallback(() => { setScale(1); stageRef.current?.position({ x: 0, y: 0 }); }, []);
   const zoom = useCallback((factor: number) => setScale((s) => Math.min(4, Math.max(0.2, s * factor))), []);
 
+  // Search focus (§9.4): center a target at 1.5× and pulse it for 600 ms.
+  const focusOn = useCallback((target: { xFt: number; yFt: number; widthFt?: number; heightFt?: number; id?: string }) => {
+    const z = 1.5;
+    const cx = (target.xFt + (target.widthFt ?? 0) / 2) * pxPerFt;
+    const cy = (target.yFt + (target.heightFt ?? 0) / 2) * pxPerFt;
+    setScale(z);
+    if (target.id) setSelectedIds(new Set([target.id]));
+    requestAnimationFrame(() => stageRef.current?.position({ x: width / 2 - z * cx, y: height / 2 - z * cy }));
+    if (target.id) { setPulseId(target.id); setTimeout(() => setPulseId((p) => (p === target.id ? null : p)), 600); }
+  }, [pxPerFt, width, height]);
+
+  const searchMatches = useMemo(() => searchLayout(searchQuery, elements, zones), [searchQuery, elements, zones]);
+
   const exportPng = useCallback(() => {
     const uri = stageRef.current?.toDataURL({ pixelRatio: 2 });
     if (!uri) return;
@@ -488,6 +505,8 @@ export function useDesignerState({
     // versions (§9 / R2.5.13)
     versions, versionCap, saveVersion, restoreVersion, deleteVersion,
     compareId, setCompareId, compareSnapshot, compareDiff,
+    // vendor preview + search (§9.4 / §11 / R2.5.14)
+    previewMode, setPreviewMode, pulseId, searchQuery, setSearchQuery, searchMatches, focusOn,
     // guides + marquee + handlers
     guides, setGuides, marquee, patchOne, onTransformEnd, onElementClick, onStageMouseDown, onStageMouseMove, onStageMouseUp,
     // element actions

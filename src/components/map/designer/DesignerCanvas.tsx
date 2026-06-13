@@ -14,7 +14,7 @@ export function DesignerCanvas() {
     width, height, scale, pxPerFt, tool, canvas, bgImg, calibrated, layers,
     elements, zones, pathways, terrain, boundary, obstacles, drawing, guides, marquee,
     measureLine, measureDist, measureCursor, selectedIds, violationIds, fillFor,
-    salesView, scores, heatFillFor, compareSnapshot,
+    salesView, scores, heatFillFor, compareSnapshot, previewMode, pulseId,
     stageRef, trRef, toFt, zoom, patchBg, commit, setSelectedIds, setGuides,
     onStageMouseDown, onStageMouseMove, onStageMouseUp, onElementClick, onTransformEnd,
     finishDrawing, isDrawTool, isClosed,
@@ -42,7 +42,7 @@ export function DesignerCanvas() {
         </Layer>
 
         {/* Underlay: full-canvas until calibrated, then true-scale at its offset; draggable while unlocked. */}
-        {bgImg && layers.underlay.visible && (
+        {bgImg && layers.underlay.visible && !previewMode && (
           <Layer listening={calibrated && !canvas.bgImage?.locked && !layers.underlay.locked}>
             {calibrated ? (
               <KonvaImage
@@ -63,7 +63,7 @@ export function DesignerCanvas() {
 
         <Layer>
           {/* compare ghost — the compared version's stalls, faint dashed (R2.5.13) */}
-          {compareSnapshot?.elements.map((el) => (
+          {!previewMode && compareSnapshot?.elements.map((el) => (
             <Rect
               key={`ghost_${el.id}`}
               x={el.xFt * pxPerFt} y={el.yFt * pxPerFt} width={el.widthFt * pxPerFt} height={el.heightFt * pxPerFt}
@@ -92,9 +92,9 @@ export function DesignerCanvas() {
                 width={el.widthFt * pxPerFt}
                 height={el.heightFt * pxPerFt}
                 rotation={el.rotation}
-                fill={heatFillFor(el) ?? fillFor(el)}
-                stroke={violationIds.has(el.id) ? "#C0392B" : isSel ? "#D69A22" : "#352F26"}
-                strokeWidth={violationIds.has(el.id) ? 2.5 : isSel ? 2 : 1}
+                fill={(!previewMode && heatFillFor(el)) || fillFor(el)}
+                stroke={violationIds.has(el.id) && !previewMode ? "#C0392B" : isSel ? "#D69A22" : "#352F26"}
+                strokeWidth={violationIds.has(el.id) && !previewMode ? 2.5 : isSel ? 2 : 1}
                 cornerRadius={3}
                 opacity={el.kind === "infra" ? 0.85 : 1}
                 listening={editable}
@@ -127,7 +127,7 @@ export function DesignerCanvas() {
           })}
 
           {/* Sales view (S): score badge per stall, tier-coloured (map-system §9.1) */}
-          {salesView && layers.stalls.visible && elements.map((el) => {
+          {salesView && !previewMode && layers.stalls.visible && elements.map((el) => {
             if (el.kind !== "stall") return null;
             const sc = scores.get(el.id);
             if (!sc) return null;
@@ -139,6 +139,13 @@ export function DesignerCanvas() {
               </Group>
             );
           })}
+
+          {/* search-focus pulse ring (§9.4) */}
+          {pulseId && (() => {
+            const el = elements.find((e) => e.id === pulseId);
+            if (!el) return null;
+            return <Rect x={el.xFt * pxPerFt - 4} y={el.yFt * pxPerFt - 4} width={el.widthFt * pxPerFt + 8} height={el.heightFt * pxPerFt + 8} rotation={el.rotation} stroke="#868EFF" strokeWidth={3} cornerRadius={4} opacity={0.9} listening={false} />;
+          })()}
 
           {/* pathways — thick rounded strips (width = stroke); emergency = red dashed */}
           {layers.pathways.visible && pathways.map((p) => p.points.length >= 2 && (

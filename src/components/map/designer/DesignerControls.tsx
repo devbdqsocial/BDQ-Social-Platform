@@ -4,7 +4,7 @@ import {
   ZoomIn, ZoomOut, Maximize, Undo2, Redo2, Hand, MousePointer2, Ruler, Spline, TreePine, Shapes, Route,
   AlignHorizontalJustifyStart, AlignHorizontalJustifyCenter, AlignHorizontalJustifyEnd,
   AlignVerticalJustifyStart, AlignVerticalJustifyCenter, AlignVerticalJustifyEnd,
-  AlignHorizontalSpaceBetween, AlignVerticalSpaceBetween, Grid2x2, Image as ImageIcon, Mountain, Gauge,
+  AlignHorizontalSpaceBetween, AlignVerticalSpaceBetween, Grid2x2, Image as ImageIcon, Mountain, Gauge, Eye,
 } from "lucide-react";
 import { createInfra, createStall, seedToEditor } from "@/lib/map/designer-ops";
 import type { Obstacle, Pathway } from "@/lib/map/layout-v2";
@@ -28,6 +28,7 @@ export function DesignerControls() {
     setBulkOpen, exportPng, drawing, isDrawTool, isClosed, finishDrawing, boundary, setBoundary,
     pathType, setPathType, addObstacle, duplicateSelected, terrainType, setTerrainType,
     salesView, setSalesView, heatmapMode, setHeatmapMode,
+    previewMode, setPreviewMode, searchQuery, setSearchQuery, searchMatches, focusOn,
   } = d;
 
   return (
@@ -121,9 +122,28 @@ export function DesignerControls() {
         <Button variant="ghost" size="sm" className={iconBtn} title="Distribute horizontally" disabled={selectedIds.size < 3} onClick={() => doDistribute("h")}><AlignHorizontalSpaceBetween className="size-4" /></Button>
         <Button variant="ghost" size="sm" className={iconBtn} title="Distribute vertically" disabled={selectedIds.size < 3} onClick={() => doDistribute("v")}><AlignVerticalSpaceBetween className="size-4" /></Button>
         <span className="mx-1 h-6 w-px bg-border" />
+        <div className="relative">
+          <input
+            id="designer-search" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search (/)" className="h-8 w-36 rounded-md border border-border bg-background px-2 text-xs"
+          />
+          {searchMatches.length > 0 && (
+            <ul className="absolute z-20 mt-1 max-h-56 w-48 overflow-auto rounded-md border border-border bg-popover p-1 text-xs shadow-md">
+              {searchMatches.map((m) => (
+                <li key={`${m.kind}_${m.id}`}>
+                  <button className="flex w-full items-center justify-between gap-2 rounded px-2 py-1 text-left hover:bg-accent" onMouseDown={(e) => { e.preventDefault(); focusOn(m.focus); setSearchQuery(""); }}>
+                    <span className="truncate">{m.label}</span>
+                    <span className="shrink-0 capitalize text-muted-foreground">{m.kind}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
         <Button variant="outline" size="sm" onClick={() => setBulkOpen(true)}><Grid2x2 className="size-4" /> Bulk grid</Button>
         <Button variant="outline" size="sm" onClick={exportPng}><ImageIcon className="size-4" /> PNG</Button>
-        <Button variant={salesView ? "secondary" : "outline"} size="sm" title="Sales view — stall scores (S)" onClick={() => setSalesView((v) => !v)}><Gauge className="size-4" /> Sales</Button>
+        <Button variant={previewMode ? "secondary" : "outline"} size="sm" title="Vendor preview — hide admin layers" onClick={() => setPreviewMode((v) => !v)}><Eye className="size-4" /> Preview</Button>
+        <Button variant={salesView ? "secondary" : "outline"} size="sm" title="Sales view — stall scores (S)" disabled={previewMode} onClick={() => setSalesView((v) => !v)}><Gauge className="size-4" /> Sales</Button>
         {salesView && (
           <>
             <span className="ml-1 text-xs text-muted-foreground">Heatmap:</span>
