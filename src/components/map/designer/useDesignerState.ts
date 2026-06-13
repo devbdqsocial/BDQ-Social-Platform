@@ -6,7 +6,8 @@ import {
   duplicate, snapToGrid, DEFAULT_CANVAS,
   type CanvasMeta, type EditorElement, type PaletteStallType,
 } from "@/lib/map/designer-ops";
-import { ZONE_COLORS, type LayoutV2, type Obstacle, type Pathway, type Zone, type ZoneColor } from "@/lib/map/layout-v2";
+import { ZONE_COLORS, type LayoutV2, type Obstacle, type Pathway, type TerrainPatch, type Zone, type ZoneColor } from "@/lib/map/layout-v2";
+import type { TerrainType } from "@/lib/map/terrain";
 import { mapViolations, pathwayWarnings, MIN_PATH_WIDTH } from "@/lib/map/validation";
 import { alignElements, distributeElements, nudge, type AlignMode } from "@/lib/map/designer-actions";
 import { INFRA_COLOR, STALL_STATUS_COLORS } from "@/lib/stall-colors";
@@ -21,7 +22,7 @@ import { useHistory } from "../useHistory";
  * plug a slice into this hook + a panel into the context, never back into a 750-line component.
  */
 
-export type Tool = "select" | "pan" | "measure" | "boundary" | "zone" | "pathway";
+export type Tool = "select" | "pan" | "measure" | "boundary" | "zone" | "pathway" | "terrain";
 
 export const LAYER_IDS = ["underlay", "terrain", "zones", "pathways", "stalls", "infra", "ops", "entryflow", "labels"] as const;
 export type LayerId = (typeof LAYER_IDS)[number];
@@ -35,8 +36,8 @@ const STORAGE_KEY = "bdq:designer:layout:v1";
 const OBSTACLE_SIZES: Record<Obstacle["type"], [number, number]> = {
   TREE: [6, 6], POLE: [2, 2], BUILDING: [20, 15], WALL: [20, 2], WATER_BODY: [20, 15],
 };
-const isDrawTool = (t: Tool) => t === "boundary" || t === "zone" || t === "pathway";
-const isClosed = (t: Tool) => t === "boundary" || t === "zone"; // pathway is an OPEN polyline
+const isDrawTool = (t: Tool) => t === "boundary" || t === "zone" || t === "pathway" || t === "terrain";
+const isClosed = (t: Tool) => t === "boundary" || t === "zone" || t === "terrain"; // pathway is an OPEN polyline
 
 export interface UseDesignerStateProps {
   eventId?: string;
@@ -93,9 +94,10 @@ export function useDesignerState({
   const [obstacles, setObstacles] = useState<Obstacle[]>(initialLayout?.obstacles ?? []);
   const [zones, setZones] = useState<Zone[]>(initialLayout?.zones ?? []);
   const [pathways, setPathways] = useState<Pathway[]>(initialLayout?.pathways ?? []);
+  const [terrain, setTerrain] = useState<TerrainPatch[]>(initialLayout?.terrain ?? []);
+  const [terrainType, setTerrainType] = useState<TerrainType>("GRASS");
   const [overrides, setOverrides] = useState<Set<string>>(new Set());
   const passthrough = useRef({
-    terrain: initialLayout?.terrain ?? [],
     ops: initialLayout?.ops ?? [],
     entryFlow: initialLayout?.entryFlow ?? [],
     versions: initialLayout?.versions ?? [],
@@ -178,7 +180,7 @@ export function useDesignerState({
 
   const layerCounts = useMemo<Record<LayerId, number>>(() => ({
     underlay: bgImg ? 1 : 0,
-    terrain: passthrough.current.terrain.length,
+    terrain: terrain.length,
     zones: zones.length,
     pathways: pathways.length,
     stalls: elements.filter((e) => e.kind === "stall").length,
@@ -186,7 +188,7 @@ export function useDesignerState({
     ops: passthrough.current.ops.length,
     entryflow: passthrough.current.entryFlow.length,
     labels: elements.length,
-  }), [bgImg, zones, pathways, elements]);
+  }), [bgImg, terrain, zones, pathways, elements]);
 
   // transformer attaches to a single selection
   useEffect(() => {
@@ -281,11 +283,13 @@ export function useDesignerState({
         setZones((zs) => [...zs, { id: `zone_${Date.now().toString(36)}`, name: `Zone ${zs.length + 1}`, color, points: pts }]);
       } else if (tool === "pathway") {
         setPathways((ps) => [...ps, { id: `path_${Date.now().toString(36)}`, type: pathType, widthFt: MIN_PATH_WIDTH[pathType], points: pts }]);
+      } else if (tool === "terrain") {
+        setTerrain((ts) => [...ts, { id: `terr_${Date.now().toString(36)}`, type: terrainType, points: pts }]);
       }
     }
     setDrawing(null);
     setTool("select");
-  }, [tool, zones.length, pathType]);
+  }, [tool, zones.length, pathType, terrainType]);
 
   const onTransformEnd = useCallback((id: string, node: Konva.Node) => {
     const sx = node.scaleX(); const sy = node.scaleY();
@@ -362,10 +366,10 @@ export function useDesignerState({
         ? { underlay: { url: bg.url, publicId: "", ftPerPx: bg.ftPerPx ?? 0, offsetXFt: bg.offsetXFt ?? 0, offsetYFt: bg.offsetYFt ?? 0, rotationDeg: 0, opacity: bg.opacity, locked: bg.locked ?? false } }
         : {}),
       boundary: boundary && boundary.length >= 3 ? { points: boundary } : undefined,
-      obstacles, terrain: pt.terrain, zones, pathways, elements,
+      obstacles, terrain, zones, pathways, elements,
       ops: pt.ops, entryFlow: pt.entryFlow, layers, versions: pt.versions,
     };
-  }, [gridFt, canvas, boundary, obstacles, zones, pathways, elements, layers]);
+  }, [gridFt, canvas, boundary, obstacles, terrain, zones, pathways, elements, layers]);
 
   const handleSave = useCallback(async () => {
     if (!eventId || !saveAction) return;
@@ -395,7 +399,8 @@ export function useDesignerState({
     // measure
     measurePts, setMeasurePts, measureCursor, setMeasureCursor, cursorFt, setCursorFt, measureLine, measureDist,
     // collections
-    boundary, setBoundary, obstacles, setObstacles, addObstacle, zones, setZones, pathways, setPathways, overrides, setOverrides,
+    boundary, setBoundary, obstacles, setObstacles, addObstacle, zones, setZones, pathways, setPathways,
+    terrain, setTerrain, terrainType, setTerrainType, overrides, setOverrides,
     // layers
     layers, toggleLayerVisible, toggleLayerLock, setAllLayersVisible, layerCounts,
     // derived

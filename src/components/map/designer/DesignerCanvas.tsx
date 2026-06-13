@@ -2,6 +2,7 @@
 
 import { Group, Image as KonvaImage, Layer, Line, Rect, Stage, Text, Transformer } from "react-konva";
 import { ZONE_COLOR_HEX, polygonCentroid } from "@/lib/map/zones";
+import { TERRAIN_COLOR_HEX } from "@/lib/map/terrain";
 import { snapToNeighbours, nudge } from "@/lib/map/designer-actions";
 import { useDesigner } from "./DesignerContext";
 
@@ -10,7 +11,7 @@ export function DesignerCanvas() {
   const d = useDesigner();
   const {
     width, height, scale, pxPerFt, tool, canvas, bgImg, calibrated, layers,
-    elements, zones, pathways, boundary, obstacles, drawing, guides, marquee,
+    elements, zones, pathways, terrain, boundary, obstacles, drawing, guides, marquee,
     measureLine, measureDist, measureCursor, selectedIds, violationIds, fillFor,
     stageRef, trRef, toFt, zoom, patchBg, commit, setSelectedIds, setGuides,
     onStageMouseDown, onStageMouseMove, onStageMouseUp, onElementClick, onTransformEnd,
@@ -59,6 +60,14 @@ export function DesignerCanvas() {
         )}
 
         <Layer>
+          {/* terrain — ground-texture polygons under everything (R2.5.8) */}
+          {layers.terrain.visible && terrain.map((t) => (
+            <Line
+              key={t.id}
+              points={t.points.flatMap(([x, y]) => [x * pxPerFt, y * pxPerFt])}
+              closed fill={TERRAIN_COLOR_HEX[t.type]} opacity={0.15} listening={false}
+            />
+          ))}
           {elements.map((el) => {
             const lid = el.kind === "infra" ? "infra" : "stalls";
             if (!layers[lid].visible) return null;
@@ -140,7 +149,7 @@ export function DesignerCanvas() {
             <Line
               points={[...drawing, ...(isDrawTool(tool) && measureCursor ? [measureCursor] : [])].flatMap(([x, y]) => [x * pxPerFt, y * pxPerFt])}
               closed={isClosed(tool)}
-              stroke={tool === "zone" ? "#6C75F5" : tool === "pathway" ? "#BCAE94" : "#01065B"} strokeWidth={2} dash={[8, 5]} listening={false}
+              stroke={tool === "zone" ? "#6C75F5" : tool === "pathway" ? "#BCAE94" : tool === "terrain" ? TERRAIN_COLOR_HEX[d.terrainType] : "#01065B"} strokeWidth={2} dash={[8, 5]} listening={false}
             />
           )}
 

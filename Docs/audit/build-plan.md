@@ -352,7 +352,13 @@ build on it.
       gate not reachable from any path → amber advisory panel (warnings never block save).
       Pathways persist via v2 (moved into state). Verify: 51f/218t green; build OK; designer
       200; 0err/10warn.
-- [ ] **R2.5.8 Terrain** (4h): 6 patch types, render under zones. Verify: visual + export-safe.
+- [x] **R2.5.8 Terrain** (4h) ✓ — **first feature through the post-refactor slice+panel pattern**:
+      `lib/map/terrain.ts` (6 types GRASS/CONCRETE/PAVERS/MUD/CARPET/TURF + hex map). A terrain
+      slice in `useDesignerState` (state + `terrainType` + draw-tool branch + buildLayoutV2 +
+      layerCounts — moved out of passthrough), a terrain palette in `DesignerControls`, and a
+      15%-opacity render under everything in `DesignerCanvas`, gated by the existing `terrain`
+      layer. Closed-polygon draw reused the generalized path. No new component plumbing — exactly
+      the architecture's promise. Verify: 51f/218t green; build OK; designer 200; 0err/10warn.
 - [ ] **R2.5.9 Align/distribute + bulk v2** (6h): 6 align + 2 distribute ops; bulk resize/
       type/status/price. Verify: geometry tests on fixtures.
 - [ ] **R2.5.10 Scoring engine** (8h): `server/map/scoring.ts` pure lib with §9.1 weight table
@@ -493,3 +499,4 @@ pages · axe pass.
 | 2026-06-13 | build session 4 (cont.) | R2.5.6 (zones) | done; zone draw (Z, shared polygon path) + colored regions + centroid labels + rollups; persists via v2; useDesignerState split still pending | 51f/215t green; build OK; designer 200 |
 | 2026-06-13 | build session 4 (cont.) | R2.5.7 (pathways) | done; open-polyline draw (P) + strips + min-width/blocked/exit warnings (non-blocking); persists via v2; **useDesignerState refactor debt growing — do next** | 51f/218t green; build OK; designer 200 |
 | 2026-06-13 | build session 5 | R2.5.5 refactor (owner-mandated) | done; MapDesigner 826→81 lines; useDesignerState single source of truth + DesignerContext + 4 components + LayersPanel; map-architecture-report.md; **debt cleared, ready for next 10 features** | 51f/218t (no test touched); build OK; both designers 200 |
+| 2026-06-13 | build session 5 (cont.) | R2.5.8 (terrain) | done; **first feature through the slice+panel pattern** — terrain.ts (6 types) + a hook slice + a controls palette + a 15%-opacity under-render gated by the terrain layer; no new plumbing, proving the refactor's promise | 51f/218t green; build OK; designer 200 |

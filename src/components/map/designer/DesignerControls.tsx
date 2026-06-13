@@ -4,10 +4,11 @@ import {
   ZoomIn, ZoomOut, Maximize, Undo2, Redo2, Hand, MousePointer2, Ruler, Spline, TreePine, Shapes, Route,
   AlignHorizontalJustifyStart, AlignHorizontalJustifyCenter, AlignHorizontalJustifyEnd,
   AlignVerticalJustifyStart, AlignVerticalJustifyCenter, AlignVerticalJustifyEnd,
-  AlignHorizontalSpaceBetween, AlignVerticalSpaceBetween, Grid2x2, Image as ImageIcon,
+  AlignHorizontalSpaceBetween, AlignVerticalSpaceBetween, Grid2x2, Image as ImageIcon, Mountain,
 } from "lucide-react";
 import { createInfra, createStall, seedToEditor } from "@/lib/map/designer-ops";
 import type { Obstacle, Pathway } from "@/lib/map/layout-v2";
+import { TERRAIN_TYPES, terrainLabel, type TerrainType } from "@/lib/map/terrain";
 import type { SeedInfraType } from "@/server/map/seed-aarush-lawn";
 import { Button } from "@/components/ui/button";
 import { DesignerToolbar } from "../DesignerToolbar";
@@ -25,7 +26,7 @@ export function DesignerControls() {
     selectedIds, addElements, deleteSelected, reset, setSelectedIds, buildLayoutV2,
     tool, selectTool, zoom, scale, fit, undo, redo, canUndo, canRedo, doAlign, doDistribute,
     setBulkOpen, exportPng, drawing, isDrawTool, isClosed, finishDrawing, boundary, setBoundary,
-    pathType, setPathType, addObstacle, duplicateSelected,
+    pathType, setPathType, addObstacle, duplicateSelected, terrainType, setTerrainType,
   } = d;
 
   return (
@@ -154,6 +155,12 @@ export function DesignerControls() {
               <option value="EMERGENCY">Emergency (10 ft)</option>
             </select>
             <Button variant="ghost" size="sm" onClick={() => selectTool("pathway")}>Draw (P)</Button>
+            <span className="mx-1 h-6 w-px bg-border" />
+            <span className="px-1 text-muted-foreground"><Mountain className="inline size-3.5" /> Terrain:</span>
+            <select value={terrainType} onChange={(e) => setTerrainType(e.target.value as TerrainType)} className="h-8 rounded-md border border-border bg-background px-1.5 text-xs">
+              {TERRAIN_TYPES.map((t) => <option key={t} value={t}>{terrainLabel(t)}</option>)}
+            </select>
+            <Button variant="ghost" size="sm" onClick={() => selectTool("terrain")}>Draw</Button>
             <span className="mx-1 h-6 w-px bg-border" />
             <span className="px-1 text-muted-foreground"><TreePine className="inline size-3.5" /> Obstacle:</span>
             {(["TREE", "POLE", "BUILDING", "WALL", "WATER_BODY"] as Obstacle["type"][]).map((t) => (
