@@ -327,8 +327,13 @@ build on it.
       Verify: geometry fixtures exact; 49f/204t green; build OK; designer 200.
 - [ ] **R2.5.5 Layers panel** (5h): 9 fixed layers, show/hide/lock (design-system §4.8).
       Verify: hidden excluded from current-view export; locked unselectable.
-- [ ] **R2.5.6 Zones** (8h): draw, 8-swatch palette, centroid labels, `zoneOf`, rollups in
-      SummaryPanel v2. Verify: rollup math tests.
+- [x] **R2.5.6 Zones** (8h) ✓: `lib/map/zones.ts` pure (`zoneOf` by element CENTER, `zoneRollups`
+      [stalls/sellable/Σ potential/area], `polygonCentroid`, `ZONE_COLOR_HEX` 8-swatch, 4 tests).
+      Designer: **zone draw tool** (`Z` — generalized the boundary polygon-draw so both share one
+      `drawing` path; auto-names "Zone N" + cycles the 8 fixed colors) → render (12%-fill polygon
+      + centroid name label) → **zones list panel** (rename ≤24, recolor swatches, remove).
+      **SummaryPanel "By zone" rollups**. Zones persist via the v2 save (moved into state).
+      Verify: rollup fixtures exact; 51f/215t green; build OK; designer 200; 0err/10warn.
 - [ ] **R2.5.7 Pathways** (8h): polyline strips, MAIN/SECONDARY/EMERGENCY presets, min-width +
       blocked + exit-reachability checks → validation entries. Verify: fixture layouts
       raise/clear each rule.
@@ -470,3 +475,4 @@ pages · axe pass.
 | 2026-06-13 | build session 4 (cont.) | R2.5.2 (calibration) | done; the "real map" — 2-point calibration → true-scale underlay; rides on extended v1 bgImage (no v2-save migration yet); confirm-step mis-calibration guard | 48f/200t green; build OK; designer 200 |
 | 2026-06-13 | build session 4 (cont.) | R2.5.4 (measurements) | done; geometry lib + distance tool (M) + status bar + occupancy; all computed/ephemeral, no persistence; R2.5.3 boundary/obstacles next (bundles the v2-save migration) | 49f/204t green; build OK; designer 200 |
 | 2026-06-13 | build session 4 (cont.) | R2.5.3 + v2-save migration | done; designer now persists full LayoutV2; boundary pen + obstacles + save-blocking validation/override; v1 layouts round-trip | 50f/211t green; build OK; both designers 200 |
+| 2026-06-13 | build session 4 (cont.) | R2.5.6 (zones) | done; zone draw (Z, shared polygon path) + colored regions + centroid labels + rollups; persists via v2; useDesignerState split still pending | 51f/215t green; build OK; designer 200 |

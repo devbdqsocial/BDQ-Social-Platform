@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type Konva from "konva";
-import { Image as KonvaImage, Layer, Line, Rect, Stage, Text, Transformer } from "react-konva";
+import { Group, Image as KonvaImage, Layer, Line, Rect, Stage, Text, Transformer } from "react-konva";
 import {
-  ZoomIn, ZoomOut, Maximize, Undo2, Redo2, Hand, MousePointer2, Ruler, Spline, TreePine, TriangleAlert,
+  ZoomIn, ZoomOut, Maximize, Undo2, Redo2, Hand, MousePointer2, Ruler, Spline, TreePine, TriangleAlert, Shapes,
   AlignHorizontalJustifyStart, AlignHorizontalJustifyCenter, AlignHorizontalJustifyEnd,
   AlignVerticalJustifyStart, AlignVerticalJustifyCenter, AlignVerticalJustifyEnd,
   AlignHorizontalSpaceBetween, AlignVerticalSpaceBetween, Grid2x2, Image as ImageIcon,
@@ -13,7 +13,8 @@ import {
   DEFAULT_CANVAS, duplicate, createInfra, createStall, seedToEditor, snapToGrid,
   type CanvasMeta, type EditorElement, type PaletteStallType,
 } from "@/lib/map/designer-ops";
-import type { LayoutV2, Obstacle } from "@/lib/map/layout-v2";
+import { ZONE_COLORS, type LayoutV2, type Obstacle, type Zone, type ZoneColor } from "@/lib/map/layout-v2";
+import { ZONE_COLOR_HEX, polygonCentroid } from "@/lib/map/zones";
 import {
   alignElements, distributeElements, nudge, relabel, makeGrid, snapToNeighbours, type AlignMode,
 } from "@/lib/map/designer-actions";
@@ -71,17 +72,17 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, i
   const [gridFt, setGridFt] = useState(initialCanvas?.gridFt ?? 5);
   const [canvas, setCanvas] = useState<CanvasMeta>(initialCanvas ?? DEFAULT_CANVAS);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [tool, setTool] = useState<"select" | "pan" | "measure" | "boundary">("select");
+  const [tool, setTool] = useState<"select" | "pan" | "measure" | "boundary" | "zone">("select");
   const [measurePts, setMeasurePts] = useState<Pt[]>([]); // distance-tool points, in feet (ephemeral)
   const [measureCursor, setMeasureCursor] = useState<Pt | null>(null);
   const [cursorFt, setCursorFt] = useState<Pt | null>(null);
   // v2 sub-collections: boundary + obstacles are editable (R2.5.3); the rest round-trip untouched.
   const [boundary, setBoundary] = useState<Pt[] | null>(initialLayout?.boundary?.points ?? null);
   const [obstacles, setObstacles] = useState<Obstacle[]>(initialLayout?.obstacles ?? []);
+  const [zones, setZones] = useState<Zone[]>(initialLayout?.zones ?? []);
   const [overrides, setOverrides] = useState<Set<string>>(new Set()); // element ids allowed to fail boundary/obstacle checks
   const passthrough = useRef({
     terrain: initialLayout?.terrain ?? [],
-    zones: initialLayout?.zones ?? [],
     pathways: initialLayout?.pathways ?? [],
     ops: initialLayout?.ops ?? [],
     entryFlow: initialLayout?.entryFlow ?? [],
@@ -89,7 +90,7 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, i
     versions: initialLayout?.versions ?? [],
   });
   const [guides, setGuides] = useState<{ points: number[] }[]>([]);
-  const [drawingBoundary, setDrawingBoundary] = useState<Pt[] | null>(null); // in-progress boundary pen
+  const [drawing, setDrawing] = useState<Pt[] | null>(null); // in-progress polygon (boundary or zone)
   const [marquee, setMarquee] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [calibrating, setCalibrating] = useState(false);
@@ -253,14 +254,13 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, i
       if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); deleteSelected(); return; }
       if (!mod) {
         const k = e.key.toLowerCase();
-        if (k === "m") { setTool("measure"); setDrawingBoundary(null); return; }
-        if (k === "b") { setTool("boundary"); setDrawingBoundary([]); return; }
-        if (k === "v") { setTool("select"); setMeasurePts([]); setMeasureCursor(null); setDrawingBoundary(null); return; }
-        if (k === "h") { setTool("pan"); setMeasurePts([]); setMeasureCursor(null); setDrawingBoundary(null); return; }
-        if (e.key === "Enter" && drawingBoundary && drawingBoundary.length >= 3) {
-          setBoundary(drawingBoundary); setDrawingBoundary(null); setTool("select"); return;
-        }
-        if (e.key === "Escape") { setMeasurePts([]); setMeasureCursor(null); setDrawingBoundary(null); setSelectedIds(new Set()); return; }
+        if (k === "m") { setTool("measure"); setDrawing(null); return; }
+        if (k === "b") { setTool("boundary"); setDrawing([]); return; }
+        if (k === "z") { setTool("zone"); setDrawing([]); return; }
+        if (k === "v") { setTool("select"); setMeasurePts([]); setMeasureCursor(null); setDrawing(null); return; }
+        if (k === "h") { setTool("pan"); setMeasurePts([]); setMeasureCursor(null); setDrawing(null); return; }
+        if (e.key === "Enter" && drawing && drawing.length >= 3) { finishPolygon(drawing); return; }
+        if (e.key === "Escape") { setMeasurePts([]); setMeasureCursor(null); setDrawing(null); setSelectedIds(new Set()); return; }
       }
       const step = e.shiftKey ? 10 : 1;
       const d = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
@@ -268,7 +268,10 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, i
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [elements, selectedIds, commit, undo, redo, deleteSelected, addElements, drawingBoundary]);
+    // finishPolygon is recreated each render; the effect re-binds on drawing/tool/zones, so its
+    // closure is always fresh — including it would just thrash the listener.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [elements, selectedIds, commit, undo, redo, deleteSelected, addElements, drawing, tool, zones]);
 
   const buildLayoutV2 = (): LayoutV2 => {
     const g = ([1, 2, 5, 10] as number[]).includes(gridFt) ? (gridFt as 1 | 2 | 5 | 10) : 5;
@@ -288,7 +291,7 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, i
         : {}),
       boundary: boundary && boundary.length >= 3 ? { points: boundary } : undefined,
       obstacles,
-      terrain: pt.terrain, zones: pt.zones, pathways: pt.pathways,
+      terrain: pt.terrain, zones, pathways: pt.pathways,
       elements,
       ops: pt.ops, entryFlow: pt.entryFlow, layers: pt.layers, versions: pt.versions,
     };
@@ -325,15 +328,21 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, i
   // marquee selection (select tool, empty-canvas drag) + distance tool (measure)
   const relPointer = () => stageRef.current?.getRelativePointerPosition() ?? null;
   const ptToFt = (p: { x: number; y: number }): Pt => [Math.round((p.x / pxPerFt) * 10) / 10, Math.round((p.y / pxPerFt) * 10) / 10];
-  const selectTool = (t: "select" | "pan" | "measure" | "boundary") => {
+  const isPolyTool = (t: string) => t === "boundary" || t === "zone";
+  const selectTool = (t: "select" | "pan" | "measure" | "boundary" | "zone") => {
     setTool(t);
     if (t !== "measure") { setMeasurePts([]); setMeasureCursor(null); }
-    if (t !== "boundary") setDrawingBoundary(null);
-    else setDrawingBoundary([]);
+    setDrawing(isPolyTool(t) ? [] : null);
   };
-  const finishBoundary = () => {
-    if (drawingBoundary && drawingBoundary.length >= 3) setBoundary(drawingBoundary);
-    setDrawingBoundary(null);
+  const finishPolygon = (pts: Pt[]) => {
+    if (pts.length >= 3) {
+      if (tool === "boundary") setBoundary(pts);
+      else if (tool === "zone") {
+        const color = ZONE_COLORS[zones.length % ZONE_COLORS.length] as ZoneColor;
+        setZones((zs) => [...zs, { id: `zone_${Date.now().toString(36)}`, name: `Zone ${zs.length + 1}`, color, points: pts }]);
+      }
+    }
+    setDrawing(null);
     setTool("select");
   };
   const onStageMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
@@ -341,14 +350,14 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, i
     const p = relPointer();
     if (!p) return;
     if (tool === "measure") { setMeasurePts((pts) => [...pts, ptToFt(p)]); return; }
-    if (tool === "boundary") {
+    if (isPolyTool(tool)) {
       const v = ptToFt(p);
       // click near the first vertex (≤8 ft) closes the polygon
-      if (drawingBoundary && drawingBoundary.length >= 3) {
-        const [fx, fy] = drawingBoundary[0];
-        if (Math.hypot(v[0] - fx, v[1] - fy) <= 8) { finishBoundary(); return; }
+      if (drawing && drawing.length >= 3) {
+        const [fx, fy] = drawing[0];
+        if (Math.hypot(v[0] - fx, v[1] - fy) <= 8) { finishPolygon(drawing); return; }
       }
-      setDrawingBoundary((pts) => [...(pts ?? []), v]);
+      setDrawing((pts) => [...(pts ?? []), v]);
       return;
     }
     if (tool !== "select") return;
@@ -358,8 +367,7 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, i
   const onStageMouseMove = () => {
     const p = relPointer();
     if (p) setCursorFt(ptToFt(p));
-    if (tool === "measure" && p) setMeasureCursor(ptToFt(p));
-    if (tool === "boundary" && p) setMeasureCursor(ptToFt(p)); // reuse cursor for the live boundary segment
+    if ((tool === "measure" || isPolyTool(tool)) && p) setMeasureCursor(ptToFt(p));
     if (!marquee || !p) return;
     setMarquee((m) => (m ? { ...m, w: p.x - m.x, h: p.y - m.y } : m));
   };
@@ -477,28 +485,36 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, i
           <Button variant="outline" size="sm" onClick={exportPng}><ImageIcon className="size-4" /> PNG</Button>
         </div>
 
-        {/* structure row — venue boundary + fixed obstacles (R2.5.3) */}
+        {/* structure row — venue boundary + zones + fixed obstacles (R2.5.3 / R2.5.6) */}
         <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-border bg-card p-2 text-xs">
-          <span className="px-1 text-muted-foreground">Boundary:</span>
-          {tool === "boundary" ? (
+          {isPolyTool(tool) ? (
             <>
-              <span className="text-foreground">{(drawingBoundary?.length ?? 0)} pts — click the first point or Enter to close, Esc to cancel</span>
-              <Button variant="outline" size="sm" disabled={(drawingBoundary?.length ?? 0) < 3} onClick={finishBoundary}>Close</Button>
-            </>
-          ) : boundary ? (
-            <>
-              <span className="text-foreground">{boundary.length}-point polygon set</span>
-              <Button variant="ghost" size="sm" onClick={() => setBoundary(null)}>Clear</Button>
-              <Button variant="ghost" size="sm" onClick={() => selectTool("boundary")}>Redraw</Button>
+              <span className="text-foreground">
+                Drawing {tool} · {(drawing?.length ?? 0)} pts — click the first point or Enter to close, Esc to cancel
+              </span>
+              <Button variant="outline" size="sm" disabled={(drawing?.length ?? 0) < 3} onClick={() => drawing && finishPolygon(drawing)}>Close</Button>
             </>
           ) : (
-            <Button variant="ghost" size="sm" onClick={() => selectTool("boundary")}><Spline className="size-4" /> Draw boundary</Button>
+            <>
+              <span className="px-1 text-muted-foreground">Boundary:</span>
+              {boundary ? (
+                <>
+                  <span className="text-foreground">{boundary.length}-pt set</span>
+                  <Button variant="ghost" size="sm" onClick={() => setBoundary(null)}>Clear</Button>
+                  <Button variant="ghost" size="sm" onClick={() => selectTool("boundary")}>Redraw</Button>
+                </>
+              ) : (
+                <Button variant="ghost" size="sm" onClick={() => selectTool("boundary")}><Spline className="size-4" /> Draw boundary (B)</Button>
+              )}
+              <span className="mx-1 h-6 w-px bg-border" />
+              <Button variant="ghost" size="sm" onClick={() => selectTool("zone")}><Shapes className="size-4" /> Add zone (Z)</Button>
+              <span className="mx-1 h-6 w-px bg-border" />
+              <span className="px-1 text-muted-foreground"><TreePine className="inline size-3.5" /> Obstacle:</span>
+              {(["TREE", "POLE", "BUILDING", "WALL", "WATER_BODY"] as Obstacle["type"][]).map((t) => (
+                <Button key={t} variant="ghost" size="sm" onClick={() => addObstacle(t)}>{t.charAt(0) + t.slice(1).toLowerCase().replace(/_/g, " ")}</Button>
+              ))}
+            </>
           )}
-          <span className="mx-1 h-6 w-px bg-border" />
-          <span className="px-1 text-muted-foreground"><TreePine className="inline size-3.5" /> Obstacle:</span>
-          {(["TREE", "POLE", "BUILDING", "WALL", "WATER_BODY"] as Obstacle["type"][]).map((t) => (
-            <Button key={t} variant="ghost" size="sm" onClick={() => addObstacle(t)}>{t.charAt(0) + t.slice(1).toLowerCase().replace(/_/g, " ")}</Button>
-          ))}
         </div>
 
         <div ref={wrapRef} className="overflow-hidden rounded-xl border border-border bg-card" style={{ touchAction: "none", maxHeight: "72vh" }}>
@@ -586,14 +602,25 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, i
               {elements.map((el) => (
                 <Text key={`t_${el.id}`} x={el.xFt * pxPerFt} y={el.yFt * pxPerFt + (el.heightFt * pxPerFt) / 2 - 4} width={el.widthFt * pxPerFt} align="center" text={el.label} fontSize={8} fill="#15120E" listening={false} />
               ))}
+              {/* zones — filled colored regions + centroid name label (R2.5.6) */}
+              {zones.map((z) => {
+                const hex = ZONE_COLOR_HEX[z.color];
+                const [cx, cy] = polygonCentroid(z.points);
+                return (
+                  <Group key={z.id} listening={false}>
+                    <Line points={z.points.flatMap(([x, y]) => [x * pxPerFt, y * pxPerFt])} closed fill={hex} opacity={0.12} stroke={hex} strokeWidth={1.5} />
+                    <Text x={cx * pxPerFt - 40} y={cy * pxPerFt - 5} width={80} align="center" text={z.name.toUpperCase()} fontSize={10} fontStyle="bold" fill={hex} />
+                  </Group>
+                );
+              })}
               {/* venue boundary polygon (set + in-progress) */}
               {boundary && boundary.length >= 2 && (
                 <Line points={boundary.flatMap(([x, y]) => [x * pxPerFt, y * pxPerFt])} closed stroke="#01065B" strokeWidth={2} dash={[8, 5]} listening={false} />
               )}
-              {drawingBoundary && drawingBoundary.length >= 1 && (
+              {drawing && drawing.length >= 1 && (
                 <Line
-                  points={[...drawingBoundary, ...(tool === "boundary" && measureCursor ? [measureCursor] : [])].flatMap(([x, y]) => [x * pxPerFt, y * pxPerFt])}
-                  stroke="#01065B" strokeWidth={2} dash={[8, 5]} listening={false}
+                  points={[...drawing, ...(isPolyTool(tool) && measureCursor ? [measureCursor] : [])].flatMap(([x, y]) => [x * pxPerFt, y * pxPerFt])}
+                  stroke={tool === "zone" ? "#6C75F5" : "#01065B"} strokeWidth={2} dash={[8, 5]} listening={false}
                 />
               )}
               {/* fixed obstacles — draggable, muted brown */}
@@ -649,7 +676,7 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, i
           onChange={(p) => selected && commit(patchOne(selected.id, p))}
           onRelabel={(prefix, start) => { if (selectedIds.size) commit(relabel(elements, selectedIds, prefix, start)); }}
         />
-        <SummaryPanel elements={elements} stallTypes={stallTypes} venueSqFt={canvas.widthFt * canvas.heightFt} />
+        <SummaryPanel elements={elements} stallTypes={stallTypes} zones={zones} venueSqFt={canvas.widthFt * canvas.heightFt} />
 
         {violations.length > 0 && (
           <div className="space-y-2 rounded-xl border border-destructive/40 bg-destructive/5 p-4 text-sm">
@@ -664,6 +691,39 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, i
                     <span className="font-medium">{v.label}</span> <span className="text-muted-foreground">{v.detail}</span>
                   </button>
                   <Button variant="ghost" size="sm" onClick={() => setOverrides((s) => new Set(s).add(v.elementId))}>Override</Button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {zones.length > 0 && (
+          <div className="space-y-2 rounded-xl border border-border bg-card p-4 text-sm">
+            <h2 className="font-display text-base font-semibold">Zones ({zones.length})</h2>
+            <ul className="space-y-2">
+              {zones.map((z) => (
+                <li key={z.id} className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="size-4 shrink-0 rounded-full" style={{ background: ZONE_COLOR_HEX[z.color] }} />
+                    <input
+                      value={z.name}
+                      onChange={(e) => setZones((zs) => zs.map((x) => (x.id === z.id ? { ...x, name: e.target.value.slice(0, 24) } : x)))}
+                      className="h-8 min-w-0 flex-1 rounded-md border border-border bg-background px-2 text-sm"
+                    />
+                    <Button variant="ghost" size="sm" onClick={() => setZones((zs) => zs.filter((x) => x.id !== z.id))}>Remove</Button>
+                  </div>
+                  <div className="flex flex-wrap gap-1 pl-6">
+                    {ZONE_COLORS.map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        aria-label={c}
+                        onClick={() => setZones((zs) => zs.map((x) => (x.id === z.id ? { ...x, color: c } : x)))}
+                        className={`size-5 rounded-full ${z.color === c ? "ring-2 ring-offset-1 ring-ring" : ""}`}
+                        style={{ background: ZONE_COLOR_HEX[c] }}
+                      />
+                    ))}
+                  </div>
                 </li>
               ))}
             </ul>

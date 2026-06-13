@@ -2,19 +2,25 @@
 
 import { useMemo } from "react";
 import type { EditorElement, PaletteStallType } from "@/lib/map/designer-ops";
+import type { Zone } from "@/lib/map/layout-v2";
 import { formatPaise } from "@/lib/utils";
 import { usedSqFt, occupancy, fmtArea, fmtPct } from "@/lib/map/geometry";
+import { zoneRollups } from "@/lib/map/zones";
+import { ZONE_COLOR_HEX } from "@/lib/map/zones";
 
 export function SummaryPanel({
   elements,
   stallTypes,
+  zones = [],
   venueSqFt,
 }: {
   elements: EditorElement[];
   stallTypes: PaletteStallType[];
+  zones?: Zone[];
   /** venue area for occupancy — boundary area later (R2.5.3); canvas W×H for now */
   venueSqFt?: number;
 }) {
+  const rollups = useMemo(() => zoneRollups(elements, zones), [elements, zones]);
   const summary = useMemo(() => {
     const nameById = Object.fromEntries(stallTypes.map((t) => [t.id, t.name]));
     const stalls = elements.filter((e) => e.kind === "stall");
@@ -51,6 +57,22 @@ export function SummaryPanel({
             <li key={name} className="flex justify-between"><span>{name}</span><span>{n}</span></li>
           ))}
         </ul>
+      )}
+      {rollups.length > 0 && (
+        <div className="border-t border-border pt-2">
+          <p className="mb-1 text-xs font-medium text-muted-foreground">By zone</p>
+          <ul className="space-y-1 text-xs">
+            {rollups.map((z) => (
+              <li key={z.zoneId} className="flex items-center justify-between gap-2">
+                <span className="flex min-w-0 items-center gap-1.5">
+                  <span className="size-2.5 shrink-0 rounded-full" style={{ background: ZONE_COLOR_HEX[z.color] }} />
+                  <span className="truncate">{z.name}</span>
+                </span>
+                <span className="shrink-0 tabular-nums text-muted-foreground">{z.stalls} · {formatPaise(z.potentialPaise)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </aside>
   );
