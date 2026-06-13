@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type Konva from "konva";
 import { Image as KonvaImage, Layer, Line, Rect, Stage, Text, Transformer } from "react-konva";
 import {
-  ZoomIn, ZoomOut, Maximize, Undo2, Redo2, Hand, MousePointer2,
+  ZoomIn, ZoomOut, Maximize, Undo2, Redo2, Hand, MousePointer2, Ruler,
   AlignHorizontalJustifyStart, AlignHorizontalJustifyCenter, AlignHorizontalJustifyEnd,
   AlignVerticalJustifyStart, AlignVerticalJustifyCenter, AlignVerticalJustifyEnd,
   AlignHorizontalSpaceBetween, AlignVerticalSpaceBetween, Grid2x2, Image as ImageIcon,
@@ -17,6 +17,7 @@ import {
   alignElements, distributeElements, nudge, relabel, makeGrid, snapToNeighbours, type AlignMode,
 } from "@/lib/map/designer-actions";
 import { INFRA_COLOR, STALL_STATUS_COLORS } from "@/lib/stall-colors";
+import { pathLength, fmtArea, fmtFt, type Pt } from "@/lib/map/geometry";
 import type { SeedInfraType } from "@/server/map/seed-aarush-lawn";
 import type { UploadSignature } from "@/lib/cloudinary";
 import { Button } from "@/components/ui/button";
@@ -65,7 +66,10 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, s
   const [gridFt, setGridFt] = useState(initialCanvas?.gridFt ?? 5);
   const [canvas, setCanvas] = useState<CanvasMeta>(initialCanvas ?? DEFAULT_CANVAS);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [tool, setTool] = useState<"select" | "pan">("select");
+  const [tool, setTool] = useState<"select" | "pan" | "measure">("select");
+  const [measurePts, setMeasurePts] = useState<Pt[]>([]); // distance-tool points, in feet (ephemeral)
+  const [measureCursor, setMeasureCursor] = useState<Pt | null>(null);
+  const [cursorFt, setCursorFt] = useState<Pt | null>(null);
   const [guides, setGuides] = useState<{ points: number[] }[]>([]);
   const [marquee, setMarquee] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
@@ -216,6 +220,13 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, s
         return;
       }
       if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); deleteSelected(); return; }
+      if (!mod) {
+        const k = e.key.toLowerCase();
+        if (k === "m") { setTool("measure"); return; }
+        if (k === "v") { setTool("select"); setMeasurePts([]); setMeasureCursor(null); return; }
+        if (k === "h") { setTool("pan"); setMeasurePts([]); setMeasureCursor(null); return; }
+        if (e.key === "Escape") { setMeasurePts([]); setMeasureCursor(null); setSelectedIds(new Set()); return; }
+      }
       const step = e.shiftKey ? 10 : 1;
       const d = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
       if (d && selectedIds.size) { e.preventDefault(); commit(nudge(elements, selectedIds, d[0], d[1])); }
@@ -250,22 +261,31 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, s
   const doAlign = (m: AlignMode) => { if (selectedIds.size > 1) commit(alignElements(elements, selectedIds, m)); };
   const doDistribute = (axis: "h" | "v") => { if (selectedIds.size > 2) commit(distributeElements(elements, selectedIds, axis)); };
 
-  // marquee selection (select tool, empty-canvas drag)
+  // marquee selection (select tool, empty-canvas drag) + distance tool (measure)
   const relPointer = () => stageRef.current?.getRelativePointerPosition() ?? null;
+  const ptToFt = (p: { x: number; y: number }): Pt => [Math.round((p.x / pxPerFt) * 10) / 10, Math.round((p.y / pxPerFt) * 10) / 10];
+  const selectTool = (t: "select" | "pan" | "measure") => {
+    setTool(t);
+    if (t !== "measure") { setMeasurePts([]); setMeasureCursor(null); }
+  };
   const onStageMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
     if (e.target !== e.target.getStage()) return;
-    if (tool !== "select") return;
     const p = relPointer();
     if (!p) return;
+    if (tool === "measure") { setMeasurePts((pts) => [...pts, ptToFt(p)]); return; }
+    if (tool !== "select") return;
     if (!(e.evt.shiftKey || e.evt.metaKey || e.evt.ctrlKey)) setSelectedIds(new Set());
     setMarquee({ x: p.x, y: p.y, w: 0, h: 0 });
   };
   const onStageMouseMove = () => {
-    if (!marquee) return;
     const p = relPointer();
-    if (!p) return;
+    if (p) setCursorFt(ptToFt(p));
+    if (tool === "measure" && p) setMeasureCursor(ptToFt(p));
+    if (!marquee || !p) return;
     setMarquee((m) => (m ? { ...m, w: p.x - m.x, h: p.y - m.y } : m));
   };
+  const measureLine = [...measurePts, ...(tool === "measure" && measureCursor ? [measureCursor] : [])];
+  const measureDist = pathLength(measureLine);
   const onStageMouseUp = () => {
     if (!marquee) return;
     const x1 = Math.min(marquee.x, marquee.x + marquee.w) / pxPerFt;
@@ -352,8 +372,9 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, s
 
         {/* power toolbar */}
         <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-border bg-card p-2">
-          <Button variant={tool === "select" ? "secondary" : "ghost"} size="sm" className={iconBtn} title="Select" onClick={() => setTool("select")}><MousePointer2 className="size-4" /></Button>
-          <Button variant={tool === "pan" ? "secondary" : "ghost"} size="sm" className={iconBtn} title="Pan" onClick={() => setTool("pan")}><Hand className="size-4" /></Button>
+          <Button variant={tool === "select" ? "secondary" : "ghost"} size="sm" className={iconBtn} title="Select (V)" onClick={() => selectTool("select")}><MousePointer2 className="size-4" /></Button>
+          <Button variant={tool === "pan" ? "secondary" : "ghost"} size="sm" className={iconBtn} title="Pan (H)" onClick={() => selectTool("pan")}><Hand className="size-4" /></Button>
+          <Button variant={tool === "measure" ? "secondary" : "ghost"} size="sm" className={iconBtn} title="Measure distance (M)" onClick={() => selectTool("measure")}><Ruler className="size-4" /></Button>
           <span className="mx-1 h-6 w-px bg-border" />
           <Button variant="ghost" size="sm" className={iconBtn} title="Zoom out" onClick={() => zoom(0.8)}><ZoomOut className="size-4" /></Button>
           <span className="w-12 text-center text-xs text-muted-foreground">{Math.round(scale * 100)}%</span>
@@ -388,6 +409,7 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, s
             onMouseDown={onStageMouseDown}
             onMouseMove={onStageMouseMove}
             onMouseUp={onStageMouseUp}
+            onDblClick={() => { if (tool === "measure") setMeasureCursor(null); }}
           >
             <Layer listening={false}>
               <Rect x={0} y={0} width={width} height={height} fill="#FAFAFA" />
@@ -462,9 +484,37 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, s
               ))}
               {guides.map((g, i) => <Line key={`g${i}`} points={g.points} stroke="#868EFF" strokeWidth={1} dash={[4, 4]} listening={false} />)}
               {marquee && <Rect x={marquee.x} y={marquee.y} width={marquee.w} height={marquee.h} fill="#868EFF22" stroke="#868EFF" strokeWidth={1} listening={false} />}
+              {/* distance tool: dashed lavender polyline + running ft/m label (ephemeral) */}
+              {measureLine.length >= 2 && (
+                <>
+                  <Line points={measureLine.flatMap(([x, y]) => [x * pxPerFt, y * pxPerFt])} stroke="#6C75F5" strokeWidth={1.5} dash={[6, 4]} listening={false} />
+                  {measureLine.map(([x, y], i) => <Rect key={`m${i}`} x={x * pxPerFt - 3} y={y * pxPerFt - 3} width={6} height={6} fill="#6C75F5" listening={false} />)}
+                  <Text
+                    x={measureLine[measureLine.length - 1][0] * pxPerFt + 6}
+                    y={measureLine[measureLine.length - 1][1] * pxPerFt - 6}
+                    text={`${measureDist.toFixed(1)} ft (${(measureDist / 3.28084).toFixed(1)} m)`}
+                    fontSize={11} fontStyle="bold" fill="#01065B" listening={false}
+                  />
+                </>
+              )}
               <Transformer ref={trRef} rotateEnabled flipEnabled={false} ignoreStroke />
             </Layer>
           </Stage>
+        </div>
+
+        {/* status bar — live cursor position, zoom, and current selection (map-system §3) */}
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-xl border border-border bg-card px-3 py-2 text-xs text-muted-foreground">
+          <span className="tabular-nums">{cursorFt ? `x ${cursorFt[0]} ft · y ${cursorFt[1]} ft` : "—"}</span>
+          <span className="tabular-nums">zoom {Math.round(scale * 100)}%</span>
+          <span className="tabular-nums">
+            {tool === "measure" && measureLine.length >= 2
+              ? `distance ${fmtFt(measureDist)}`
+              : selected
+                ? `${selected.label}: ${selected.widthFt}×${selected.heightFt} ft · ${fmtArea(selected.widthFt * selected.heightFt)}`
+                : selectedIds.size > 1
+                  ? `${selectedIds.size} selected`
+                  : "nothing selected"}
+          </span>
         </div>
       </div>
 
@@ -475,7 +525,7 @@ export default function MapDesigner({ eventId, initialElements, initialCanvas, s
           onChange={(p) => selected && commit(patchOne(selected.id, p))}
           onRelabel={(prefix, start) => { if (selectedIds.size) commit(relabel(elements, selectedIds, prefix, start)); }}
         />
-        <SummaryPanel elements={elements} stallTypes={stallTypes} />
+        <SummaryPanel elements={elements} stallTypes={stallTypes} venueSqFt={canvas.widthFt * canvas.heightFt} />
       </div>
 
       {bulkOpen && (

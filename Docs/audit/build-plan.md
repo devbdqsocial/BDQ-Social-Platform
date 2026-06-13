@@ -305,8 +305,14 @@ build on it.
 - [ ] **R2.5.3 Boundary + obstacles** (8h): polygon pen (≥3 pts, vertex edit), obstacle palette
       (TREE/POLE/BUILDING/WALL/WATER_BODY), out-of-bounds + overlap save-block w/ per-item
       override. Verify: fixture violations block; override saves + recorded.
-- [ ] **R2.5.4 Distance tool + measurements** (6h): `M` distance tool (multi-segment, ft+m),
-      live W×H/area labels, status bar, shoelace area lib + tests. Verify: fixtures ±0.1 ft.
+- [x] **R2.5.4 Distance tool + measurements** (6h) ✓: `lib/map/geometry.ts` pure (shoelace
+      `polygonArea`/`polygonPerimeter`, `pathLength`, `usedSqFt`, `occupancy`, ft/m formatters,
+      4 tests). Designer: **distance tool** (`M`, click A→B multi-segment, dashed lavender
+      polyline + running "X ft (Y m)" label, double-click ends, Esc clears, ephemeral — not
+      saved); **status bar** (live cursor x/y ft, zoom %, selection W×H·area / count / live
+      distance); V/H/M tool shortcuts; **occupancy** in SummaryPanel (used sq ft + % of venue
+      area — canvas W×H now, boundary area in R2.5.3). No persistence (all computed/ephemeral).
+      Verify: geometry fixtures exact; 49f/204t green; build OK; designer 200.
 - [ ] **R2.5.5 Layers panel** (5h): 9 fixed layers, show/hide/lock (design-system §4.8).
       Verify: hidden excluded from current-view export; locked unselectable.
 - [ ] **R2.5.6 Zones** (8h): draw, 8-swatch palette, centroid labels, `zoneOf`, rollups in
@@ -450,3 +456,4 @@ pages · axe pass.
 | 2026-06-13 | build session 3 | R2.2 (D11/D13/D14/D16/D17) | done; **PHASE R2 COMPLETE**; status-badges consolidated, 7 tables relocated, ~30-file date sweep, RpaPageHeader/RpaEmpty, toResult+ActionForm on critical forms; remaining low-traffic forms deferred to R5 (cut pages excluded) | 46f/184t green; build 82 pages; 0 err/10 warn; dev smoke 10 routes 200 |
 | 2026-06-13 | build session 4 | R2.5.1 (map foundation) | done; layout-v2 schema + upgradeLayout + editorFromLayout; both designer pages load v1/v2; useDesignerState split pulled to R2.5.5 (no consumers yet) | 47f/192t green; build OK; designer pages 200 |
 | 2026-06-13 | build session 4 (cont.) | R2.5.2 (calibration) | done; the "real map" — 2-point calibration → true-scale underlay; rides on extended v1 bgImage (no v2-save migration yet); confirm-step mis-calibration guard | 48f/200t green; build OK; designer 200 |
+| 2026-06-13 | build session 4 (cont.) | R2.5.4 (measurements) | done; geometry lib + distance tool (M) + status bar + occupancy; all computed/ephemeral, no persistence; R2.5.3 boundary/obstacles next (bundles the v2-save migration) | 49f/204t green; build OK; designer 200 |

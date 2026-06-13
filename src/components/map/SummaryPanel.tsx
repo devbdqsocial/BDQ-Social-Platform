@@ -3,8 +3,18 @@
 import { useMemo } from "react";
 import type { EditorElement, PaletteStallType } from "@/lib/map/designer-ops";
 import { formatPaise } from "@/lib/utils";
+import { usedSqFt, occupancy, fmtArea, fmtPct } from "@/lib/map/geometry";
 
-export function SummaryPanel({ elements, stallTypes }: { elements: EditorElement[]; stallTypes: PaletteStallType[] }) {
+export function SummaryPanel({
+  elements,
+  stallTypes,
+  venueSqFt,
+}: {
+  elements: EditorElement[];
+  stallTypes: PaletteStallType[];
+  /** venue area for occupancy — boundary area later (R2.5.3); canvas W×H for now */
+  venueSqFt?: number;
+}) {
   const summary = useMemo(() => {
     const nameById = Object.fromEntries(stallTypes.map((t) => [t.id, t.name]));
     const stalls = elements.filter((e) => e.kind === "stall");
@@ -16,8 +26,12 @@ export function SummaryPanel({ elements, stallTypes }: { elements: EditorElement
       const key = s.stallTypeId ? nameById[s.stallTypeId] ?? "Other" : "Untyped";
       byType.set(key, (byType.get(key) ?? 0) + 1);
     }
-    return { total: stalls.length, infra: elements.length - stalls.length, blocked, sellable, totalPaise, byType: [...byType] };
-  }, [elements, stallTypes]);
+    const used = usedSqFt(elements);
+    return {
+      total: stalls.length, infra: elements.length - stalls.length, blocked, sellable, totalPaise,
+      byType: [...byType], used, occ: venueSqFt ? occupancy(elements, venueSqFt) : null,
+    };
+  }, [elements, stallTypes, venueSqFt]);
 
   return (
     <aside className="space-y-2 rounded-xl border border-border bg-card p-4 text-sm">
@@ -26,6 +40,10 @@ export function SummaryPanel({ elements, stallTypes }: { elements: EditorElement
       <div className="flex justify-between"><span className="text-muted-foreground">Sellable</span><span className="font-medium">{summary.sellable}</span></div>
       {summary.blocked > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Blocked</span><span className="font-medium">{summary.blocked}</span></div>}
       <div className="flex justify-between"><span className="text-muted-foreground">Infra / zones</span><span className="font-medium">{summary.infra}</span></div>
+      <div className="flex justify-between border-t border-border pt-2"><span className="text-muted-foreground">Used area</span><span className="font-medium tabular-nums">{fmtArea(summary.used)}</span></div>
+      {summary.occ != null && (
+        <div className="flex justify-between"><span className="text-muted-foreground">Occupancy</span><span className="font-medium tabular-nums">{fmtPct(summary.occ)}</span></div>
+      )}
       <div className="flex justify-between border-t border-border pt-2"><span className="text-muted-foreground">Potential value</span><span className="font-semibold">{formatPaise(summary.totalPaise)}</span></div>
       {summary.byType.length > 0 && (
         <ul className="border-t border-border pt-2 text-xs text-muted-foreground">

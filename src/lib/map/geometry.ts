@@ -1,0 +1,64 @@
+import type { EditorElement } from "@/lib/map/designer-ops";
+
+/**
+ * Pure planar geometry for the designer measurements (map-system.md §3, build-plan R2.5.4).
+ * All coordinates/lengths are in FEET. DB-free so it's unit-testable.
+ */
+
+export type Pt = [number, number];
+
+/** Shoelace area of a closed polygon, in square feet (always non-negative). */
+export function polygonArea(points: Pt[]): number {
+  if (points.length < 3) return 0;
+  let sum = 0;
+  for (let i = 0; i < points.length; i++) {
+    const [x1, y1] = points[i];
+    const [x2, y2] = points[(i + 1) % points.length];
+    sum += x1 * y2 - x2 * y1;
+  }
+  return Math.abs(sum) / 2;
+}
+
+/** Perimeter of a closed polygon, in feet. */
+export function polygonPerimeter(points: Pt[]): number {
+  if (points.length < 2) return 0;
+  let p = 0;
+  for (let i = 0; i < points.length; i++) {
+    const [x1, y1] = points[i];
+    const [x2, y2] = points[(i + 1) % points.length];
+    p += Math.hypot(x2 - x1, y2 - y1);
+  }
+  return p;
+}
+
+/** Length of an OPEN polyline (the distance tool's multi-segment path), in feet. */
+export function pathLength(points: Pt[]): number {
+  let p = 0;
+  for (let i = 1; i < points.length; i++) {
+    p += Math.hypot(points[i][0] - points[i - 1][0], points[i][1] - points[i - 1][1]);
+  }
+  return p;
+}
+
+/** Footprint of one rectangular element (rotation ignored — bounding footprint), sq ft. */
+export const elementArea = (el: { widthFt: number; heightFt: number }): number => el.widthFt * el.heightFt;
+
+/** Total drawn footprint of all elements, sq ft. */
+export function usedSqFt(elements: EditorElement[]): number {
+  return elements.reduce((s, e) => s + elementArea(e), 0);
+}
+
+/** Occupancy of the venue: used footprint ÷ venue area (0–1). */
+export function occupancy(elements: EditorElement[], venueSqFt: number): number {
+  if (venueSqFt <= 0) return 0;
+  return usedSqFt(elements) / venueSqFt;
+}
+
+const nf = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
+const nf1 = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 1 });
+
+export const fmtFt = (ft: number): string => `${nf1.format(ft)} ft`;
+export const fmtArea = (sqft: number): string => `${nf.format(sqft)} sq ft`;
+export const fmtPct = (frac: number): string => `${nf1.format(frac * 100)}%`;
+/** Distance label with the metric twin, e.g. "120.0 ft (36.6 m)". */
+export const fmtDistance = (ft: number): string => `${nf1.format(ft)} ft (${nf1.format(ft / 3.28084)} m)`;
