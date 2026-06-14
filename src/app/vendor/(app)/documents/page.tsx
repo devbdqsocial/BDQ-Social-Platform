@@ -7,18 +7,20 @@ import { getProfile } from "@/server/vendors/service";
 import { getContract } from "@/server/vendors/contract";
 import { db } from "@/server/db";
 import { formatPaise } from "@/lib/utils";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 
 export const metadata: Metadata = { title: "Documents" };
 export const dynamic = "force-dynamic";
 
 const KYC_LABELS: Record<string, string> = { pan: "PAN card", fssai: "FSSAI licence", gst: "GST certificate", id: "Govt photo ID" };
 
+const tileStyle = { border: "1px solid color-mix(in srgb, currentColor 16%, transparent)" } as const;
+const TILE = "rounded-[var(--radius-lg)] p-[var(--space-lg)] space-y-[var(--space-sm)]";
+const LINK = "f-paragraph-small font-bold underline underline-offset-2";
+
 export default async function VendorDocuments() {
   const session = await requireVendor();
   const profile = await getProfile(session.userId);
-  if (!profile) redirect("/vendor/onboarding");
+  if (!profile) redirect("/vendor/home");
 
   const contract = await getContract(profile.id);
   const booking = await db.booking.findFirst({
@@ -33,101 +35,83 @@ export default async function VendorDocuments() {
   const docUrls = (profile.kyc?.docUrls as Record<string, { url: string } | undefined> | null) ?? {};
   const kycDocs = Object.entries(KYC_LABELS).filter(([k]) => docUrls[k]?.url);
   const products = profile.assets.filter((a) => a.kind === "PRODUCT" || a.kind === "LOGO" || a.kind === "BANNER");
+  const signed = contract?.status === "SIGNED";
 
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="max-w-3xl space-y-[var(--space-2xl)]">
       <div>
-        <h1 className="font-display text-3xl font-bold tracking-tight">Documents</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Your agreement, receipts, event rules, and uploads — all in one place.</p>
+        <p className="kicker opacity-60">Documents</p>
+        <h1 className="f-exat f-h60 mt-1">Documents</h1>
+        <p className="f-paragraph-small mt-[var(--space-sm)] opacity-75">Your agreement, receipts, event rules, and uploads — all in one place.</p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-[var(--space-lg)] sm:grid-cols-2">
         {/* Contract */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base">Vendor agreement</CardTitle>
-              <Badge variant={contract?.status === "SIGNED" ? "success" : "warning"}>{contract?.status === "SIGNED" ? "Signed" : "Not signed"}</Badge>
-            </div>
-            <CardDescription>
-              {contract?.status === "SIGNED" ? (
-                contract.url ? (
-                  <a href={contract.url} target="_blank" rel="noreferrer" className="text-primary hover:underline">Download signed PDF →</a>
-                ) : (
-                  "Signed — PDF copy unavailable."
-                )
-              ) : (
-                <Link href="/vendor/onboarding?step=contract" className="text-primary hover:underline">Read &amp; sign →</Link>
-              )}
-            </CardDescription>
-          </CardHeader>
-        </Card>
+        <div className={TILE} style={tileStyle}>
+          <div className="flex items-center justify-between gap-[var(--space-md)]">
+            <h2 className="f-h32 f-exat">Vendor agreement</h2>
+            <span className={signed ? "badge-rpa" : "badge-rpa badge-rpa--muted"}>{signed ? "Signed" : "Not signed"}</span>
+          </div>
+          {signed ? (
+            contract?.url ? (
+              <a href={contract.url} target="_blank" rel="noreferrer" className={LINK} style={{ color: "var(--light-blue)" }}>Download signed PDF →</a>
+            ) : (
+              <p className="f-paragraph-small opacity-70">Signed — PDF copy unavailable.</p>
+            )
+          ) : (
+            <Link href="/vendor/home?step=contract" className={LINK} style={{ color: "var(--light-blue)" }}>Read &amp; sign →</Link>
+          )}
+        </div>
 
         {/* Receipt */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Payment receipt</CardTitle>
-            <CardDescription>
-              {booking?.payment ? (
-                <>Stall fee {formatPaise(booking.payment.amount)} · {fmt(booking.payment.createdAt)} · #{booking.payment.id.slice(0, 8)}</>
-              ) : (
-                "Available after you pay for your stall."
-              )}
-            </CardDescription>
-          </CardHeader>
-        </Card>
+        <div className={TILE} style={tileStyle}>
+          <h2 className="f-h32 f-exat">Payment receipt</h2>
+          <p className="f-paragraph-small opacity-70 text-pretty">
+            {booking?.payment ? (
+              <>Stall fee {formatPaise(booking.payment.amount)} · {fmt(booking.payment.createdAt)} · #{booking.payment.id.slice(0, 8)}</>
+            ) : (
+              "Available after you pay for your stall."
+            )}
+          </p>
+        </div>
 
-        {/* Stall pass + rules */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Your stall</CardTitle>
-            <CardDescription>
-              {booking ? (
-                <>Stall {booking.stall.label} · {booking.event.name} · {fmt(booking.event.startsAt)}</>
-              ) : (
-                "Reserve a stall to see your pass and timings."
-              )}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-3 text-sm">
-            <Link href="/vendor-rules" target="_blank" className="text-primary hover:underline">Event Rules</Link>
-            <Link href="/vendor-booking-policy" target="_blank" className="text-primary hover:underline">Booking Policy</Link>
-            <Link href="/vendor-data-policy" target="_blank" className="text-primary hover:underline">Data Policy</Link>
-          </CardContent>
-        </Card>
+        {/* Stall + rules */}
+        <div className={TILE} style={tileStyle}>
+          <h2 className="f-h32 f-exat">Your stall</h2>
+          <p className="f-paragraph-small opacity-70 text-pretty">
+            {booking ? <>Stall {booking.stall.label} · {booking.event.name} · {fmt(booking.event.startsAt)}</> : "Reserve a stall to see your pass and timings."}
+          </p>
+          <div className="flex flex-wrap gap-[var(--space-md)] pt-[var(--space-xs)]">
+            <Link href="/vendor-rules" target="_blank" className={LINK} style={{ color: "var(--light-blue)" }}>Event Rules</Link>
+            <Link href="/vendor-booking-policy" target="_blank" className={LINK} style={{ color: "var(--light-blue)" }}>Booking Policy</Link>
+            <Link href="/vendor-data-policy" target="_blank" className={LINK} style={{ color: "var(--light-blue)" }}>Data Policy</Link>
+          </div>
+        </div>
 
         {/* KYC docs */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Verification documents</CardTitle>
-            <CardDescription>
-              {kycDocs.length ? "Documents you uploaded." : "No documents uploaded yet."}
-            </CardDescription>
-          </CardHeader>
-          {kycDocs.length > 0 && (
-            <CardContent className="flex flex-wrap gap-3 text-sm">
-              {kycDocs.map(([k, label]) => (
-                <a key={k} href={docUrls[k]!.url} target="_blank" rel="noreferrer" className="text-primary hover:underline">{label}</a>
-              ))}
-              <Link href="/vendor/onboarding?step=docs" className="text-muted-foreground hover:text-foreground">Manage →</Link>
-            </CardContent>
-          )}
-        </Card>
+        <div className={TILE} style={tileStyle}>
+          <h2 className="f-h32 f-exat">Verification documents</h2>
+          <p className="f-paragraph-small opacity-70">{kycDocs.length ? "Documents you uploaded." : "No documents uploaded yet."}</p>
+          <div className="flex flex-wrap items-center gap-[var(--space-md)] pt-[var(--space-xs)]">
+            {kycDocs.map(([k, label]) => (
+              <a key={k} href={docUrls[k]!.url} target="_blank" rel="noreferrer" className={LINK} style={{ color: "var(--light-blue)" }}>{label}</a>
+            ))}
+            <Link href="/vendor/home?step=docs" className="f-paragraph-small font-bold opacity-60 hover:opacity-100">Manage →</Link>
+          </div>
+        </div>
       </div>
 
       {products.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Brand assets</CardTitle>
-            <CardDescription>Your uploaded logo, banner, and product photos.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-3">
+        <div className={TILE} style={tileStyle}>
+          <h2 className="f-h32 f-exat">Brand assets</h2>
+          <p className="f-paragraph-small opacity-70">Your uploaded logo, banner, and product photos.</p>
+          <div className="flex flex-wrap gap-[var(--space-md)] pt-[var(--space-xs)]">
             {products.map((a) => (
               // eslint-disable-next-line @next/next/no-img-element
-              <img key={a.id} src={a.url} alt={a.kind} className="size-16 rounded-md border border-border object-cover" />
+              <img key={a.id} src={a.url} alt={a.kind} className="size-16 rounded-[var(--radius-md)] object-cover" style={tileStyle} />
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
     </div>
   );
