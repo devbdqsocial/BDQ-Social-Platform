@@ -3,24 +3,48 @@
 import { useState, useEffect, useMemo } from "react";
 import { joinPlatformWaitlist } from "@/actions/waitlist";
 import { timeLeft, type TimeLeft } from "@/lib/countdown";
+import { SplitReveal } from "@/components/motion/SplitReveal";
+import { WordmarkWall } from "@/components/motion/WordmarkWall";
 
 const pad = (n: number) => String(n).padStart(2, "0");
+
+/** rAF count-up to `target`; jumps straight to the value when motion is reduced. */
+function useCountUp(target: number, animate: boolean) {
+  const [n, setN] = useState(animate ? 0 : target);
+  useEffect(() => {
+    if (!animate || target <= 0) { setN(target); return; }
+    let raf = 0;
+    const t0 = performance.now();
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - t0) / 1200);
+      setN(Math.round(target * (1 - Math.pow(1 - p, 3))));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, animate]);
+  return n;
+}
 
 export function ComingSoonClient({ count, targetIso }: { count: number; targetIso: string | null }) {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
   const [interestedInStall, setInterestedInStall] = useState(false);
   const [submittedPhone, setSubmittedPhone] = useState("");
+  const [reduced, setReduced] = useState(false);
+
+  useEffect(() => { setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches); }, []);
 
   // Dynamic target from the next event (R3.1) — reuse the tested countdown lib, no hardcoded date.
   const target = useMemo(() => (targetIso ? new Date(targetIso) : null), [targetIso]);
   const [left, setLeft] = useState<TimeLeft | null>(() => (target ? timeLeft(target) : null));
-
   useEffect(() => {
     if (!target) return;
-    const interval = setInterval(() => setLeft(timeLeft(target)), 1000);
-    return () => clearInterval(interval);
+    const id = setInterval(() => setLeft(timeLeft(target)), 1000);
+    return () => clearInterval(id);
   }, [target]);
+
+  const shownCount = useCountUp(count, !reduced);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -41,93 +65,101 @@ export function ComingSoonClient({ count, targetIso }: { count: number; targetIs
   const units = left
     ? [
         { label: "Days", value: left.days },
-        { label: "Hours", value: left.hours },
-        { label: "Mins", value: left.mins },
-        { label: "Secs", value: left.secs },
+        { label: "Hrs", value: left.hours },
+        { label: "Min", value: left.mins },
+        { label: "Sec", value: left.secs },
       ]
     : [];
 
   return (
-    <div className="rpa gama-1 bg-1 paint relative flex min-h-[100svh] items-center justify-center overflow-hidden">
-      <main id="main" className="wrapper w-full max-w-[64rem] py-[var(--space-5xl)] text-center">
-        <span className="f-paragraph-small f-bold t-upper" style={{ letterSpacing: "0.2em" }}>
-          Vadodara&apos;s most anticipated social experience
-        </span>
-        <h1 className="f-exat mx-auto mt-[var(--space-lg)] max-w-[18ch] f-h133">
-          The next great gathering is coming
-        </h1>
-        <p className="f-paragraph mx-auto mt-[var(--space-lg)] max-w-[52ch]">
-          Discover curated markets, live experiences, creators, food, music, and meaningful connections.
-        </p>
+    <div className="rpa gama-1 bg-1 bg-ink relative flex min-h-[100svh] items-center overflow-hidden" style={{ color: "var(--color)" }}>
+      {/* animated lavender glow + low-opacity wordmark texture + floating branded shape */}
+      <div aria-hidden className="coming-glow pointer-events-none absolute inset-0" style={{ background: "radial-gradient(55% 45% at 28% 8%, rgba(134,142,255,0.20), transparent 70%)" }} />
+      <WordmarkWall rows={6} mobileRows={4} duration={34} rowClassName="f-h133" className="pointer-events-none absolute inset-0 flex flex-col justify-between py-[var(--space-lg)] opacity-[0.05]" />
+      <div aria-hidden className="coming-float pointer-events-none absolute right-[-8%] top-[8%] hidden w-[46vw] max-w-[640px] lg:block" style={{ opacity: 0.9 }}>
+        <div className="svg svg--form11 w-full"><div className="svg__bg" /></div>
+      </div>
 
-        {/* Countdown — only when there's an upcoming event still ahead */}
-        {left && !left.done && (
-          <div className="mt-[var(--space-3xl)] flex justify-center gap-[var(--space-xl)] sm:gap-[var(--space-3xl)]">
-            {units.map((u) => (
-              <div key={u.label} className="text-center">
-                <div className="f-exat tabular-nums f-h100">{pad(u.value)}</div>
-                <div className="f-paragraph-small f-bold t-upper" style={{ letterSpacing: "0.14em" }}>{u.label}</div>
-              </div>
-            ))}
-          </div>
-        )}
+      <main id="main" className="wrapper relative z-10 w-full py-[var(--space-5xl)]">
+        <div className="max-w-[42rem]">
+          <span className="kicker block">Vadodara&apos;s most anticipated social experience</span>
 
-        {/* Form / success */}
-        {status === "success" ? (
-          <div className="mx-auto mt-[var(--space-3xl)] max-w-[40rem] rounded-[var(--radius-lg)] border p-[var(--space-xl)]" style={{ borderColor: "var(--color)" }}>
-            <p className="f-exat f-h42">You&apos;re on the list.</p>
-            <p className="f-paragraph-small mt-[var(--space-sm)]">
-              We&apos;ll notify {submittedPhone || "you"} on WhatsApp the moment we go live.
-            </p>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="mx-auto mt-[var(--space-3xl)] max-w-[42rem]">
-            <div className="flex flex-col items-stretch justify-center gap-[var(--space-lg)] sm:flex-row sm:items-end">
-              <div className="flex flex-1 items-end gap-[var(--space-sm)]" style={{ borderBottom: "1px solid var(--color)" }}>
-                <span className="f-exat pb-[var(--space-md)] f-h42">+91</span>
-                <input
-                  type="tel"
-                  name="phone"
-                  placeholder="98765 43210"
-                  required
-                  disabled={status === "loading"}
-                  className="f-exat w-full bg-transparent pb-[var(--space-md)] outline-none disabled:opacity-50 f-h42" style={{ color: "var(--color)" }}
-                />
-              </div>
-              <button type="submit" disabled={status === "loading"} className="btn shrink-0 self-center sm:self-end" data-cursor>
-                <span className="btn__text">{status === "loading" ? "Joining…" : "Join"}</span>
-              </button>
-            </div>
+          <SplitReveal as="h1" mode="chars" className="f-exat mt-[var(--space-lg)] max-w-[15ch] f-h133">
+            The next great gathering is coming
+          </SplitReveal>
 
-            <button
-              type="button"
-              onClick={() => setInterestedInStall((v) => !v)}
-              className="f-paragraph-small mt-[var(--space-lg)] flex items-center gap-[var(--space-sm)]"
-              data-cursor
-            >
-              <span
-                className="grid size-[1.1em] place-items-center rounded-[3px] border"
-                style={{ borderColor: "var(--color)", background: interestedInStall ? "var(--color)" : "transparent" }}
-              >
-                {interestedInStall && <span className="size-[0.5em]" style={{ background: "var(--bgcolor)" }} />}
-              </span>
-              <span className="f-bold t-upper" style={{ letterSpacing: "0.08em" }}>I want to exhibit my brand at the event</span>
-            </button>
-
-            {status === "error" && <p className="f-paragraph-small mt-[var(--space-md)]">{message}</p>}
-          </form>
-        )}
-
-        {count > 0 && status !== "success" && (
-          <p className="f-paragraph-small mt-[var(--space-2xl)]">
-            Join {count.toLocaleString()} others already on the waitlist
+          <p className="f-paragraph mt-[var(--space-lg)] max-w-[46ch] opacity-85">
+            Curated markets, live experiences, creators, food and music — and the people who turn a night into a memory.
           </p>
-        )}
+
+          {left && !left.done && (
+            <div className="mt-[var(--space-2xl)] flex gap-[var(--space-2xl)]">
+              {units.map((u) => (
+                <div key={u.label}>
+                  <div className="f-exat tabular-nums f-h76">{pad(u.value)}</div>
+                  <div className="kicker opacity-65">{u.label}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {status === "success" ? (
+            <div className="mt-[var(--space-2xl)] max-w-[34rem] rounded-[var(--radius-lg)] p-[var(--space-xl)]" style={{ border: "1px solid var(--color)" }}>
+              <p className="f-exat f-h42">You&apos;re on the list.</p>
+              <p className="f-paragraph-small mt-[var(--space-sm)] opacity-80">
+                We&apos;ll WhatsApp {submittedPhone || "you"} the moment we go live.
+              </p>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="mt-[var(--space-2xl)] max-w-[34rem]">
+              {/* Capture — prefix + number same size/baseline, Join inline beside the field on every screen */}
+              <div className="flex items-end gap-[var(--space-md)]">
+                <div className="flex min-w-0 flex-1 items-baseline gap-[var(--space-sm)] pb-[var(--space-sm)]" style={{ borderBottom: "1px solid var(--color)" }}>
+                  <span className="f-exat shrink-0 tabular-nums f-h32">+91</span>
+                  <input
+                    type="tel"
+                    name="phone"
+                    inputMode="numeric"
+                    autoComplete="tel-national"
+                    placeholder="98765 43210"
+                    required
+                    disabled={status === "loading"}
+                    className="f-exat w-full min-w-0 bg-transparent tabular-nums outline-none placeholder:opacity-40 disabled:opacity-50 f-h32"
+                    style={{ color: "var(--color)" }}
+                  />
+                </div>
+                <button type="submit" disabled={status === "loading"} className="btn btn--accent shrink-0" data-cursor>
+                  <span className="btn__text">{status === "loading" ? "Joining…" : "Join"}</span>
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setInterestedInStall((v) => !v)}
+                aria-pressed={interestedInStall}
+                className="f-paragraph-small mt-[var(--space-lg)] flex items-center gap-[var(--space-sm)]"
+                data-cursor
+              >
+                <span className="grid size-[1.15em] shrink-0 place-items-center rounded-[3px] border" style={{ borderColor: "var(--color)", background: interestedInStall ? "var(--color)" : "transparent" }}>
+                  {interestedInStall && <span className="size-[0.5em]" style={{ background: "var(--bgcolor)" }} />}
+                </span>
+                <span className="f-bold t-upper" style={{ letterSpacing: "0.08em" }}>I want to exhibit my brand at the event</span>
+              </button>
+
+              {status === "error" && <p role="alert" className="f-paragraph-small mt-[var(--space-md)] opacity-90">{message}</p>}
+            </form>
+          )}
+
+          {count > 0 && status !== "success" && (
+            <p className="f-paragraph-small mt-[var(--space-xl)] flex items-center gap-[var(--space-sm)] opacity-85">
+              <span aria-hidden className="coming-glow inline-block size-2 rounded-full" style={{ background: "var(--color)" }} />
+              <b className="tabular-nums">{shownCount.toLocaleString()}</b> already on the waitlist
+            </p>
+          )}
+        </div>
       </main>
 
-      <div className="f-paragraph-small absolute bottom-[var(--space-lg)]">
-        © {new Date().getFullYear()} BDQ Social
-      </div>
+      <div className="kicker absolute inset-x-0 bottom-[var(--space-lg)] z-10 text-center opacity-55">© {new Date().getFullYear()} BDQ Social · Vadodara</div>
     </div>
   );
 }

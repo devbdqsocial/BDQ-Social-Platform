@@ -521,6 +521,21 @@
     to   { opacity: 1; transform: translateY(0) rotateX(0); }
   }
 
+  /* Coming-soon (R3 redesign): softly pulsing lavender glow + a slow floating branded shape.
+     Applied only when the user hasn't asked for reduced motion. */
+  @keyframes coming-glow {
+    0%, 100% { opacity: 0.8; transform: scale(1); }
+    50%      { opacity: 1;   transform: scale(1.06); }
+  }
+  @keyframes coming-float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50%      { transform: translateY(-16px) rotate(2deg); }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .coming-glow  { animation: coming-glow 7s ease-in-out infinite; }
+    .coming-float { animation: coming-float 9s ease-in-out infinite; }
+  }
+
   /* RPA animated link underline: wipes in from the left on hover/focus. */
   .link-underline {
     background-image: linear-gradient(currentColor, currentColor);

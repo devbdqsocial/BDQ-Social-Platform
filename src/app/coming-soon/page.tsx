@@ -1,5 +1,6 @@
 import { db } from "@/server/db";
 import { listPublished } from "@/server/events/service";
+import { MaskDefs } from "@/components/motion/MaskDefs";
 import { ComingSoonClient } from "./ComingSoonClient";
 
 export const dynamic = "force-dynamic";
@@ -11,5 +12,11 @@ export default async function ComingSoonPage() {
     listPublished(),
   ]);
   const targetIso = events[0]?.startsAt.toISOString() ?? null;
-  return <ComingSoonClient count={count} targetIso={targetIso} />;
+  return (
+    <>
+      {/* Provides the #svg-form11 clip-path used by the floating branded shape (this route uses the bare root layout). */}
+      <MaskDefs />
+      <ComingSoonClient count={count} targetIso={targetIso} />
+    </>
+  );
 }
