@@ -625,9 +625,14 @@ Carryover flags routed to later phases: success share-image art (satori spike), 
         now includes the layout; the vendor event page scores it (`scoreLayout`) and passes per-stall
         **`describeStall` why-bullets** + zone + size to `VendorStallReserve`, which shows a detail
         sheet on select (label/type/zone chips · price · size · "Why this stall" bullets · status ·
-        Reserve), gated to AVAILABLE. Verify: picker 200; sheet renders; 304t; build OK. **Remaining
-        R4.1:** RPA re-skin of the whole vendor portal (home/timeline/step forms/leads/contract) +
-        map zoom-to-stall pulse + distance-chip split.
+        Reserve), gated to AVAILABLE. Verify: picker 200; sheet renders; 304t; build OK.
+  - **NEXT SESSION resumes here — finish ALL of R4.1 before any later R4 package; do not
+        context-switch** (owner directive 2026-06-14). Ordered focus for the remainder:
+        (1) **Vendor home** (spine), (2) **Vendor timeline**, (3) **Vendor onboarding flow**,
+        (4) **Vendor preparation flow**, (5) **Stall comparison**, (6) **Map pulse / focus**
+        (zoom-to-stall + 600 ms pulse), (7) **premium RPA visual system** (re-skin the whole vendor
+        portal off the neutral admin theme onto the `.rpa` layer — vendor-portal §3-§7). Resume from
+        the completed stall sheet (commit 3b9272b). Branch: single `main` (prod-gated).
 - [ ] **R4.2 Add-ons (M5)** (14h): migration prod-first; vendor flow; webhook dispatch branch;
       stock guard. Verify: e2e add-on order; oversold test; replay no-dup.
 - [ ] **R4.3 SLA surfacing** (6h): UNDER_REVIEW aging + admin tile + vendor wait copy.
