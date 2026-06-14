@@ -10,7 +10,7 @@ import { SplitReveal } from "@/components/motion/SplitReveal";
 
 export const metadata: Metadata = {
   title: "Brands",
-  description: "80+ handpicked indie brands — fusion wear, jewellery, decor, and more.",
+  description: "Handpicked indie brands — fusion wear, jewellery, decor, and more.",
 };
 export const dynamic = "force-dynamic";
 

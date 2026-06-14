@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { fmtDateLong as fmtDate } from "@/lib/date-formats";
 import Link from "next/link";
 import { listPublished } from "@/server/events/service";
@@ -15,7 +14,8 @@ import { WordmarkWall } from "@/components/motion/WordmarkWall";
 import { PinnedServices } from "@/components/motion/PinnedServices";
 import { BrandsCarousel } from "@/components/motion/BrandsCarousel";
 
-export const dynamic = "force-dynamic";
+// ISR (R3.2): statically cached, revalidated every 5 min — landing has no per-request data.
+export const revalidate = 300;
 
 // Angled RPA tab button.
 function Btn({ href, children }: { href: string; children: React.ReactNode }) {
@@ -26,13 +26,22 @@ function Btn({ href, children }: { href: string; children: React.ReactNode }) {
   );
 }
 
+// Proof-band stat — a real count, never a fabricated claim (R3.2 / design-debt D25).
+function Stat({ n, label }: { n: number; label: string }) {
+  return (
+    <Reveal>
+      <div className="f-exat tabular-nums f-h100">{n}</div>
+      <div className="kicker mt-[var(--space-xs)]">{label}</div>
+    </Reveal>
+  );
+}
+
 export default async function LandingPage() {
   const [events, brands] = await Promise.all([listPublished(), listApprovedVendors()]);
   const event = events[0];
   const featured = brands.slice(0, 6);
   const minPrice = event?.ticketTypes.length ? Math.min(...event.ticketTypes.map((t) => t.priceInPaise)) : null;
   const sponsors = event ? await sponsorsForEventPublic(event.id) : [];
-  const heroImg = featured.map((v) => primaryLogo(v.assets)).find(Boolean) ?? null;
 
   return (
     <div>
@@ -67,14 +76,11 @@ export default async function LandingPage() {
             </Reveal>
           </div>
 
+          {/* Intentional RPA key art (D24): the branded form shape, not a borrowed vendor logo. */}
           <Reveal effect="clip" className="hidden lg:block">
             <Parallax amount={10}>
               <div className="svg svg--form11 media-tint mx-auto w-[80%]">
-                {heroImg ? (
-                  <Image src={heroImg} alt="" fill className="svg__img" sizes="40vw" priority />
-                ) : (
-                  <div className="svg__bg" />
-                )}
+                <div className="svg__bg" />
               </div>
             </Parallax>
           </Reveal>
@@ -92,7 +98,7 @@ export default async function LandingPage() {
                 fmtDate(event.startsAt),
                 event.location ?? "Vadodara",
                 ...(minPrice != null ? [`Tickets from ${formatPaise(minPrice)}`] : []),
-                "80+ curated brands",
+                ...(brands.length > 0 ? [`${brands.length} curated brands`] : []),
                 "Live music",
               ].map((fact, i) => (
                 <span key={i} className="kicker px-[var(--space-2xl)]">
@@ -103,6 +109,17 @@ export default async function LandingPage() {
           </div>
         )}
       </section>
+
+      {/* ============ PROOF BAND (R3.2) — real counts, no static claims ============ */}
+      {(brands.length > 0 || sponsors.length > 0) && (
+        <section className="gama-2 surface-2 paint py-[var(--space-4xl)]">
+          <div className="wrapper grid grid-cols-2 gap-[var(--space-xl)] text-center sm:grid-cols-3">
+            <Stat n={brands.length} label="Curated brands" />
+            {sponsors.length > 0 && <Stat n={sponsors.length} label={sponsors.length === 1 ? "Partner" : "Partners"} />}
+            <Stat n={events.length} label={events.length === 1 ? "Edition" : "Editions"} />
+          </div>
+        </section>
+      )}
 
       {/* ============ MANIFESTO (mod-text--big) — cream / ink ============ */}
       <section className="paint py-[var(--space-5xl)]">
@@ -158,6 +175,7 @@ export default async function LandingPage() {
         <section className="gama-3 bg-3 paint relative flex min-h-[80svh] items-center overflow-hidden py-[var(--space-5xl)]">
           <WordmarkWall
             rows={5}
+            mobileRows={3}
             duration={24}
             rowClassName="f-h133"
             className="pointer-events-none absolute inset-0 flex flex-col justify-between py-[var(--space-lg)] opacity-10"

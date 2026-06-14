@@ -5,6 +5,7 @@
  */
 export function WordmarkWall({
   rows = 4,
+  mobileRows = 3,
   word = "BDQ",
   animated = true,
   duration = 30,
@@ -12,6 +13,8 @@ export function WordmarkWall({
   rowClassName = "f-h76",
 }: {
   rows?: number;
+  /** rows shown below 640px — trims marquee paint cost on mobile (design-debt D30). */
+  mobileRows?: number;
   word?: string;
   animated?: boolean;
   duration?: number;
@@ -22,7 +25,7 @@ export function WordmarkWall({
   return (
     <div className={`wall ${className}`} aria-hidden>
       {Array.from({ length: rows }).map((_, r) => (
-        <div key={r} className={animated ? "marquee" : "overflow-hidden"}>
+        <div key={r} className={`${animated ? "marquee" : "overflow-hidden"}${r >= mobileRows ? " hidden sm:block" : ""}`}>
           <div
             className={animated ? "marquee-track" : "inline-flex w-max"}
             style={

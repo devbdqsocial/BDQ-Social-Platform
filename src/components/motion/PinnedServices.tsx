@@ -4,7 +4,7 @@ import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { WordmarkWall } from "./WordmarkWall";
 
 const SERVICES: { n: string; title: string; body: string; gama: string }[] = [
-  { n: "01", title: "Shopping", body: "80+ handpicked indie brands — fusion wear, jewellery, home, and thoughtful Diwali gifting you won't find at the mall.", gama: "gama-1 bg-1" },
+  { n: "01", title: "Shopping", body: "Handpicked indie brands — fusion wear, jewellery, home, and thoughtful Diwali gifting you won't find at the mall.", gama: "gama-1 bg-1" },
   { n: "02", title: "Food", body: "A proper food court: the city's best cafés, bakers, and inventive street food. Clean, fresh, genuinely good.", gama: "gama-3 bg-1" },
   { n: "03", title: "Music", body: "Easy acoustic sets at sundown that build into a warm, high-energy night.", gama: "gama-2 surface-2" },
   { n: "04", title: "Photos", body: "Lounges, neon, and little surprises — bring friends and stay a while.", gama: "gama-1 bg-2" },

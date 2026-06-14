@@ -4,7 +4,7 @@ import { gsap, ScrollTrigger } from "@/lib/gsap";
 
 const STEPS: { word: string; body: string; gama: string }[] = [
   { word: "Arrive", body: "Gates open in the late afternoon. Golden hour, easy energy, the night ahead of you.", gama: "gama-1 bg-1" },
-  { word: "Wander", body: "80+ handpicked brands, a proper food court, and corners made for photos.", gama: "gama-3 bg-1" },
+  { word: "Wander", body: "Handpicked brands, a proper food court, and corners made for photos.", gama: "gama-3 bg-1" },
   { word: "Linger", body: "Acoustic sets at sundown build into a warm, high-energy night. Stay a while.", gama: "gama-1 bg-2" },
 ];
 

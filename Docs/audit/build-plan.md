@@ -479,8 +479,21 @@ owner walks the designer once and signs off in the session log.
       there's no upcoming event** (graceful). Verify: target from event ✓ (no hardcode; grep
       clean); page 200, heading+form render; 59f/271t green; build OK; 0err/10warn. **Lighthouse
       ≥95 = staging/manual check** (page is SSR + one small client island; can't run LH here).
-- [ ] **R3.2 Landing rebuild** (20h): customer-portal/changes §6.2 section order, proof band,
-      real-count bindings (D24, D25, D30), ISR. Verify: LCP ≤2.5s; no static-claims grep.
+- [x] **R3.2 Landing rebuild** (20h) ✓ — the RPA section order already matched §6.2 (hero →
+      manifesto → services → brands → sponsors → CTA → FAQ); this closed the three design-debt
+      deltas + added the proof band. **D24** hero art: dropped the borrowed first-vendor-logo
+      (accidental art direction) for the intentional branded `svg__bg` form shape (also drops a
+      `priority` image → better LCP). **D25** static claims: bound the hero ticker to the real
+      `brands.length` and **cut every fabricated "80+ …brands"** claim (PinnedServices,
+      PinnedConcepts, vendors metadata) — grep across `src/app` + `src/components` = clean. **Proof
+      band**: a new real-count strip (curated brands · partners · editions), zero hardcoded
+      numbers. **D30** WordmarkWall: `mobileRows={3}` (rows ≥3 `hidden sm:block`) — 3 rows <640px.
+      **ISR**: `revalidate = 300` declared, but **flagged** — the root layout reads `headers()` for
+      the strict **nonce CSP**, which forces every route dynamic (`ƒ`); full static ISR is
+      mutually exclusive with the (owner-approved) nonce CSP. The LCP win therefore comes from the
+      data-layer cache (`listPublished` `unstable_cache` 60s) + the dropped priority image + lighter
+      mobile paint, not route-level static. Verify: no static-claims grep ✓; landing 200; proof
+      band renders; 60f/274t green; build OK; 0err/10warn. **LCP ≤2.5s = staging measurement.**
 - [ ] **R3.3 Event detail + checkout** (16h): sticky CTA, inline OTP sheet, skeleton (D18),
       ISR. Verify: anonymous→buy e2e at 390px; budget met.
 - [ ] **R3.4 Wallet + profile + tab bar** (16h): 4-tab IA (D20, D29), flip-card structure,
@@ -600,3 +613,4 @@ pages · axe pass.
 | 2026-06-14 | build session 6 | DB migrations + R2.5 audit | done; `migrate deploy` to local + **prod (ep-dry-sunset)** — ticket_admit_count (M1) + lead/payment indexes, both up-to-date (**M1 prod-gate CLOSED**); wrote map-audit.md (go/no-go: YES to start R3; flags O(n²) scoring/no-memo perf, throughput demand=0, no vendor surface yet) | both DBs synced; build green |
 | 2026-06-14 | build session 6 (cont.) | R3.1 (coming-soon) | done; **R3 begins** — countdown target now dynamic from next published event's startsAt (was hardcoded 2026-10-01), reuses tested timeLeft lib, hides gracefully with no event | 59f/271t green; build OK; coming-soon 200 |
 | 2026-06-14 | build session 6 (cont.) | R2.5.17 (perf hardening, owner-mandated) | done; spatial-grid scoring (O(n²)→~linear, 70ms→15ms @500, proven identical) + React.memo ElementNode (ref-stable handlers) + throughput wired to real ticket totals; stress-fixture; performance-audit-r2.5.17.md; **perf 60→~80** | 60f/274t green; build OK; both designers 200 |
+| 2026-06-14 | build session 6 (cont.) | R3.2 (landing rebuild) | done; D24 hero art (branded shape, not vendor logo) + D25 real-count binding & cut all "80+" claims + proof band (real counts) + D30 mobile-3-rows; ISR declared but **flagged blocked by nonce-CSP headers() → route stays dynamic**; data-cache + dropped priority img carry LCP | 60f/274t green; build OK; landing 200, claims grep clean |
