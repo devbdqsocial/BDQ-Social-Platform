@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getApprovedVendor } from "@/server/vendors/service";
+import { getApprovedVendor, getVendorStallLabel } from "@/server/vendors/service";
 import { primaryLogo, productImages } from "@/lib/vendor-assets";
 import { Reveal } from "@/components/motion/Reveal";
 
@@ -11,7 +11,15 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const v = await getApprovedVendor(id);
-  return { title: v?.brandName ?? "Brand", description: v?.description ?? undefined };
+  if (!v) return { title: "Brand" };
+  const logo = primaryLogo(v.assets);
+  const description = v.description ?? `Meet ${v.brandName} at BDQ Social.`;
+  return {
+    title: v.brandName,
+    description,
+    openGraph: { title: v.brandName, description, type: "profile", images: logo ? [logo] : undefined },
+    twitter: { card: logo ? "summary_large_image" : "summary", title: v.brandName, description },
+  };
 }
 
 export default async function VendorDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -19,6 +27,7 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
   const v = await getApprovedVendor(id);
   if (!v) notFound();
 
+  const stallLabel = await getVendorStallLabel(v.id);
   const logo = primaryLogo(v.assets);
   const products = productImages(v.assets);
   const socials = (v.socials as { instagram?: string } | null) ?? null;
@@ -43,13 +52,13 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
               )}
               <div className="f-paragraph-small f-bold mt-[var(--space-lg)] flex gap-[var(--space-lg)]">
                 {v.website && (
-                  <a href={v.website} target="_blank" rel="noreferrer" data-cursor className="underline">Website</a>
+                  <a href={v.website} target="_blank" rel="noopener noreferrer" data-cursor className="underline">Website</a>
                 )}
                 {socials?.instagram && (
                   <a
                     href={`https://instagram.com/${socials.instagram.replace(/^@/, "")}`}
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                     data-cursor
                     className="underline"
                   >
@@ -57,6 +66,11 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
                   </a>
                 )}
               </div>
+              {stallLabel && (
+                <Link href="/map" data-cursor className="mt-[var(--space-lg)] inline-flex items-center gap-[var(--space-sm)] rounded-full px-[var(--space-lg)] py-[var(--space-sm)] f-paragraph-small f-bold" style={{ border: "1px solid var(--color)" }}>
+                  Stall {stallLabel} — see on map →
+                </Link>
+              )}
             </div>
             {logo && (
               <div className="svg svg--form11 mx-auto w-[80%] lg:ml-auto lg:mr-0">

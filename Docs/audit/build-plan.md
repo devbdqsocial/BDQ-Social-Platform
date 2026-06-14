@@ -556,7 +556,18 @@ owner walks the designer once and signs off in the session log.
       admin/ops views. **Flagged:** filter is by stage/area (ScheduleItem has no category field);
       "what did I miss" = past items shown muted inline (no separate section). Verify: 5/5 now-line
       tests; 63f/287t green; build OK; /schedule 200 with live timeline. 0err/10warn.
-- [ ] **R3.7 Discover + brand detail** (10h). Verify: filter e2e; SEO meta.
+- [x] **R3.7 Discover + brand detail** (10h) ✓ — **Discover** (`/vendors`): the static grid became
+      `VendorDiscover` (client) — a **search** field + **category chips with live counts** (reuses
+      `bucketOf` → Everyone / Food & drink / Shopping / Experiences, chips hidden when empty) over
+      the approved line-up (≤200, no API), with the "Nothing for '<q>' — try another category"
+      empty state. **Brand detail** (`/vendors/[id]`, already strong) gained a **stall location
+      chip** ("Stall F-12 — see on map →" via new `getVendorStallLabel`, shown only when the brand
+      has a confirmed BOOKED stall), `rel="noopener noreferrer"` on outbound links, and **SEO**:
+      `openGraph` (type profile + logo image) + `twitter` card in `generateMetadata`. **Flagged:**
+      offer badge + active-offers list deferred to **R3.9** (no `Offer` model yet); the chip links
+      to `/map` (R3.5 guide has no per-stall deep-link). Verify: filter (search+chips) renders;
+      brand detail `og:title` present; stall chip renders; 63f/287t green; build OK; both 200.
+      0err/10warn.
 - [ ] **R3.8 Guide + Gallery** (8h, content-gated). Verify: gates behave (≥8 photos, non-empty).
 - [ ] **R3.9 Offers surface** (8h). Verify: publish→appears; ended→greys.
 - [ ] **R3.10 Home modes** (8h): PRE/LIVE/POST wiring. Verify: clock-mocked flips.
@@ -672,3 +683,4 @@ pages · axe pass.
 | 2026-06-14 | build session 6 (cont.) | R3.4 (wallet + profile + tabs) | done; success reveal (confetti, once/order, reduced-motion, never-faked) + wallet→/tickets + TicketCard flip (QR no-CLS, a11y) + ics.ts add-to-calendar (+tests) + Web-Share + 4-tab IA + lightweight /profile + login ?next; **deferred:** share image art (satori spike), offline precache (PWA/R7), /schedule bridge until R3.6 | 61f/279t green; build OK; routes 200 |
 | 2026-06-14 | build session 6 (cont.) | R3.5 (customer map → guide) | done; **killed D2** — getEventGuide() real data (booked-stall brands, zones, facilities), discovery-first EventGuide (chips/search/brand cards/sheet/facilities/schedule + read-only MapCanvas); bucketOf +tests; removed superseded MapPreview; **deferred:** logos, tap→map-pulse, offer badge; axe=staging | 62f/282t green; build OK; /map 200; demo grep clean |
 | 2026-06-14 | build session 6 (cont.) | R3.6 (schedule timeline) | done; living festival timeline — reuse resolveNowNext + new schedule.ts (itemPhase/groupByDay/stagesOf, 5 time-mocked tests); getActiveSchedule + real /schedule (retires R3.4 bridge); On-now/Up-next cards, day pills, stage filter, live NOW-line, per-item add-to-calendar, aria-live | 63f/287t green; build OK; /schedule 200 |
+| 2026-06-14 | build session 6 (cont.) | R3.7 (discover + brand detail) | done; VendorDiscover (search + bucket chips w/ counts + empty state) over /vendors; brand detail stall chip (getVendorStallLabel) + openGraph/twitter SEO + rel noopener; **deferred:** offer badge/list → R3.9 (no Offer model) | 63f/287t green; build OK; vendors+detail 200, og:title present |

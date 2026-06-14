@@ -136,3 +136,13 @@ export async function upsertKyc(userId: string, input: VendorKycInput) {
 export async function deleteKyc(vendorProfileId: string) {
   await db.vendorKyc.deleteMany({ where: { vendorProfileId } });
 }
+
+/** The brand's confirmed stall label (for the "see on map" chip, customer-portal §3.5). */
+export async function getVendorStallLabel(vendorProfileId: string): Promise<string | null> {
+  const b = await db.booking.findFirst({
+    where: { vendorProfileId, status: "BOOKED" },
+    orderBy: { createdAt: "desc" },
+    select: { stall: { select: { label: true } } },
+  });
+  return b?.stall?.label ?? null;
+}
