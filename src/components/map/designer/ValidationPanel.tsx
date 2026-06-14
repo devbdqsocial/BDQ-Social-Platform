@@ -7,7 +7,7 @@ import { useDesigner } from "./DesignerContext";
  * focuses its object) plus the entry-flow throughput roll-up with per-SCAN_POINT lane editing.
  */
 export function ValidationPanel() {
-  const { validation, throughput, entryFlow, patchEntry, elements, focusOn } = useDesigner();
+  const { validation, throughput, entryFlow, patchEntry, elements, focusOn, attendance, attendanceFromTickets, attendanceOverride, setAttendanceOverride } = useDesigner();
   const scanPoints = entryFlow.filter((o) => o.type === "SCAN_POINT");
   const errors = validation.filter((v) => v.severity === "error");
   const warnings = validation.filter((v) => v.severity === "warning");
@@ -27,11 +27,27 @@ export function ValidationPanel() {
         </span>
       </div>
 
-      {/* throughput roll-up (§8) */}
+      {/* throughput roll-up (§8) — capacity vs real expected peak arrival (R2.5.17) */}
       {entryFlow.length > 0 && (
         <div className="space-y-1 rounded-md border border-border p-2">
-          <p className="text-xs font-medium text-muted-foreground">Gate throughput</p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-medium text-muted-foreground">Gate throughput</p>
+            <span className={`text-xs font-semibold ${throughput.ok ? "text-green-600" : "text-destructive"}`}>{attendance > 0 ? (throughput.ok ? "✓ OK" : "Under") : "—"}</span>
+          </div>
           <p className="text-xs">Capacity ≈ <b>{throughput.capacityPerHour.toLocaleString("en-IN")}/h</b> · {throughput.scanLanes} scan lane{throughput.scanLanes === 1 ? "" : "s"}</p>
+          <p className="text-xs text-muted-foreground">
+            Peak arrival ≈ <b className="text-foreground">{throughput.expectedPeakPerHour.toLocaleString("en-IN")}/h</b>
+            {attendance > 0 ? ` (60% of ${attendance.toLocaleString("en-IN")} in 2h)` : " — set expected attendance"}
+            {!throughput.ok && attendance > 0 && <span className="text-destructive"> · short {throughput.shortfall.toLocaleString("en-IN")}/h</span>}
+          </p>
+          <label className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+            <span>Expected attendance{attendanceOverride == null && attendanceFromTickets > 0 ? " (from tickets)" : ""}</span>
+            <input
+              type="number" min={0} value={attendanceOverride ?? (attendanceFromTickets || "")} placeholder="0"
+              onChange={(e) => setAttendanceOverride(e.target.value === "" ? null : Math.max(0, Number(e.target.value)))}
+              className="h-7 w-24 rounded border border-border bg-background px-1 text-right text-xs"
+            />
+          </label>
           {scanPoints.map((o) => (
             <label key={o.id} className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
               <span className="truncate">{o.label}</span>

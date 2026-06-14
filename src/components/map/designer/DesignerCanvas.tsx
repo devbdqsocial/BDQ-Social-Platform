@@ -1,12 +1,58 @@
 "use client";
 
+import { memo, useCallback, useRef } from "react";
+import type Konva from "konva";
+import type { KonvaEventObject } from "konva/lib/Node";
 import { Group, Image as KonvaImage, Layer, Line, Rect, Stage, Text, Transformer } from "react-konva";
+import type { EditorElement } from "@/lib/map/designer-ops";
 import { ZONE_COLOR_HEX, polygonCentroid } from "@/lib/map/zones";
 import { TERRAIN_COLOR_HEX } from "@/lib/map/terrain";
 import { TIER_HEX } from "@/server/map/scoring";
 import { OPS_HEX, ENTRY_HEX } from "@/lib/map/entry-ops";
 import { snapToNeighbours, nudge } from "@/lib/map/designer-actions";
 import { useDesigner } from "./DesignerContext";
+
+/**
+ * Memoized element node (R2.5.17 perf). Re-renders ONLY when its own props change (geometry,
+ * selection, fill, violation, editability) — so high-frequency parent re-renders that don't touch
+ * this element (zoom, search typing, attendance input, side-panel updates) skip it entirely. The
+ * drag/transform callbacks are ref-stabilized by the parent, so they never change identity.
+ */
+interface ElementNodeProps {
+  el: EditorElement;
+  pxPerFt: number;
+  editable: boolean;
+  isSel: boolean;
+  isViolation: boolean;
+  fill: string;
+  onClick: (id: string, e: KonvaEventObject<MouseEvent | TouchEvent>) => void;
+  onDragStartId: (id: string) => void;
+  onDragMoveId: (id: string, node: Konva.Node) => void;
+  onDragEndId: (id: string, node: Konva.Node) => void;
+  onTransformEndId: (id: string, node: Konva.Node) => void;
+}
+const ElementNode = memo(function ElementNode({ el, pxPerFt, editable, isSel, isViolation, fill, onClick, onDragStartId, onDragMoveId, onDragEndId, onTransformEndId }: ElementNodeProps) {
+  return (
+    <Rect
+      id={el.id}
+      x={el.xFt * pxPerFt} y={el.yFt * pxPerFt} width={el.widthFt * pxPerFt} height={el.heightFt * pxPerFt}
+      rotation={el.rotation}
+      fill={fill}
+      stroke={isViolation ? "#C0392B" : isSel ? "#D69A22" : "#352F26"}
+      strokeWidth={isViolation ? 2.5 : isSel ? 2 : 1}
+      cornerRadius={3}
+      opacity={el.kind === "infra" ? 0.85 : 1}
+      listening={editable}
+      draggable={editable}
+      onClick={(e) => onClick(el.id, e)}
+      onTap={(e) => onClick(el.id, e)}
+      onDragStart={() => onDragStartId(el.id)}
+      onDragMove={(e) => onDragMoveId(el.id, e.target)}
+      onDragEnd={(e) => onDragEndId(el.id, e.target)}
+      onTransformEnd={(e) => onTransformEndId(el.id, e.target)}
+    />
+  );
+});
 
 /** Pure Konva render surface (build-plan R2.5.5). All state + handlers come from the store. */
 export function DesignerCanvas() {
@@ -20,6 +66,36 @@ export function DesignerCanvas() {
     onStageMouseDown, onStageMouseMove, onStageMouseUp, onElementClick, onTransformEnd,
     finishDrawing, isDrawTool, isClosed,
   } = d;
+
+  // Latest-value refs so the drag/transform callbacks stay referentially stable (R2.5.17) — the
+  // memoized ElementNode then only re-renders on its own prop changes, not on every store render.
+  const elementsRef = useRef(elements); elementsRef.current = elements;
+  const selRef = useRef(selectedIds); selRef.current = selectedIds;
+  const pxRef = useRef(pxPerFt); pxRef.current = pxPerFt;
+  const toFtRef = useRef(toFt); toFtRef.current = toFt;
+  const commitRef = useRef(commit); commitRef.current = commit;
+
+  const onDragStartId = useCallback((id: string) => {
+    if (!selRef.current.has(id)) setSelectedIds(new Set([id]));
+  }, [setSelectedIds]);
+  const onDragMoveId = useCallback((id: string, node: Konva.Node) => {
+    if (selRef.current.size > 1) return;
+    const px = pxRef.current; const els = elementsRef.current;
+    const el = els.find((e) => e.id === id); if (!el) return;
+    const moving = { ...el, xFt: node.x() / px, yFt: node.y() / px };
+    const r = snapToNeighbours(moving, els.filter((o) => o.id !== id), px, 8);
+    node.x(r.xFt * px); node.y(r.yFt * px);
+    setGuides(r.guides);
+  }, [setGuides]);
+  const onDragEndId = useCallback((id: string, node: Konva.Node) => {
+    const els = elementsRef.current; const sel = selRef.current;
+    const el = els.find((e) => e.id === id); if (!el) return;
+    const nx = toFtRef.current(node.x()); const ny = toFtRef.current(node.y());
+    if (sel.has(id) && sel.size > 1) commitRef.current(nudge(els, sel, nx - el.xFt, ny - el.yFt));
+    else commitRef.current(els.map((e) => (e.id === id ? { ...e, xFt: nx, yFt: ny } : e)));
+    setGuides([]);
+  }, [setGuides]);
+  const onTransformEndId = useCallback((id: string, node: Konva.Node) => onTransformEnd(id, node), [onTransformEnd]);
 
   return (
     <div ref={d.wrapRef} className="overflow-hidden rounded-xl border border-border bg-card" style={{ touchAction: "none", maxHeight: "72vh" }}>
@@ -82,42 +158,20 @@ export function DesignerCanvas() {
           {elements.map((el) => {
             const lid = el.kind === "infra" ? "infra" : "stalls";
             if (!layers[lid].visible) return null;
-            const editable = tool === "select" && !layers[lid].locked;
-            const isSel = selectedIds.has(el.id);
             return (
-              <Rect
+              <ElementNode
                 key={el.id}
-                id={el.id}
-                x={el.xFt * pxPerFt}
-                y={el.yFt * pxPerFt}
-                width={el.widthFt * pxPerFt}
-                height={el.heightFt * pxPerFt}
-                rotation={el.rotation}
+                el={el}
+                pxPerFt={pxPerFt}
+                editable={tool === "select" && !layers[lid].locked}
+                isSel={selectedIds.has(el.id)}
+                isViolation={violationIds.has(el.id) && !previewMode}
                 fill={(!previewMode && heatFillFor(el)) || fillFor(el)}
-                stroke={violationIds.has(el.id) && !previewMode ? "#C0392B" : isSel ? "#D69A22" : "#352F26"}
-                strokeWidth={violationIds.has(el.id) && !previewMode ? 2.5 : isSel ? 2 : 1}
-                cornerRadius={3}
-                opacity={el.kind === "infra" ? 0.85 : 1}
-                listening={editable}
-                draggable={editable}
-                onClick={(e) => onElementClick(el.id, e)}
-                onTap={(e) => onElementClick(el.id, e)}
-                onDragStart={() => { if (!selectedIds.has(el.id)) setSelectedIds(new Set([el.id])); }}
-                onDragMove={(e) => {
-                  if (selectedIds.size > 1) return;
-                  const node = e.target;
-                  const moving = { ...el, xFt: node.x() / pxPerFt, yFt: node.y() / pxPerFt };
-                  const r = snapToNeighbours(moving, elements.filter((o) => o.id !== el.id), pxPerFt, 8);
-                  node.x(r.xFt * pxPerFt); node.y(r.yFt * pxPerFt);
-                  setGuides(r.guides);
-                }}
-                onDragEnd={(e) => {
-                  const nx = toFt(e.target.x()); const ny = toFt(e.target.y());
-                  if (selectedIds.has(el.id) && selectedIds.size > 1) commit(nudge(elements, selectedIds, nx - el.xFt, ny - el.yFt));
-                  else commit(d.patchOne(el.id, { xFt: nx, yFt: ny }));
-                  setGuides([]);
-                }}
-                onTransformEnd={(e) => onTransformEnd(el.id, e.target)}
+                onClick={onElementClick}
+                onDragStartId={onDragStartId}
+                onDragMoveId={onDragMoveId}
+                onDragEndId={onDragEndId}
+                onTransformEndId={onTransformEndId}
               />
             );
           })}

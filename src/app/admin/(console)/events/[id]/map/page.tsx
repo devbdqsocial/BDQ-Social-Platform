@@ -38,6 +38,9 @@ export default async function EventMapPage({ params }: { params: Promise<{ id: s
   );
   const initialLayout = upgradeLayout(event.mapLayout?.layoutJson, event.mapLayout?.opsLayerJson);
 
+  // Real attendance for the entry-flow throughput verdict (R2.5.17) — Σ ticket-type capacity.
+  const expectedAttendance = event.ticketTypes.reduce((sum, t) => sum + t.totalQty, 0);
+
   return (
     <div className="space-y-4">
       <header className="flex items-center justify-between gap-3">
@@ -62,6 +65,7 @@ export default async function EventMapPage({ params }: { params: Promise<{ id: s
         initialCanvas={initialCanvas}
         initialLayout={initialLayout}
         stallTypes={palette}
+        expectedAttendance={expectedAttendance}
         saveAction={saveMapAction}
         uploadAction={getMapUploadSignatureAction}
       />

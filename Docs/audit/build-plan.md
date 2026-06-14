@@ -448,6 +448,20 @@ build on it.
 **R2.5 MAP CLUSTER COMPLETE** (R2.5.1–R2.5.16, minus the R2.5.5 owner-mandated refactor done
 mid-cluster). 16 packages, ~25 pure-lib test files, flagship designer feature-complete for V1.
 
+- [x] **R2.5.17 Performance hardening** (owner-mandated, pre-R3.2) ✓ — addressed the audit's #1
+      risk. **Scoring de-quadratified:** a `SpatialGrid` (32 ft cells) makes `scoreCorner`/
+      `scoreVisibility` query neighbours instead of scanning all stalls; **proven byte-identical**
+      to a brute-force full scan (`scoring.perf.test.ts` over 200 stalls). Measured: 500-stall full
+      re-score **~70 ms → ~15 ms**, quadratic → linear. **Canvas memoized:** `React.memo`
+      `<ElementNode>` with ref-stabilized drag/transform callbacks → zoom/search/attendance/panel
+      re-renders skip the element layer (behaviour identical by construction). **Throughput wired
+      to real attendance:** event page passes `Σ ticketType.totalQty`; `ValidationPanel` shows a
+      real Capacity-vs-Peak ✓/Under verdict + an overridable attendance field (was permanently 0).
+      New `lib/map/stress-fixture.ts` (100→500 elements). Report:
+      [performance-audit-r2.5.17.md](performance-audit-r2.5.17.md). **Perf score 60 → ~80**
+      (on-device 60 fps still a staging measurement). Verify: 60f/274t green; build OK; both
+      designers 200; 0err/10warn.
+
 **GATE R2.5:** real Aarush Lawn underlay calibrated on staging (gate 3.15 dry-run) · designer
 60fps with 500-element fixture on mid Android (perf budget row) · all §14 acceptances green ·
 owner walks the designer once and signs off in the session log.
@@ -585,3 +599,4 @@ pages · axe pass.
 | 2026-06-13 | build session 5 (cont.) | R2.5.16 (entry-flow + ops + validation) | done; **R2.5 MAP CLUSTER COMPLETE** — throughput.ts + entry-ops.ts + validation-report.ts (+tests); ops/entryFlow reactive state + palettes + canvas render + drag; ValidationPanel (focus-on-click + throughput rollup + lane editor); ops-PDF flag closed; **flagged:** O-mode→palette, throughput card→panel | 59f/271t green; build OK; both designers 200 |
 | 2026-06-14 | build session 6 | DB migrations + R2.5 audit | done; `migrate deploy` to local + **prod (ep-dry-sunset)** — ticket_admit_count (M1) + lead/payment indexes, both up-to-date (**M1 prod-gate CLOSED**); wrote map-audit.md (go/no-go: YES to start R3; flags O(n²) scoring/no-memo perf, throughput demand=0, no vendor surface yet) | both DBs synced; build green |
 | 2026-06-14 | build session 6 (cont.) | R3.1 (coming-soon) | done; **R3 begins** — countdown target now dynamic from next published event's startsAt (was hardcoded 2026-10-01), reuses tested timeLeft lib, hides gracefully with no event | 59f/271t green; build OK; coming-soon 200 |
+| 2026-06-14 | build session 6 (cont.) | R2.5.17 (perf hardening, owner-mandated) | done; spatial-grid scoring (O(n²)→~linear, 70ms→15ms @500, proven identical) + React.memo ElementNode (ref-stable handlers) + throughput wired to real ticket totals; stress-fixture; performance-audit-r2.5.17.md; **perf 60→~80** | 60f/274t green; build OK; both designers 200 |

@@ -62,6 +62,39 @@ function falloff(dist: number, full: number, zero: number): number {
 const round = (n: number): number => Math.round(n);
 const tierOf = (total: number): ScoreTier => (total >= 80 ? "PREMIUM" : total >= 60 ? "STRONG" : total >= 40 ? "STANDARD" : "VALUE");
 
+// ── spatial index (R2.5.17 perf) ─────────────────────────────────────────────
+// A uniform grid over stalls so the corner/visibility neighbour checks query only
+// nearby cells instead of scanning every stall — turns the old O(n²) into ~O(n).
+// Correctness is size-independent: a stall is inserted into EVERY cell its bbox
+// overlaps, and `near()` returns the union of stalls in all cells overlapping the
+// (padded) query rect, so it is always a superset; the precise rectsOverlap test
+// downstream is unchanged → identical results.
+const GRID_CELL_FT = 32;
+
+class SpatialGrid {
+  private buckets = new Map<string, EditorElement[]>();
+  constructor(stalls: EditorElement[], private cell = GRID_CELL_FT) {
+    for (const s of stalls) this.forCells(s, 0, (k) => {
+      const arr = this.buckets.get(k);
+      if (arr) arr.push(s); else this.buckets.set(k, [s]);
+    });
+  }
+  private forCells(r: Rect, pad: number, fn: (key: string) => void) {
+    const c0 = Math.floor((r.xFt - pad) / this.cell), c1 = Math.floor((r.xFt + r.widthFt + pad) / this.cell);
+    const r0 = Math.floor((r.yFt - pad) / this.cell), r1 = Math.floor((r.yFt + r.heightFt + pad) / this.cell);
+    for (let cx = c0; cx <= c1; cx++) for (let cy = r0; cy <= r1; cy++) fn(`${cx},${cy}`);
+  }
+  /** Stalls whose cells overlap `rect` expanded by `pad` ft (a superset of true neighbours). */
+  near(rect: Rect, pad = 0): EditorElement[] {
+    const seen = new Set<string>(); const out: EditorElement[] = [];
+    this.forCells(rect, pad, (k) => {
+      const arr = this.buckets.get(k); if (!arr) return;
+      for (const s of arr) if (!seen.has(s.id)) { seen.add(s.id); out.push(s); }
+    });
+    return out;
+  }
+}
+
 // ── scoring context (precomputed once for a whole layout) ────────────────────
 
 export interface ScoringContext {
@@ -72,6 +105,10 @@ export interface ScoringContext {
   pathways: Pathway[];
   /** zoneId → tertile rank: 2 = top third by avg price, 1 = middle, 0 = bottom. */
   zoneRank: Map<string, 0 | 1 | 2>;
+  /** stallId → its (first-match, draw-order) zone id — precomputed once (R2.5.17). */
+  zoneIdByStall: Map<string, string>;
+  /** spatial index over stalls for O(1)-avg neighbour queries (R2.5.17). */
+  grid: SpatialGrid;
 }
 
 const FOOD_ZONE = /food|f&b|dining|eat/i;
@@ -105,7 +142,11 @@ export function buildScoringContext(elements: EditorElement[], zones: Zone[], pa
   const third = Math.ceil(ordered.length / 3);
   ordered.forEach(([id], i) => zoneRank.set(id, i < third ? 2 : i < third * 2 ? 1 : 0));
 
-  return { stalls, gates, anchors, zones, pathways, zoneRank };
+  // precompute each stall's (first-match) zone once, so scoreZone is an O(1) lookup
+  const zoneIdByStall = new Map<string, string>();
+  for (const s of stalls) { const z = zoneOf(s, zones); if (z) zoneIdByStall.set(s.id, z.id); }
+
+  return { stalls, gates, anchors, zones, pathways, zoneRank, zoneIdByStall, grid: new SpatialGrid(stalls) };
 }
 
 // ── component scorers ────────────────────────────────────────────────────────
@@ -154,8 +195,9 @@ function scoreFrontage(stall: EditorElement, ctx: ScoringContext): ScoreComponen
 
 function scoreCorner(stall: EditorElement, ctx: ScoringContext): ScoreComponent {
   const max = SCORE_WEIGHTS.corner;
-  const others = ctx.stalls.filter((s) => s.id !== stall.id);
   const G = 4; // gap that counts as "a neighbor"
+  // only stalls within G ft of this stall's bbox can touch any of its 4 bands (R2.5.17 grid)
+  const others = ctx.grid.near(stall, G).filter((s) => s.id !== stall.id);
   const sides: Rect[] = [
     { xFt: stall.xFt - G, yFt: stall.yFt, widthFt: G, heightFt: stall.heightFt }, // left
     { xFt: stall.xFt + stall.widthFt, yFt: stall.yFt, widthFt: G, heightFt: stall.heightFt }, // right
@@ -186,16 +228,17 @@ function scoreVisibility(stall: EditorElement, ctx: ScoringContext): ScoreCompon
     : dir[1] >= 0
       ? { xFt: stall.xFt, yFt: stall.yFt + stall.heightFt, widthFt: stall.widthFt, heightFt: D }
       : { xFt: stall.xFt, yFt: stall.yFt - D, widthFt: stall.widthFt, heightFt: D };
-  const clear = !ctx.stalls.some((s) => s.id !== stall.id && rectsOverlap(front, s));
+  // only stalls overlapping the front band can block it (R2.5.17 grid)
+  const clear = !ctx.grid.near(front).some((s) => s.id !== stall.id && rectsOverlap(front, s));
   return { key: "visibility", score: clear ? max : 0, max, note: clear ? "Open frontage" : "Faces other stalls" };
 }
 
 function scoreZone(stall: EditorElement, ctx: ScoringContext): ScoreComponent {
   const max = SCORE_WEIGHTS.zone;
-  const z = zoneOf(stall, ctx.zones);
-  const rank = z ? ctx.zoneRank.get(z.id) ?? 0 : 0;
+  const zoneId = ctx.zoneIdByStall.get(stall.id) ?? null;
+  const rank = zoneId ? ctx.zoneRank.get(zoneId) ?? 0 : 0;
   const f = rank === 2 ? 1 : rank === 1 ? 0.5 : 0;
-  return { key: "zone", score: max * f, max, note: rank === 2 ? "Premium zone" : rank === 1 ? "Mid-tier zone" : z ? "Value zone" : "Outside a zone" };
+  return { key: "zone", score: max * f, max, note: rank === 2 ? "Premium zone" : rank === 1 ? "Mid-tier zone" : zoneId ? "Value zone" : "Outside a zone" };
 }
 
 // ── public API ────────────────────────────────────────────────────────────────

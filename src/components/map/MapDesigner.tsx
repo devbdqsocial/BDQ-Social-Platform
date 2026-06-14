@@ -26,6 +26,8 @@ export interface MapDesignerProps {
   /** full upgraded layout — the designer round-trips its v2 sub-collections (boundary/zones/…). */
   initialLayout?: LayoutV2;
   stallTypes?: PaletteStallType[];
+  /** Σ of the event's ticket-type totalQty — real attendance for the throughput verdict. */
+  expectedAttendance?: number;
   saveAction?: (eventId: string, layout: LayoutV2) => Promise<void>;
   uploadAction?: () => Promise<UploadSignature>;
 }

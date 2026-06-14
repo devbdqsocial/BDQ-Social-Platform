@@ -54,12 +54,14 @@ export interface UseDesignerStateProps {
   initialCanvas?: CanvasMeta;
   initialLayout?: LayoutV2;
   stallTypes?: PaletteStallType[];
+  /** Σ of the event's ticket-type totalQty — the real attendance for throughput (R2.5.17). */
+  expectedAttendance?: number;
   saveAction?: (eventId: string, layout: LayoutV2) => Promise<void>;
   uploadAction?: () => Promise<UploadSignature>;
 }
 
 export function useDesignerState({
-  eventId, initialElements, initialCanvas, initialLayout, stallTypes = [], saveAction, uploadAction,
+  eventId, initialElements, initialCanvas, initialLayout, stallTypes = [], expectedAttendance = 0, saveAction, uploadAction,
 }: UseDesignerStateProps) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
@@ -124,6 +126,7 @@ export function useDesignerState({
   const [bulkOpen, setBulkOpen] = useState(false);
   const [salesView, setSalesView] = useState(false);
   const [heatmapMode, setHeatmapMode] = useState<HeatmapMode>("off");
+  const [attendanceOverride, setAttendanceOverride] = useState<number | null>(null); // throughput what-if (§8)
   const [previewMode, setPreviewMode] = useState(false); // vendor lens (§11)
   const [pulseId, setPulseId] = useState<string | null>(null); // search focus highlight
   const [searchQuery, setSearchQuery] = useState("");
@@ -169,7 +172,9 @@ export function useDesignerState({
   const pathWarnings = useMemo(() => pathwayWarnings(pathways, elements), [pathways, elements]);
   // Consolidated validation drawer (§4/§7/§8 + dup-label + unpriced) + throughput rollup (R2.5.16)
   const validation = useMemo(() => validationReport({ elements, boundary, obstacles, pathways, overrides }), [elements, boundary, obstacles, pathways, overrides]);
-  const throughput = useMemo(() => throughputReport(entryFlow, 0), [entryFlow]);
+  // Throughput demand is REAL now (R2.5.17): the event's ticket total, overridable for what-ifs.
+  const attendance = attendanceOverride ?? expectedAttendance;
+  const throughput = useMemo(() => throughputReport(entryFlow, attendance), [entryFlow, attendance]);
 
   const gridLines = useMemo(() => {
     let step = gridFt > 0 ? gridFt : 5;
@@ -524,6 +529,8 @@ export function useDesignerState({
     layers, toggleLayerVisible, toggleLayerLock, setAllLayersVisible, layerCounts,
     // derived
     violations, violationIds, pathWarnings, validation, throughput, gridLines, fillFor,
+    // throughput attendance (§8 / R2.5.17)
+    attendance, attendanceFromTickets: expectedAttendance, attendanceOverride, setAttendanceOverride,
     // sales view (scoring §9.1) + price suggestions (§9.2) + heatmap (§9.3)
     salesView, setSalesView, scores, selectedScore, suggestion, applySuggestions,
     heatmapMode, setHeatmapMode, heatFillFor, heatmapBounds,
