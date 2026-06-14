@@ -639,8 +639,18 @@ Carryover flags routed to later phases: success share-image art (satori spike), 
         contract** RPA tiles/badges/Exat/.btn. Note: §4 "preparation flow" = the home lifecycle
         states (BOOKED prep copy) — add-ons is **R4.2** (deliberately not started). Verify: typecheck
         + lint (0 err) + 298 tests + prod build all green.
-- [ ] **R4.2 Add-ons (M5)** (14h): migration prod-first; vendor flow; webhook dispatch branch;
-      stock guard. Verify: e2e add-on order; oversold test; replay no-dup.
+- [x] **R4.2 Add-ons (M5)** (14h): migration prod-first; vendor flow; webhook dispatch branch;
+      stock guard. Verify: e2e add-on order; oversold test; replay no-dup. **DONE 2026-06-15
+      (commit 41c96cd).** New `StallAddOn`/`BookingAddOnOrder`/`BookingAddOn` + `Payment.addOnOrderId`
+      (migration `20260614020000_stall_addons` applied to **local + prod** ep-dry-sunset, prod-first).
+      Domain `src/server/addons/service.ts`: admin CRUD (audited), `createAddOnOrder` (BOOKED-only,
+      startsAt−48h window, maxPerBooking, price snapshot, separate Razorpay order), `fulfillAddOnOrder`
+      (idempotent by `Payment.gatewayRef`, amount-verified, **conditional-UPDATE stock guard** = ticket
+      oversell pattern; oversold keeps money CAPTURED + OVERSOLD audit). Webhook gains the add-on
+      dispatch branch. Vendor `/add-ons` (qty steppers + live total + Pay) + nav + home BOOKED teaser;
+      admin `events/[id]/add-ons` CRUD + orders list + CSV. Tests: `addOnOrdersOpen` unit + gated
+      integration (snapshot / oversell race / replay no-dup) — green vs migrated local DB. typecheck +
+      lint (0 err) + 302 unit tests + prod build all green.
 - [ ] **R4.3 SLA surfacing** (6h): UNDER_REVIEW aging + admin tile + vendor wait copy.
       Verify: >48h fixture fires tile.
 - [ ] **R4.4 Lead QR print + day chips** (4h). Verify: print snapshot.
