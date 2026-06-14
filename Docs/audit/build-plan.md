@@ -494,8 +494,20 @@ owner walks the designer once and signs off in the session log.
       data-layer cache (`listPublished` `unstable_cache` 60s) + the dropped priority image + lighter
       mobile paint, not route-level static. Verify: no static-claims grep ✓; landing 200; proof
       band renders; 60f/274t green; build OK; 0err/10warn. **LCP ≤2.5s = staging measurement.**
-- [ ] **R3.3 Event detail + checkout** (16h): sticky CTA, inline OTP sheet, skeleton (D18),
-      ISR. Verify: anonymous→buy e2e at 390px; budget met.
+- [x] **R3.3 Event detail + checkout** (16h) ✓ — revenue-critical rebuild; payment fulfilment
+      (webhook/idempotent/paise/no-refund/group-QR) **untouched**. **Fixed the #1 leak:** anonymous
+      Buy `router.push("/login")` → `/login` hardcoded `redirectTo="/dashboard"` → **cart lost**.
+      Now an **inline OTP sheet** (new DRY `usePhoneOtp`, also adopted by `PhoneLogin`) verifies in
+      place and **resumes payment with the cart intact** (guest-first; phone = identity, no extra
+      name/email gate). Checkout also got **scarcity** ("Only N left" <10), **per-type sold-out** +
+      stepper capped to real `remaining`, a **trust strip** (secure/instant-QR/no-refund), and
+      recoverable error copy. Event page rebuilt to sell: hero with **above-fold CTA + countdown +
+      availability + price-from**, `#tickets` anchor, **featured brands** (real vendors), schedule,
+      **venue/arrival**, **policies** accordion, **final CTA**, and a mobile **`StickyBuyBar`**
+      (IntersectionObserver, no CLS). [checkout-audit.md](checkout-audit.md). **Flagged:** success
+      celebration → R3.4 (wallet/reveal); editorial food/workshop sections need content models;
+      LCP/Lighthouse = staging (nonce-CSP forces dynamic, same as R3.2). Verify: 60f/274t green;
+      build OK; event page 200 w/ CTA+trust+policies; OTP→pay path needs Firebase+handset (staging).
 - [ ] **R3.4 Wallet + profile + tab bar** (16h): 4-tab IA (D20, D29), flip-card structure,
       share/download, offline precache. Verify: e2e flip+share; offline render.
 - [ ] **R3.5 Public/customer map** (14h): map-system §11b lens (zones, anchors, brand sheet,
@@ -614,3 +626,4 @@ pages · axe pass.
 | 2026-06-14 | build session 6 (cont.) | R3.1 (coming-soon) | done; **R3 begins** — countdown target now dynamic from next published event's startsAt (was hardcoded 2026-10-01), reuses tested timeLeft lib, hides gracefully with no event | 59f/271t green; build OK; coming-soon 200 |
 | 2026-06-14 | build session 6 (cont.) | R2.5.17 (perf hardening, owner-mandated) | done; spatial-grid scoring (O(n²)→~linear, 70ms→15ms @500, proven identical) + React.memo ElementNode (ref-stable handlers) + throughput wired to real ticket totals; stress-fixture; performance-audit-r2.5.17.md; **perf 60→~80** | 60f/274t green; build OK; both designers 200 |
 | 2026-06-14 | build session 6 (cont.) | R3.2 (landing rebuild) | done; D24 hero art (branded shape, not vendor logo) + D25 real-count binding & cut all "80+" claims + proof band (real counts) + D30 mobile-3-rows; ISR declared but **flagged blocked by nonce-CSP headers() → route stays dynamic**; data-cache + dropped priority img carry LCP | 60f/274t green; build OK; landing 200, claims grep clean |
+| 2026-06-14 | build session 6 (cont.) | R3.3 (event + checkout) | done; **fixed cart-losing login redirect → inline OTP (usePhoneOtp, shared w/ PhoneLogin)** resumes payment with cart intact; scarcity + per-type sold-out + trust strip + recoverable errors; event page rebuilt (above-fold CTA/countdown/availability, brands, venue, policies, final CTA, sticky mobile bar); checkout-audit.md; payment flow untouched; **flagged:** success celebration→R3.4, LCP=staging | 60f/274t green; build OK; event 200 |

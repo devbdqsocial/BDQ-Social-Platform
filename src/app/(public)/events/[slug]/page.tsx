@@ -1,18 +1,33 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getBySlug } from "@/server/events/service";
 import { sponsorsForEventPublic } from "@/server/sponsors/service";
+import { listApprovedVendors } from "@/server/vendors/service";
+import { primaryLogo } from "@/lib/vendor-assets";
+import { formatPaise } from "@/lib/utils";
 import { fmtDateFull, fmtTime, fmtDayLabel } from "@/lib/date-formats";
+import { Countdown } from "@/components/landing/Countdown";
 import { BookingFloorPlan } from "@/components/map/BookingFloorPlan";
 import { TicketCheckout } from "@/components/tickets/TicketCheckout";
 import { SponsorStrip } from "@/components/landing/SponsorStrip";
 import { NotifyMe } from "@/components/events/NotifyMe";
+import { StickyBuyBar } from "@/components/events/StickyBuyBar";
 
 export const dynamic = "force-dynamic";
 
 const fmt = fmtDateFull;
 const time = fmtTime;
 const dayLabel = fmtDayLabel;
+
+const POLICIES: [string, string][] = [
+  ["Refunds", "All sales are final — no refunds or exchanges. Pick your date with confidence."],
+  ["Entry", "Your QR code is your ticket. Show it at the gate from your phone — one QR admits your whole group."],
+  ["Security", "Bag checks at entry for everyone's safety. No outside alcohol; please travel light."],
+  ["Parking", "On-site and nearby parking available. Arrive a little early on peak evenings."],
+  ["Kids", "Family-friendly until early evening. Little ones enter free with a paying adult."],
+  ["Photography", "Bring your camera — it's made for photos. We may capture the event for our channels."],
+];
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -25,44 +40,53 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
   const event = await getBySlug(slug);
   if (!event || (event.status !== "PUBLISHED" && event.status !== "LIVE")) notFound();
 
-  const mapStalls = event.stalls.map((s) => ({
-    id: s.id,
-    label: s.label,
-    status: s.status,
-    kind: s.kind,
-    xFt: s.xFt,
-    yFt: s.yFt,
-    widthFt: s.widthFt,
-    heightFt: s.heightFt,
-    rotation: s.rotation,
-  }));
+  const [sponsors, vendors] = await Promise.all([sponsorsForEventPublic(event.id), listApprovedVendors()]);
+  const brands = vendors.slice(0, 8);
 
+  const mapStalls = event.stalls.map((s) => ({
+    id: s.id, label: s.label, status: s.status, kind: s.kind,
+    xFt: s.xFt, yFt: s.yFt, widthFt: s.widthFt, heightFt: s.heightFt, rotation: s.rotation,
+  }));
   const mapCanvas = (event.mapLayout?.layoutJson as { canvas?: { widthFt: number; heightFt: number } } | null)?.canvas;
-  const sponsors = await sponsorsForEventPublic(event.id);
-  const soldOut = event.ticketTypes.length > 0 && event.ticketTypes.every((t) => t.soldQty >= t.totalQty);
+
+  const hasTickets = event.ticketTypes.length > 0;
+  const soldOut = hasTickets && event.ticketTypes.every((t) => t.soldQty >= t.totalQty);
+  const minPrice = hasTickets ? Math.min(...event.ticketTypes.map((t) => t.priceInPaise)) : null;
+  const totalCap = event.ticketTypes.reduce((s, t) => s + t.totalQty, 0);
+  const remaining = event.ticketTypes.reduce((s, t) => s + Math.max(0, t.totalQty - t.soldQty), 0);
+  const availLabel = soldOut ? "Sold out" : !hasTickets ? "On sale soon" : totalCap > 0 && remaining / totalCap <= 0.15 ? "Selling fast" : "On sale now";
+  const priceLabel = minPrice != null ? `from ${formatPaise(minPrice)}` : null;
+
   const theme = (event.theme as { primary?: string; accent?: string } | null) ?? null;
   const themeStyle = theme ? ({ "--primary": theme.primary, "--accent": theme.accent } as React.CSSProperties) : undefined;
 
   return (
     <div style={themeStyle}>
-      {/* Event header — cabecera--proyecto */}
-      <section className="gama-1 bg-1 paint flex min-h-[65svh] items-end py-[var(--space-5xl)]">
+      {/* ===== HERO — sell the night, CTA above the fold ===== */}
+      <section className="gama-1 bg-1 paint flex min-h-[78svh] items-end py-[var(--space-5xl)]">
         <div className="wrapper">
-          <h1 className="f-exat f-h133">{event.name}</h1>
-          <div className="mt-[var(--space-lg)] flex flex-wrap gap-[var(--space-lg)]">
+          <span className="kicker">{availLabel}{event.location ? ` · ${event.location}` : ""}</span>
+          <h1 className="f-exat mt-[var(--space-sm)] f-h133">{event.name}</h1>
+          <div className="mt-[var(--space-lg)] flex flex-wrap items-center gap-[var(--space-lg)]">
             <span className="kicker">{fmt(event.startsAt)}</span>
-            {event.location && <span className="kicker">{event.location}</span>}
+            {priceLabel && <span className="kicker">Tickets {priceLabel}</span>}
           </div>
-          {event.description && (
-            <p className="f-paragraph mt-[var(--space-lg)] max-w-[52ch]">{event.description}</p>
-          )}
+          {event.description && <p className="f-paragraph mt-[var(--space-lg)] max-w-[52ch]">{event.description}</p>}
+          <div className="mt-[var(--space-xl)]"><Countdown target={event.startsAt.toISOString()} /></div>
+          <div id="event-hero-cta" className="mt-[var(--space-xl)] flex flex-wrap items-center gap-[var(--space-lg)]">
+            {hasTickets && !soldOut && (
+              <a href="#tickets" className="btn btn--lg" data-cursor><span className="btn__text">Get tickets</span></a>
+            )}
+            <Link href="/vendors" className="kicker link-underline" data-cursor>See the brands →</Link>
+          </div>
         </div>
       </section>
 
-      <section className="paint py-[var(--space-5xl)]">
+      {/* ===== TICKETS ===== */}
+      <section id="tickets" className="paint py-[var(--space-5xl)]" style={{ scrollMarginTop: "var(--space-xl)" }}>
         <div className="wrapper max-w-[62rem]">
           <h2 className="f-exat mb-[var(--space-lg)] f-h42">Get your tickets</h2>
-          {event.ticketTypes.length === 0 ? (
+          {!hasTickets ? (
             <p className="f-paragraph p-[var(--space-xl)] text-center opacity-70" style={{ border: "1px dashed var(--color)" }}>
               Ticket sales open soon — check back shortly.
             </p>
@@ -75,63 +99,130 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
           ) : (
             <TicketCheckout
               eventId={event.id}
-              ticketTypes={event.ticketTypes.map((t) => ({ id: t.id, name: t.name, priceInPaise: t.priceInPaise }))}
+              ticketTypes={event.ticketTypes.map((t) => ({ id: t.id, name: t.name, priceInPaise: t.priceInPaise, remaining: Math.max(0, t.totalQty - t.soldQty) }))}
             />
           )}
+        </div>
+      </section>
 
-          {event.schedule.length > 0 && (
-            <div className="mt-[var(--space-4xl)]">
-              <h2 className="f-exat f-h42">What&apos;s happening</h2>
-              <div className="mt-[var(--space-lg)] space-y-6">
-                {Object.entries(
-                  event.schedule.reduce<Record<string, typeof event.schedule>>((acc, s) => {
-                    (acc[dayLabel(s.startsAt)] ??= []).push(s);
-                    return acc;
-                  }, {}),
-                ).map(([day, items]) => (
-                  <div key={day}>
-                    <h3 className="kicker mb-[var(--space-md)] opacity-70">{day}</h3>
-                    <ul>
-                      {items.map((s) => (
-                        <li
-                          key={s.id}
-                          className="flex items-baseline gap-[var(--space-xl)] py-[var(--space-md)]"
-                          style={{ borderTop: "1px solid color-mix(in srgb, currentColor 30%, transparent)" }}
-                        >
-                          <span className="f-paragraph-small f-bold w-[9ch] shrink-0 tabular-nums">
-                            {time(s.startsAt)}{s.endsAt ? `–${time(s.endsAt)}` : ""}
-                          </span>
-                          <span className="f-paragraph">
-                            {s.title}
-                            {s.stageOrZone ? <span className="opacity-60"> · {s.stageOrZone}</span> : ""}
-                            {s.performer ? <span className="opacity-60"> · {s.performer}</span> : ""}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
+      {/* ===== FEATURED BRANDS — real approved vendors ===== */}
+      {brands.length > 0 && (
+        <section className="gama-2 surface-2 paint py-[var(--space-5xl)]">
+          <div className="wrapper">
+            <div className="flex items-end justify-between gap-4">
+              <h2 className="f-exat f-h60">The brands you&apos;ll meet</h2>
+              <Link href="/vendors" data-cursor className="kicker link-underline">See all →</Link>
             </div>
-          )}
+            <ul className="mt-[var(--space-2xl)] grid grid-cols-2 gap-[var(--space-lg)] sm:grid-cols-3 lg:grid-cols-4">
+              {brands.map((v) => {
+                const logo = primaryLogo(v.assets);
+                return (
+                  <li key={v.id} className="surface-1 flex aspect-[4/3] items-center justify-center overflow-hidden p-[var(--space-lg)]" style={{ border: "1px solid color-mix(in srgb, currentColor 20%, transparent)" }}>
+                    {logo ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={logo} alt={v.brandName} className="max-h-full max-w-full object-contain" loading="lazy" />
+                    ) : (
+                      <span className="f-exat text-center f-h32">{v.brandName}</span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </section>
+      )}
 
+      {/* ===== SCHEDULE ===== */}
+      {event.schedule.length > 0 && (
+        <section className="paint py-[var(--space-5xl)]">
+          <div className="wrapper max-w-[62rem]">
+            <h2 className="f-exat f-h60">What&apos;s happening</h2>
+            <div className="mt-[var(--space-2xl)] space-y-[var(--space-2xl)]">
+              {Object.entries(
+                event.schedule.reduce<Record<string, typeof event.schedule>>((acc, s) => {
+                  (acc[dayLabel(s.startsAt)] ??= []).push(s);
+                  return acc;
+                }, {}),
+              ).map(([day, items]) => (
+                <div key={day}>
+                  <h3 className="kicker mb-[var(--space-md)] opacity-70">{day}</h3>
+                  <ul>
+                    {items.map((s) => (
+                      <li key={s.id} className="flex items-baseline gap-[var(--space-xl)] py-[var(--space-md)]" style={{ borderTop: "1px solid color-mix(in srgb, currentColor 30%, transparent)" }}>
+                        <span className="f-paragraph-small f-bold w-[9ch] shrink-0 tabular-nums">{time(s.startsAt)}{s.endsAt ? `–${time(s.endsAt)}` : ""}</span>
+                        <span className="f-paragraph">
+                          {s.title}
+                          {s.stageOrZone ? <span className="opacity-60"> · {s.stageOrZone}</span> : ""}
+                          {s.performer ? <span className="opacity-60"> · {s.performer}</span> : ""}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ===== VENUE & ARRIVAL ===== */}
+      <section className="gama-1 bg-2 paint py-[var(--space-5xl)]">
+        <div className="wrapper max-w-[62rem]">
+          <h2 className="f-exat f-h60">Getting there</h2>
+          <div className="mt-[var(--space-lg)] grid gap-[var(--space-xl)] sm:grid-cols-2">
+            <div><p className="kicker opacity-70">Venue</p><p className="f-paragraph mt-[var(--space-xs)]">{event.location ?? "Vadodara"}</p></div>
+            <div><p className="kicker opacity-70">When</p><p className="f-paragraph mt-[var(--space-xs)]">{fmt(event.startsAt)}</p></div>
+            <div><p className="kicker opacity-70">Parking</p><p className="f-paragraph mt-[var(--space-xs)]">On-site and nearby — arrive early on peak evenings.</p></div>
+            <div><p className="kicker opacity-70">Accessibility</p><p className="f-paragraph mt-[var(--space-xs)]">Step-free entry and accessible restrooms on site.</p></div>
+          </div>
           {mapStalls.length > 0 && (
-            <div className="mt-[var(--space-4xl)]">
-              <h2 className="f-exat f-h42">Event layout</h2>
-              <p className="f-paragraph-small mb-[var(--space-lg)] mt-[var(--space-xs)] opacity-70">
-                Selling at the market? Browse live availability, then apply as a vendor to pick your spot.
-              </p>
+            <div className="mt-[var(--space-2xl)]">
+              <p className="f-paragraph-small mb-[var(--space-md)] opacity-70">Browse the layout — live stall availability.</p>
               <BookingFloorPlan stalls={mapStalls} canvas={mapCanvas} />
-            </div>
-          )}
-
-          {sponsors.length > 0 && (
-            <div className="mt-[var(--space-4xl)]">
-              <SponsorStrip sponsors={sponsors} />
             </div>
           )}
         </div>
       </section>
+
+      {/* ===== POLICIES (trust) ===== */}
+      <section className="paint py-[var(--space-5xl)]">
+        <div className="wrapper max-w-[62rem]">
+          <h2 className="f-exat f-h60">Good to know</h2>
+          <div className="mt-[var(--space-2xl)]">
+            {POLICIES.map(([q, a]) => (
+              <details key={q} className="group py-[var(--space-lg)]" style={{ borderTop: "1px solid var(--color)" }}>
+                <summary className="f-exat flex cursor-pointer list-none items-center justify-between gap-[var(--space-lg)] f-h42">
+                  {q}
+                  <span aria-hidden className="shrink-0 transition-transform duration-300 group-open:rotate-45 f-h42">+</span>
+                </summary>
+                <p className="f-paragraph mt-[var(--space-md)] max-w-[52ch] opacity-80">{a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {sponsors.length > 0 && (
+        <section className="paint pb-[var(--space-5xl)]">
+          <div className="wrapper max-w-[62rem]"><SponsorStrip sponsors={sponsors} /></div>
+        </section>
+      )}
+
+      {/* ===== FINAL CTA ===== */}
+      {hasTickets && !soldOut && (
+        <section className="gama-3 bg-3 paint relative flex min-h-[60svh] items-center overflow-hidden py-[var(--space-5xl)]">
+          <div className="wrapper text-center">
+            <span className="kicker block">{availLabel}</span>
+            <h2 className="f-exat mx-auto mt-[var(--space-md)] max-w-[16ch] f-h133">Don&apos;t miss {event.name}</h2>
+            <p className="f-paragraph mt-[var(--space-lg)]">{fmt(event.startsAt)}{priceLabel ? ` · Tickets ${priceLabel}` : ""}</p>
+            <div className="mt-[var(--space-2xl)] flex justify-center">
+              <a href="#tickets" className="btn btn--lg" data-cursor><span className="btn__text">Get tickets</span></a>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {hasTickets && !soldOut && <StickyBuyBar priceLabel={priceLabel} />}
     </div>
   );
 }

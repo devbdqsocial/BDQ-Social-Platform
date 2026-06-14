@@ -1,16 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  RecaptchaVerifier,
-  signInWithPhoneNumber,
-  type ConfirmationResult,
-} from "firebase/auth";
-import { firebaseAuth } from "@/lib/firebase-client";
+import { usePhoneOtp } from "./usePhoneOtp";
 import { Button } from "@/components/ui/button";
-
-const msg = (e: unknown) => (e instanceof Error ? e.message : "Something went wrong");
 
 export function PhoneLogin({
   redirectTo = "/events",
@@ -23,53 +15,10 @@ export function PhoneLogin({
   vendorSignup?: boolean;
 }) {
   const router = useRouter();
-  const verifierRef = useRef<RecaptchaVerifier | null>(null);
-  const [phone, setPhone] = useState("+91");
-  const [code, setCode] = useState("");
-  const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(null);
-  const [status, setStatus] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const { phone, setPhone, code, setCode, confirmation, status, loading, sendOtp, verifyOtp } = usePhoneOtp();
 
-  const sendOtp = async () => {
-    setLoading(true);
-    setStatus(null);
-    try {
-      if (!verifierRef.current) {
-        verifierRef.current = new RecaptchaVerifier(firebaseAuth, "recaptcha", { size: "invisible" });
-      }
-      const conf = await signInWithPhoneNumber(firebaseAuth, phone.trim(), verifierRef.current);
-      setConfirmation(conf);
-      setStatus("Code sent — check your SMS.");
-    } catch (e) {
-      setStatus(msg(e));
-      verifierRef.current?.clear();
-      verifierRef.current = null;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const verifyCode = async () => {
-    if (!confirmation) return;
-    setLoading(true);
-    setStatus(null);
-    try {
-      const cred = await confirmation.confirm(code.trim());
-      const idToken = await cred.user.getIdToken();
-      const res = await fetch("/api/auth/verify", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ idToken, zone, vendorSignup }),
-      });
-      if (!res.ok) throw new Error("Sign-in failed");
-      router.push(redirectTo);
-      router.refresh();
-    } catch (e) {
-      setStatus(msg(e));
-    } finally {
-      setLoading(false);
-    }
-  };
+  const verifyCode = () =>
+    verifyOtp(() => { router.push(redirectTo); router.refresh(); }, { zone, vendorSignup });
 
   return (
     <div className="space-y-4">
