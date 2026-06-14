@@ -594,10 +594,25 @@ owner walks the designer once and signs off in the session log.
       DRAFT→PUBLISHED→ENDED + auto-end cron = R5 (§6.1); discover-card/guide offer **badge** still
       deferred (needs per-vendor offer joins in those queries); hard redemption = V2. Verify:
       6/6 phase tests; /offers holds at 0 published; 65f/298t green; build OK; both 200. 0err/10warn.
-- [ ] **R3.10 Home modes** (8h): PRE/LIVE/POST wiring. Verify: clock-mocked flips.
+- [x] **R3.10 Home modes** (8h) ✓ — **lifecycle orchestration, not a redesign.** Pure
+      `lib/home-content.ts` `homeFocus(mode)` maps R1.5's time-based `getHomeMode` (PRE/LIVE/POST)
+      to the home's emphasis; the **same landing, same nav, same design** shifts focus: **PRE** →
+      countdown + "Get tickets" + brands; **LIVE** → "We're live tonight", "What's on now"
+      (schedule) + map + offers, no countdown; **POST** → "That's a wrap", "Relive the night"
+      (gallery) + brands + next event. Wired into the hero (kicker, CTAs, countdown gate, price)
+      and the closing band (heading + action), all driven by `focus`. **6 tests** incl. **clock-
+      mocked PRE→LIVE→POST flips** end-to-end (getHomeMode→homeFocus across the live window
+      boundaries). Verify: clock-mocked flips ✓; landing 200, correctly **POST** for the past local
+      event ("Relive the night"); 66f/304t green; build OK; 0err/10warn.
 
 **GATE R3:** full anonymous→ticket e2e on phone viewport · budgets green on all 7 customer
 pages · axe pass.
+**R3 CODE-COMPLETE (2026-06-14):** R3.1–R3.10 all shipped — coming-soon, landing (+lifecycle
+modes), event+checkout (inline OTP), wallet/reveal/flip, customer guide, schedule timeline,
+discover, guide+gallery, offers. The gate's three checks are **staging/manual** (phone e2e,
+Lighthouse budgets, axe) — owner/staging actions, tracked there; no code blocks remain in R3.
+Carryover flags routed to later phases: success share-image art (satori spike), offline precache
+(R7), admin Content CRUD + offer cron (R5), discover/guide offer badges, brand-card logos.
 
 ---
 
@@ -710,3 +725,4 @@ pages · axe pass.
 | 2026-06-14 | build session 6 (cont.) | R3.7 (discover + brand detail) | done; VendorDiscover (search + bucket chips w/ counts + empty state) over /vendors; brand detail stall chip (getVendorStallLabel) + openGraph/twitter SEO + rel noopener; **deferred:** offer badge/list → R3.9 (no Offer model) | 63f/287t green; build OK; vendors+detail 200, og:title present |
 | 2026-06-14 | build session 6 (cont.) | R3.8 (guide + gallery) | done; content-gate.ts (galleryReady≥8 / guideReady non-empty / parseGuideSections, 5 tests); /guide (event timings + SystemSetting sections, gated); **GalleryPhoto model migrated local+prod** + /gallery (masonry + no-lib viewer, gated ≥8); gates verified (guide shows, gallery holds at 0) | 64f/292t green; build OK; both 200 |
 | 2026-06-14 | build session 6 (cont.) | R3.9 (offers) | done; **Offer model migrated local+prod**; offer.ts (offerPhase/canRedeem/validity, 6 tests = publish→appears/ended→greys); /offers (cards + greying + Show-at-stall redemption takeover w/ live clock + press-hold markOfferUsed) + brand-detail live offers (closes R3.7 deferral); **deferred:** admin CRUD/cron→R5, discover badge | 65f/298t green; build OK; /offers holds at 0 |
+| 2026-06-14 | build session 6 (cont.) | R3.10 (home modes) | done; **PHASE R3 CODE-COMPLETE** — home-content.ts homeFocus(mode) + clock-mocked PRE→LIVE→POST flips (6 tests); landing hero+closing band orchestrate by getHomeMode (same page/nav/design); live smoke = POST for the past local event. GATE R3 checks (phone e2e, budgets, axe) = staging | 66f/304t green; build OK; landing 200 |

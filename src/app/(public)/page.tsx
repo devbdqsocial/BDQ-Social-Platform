@@ -3,6 +3,8 @@ import Link from "next/link";
 import { listPublished } from "@/server/events/service";
 import { listApprovedVendors } from "@/server/vendors/service";
 import { sponsorsForEventPublic } from "@/server/sponsors/service";
+import { getHomeMode } from "@/lib/home-mode";
+import { homeFocus } from "@/lib/home-content";
 import { primaryLogo } from "@/lib/vendor-assets";
 import { formatPaise } from "@/lib/utils";
 import { Countdown } from "@/components/landing/Countdown";
@@ -43,6 +45,10 @@ export default async function LandingPage() {
   const minPrice = event?.ticketTypes.length ? Math.min(...event.ticketTypes.map((t) => t.priceInPaise)) : null;
   const sponsors = event ? await sponsorsForEventPublic(event.id) : [];
 
+  // Lifecycle orchestration (R3.10): the home shifts focus PRE → LIVE → POST, same page + nav.
+  const mode = getHomeMode(event ? { startsAt: event.startsAt, endsAt: event.endsAt, status: event.status } : null);
+  const focus = homeFocus(mode);
+
   return (
     <div>
       {/* ============ HERO (cabecera--home) — navy / light-blue ============ */}
@@ -50,7 +56,7 @@ export default async function LandingPage() {
         <div className="wrapper grid w-full items-center gap-[var(--space-3xl)] py-[var(--space-5xl)] lg:grid-cols-2">
           <div>
             <Reveal>
-              <span className="kicker block">{event?.location ?? "Vadodara"} · Curated night market</span>
+              <span className="kicker block">{event?.location ?? "Vadodara"} · {focus.kicker}</span>
             </Reveal>
             <SplitReveal as="h1" mode="chars" className="f-exat mt-[var(--space-md)] max-w-[14ch] f-h133">
               The city&apos;s most curated night market
@@ -65,11 +71,11 @@ export default async function LandingPage() {
                   {fmtDate(event.startsAt)} · {event.location}
                 </p>
               )}
-              {event && <div className="mt-[var(--space-md)]"><Countdown target={event.startsAt.toISOString()} /></div>}
+              {event && focus.showCountdown && <div className="mt-[var(--space-md)]"><Countdown target={event.startsAt.toISOString()} /></div>}
               <div className="mt-[var(--space-xl)] flex flex-wrap items-center gap-[var(--space-lg)]">
-                <Btn href="/events">Tickets</Btn>
-                <Btn href="/vendors">Brands</Btn>
-                {minPrice != null && (
+                <Btn href={focus.primary.href}>{focus.primary.label}</Btn>
+                {focus.secondary.map((a) => <Btn key={a.href} href={a.href}>{a.label}</Btn>)}
+                {minPrice != null && focus.showTicketPrice && (
                   <span className="f-paragraph-small">from {formatPaise(minPrice)}</span>
                 )}
               </div>
@@ -182,17 +188,17 @@ export default async function LandingPage() {
           />
           <div className="wrapper relative w-full text-center">
             <Reveal>
-              <span className="kicker block">Up next</span>
+              <span className="kicker block">{focus.kicker}</span>
               <h2 className="f-exat mx-auto mt-[var(--space-md)] max-w-[16ch] f-h133">
-                {event.name}
+                {focus.closing.heading(event.name)}
               </h2>
               <p className="f-paragraph mt-[var(--space-lg)]">
                 {fmtDate(event.startsAt)} · {event.location}
-                {minPrice != null && <> · from {formatPaise(minPrice)}</>}
+                {minPrice != null && focus.showTicketPrice && <> · from {formatPaise(minPrice)}</>}
               </p>
               <div className="mt-[var(--space-2xl)] flex justify-center">
-                <Link href={`/events/${event.slug}`} className="btn btn--lg" data-cursor>
-                  <span className="btn__text">Get tickets</span>
+                <Link href={focus.closing.action.href} className="btn btn--lg" data-cursor>
+                  <span className="btn__text">{focus.closing.action.label}</span>
                 </Link>
               </div>
             </Reveal>
