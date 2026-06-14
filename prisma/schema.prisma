@@ -223,9 +223,26 @@ model Event {
   expenses         Expense[]
   budgets          Budget[]
   expenseSchedules ExpenseSchedule[]
+  galleryPhotos    GalleryPhoto[]
   mapId            String?
 
   @@index([status])
+}
+
+/** Post-event gallery (customer-portal §3.8). Curated in the admin Content group; the public
+ *  gallery shows only `published` photos and only when there are ≥8 (avoid a hollow launch). */
+model GalleryPhoto {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  url       String
+  publicId  String
+  caption   String?
+  sortOrder Int      @default(0)
+  published Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([eventId, published, sortOrder])
 }
 
 model TicketType {

@@ -568,7 +568,19 @@ owner walks the designer once and signs off in the session log.
       to `/map` (R3.5 guide has no per-stall deep-link). Verify: filter (search+chips) renders;
       brand detail `og:title` present; stall chip renders; 63f/287t green; build OK; both 200.
       0err/10warn.
-- [ ] **R3.8 Guide + Gallery** (8h, content-gated). Verify: gates behave (≥8 photos, non-empty).
+- [x] **R3.8 Guide + Gallery** (8h, content-gated) ✓ — pure `lib/content-gate.ts` (`galleryReady`
+      ≥8, `cleanSections`/`guideReady` non-empty, `parseGuideSections` defensive) + **5 tests** lock
+      the gates. **Guide** (`/guide`): `getGuide()` = event-derived basics (Getting there from
+      location, **Timings bound to the event's startsAt/endsAt**) + admin-edited sections from
+      `SystemSetting guide:<eventId>` (the §6.3 editor is R5); anchor-chip row → `f-h60` sections;
+      hold state when empty. **Gallery** (`/gallery`): new **`GalleryPhoto` model** (migration
+      applied **local + prod**, client regenerated); `getGalleryPhotos()` (published only) → a
+      `GalleryGrid` client (CSS-columns masonry + no-library full-screen viewer w/ keyboard
+      ←/→/Esc, caption, counter) **only when ≥8 published** — else the "lights up after the night"
+      hold state. **Flagged:** admin guide editor + gallery curation are R5 (Content group); viewer
+      uses lazy `<img>` (eslint-disabled) not `next/image`. Verify: gates behave — guide shows
+      (Timings present), gallery shows hold state (0<8); 5/5 gate tests; 64f/292t green; build OK;
+      both 200. 0err/10warn.
 - [ ] **R3.9 Offers surface** (8h). Verify: publish→appears; ended→greys.
 - [ ] **R3.10 Home modes** (8h): PRE/LIVE/POST wiring. Verify: clock-mocked flips.
 
@@ -684,3 +696,4 @@ pages · axe pass.
 | 2026-06-14 | build session 6 (cont.) | R3.5 (customer map → guide) | done; **killed D2** — getEventGuide() real data (booked-stall brands, zones, facilities), discovery-first EventGuide (chips/search/brand cards/sheet/facilities/schedule + read-only MapCanvas); bucketOf +tests; removed superseded MapPreview; **deferred:** logos, tap→map-pulse, offer badge; axe=staging | 62f/282t green; build OK; /map 200; demo grep clean |
 | 2026-06-14 | build session 6 (cont.) | R3.6 (schedule timeline) | done; living festival timeline — reuse resolveNowNext + new schedule.ts (itemPhase/groupByDay/stagesOf, 5 time-mocked tests); getActiveSchedule + real /schedule (retires R3.4 bridge); On-now/Up-next cards, day pills, stage filter, live NOW-line, per-item add-to-calendar, aria-live | 63f/287t green; build OK; /schedule 200 |
 | 2026-06-14 | build session 6 (cont.) | R3.7 (discover + brand detail) | done; VendorDiscover (search + bucket chips w/ counts + empty state) over /vendors; brand detail stall chip (getVendorStallLabel) + openGraph/twitter SEO + rel noopener; **deferred:** offer badge/list → R3.9 (no Offer model) | 63f/287t green; build OK; vendors+detail 200, og:title present |
+| 2026-06-14 | build session 6 (cont.) | R3.8 (guide + gallery) | done; content-gate.ts (galleryReady≥8 / guideReady non-empty / parseGuideSections, 5 tests); /guide (event timings + SystemSetting sections, gated); **GalleryPhoto model migrated local+prod** + /gallery (masonry + no-lib viewer, gated ≥8); gates verified (guide shows, gallery holds at 0) | 64f/292t green; build OK; both 200 |
