@@ -62,7 +62,8 @@ async function verifyCounts(expected: number) {
   expect(mapLayouts).toBe(expected);
 }
 
-describe("Event Archiving Integration", () => {
+// DB integration — skipped unless RUN_DB_TESTS=1 (it hits a real DB; CI has none).
+describe.runIf(process.env.RUN_DB_TESTS === "1")("Event Archiving Integration", () => {
   it("should logically archive and restore past events", async () => {
     await cleanUp();
 

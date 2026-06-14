@@ -3,6 +3,7 @@ import { unstable_cache } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { db } from "@/server/db";
 import { decryptNullable, encryptNullable } from "@/lib/crypto-field";
+import { logError } from "@/lib/logger";
 import type { VendorKycInput, VendorProfileInput } from "@/server/schemas";
 import type { UploadableAssetKind } from "@/lib/assets";
 
@@ -28,14 +29,22 @@ export async function getProfile(userId: string) {
 // ── Public brand directory (read-only, no auth) ───────────────────────────────
 // Cached 60s for display; no Date fields are consumed downstream, so no revival needed.
 // Vendor-portal reads/mutations and ownership checks query the DB directly.
+// Resilient + fresh cache key (`:v2`): the public landing + /vendors must never 500 if this query
+// (or a stale Vercel data-cache entry under the old key) misbehaves — degrade to an empty line-up.
 export const listApprovedVendors = unstable_cache(
-  () =>
-    db.vendorProfile.findMany({
-      where: { approvalStatus: "APPROVED" },
-      orderBy: { brandName: "asc" },
-      include: { assets: { select: { kind: true, url: true } } },
-    }),
-  ["vendors:approved"],
+  async () => {
+    try {
+      return await db.vendorProfile.findMany({
+        where: { approvalStatus: "APPROVED" },
+        orderBy: { brandName: "asc" },
+        include: { assets: { select: { kind: true, url: true } } },
+      });
+    } catch (e) {
+      logError("listApprovedVendors", e);
+      return [];
+    }
+  },
+  ["vendors:approved:v2"],
   { revalidate: 60, tags: ["vendors"] },
 );
 

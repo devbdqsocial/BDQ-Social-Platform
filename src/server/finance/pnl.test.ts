@@ -76,7 +76,8 @@ describe("computePnl", () => {
   });
 });
 
-describe("getEventPnl Integration", () => {
+// DB integration — skipped unless RUN_DB_TESTS=1 (its cleanup hooks hit a real DB; CI has none).
+describe.runIf(process.env.RUN_DB_TESTS === "1")("getEventPnl Integration", () => {
   const db = new PrismaClient();
   const testEventId = "test_pnl_ev_id";
 

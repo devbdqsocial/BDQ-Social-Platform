@@ -21,7 +21,8 @@ async function cleanUp() {
   await db.event.deleteMany({ where: { id: testEventId } });
 }
 
-describe("Unified Waitlist Integration", () => {
+// DB integration — skipped unless RUN_DB_TESTS=1 (its cleanup hooks hit a real DB; CI has none).
+describe.runIf(process.env.RUN_DB_TESTS === "1")("Unified Waitlist Integration", () => {
   beforeAll(async () => {
     await cleanUp();
     // Seed a test event
