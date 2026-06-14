@@ -288,7 +288,7 @@ export function listUserTickets(userId: string) {
     where: { order: { userId, status: "PAID" } },
     include: {
       ticketType: { select: { name: true } },
-      order: { include: { event: { select: { name: true, slug: true, startsAt: true } } } },
+      order: { include: { event: { select: { name: true, slug: true, startsAt: true, location: true } } } },
     },
     orderBy: { createdAt: "desc" },
   });

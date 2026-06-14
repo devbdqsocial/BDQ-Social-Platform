@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Ticket, Store, CalendarDays } from "lucide-react";
+import { Home, Ticket, Map, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// Companion IA (customer-portal §2 / design-debt D29): Home · Schedule · Map · Tickets.
 const TABS = [
   { href: "/", label: "Home", icon: Home, exact: true },
-  { href: "/events", label: "Events", icon: CalendarDays },
-  { href: "/dashboard", label: "Dashboard", icon: Ticket },
-  { href: "/vendors", label: "Brands", icon: Store },
+  { href: "/schedule", label: "Schedule", icon: CalendarDays },
+  { href: "/map", label: "Map", icon: Map },
+  { href: "/tickets", label: "Tickets", icon: Ticket },
 ];
 
 /** Mobile-only bottom navigation for the customer experience. Hidden on >=sm (header serves there). */

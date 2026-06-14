@@ -1,0 +1,117 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { icsHref } from "@/lib/ics";
+
+/**
+ * Wallet flip card (delight.md §4). Front = QR + essentials; back = details, add-to-calendar,
+ * share, terms. Flips on tap/Enter (3D rotateY); reduced-motion = crossfade. Both faces stay in
+ * the DOM (a11y), the hidden one is `aria-hidden`. QR has explicit dims (no CLS — design-debt D20).
+ */
+
+export interface TicketCardData {
+  ticketId: string;
+  orderId: string;
+  eventName: string;
+  typeName: string;
+  startsAtIso: string;
+  location: string | null;
+  admitCount: number;
+  status: string; // VALID | CHECKED_IN | ...
+  qr: string; // data URL
+  eventUrl?: string;
+  holderPhone?: string;
+}
+
+const QR = 96;
+
+export function TicketCard({ d }: { d: TicketCardData }) {
+  const [flipped, setFlipped] = useState(false);
+  const [reduced, setReduced] = useState(false);
+  const [hint, setHint] = useState(false);
+
+  useEffect(() => {
+    setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    if (!sessionStorage.getItem("ticketHint")) setHint(true);
+  }, []);
+
+  const flip = () => {
+    setFlipped((f) => !f);
+    if (hint) { setHint(false); sessionStorage.setItem("ticketHint", "1"); }
+  };
+
+  const used = d.status === "CHECKED_IN";
+  const start = new Date(d.startsAtIso);
+  const dateLine = start.toLocaleString("en-IN", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+
+  const ics = icsHref({ uid: d.ticketId, title: d.eventName, start, location: d.location ?? undefined, url: d.eventUrl, description: `Your ${d.typeName} ticket — admits ${d.admitCount}.` });
+
+  const share = async () => {
+    const text = `I'm going to ${d.eventName} — ${dateLine}.`;
+    try {
+      if (navigator.share) await navigator.share({ title: d.eventName, text, url: d.eventUrl });
+      else if (navigator.clipboard) await navigator.clipboard.writeText(`${text} ${d.eventUrl ?? ""}`.trim());
+    } catch { /* user cancelled — no-op */ }
+  };
+
+  const faceBase = "absolute inset-0 flex gap-[var(--space-xl)] p-[var(--space-xl)]";
+  const t = reduced ? "opacity .15s ease" : "transform .6s var(--ease-swift, cubic-bezier(.4,0,.2,1))";
+
+  return (
+    <div style={{ perspective: 1200 }}>
+      <button
+        type="button"
+        onClick={flip}
+        aria-pressed={flipped}
+        aria-label={flipped ? "Show QR code" : "Show ticket details"}
+        data-cursor
+        className="relative block w-full text-left"
+        style={{ minHeight: QR + 48 }}
+      >
+        <div
+          className="relative h-full w-full"
+          style={{ transformStyle: reduced ? undefined : "preserve-3d", transition: t, transform: reduced ? undefined : `rotateY(${flipped ? 180 : 0}deg)` }}
+        >
+          {/* FRONT — QR + essentials */}
+          <div
+            aria-hidden={flipped}
+            className={`gama-1 bg-1 paint relative items-center overflow-hidden rounded-[var(--radius-lg)] ${faceBase}`}
+            style={{ backfaceVisibility: "hidden", position: "relative", opacity: reduced && flipped ? 0 : 1 }}
+          >
+            <div className="min-w-0 flex-1">
+              <p className="f-exat f-h42">{d.eventName}</p>
+              <p className="f-paragraph-small mt-[var(--space-xs)] opacity-70">{d.typeName} · {dateLine}</p>
+              <div className="mt-[var(--space-md)] flex flex-wrap items-center gap-[var(--space-md)]">
+                <span className={used ? "badge-rpa badge-rpa--muted" : "badge-rpa"}>{used ? "Checked in" : "Valid"}</span>
+                {d.admitCount > 1 && <span className="badge-rpa">Admits {d.admitCount}</span>}
+              </div>
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={d.qr} alt="Ticket QR" width={QR} height={QR} className="shrink-0 rounded-lg bg-white p-1.5" style={{ width: QR, height: QR }} />
+            <span aria-hidden className="absolute bottom-[var(--space-sm)] right-[var(--space-md)] opacity-50">⟲</span>
+            {hint && <span className="kicker absolute bottom-[var(--space-sm)] left-[var(--space-md)] opacity-60">Tap for details</span>}
+          </div>
+
+          {/* BACK — details + actions */}
+          <div
+            aria-hidden={!flipped}
+            className={`surface-2 paint flex-col justify-between rounded-[var(--radius-lg)] ${faceBase}`}
+            style={{ backfaceVisibility: "hidden", transform: reduced ? undefined : "rotateY(180deg)", position: "absolute", opacity: reduced ? (flipped ? 1 : 0) : 1, pointerEvents: reduced && !flipped ? "none" : undefined }}
+          >
+            <div className="space-y-[2px]">
+              <p className="kicker opacity-70">Order #{d.orderId.slice(0, 8)}</p>
+              {d.holderPhone && <p className="f-paragraph-small opacity-80">Holder {d.holderPhone}</p>}
+              {d.location && <p className="f-paragraph-small opacity-80">{d.location}</p>}
+              <p className="f-paragraph-small opacity-60">Gates open in the late afternoon — show this QR at entry.</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-[var(--space-lg)]" onClick={(e) => e.stopPropagation()}>
+              <a href={ics} download={`${d.eventName.replace(/\s+/g, "-").toLowerCase()}.ics`} className="f-paragraph-small f-bold t-upper link-underline" style={{ letterSpacing: "0.06em" }}>Add to calendar</a>
+              <button type="button" onClick={share} className="f-paragraph-small f-bold t-upper link-underline" style={{ letterSpacing: "0.06em" }}>Share</button>
+            </div>
+            <p className="f-paragraph-small opacity-50">All sales final.</p>
+          </div>
+        </div>
+      </button>
+    </div>
+  );
+}

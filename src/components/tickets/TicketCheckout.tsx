@@ -97,7 +97,7 @@ export function TicketCheckout({ eventId, ticketTypes }: { eventId: string; tick
         razorpayOrderId: json.data.razorpayOrderId,
         amountPaise: json.data.amountPaise,
         description: "Event tickets",
-        onSuccess: () => router.push(`/tickets?paid=${json.data.orderId}`),
+        onSuccess: () => router.push(`/tickets?reveal=${json.data.orderId}`),
         onDismiss: () => setBusy(false),
       });
     } catch (e) {

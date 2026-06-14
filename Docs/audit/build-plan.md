@@ -508,8 +508,25 @@ owner walks the designer once and signs off in the session log.
       celebration → R3.4 (wallet/reveal); editorial food/workshop sections need content models;
       LCP/Lighthouse = staging (nonce-CSP forces dynamic, same as R3.2). Verify: 60f/274t green;
       build OK; event page 200 w/ CTA+trust+policies; OTP→pay path needs Firebase+handset (staging).
-- [ ] **R3.4 Wallet + profile + tab bar** (16h): 4-tab IA (D20, D29), flip-card structure,
-      share/download, offline precache. Verify: e2e flip+share; offline render.
+- [x] **R3.4 Wallet + profile + tab bar** (16h) ✓ — **Festival companion, in priority order.**
+      (1) **Success celebration** (delight §1+§3): `TicketReveal` — navy takeover (`reveal-wipe`),
+      "You're in." headline, **24-particle canvas confetti** burst + haptic, plays **once per order**
+      (`sessionStorage reveal:<id>`), **reduced-motion/low-memory → instant, no confetti**, tap-to-
+      skip. Renders **only when the order is truly PAID** (the ticket exists) — never fakes
+      confirmation; webhook-pending still shows the confirming + 5s auto-refresh state. R3.3 success
+      now routes `?reveal=`. (2) **Wallet** moved to **`/tickets`** (blueprint §2; `/dashboard`
+      redirects there). (3) **QR / flip card** (`TicketCard`, delight §4): 3D `rotateY` flip on
+      tap/Enter (reduced-motion → crossfade), front = QR (**explicit 96px, no CLS — D20**) +
+      essentials + ADMIT-N, back = order id / holder / gate + actions; a11y `aria-pressed`, both
+      faces in DOM, hidden face `aria-hidden`; first-visit "Tap for details" hint. (4) **Add to
+      calendar**: pure `lib/ics.ts` (RFC-5545 VEVENT, CRLF, escaping, +4h default) + 5 tests →
+      `<a download>` .ics. (5) **4-tab IA** (D29): Home · Schedule · Map · Tickets; **share** via Web
+      Share (text+url). Plus a lightweight **`/profile`** (phone read-only + name/email form for
+      receipts + sign-out — *not* a SaaS console) and login now honours a safe `?next`. **Flagged
+      deferred:** shareable **image art** (delight §2 — needs a satori/Cloudinary spike + dep);
+      **offline precache** (sw.js wallet caching → PWA/R7); `/schedule` is a temporary bridge to the
+      event schedule until R3.6. Verify: 61f/279t green; build OK; routes 200; wallet session-gated
+      → `/login?next=` (authenticated flip/reveal = staging). 0err/10warn.
 - [ ] **R3.5 Public/customer map** (14h): map-system §11b lens (zones, anchors, brand sheet,
       category chips, search, navigate-to) replacing demo statuses (D2).
       Verify: `grep assignDemoStatuses src` → dev fixtures only; axe pass.
@@ -627,3 +644,4 @@ pages · axe pass.
 | 2026-06-14 | build session 6 (cont.) | R2.5.17 (perf hardening, owner-mandated) | done; spatial-grid scoring (O(n²)→~linear, 70ms→15ms @500, proven identical) + React.memo ElementNode (ref-stable handlers) + throughput wired to real ticket totals; stress-fixture; performance-audit-r2.5.17.md; **perf 60→~80** | 60f/274t green; build OK; both designers 200 |
 | 2026-06-14 | build session 6 (cont.) | R3.2 (landing rebuild) | done; D24 hero art (branded shape, not vendor logo) + D25 real-count binding & cut all "80+" claims + proof band (real counts) + D30 mobile-3-rows; ISR declared but **flagged blocked by nonce-CSP headers() → route stays dynamic**; data-cache + dropped priority img carry LCP | 60f/274t green; build OK; landing 200, claims grep clean |
 | 2026-06-14 | build session 6 (cont.) | R3.3 (event + checkout) | done; **fixed cart-losing login redirect → inline OTP (usePhoneOtp, shared w/ PhoneLogin)** resumes payment with cart intact; scarcity + per-type sold-out + trust strip + recoverable errors; event page rebuilt (above-fold CTA/countdown/availability, brands, venue, policies, final CTA, sticky mobile bar); checkout-audit.md; payment flow untouched; **flagged:** success celebration→R3.4, LCP=staging | 60f/274t green; build OK; event 200 |
+| 2026-06-14 | build session 6 (cont.) | R3.4 (wallet + profile + tabs) | done; success reveal (confetti, once/order, reduced-motion, never-faked) + wallet→/tickets + TicketCard flip (QR no-CLS, a11y) + ics.ts add-to-calendar (+tests) + Web-Share + 4-tab IA + lightweight /profile + login ?next; **deferred:** share image art (satori spike), offline precache (PWA/R7), /schedule bridge until R3.6 | 61f/279t green; build OK; routes 200 |

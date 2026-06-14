@@ -134,7 +134,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
 
       {/* ===== SCHEDULE ===== */}
       {event.schedule.length > 0 && (
-        <section className="paint py-[var(--space-5xl)]">
+        <section id="schedule" className="paint py-[var(--space-5xl)]" style={{ scrollMarginTop: "var(--space-xl)" }}>
           <div className="wrapper max-w-[62rem]">
             <h2 className="f-exat f-h60">What&apos;s happening</h2>
             <div className="mt-[var(--space-2xl)] space-y-[var(--space-2xl)]">

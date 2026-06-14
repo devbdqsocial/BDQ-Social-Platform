@@ -511,6 +511,16 @@
     to   { transform: translate3d(-50%, 0, 0); }
   }
 
+  /* Ticket reveal (delight §1): navy takeover wipes up, headline rises. */
+  @keyframes reveal-wipe {
+    from { clip-path: inset(100% 0 0 0); }
+    to   { clip-path: inset(0 0 0 0); }
+  }
+  @keyframes reveal-rise {
+    from { opacity: 0; transform: translateY(24px) rotateX(8deg); }
+    to   { opacity: 1; transform: translateY(0) rotateX(0); }
+  }
+
   /* RPA animated link underline: wipes in from the left on hover/focus. */
   .link-underline {
     background-image: linear-gradient(currentColor, currentColor);

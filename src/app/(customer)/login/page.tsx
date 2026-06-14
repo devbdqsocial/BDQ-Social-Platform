@@ -5,7 +5,12 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: "Sign in" };
 
-export default function CustomerLoginPage() {
+// Only same-site relative paths are honoured as the post-login target (no open redirect).
+const safeNext = (n?: string) => (n && n.startsWith("/") && !n.startsWith("//") ? n : "/dashboard");
+
+export default async function CustomerLoginPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+  const { next } = await searchParams;
+  const redirectTo = safeNext(next);
   return (
     <section className="grid min-h-[100svh] lg:grid-cols-2">
       {/* left — big Exat headline on navy */}
@@ -22,7 +27,7 @@ export default function CustomerLoginPage() {
             Sign in with your phone number to book tickets and find them again later.
           </p>
           <div className="mt-[var(--space-2xl)]">
-            <PhoneLogin redirectTo="/dashboard" />
+            <PhoneLogin redirectTo={redirectTo} />
           </div>
           <p className="f-paragraph-small mt-[var(--space-lg)] opacity-70">
             We&apos;ll text you a one-time code. No passwords to remember.
