@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { payStallAction } from "@/app/vendor/(app)/onboarding/actions";
 import { openCheckout } from "@/lib/razorpay-checkout";
-import { Button } from "@/components/ui/button";
 import { formatPaise } from "@/lib/utils";
 
 export function PayStep({ bookingId, amountPaise }: { bookingId: string; amountPaise: number }) {
@@ -24,7 +23,7 @@ export function PayStep({ bookingId, amountPaise }: { bookingId: string; amountP
         amountPaise: r.amountPaise ?? 0,
         description: "Stall fee",
         onSuccess: () => {
-          router.push("/vendor/dashboard");
+          router.push("/vendor/home");
           router.refresh();
         },
         onDismiss: () => setBusy(false),
@@ -36,10 +35,12 @@ export function PayStep({ bookingId, amountPaise }: { bookingId: string; amountP
   };
 
   return (
-    <div className="space-y-3">
-      <Button disabled={busy} onClick={pay}>{busy ? "Starting…" : `Pay ${formatPaise(amountPaise)} & confirm`}</Button>
-      {err && <p className="text-sm text-destructive">{err}</p>}
-      <p className="text-xs text-muted-foreground">All stall fees are final and non-refundable.</p>
+    <div className="space-y-[var(--space-md)]">
+      <button type="button" disabled={busy} onClick={pay} data-cursor className="btn btn--lg btn--accent">
+        <span className="btn__text">{busy ? "Starting…" : `Pay ${formatPaise(amountPaise)}`}</span>
+      </button>
+      {err && <p className="f-paragraph-small font-bold" style={{ color: "var(--red)" }}>{err}</p>}
+      <p className="f-paragraph-small opacity-60">All stall fees are final and non-refundable.</p>
     </div>
   );
 }

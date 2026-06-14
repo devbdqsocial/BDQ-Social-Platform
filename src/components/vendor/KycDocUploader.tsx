@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { isAllowedImage } from "@/lib/assets";
 import { getKycUploadSignatureAction, saveKycDocAction, deleteKycDocAction } from "@/app/vendor/(app)/profile/actions";
-import { Button } from "@/components/ui/button";
 
 export function KycDocUploader({ docType, label, current }: { docType: string; label: string; current: string | null }) {
   const router = useRouter();
@@ -52,24 +51,29 @@ export function KycDocUploader({ docType, label, current }: { docType: string; l
     router.refresh();
   };
 
+  const pill = "f-paragraph-small rounded-full border px-[var(--space-md)] py-[var(--space-xs)] font-bold transition-colors disabled:opacity-50";
+  const pillStyle = { borderColor: "color-mix(in srgb, currentColor 35%, transparent)" } as const;
   return (
-    <div className="flex items-center justify-between gap-3 rounded-md border border-border p-3">
+    <div
+      className="flex items-center justify-between gap-[var(--space-md)] rounded-[var(--radius-md)] p-[var(--space-md)]"
+      style={{ border: "1px solid color-mix(in srgb, currentColor 16%, transparent)" }}
+    >
       <div className="min-w-0">
-        <p className="text-sm font-medium">{label}</p>
+        <p className="f-paragraph-small font-bold">{label}</p>
         {current ? (
-          <a href={current} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline">View uploaded</a>
+          <a href={current} target="_blank" rel="noreferrer" className="f-paragraph-small font-bold underline underline-offset-2" style={{ color: "var(--light-blue)" }}>View uploaded</a>
         ) : (
-          <p className="text-xs text-muted-foreground">Not uploaded</p>
+          <p className="f-paragraph-small opacity-60">Not uploaded</p>
         )}
-        {err && <p className="text-xs text-destructive">{err}</p>}
+        {err && <p className="f-paragraph-small font-bold" style={{ color: "var(--red)" }}>{err}</p>}
       </div>
-      <div className="flex shrink-0 gap-2">
+      <div className="flex shrink-0 gap-[var(--space-sm)]">
         {current && (
-          <Button type="button" variant="ghost" size="sm" onClick={onDelete}>Remove</Button>
+          <button type="button" onClick={onDelete} className="f-paragraph-small rounded-full px-[var(--space-md)] py-[var(--space-xs)] font-bold opacity-70 transition-opacity hover:opacity-100">Remove</button>
         )}
-        <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => fileRef.current?.click()}>
+        <button type="button" disabled={busy} onClick={() => fileRef.current?.click()} className={pill} style={pillStyle}>
           {busy ? "Uploading…" : current ? "Replace" : "Upload"}
-        </Button>
+        </button>
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPick} />
       </div>
     </div>

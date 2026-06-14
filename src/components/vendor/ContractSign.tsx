@@ -5,8 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { signContractAction } from "@/app/vendor/(app)/onboarding/actions";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { RpaInput, RpaSubmit } from "@/components/vendor/rpa-fields";
 
 export function ContractSign() {
   const router = useRouter();
@@ -28,26 +27,27 @@ export function ContractSign() {
     }
   };
 
+  const lnk = "font-bold underline underline-offset-2";
   return (
-    <form onSubmit={submit} className="max-w-xl space-y-4">
-      <p className="text-sm text-muted-foreground">
+    <form onSubmit={submit} className="max-w-xl space-y-[var(--space-lg)]">
+      <p className="f-paragraph-small opacity-80 text-pretty">
         Read the full{" "}
-        <Link href="/vendor-agreement" target="_blank" className="text-primary underline">Vendor Participation Agreement</Link>{" "}
+        <Link href="/vendor-agreement" target="_blank" className={lnk}>Vendor Participation Agreement</Link>{" "}
         (also the{" "}
-        <Link href="/vendor-rules" target="_blank" className="text-primary underline">Event Rules</Link>,{" "}
-        <Link href="/vendor-booking-policy" target="_blank" className="text-primary underline">Booking Policy</Link>, and{" "}
-        <Link href="/vendor-data-policy" target="_blank" className="text-primary underline">Data Policy</Link>), then sign below.
+        <Link href="/vendor-rules" target="_blank" className={lnk}>Event Rules</Link>,{" "}
+        <Link href="/vendor-booking-policy" target="_blank" className={lnk}>Booking Policy</Link>, and{" "}
+        <Link href="/vendor-data-policy" target="_blank" className={lnk}>Data Policy</Link>), then sign below.
         You&apos;ll get a downloadable signed PDF.
       </p>
-      <label className="block text-sm font-medium">
-        Type your full legal name
-        <Input name="signerName" required minLength={2} className="mt-1.5" placeholder="As you would sign" />
+      <label className="block space-y-[var(--space-sm)]">
+        <span className="f-paragraph-small block font-bold">Type your full legal name</span>
+        <RpaInput name="signerName" required minLength={2} placeholder="As you would sign" />
       </label>
-      <label className="flex items-start gap-2 text-sm">
-        <input type="checkbox" name="agree" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-1" />
+      <label className="f-paragraph-small flex items-start gap-[var(--space-sm)]">
+        <input type="checkbox" name="agree" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-1 accent-[var(--light-blue)]" />
         I have read and agree to the Vendor Participation Agreement and the linked policies, and I understand all stall fees are final and non-refundable.
       </label>
-      <Button type="submit" disabled={!agree || busy}>{busy ? "Signing…" : "Sign agreement"}</Button>
+      <RpaSubmit lg disabled={!agree || busy}>{busy ? "Signing…" : "Sign agreement"}</RpaSubmit>
     </form>
   );
 }

@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { saveProfileAction } from "@/app/vendor/(app)/profile/actions";
 import { AssetUploader } from "@/components/vendor/AssetUploader";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { RpaField, RpaInput, RpaTextarea, RpaSelect, RpaSubmit } from "@/components/vendor/rpa-fields";
 import { PRODUCT_CATEGORIES } from "@/server/schemas";
 
 export type BrandProfile = {
@@ -22,18 +21,6 @@ export type BrandProfile = {
   city: string | null;
   assets: { id: string; url: string; kind: string }[];
 };
-
-const fieldCls = "h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring";
-const areaCls = "w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring";
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block text-sm font-medium">
-      {label}
-      <div className="mt-1.5">{children}</div>
-    </label>
-  );
-}
 
 export function BrandForm({ profile }: { profile: BrandProfile }) {
   const router = useRouter();
@@ -55,38 +42,38 @@ export function BrandForm({ profile }: { profile: BrandProfile }) {
   };
 
   return (
-    <form onSubmit={submit} className="space-y-5">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Brand name *"><Input name="brandName" required defaultValue={brandDefault} placeholder="Your public brand" /></Field>
-        <Field label="Registered / legal name"><Input name="registeredName" defaultValue={profile.registeredName ?? ""} placeholder="As on PAN / GST" /></Field>
-        <Field label="Product category *">
-          <select name="productCategory" required defaultValue={profile.productCategory ?? ""} className={fieldCls}>
+    <form onSubmit={submit} className="space-y-[var(--space-xl)]">
+      <div className="grid gap-[var(--space-lg)] sm:grid-cols-2">
+        <RpaField label="Brand name *"><RpaInput name="brandName" required defaultValue={brandDefault} placeholder="Your public brand" /></RpaField>
+        <RpaField label="Registered / legal name"><RpaInput name="registeredName" defaultValue={profile.registeredName ?? ""} placeholder="As on PAN / GST" /></RpaField>
+        <RpaField label="Product category *">
+          <RpaSelect name="productCategory" required defaultValue={profile.productCategory ?? ""}>
             <option value="">Select…</option>
             {PRODUCT_CATEGORIES.map((c) => (
               <option key={c} value={c}>{c}</option>
             ))}
-          </select>
-        </Field>
-        <Field label="Contact person"><Input name="contactPerson" defaultValue={profile.contactPerson ?? ""} /></Field>
-        <Field label="WhatsApp"><Input name="whatsapp" defaultValue={profile.whatsapp ?? ""} placeholder="+91 98765 43210" /></Field>
-        <Field label="City / area"><Input name="city" defaultValue={profile.city ?? ""} placeholder="Vadodara" /></Field>
-        <Field label="Website"><Input name="website" defaultValue={profile.website ?? ""} placeholder="https://" /></Field>
-        <Field label="Instagram"><Input name="instagram" defaultValue={profile.instagram ?? ""} placeholder="@yourhandle" /></Field>
+          </RpaSelect>
+        </RpaField>
+        <RpaField label="Contact person"><RpaInput name="contactPerson" defaultValue={profile.contactPerson ?? ""} /></RpaField>
+        <RpaField label="WhatsApp"><RpaInput name="whatsapp" defaultValue={profile.whatsapp ?? ""} placeholder="+91 98765 43210" /></RpaField>
+        <RpaField label="City / area"><RpaInput name="city" defaultValue={profile.city ?? ""} placeholder="Vadodara" /></RpaField>
+        <RpaField label="Website"><RpaInput name="website" defaultValue={profile.website ?? ""} placeholder="https://" /></RpaField>
+        <RpaField label="Instagram"><RpaInput name="instagram" defaultValue={profile.instagram ?? ""} placeholder="@yourhandle" /></RpaField>
       </div>
-      <Field label="What do you sell? *">
-        <textarea name="products" required rows={2} defaultValue={profile.products ?? ""} className={areaCls} placeholder="e.g. handmade silver jewellery, kurtis, candles" />
-      </Field>
-      <Field label="Brand description">
-        <textarea name="description" rows={3} defaultValue={profile.description ?? ""} className={areaCls} placeholder="A line or two about your brand" />
-      </Field>
+      <RpaField label="What do you sell? *">
+        <RpaTextarea name="products" required rows={2} defaultValue={profile.products ?? ""} placeholder="e.g. handmade silver jewellery, kurtis, candles" />
+      </RpaField>
+      <RpaField label="Brand description">
+        <RpaTextarea name="description" rows={3} defaultValue={profile.description ?? ""} placeholder="A line or two about your brand" />
+      </RpaField>
 
-      <div className="grid gap-6 border-t border-border pt-5 sm:grid-cols-3">
+      <div className="grid gap-[var(--space-xl)] pt-[var(--space-lg)] sm:grid-cols-3" style={{ borderTop: "1px solid color-mix(in srgb, currentColor 16%, transparent)" }}>
         <AssetUploader kind="LOGO" label="Logo" assets={profile.assets} />
         <AssetUploader kind="BANNER" label="Banner" assets={profile.assets} />
         <AssetUploader kind="PRODUCT" label="Product photos" assets={profile.assets} />
       </div>
 
-      <Button type="submit" disabled={busy}>{busy ? "Saving…" : "Save & continue"}</Button>
+      <RpaSubmit lg disabled={busy}>{busy ? "Saving…" : "Save & continue"}</RpaSubmit>
     </form>
   );
 }

@@ -10,7 +10,6 @@ import {
   getUploadSignatureAction,
   saveAssetAction,
 } from "@/app/vendor/(app)/profile/actions";
-import { Button } from "@/components/ui/button";
 
 interface Asset {
   id: string;
@@ -73,26 +72,33 @@ export function AssetUploader({
   };
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-3">
-        <h3 className="text-sm font-medium">{label}</h3>
-        <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => fileRef.current?.click()}>
+    <div className="space-y-[var(--space-md)]">
+      <div className="flex items-center gap-[var(--space-md)]">
+        <h3 className="f-paragraph-small font-bold">{label}</h3>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => fileRef.current?.click()}
+          className="f-paragraph-small rounded-full border px-[var(--space-md)] py-[var(--space-xs)] font-bold transition-colors disabled:opacity-50"
+          style={{ borderColor: "color-mix(in srgb, currentColor 35%, transparent)" }}
+        >
           {busy ? "Uploading…" : "Upload"}
-        </Button>
+        </button>
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPick} />
       </div>
-      {err && <p className="text-sm text-destructive">{err}</p>}
+      {err && <p className="f-paragraph-small font-bold" style={{ color: "var(--red)" }}>{err}</p>}
       {items.length > 0 && (
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-[var(--space-md)]">
           {items.map((a) => (
             <div key={a.id} className="relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={cld(a.url, 160)} alt={`${a.kind.toLowerCase()} asset preview`} className="size-20 rounded-md border border-border object-cover" />
+              <img src={cld(a.url, 160)} alt={`${a.kind.toLowerCase()} asset preview`} className="size-20 rounded-[var(--radius-md)] object-cover" style={{ border: "1px solid color-mix(in srgb, currentColor 20%, transparent)" }} />
               <button
                 type="button"
                 aria-label="Remove"
                 onClick={() => onDelete(a.id)}
-                className="absolute -right-2 -top-2 size-5 rounded-full bg-destructive text-xs text-destructive-foreground"
+                className="absolute -right-2 -top-2 grid size-5 place-items-center rounded-full text-xs text-white"
+                style={{ background: "var(--red)" }}
               >
                 ×
               </button>
