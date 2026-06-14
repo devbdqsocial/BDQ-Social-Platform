@@ -225,6 +225,7 @@ model Event {
   expenseSchedules ExpenseSchedule[]
   galleryPhotos    GalleryPhoto[]
   offers           Offer[]
+  addOns           StallAddOn[]
   mapId            String?
 
   @@index([status])
@@ -453,6 +454,8 @@ model Payment {
   order        Order?         @relation(fields: [orderId], references: [id])
   bookingId    String?        @unique
   booking      Booking?       @relation(fields: [bookingId], references: [id])
+  addOnOrderId String?            @unique
+  addOnOrder   BookingAddOnOrder? @relation(fields: [addOnOrderId], references: [id])
   gateway      PaymentGateway
   mode         PaymentMode
   gatewayRef   String?        @unique
@@ -584,6 +587,7 @@ model Booking {
   gatewayOrderId  String?        @unique
   payBy           DateTime? // deadline to pay after admin approval (RESERVED→PENDING_PAYMENT window)
   payment         Payment?
+  addOnOrders     BookingAddOnOrder[]
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   // "one active booking per stall" is enforced by a partial unique index (raw SQL migration,
@@ -872,5 +876,62 @@ model Suppression {
   contact   String   @id
   reason    String?
   createdAt DateTime @default(now())
+}
+
+// ── Stall add-ons (R4.2 / vendor-portal §5, admin-portal §6.5) ──────────────────────────────
+// Admin-CRUD extras a BOOKED vendor can order per event (table, chairs, power, signage…).
+// Prices admin-entered, integer paise (locked rules). Stock guarded by conditional UPDATE on
+// `sold` (same oversold pattern as tickets). Orders pay via a separate Razorpay order, fulfilled
+// idempotently by the shared webhook (branch on the BookingAddOnOrder lookup).
+
+enum AddOnOrderStatus {
+  PENDING_PAYMENT
+  PAID
+  CANCELLED
+}
+
+model StallAddOn {
+  id            String   @id @default(cuid())
+  eventId       String
+  event         Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name          String
+  pricePaise    Int
+  maxPerBooking Int      @default(5)
+  stock         Int? // null = unlimited
+  sold          Int      @default(0)
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  lines         BookingAddOn[]
+
+  @@index([eventId])
+}
+
+model BookingAddOnOrder {
+  id             String           @id @default(cuid())
+  bookingId      String
+  booking        Booking          @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  status         AddOnOrderStatus @default(PENDING_PAYMENT)
+  gatewayOrderId String?          @unique
+  totalPaise     Int
+  payment        Payment?
+  lines          BookingAddOn[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([bookingId])
+}
+
+model BookingAddOn {
+  id         String            @id @default(cuid())
+  orderId    String
+  order      BookingAddOnOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  addOnId    String
+  addOn      StallAddOn        @relation(fields: [addOnId], references: [id])
+  qty        Int
+  pricePaise Int // snapshot at order time (integer paise)
+
+  @@index([orderId])
+  @@index([addOnId])
 }
 

@@ -249,3 +249,21 @@ export type ExpenseInput = z.infer<typeof expenseSchema>;
 export type BudgetInput = z.infer<typeof budgetSchema>;
 export type ExpenseScheduleInput = z.infer<typeof expenseScheduleSchema>;
 export type SettlementInput = z.infer<typeof settlementSchema>;
+
+/** Stall add-ons (R4.2). Price is admin-entered paise; stock null = unlimited. */
+export const createAddOnSchema = z.object({
+  eventId: id,
+  name: z.string().min(1).max(60),
+  pricePaise: paise.refine((n) => n > 0, "Price required"),
+  maxPerBooking: z.coerce.number().int().min(1).max(50).default(5),
+  stock: z.coerce.number().int().nonnegative().nullish(),
+  active: z.boolean().default(true),
+});
+export const updateAddOnSchema = createAddOnSchema.omit({ eventId: true }).extend({ id });
+export const addOnOrderSchema = z.object({
+  bookingId: id,
+  items: z.array(z.object({ addOnId: id, qty: z.number().int().min(1) })).min(1),
+});
+export type CreateAddOnInput = z.infer<typeof createAddOnSchema>;
+export type UpdateAddOnInput = z.infer<typeof updateAddOnSchema>;
+export type AddOnOrderInput = z.infer<typeof addOnOrderSchema>;

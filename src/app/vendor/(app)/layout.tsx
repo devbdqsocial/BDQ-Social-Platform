@@ -9,6 +9,7 @@ import { SignOutButton } from "@/components/auth/SignOutButton";
 const NAV = [
   { href: "/vendor/home", label: "Home" },
   { href: "/vendor/events", label: "Book a stall" },
+  { href: "/vendor/add-ons", label: "Add-ons" },
   { href: "/vendor/leads", label: "Leads" },
   { href: "/vendor/profile", label: "Brand profile" },
   { href: "/vendor/documents", label: "Documents" },

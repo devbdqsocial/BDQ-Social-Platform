@@ -239,6 +239,9 @@ export default async function VendorHome({ searchParams }: { searchParams: Promi
               <div className="space-y-[var(--space-md)]">
                 <p className="f-h32 f-exat">Stall {label} is yours.</p>
                 <p className="f-paragraph opacity-80">See you at the market. We&apos;ll be in touch with prep details closer to the date.</p>
+                <Link href="/vendor/add-ons" className="link--split f-paragraph font-bold" style={{ color: "var(--light-blue)" }}>
+                  Order tables, chairs &amp; power <span className="arrow">→</span>
+                </Link>
               </div>
             ) : rejected ? (
               <div className="space-y-[var(--space-md)]">

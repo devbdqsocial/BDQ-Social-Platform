@@ -47,6 +47,7 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
         </div>
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline" size="sm"><Link href={`/admin/events/${event.id}/map`}>Edit layout</Link></Button>
+          <Button asChild variant="outline" size="sm"><Link href={`/admin/events/${event.id}/add-ons`}>Stall add-ons</Link></Button>
           <Button asChild variant="ghost" size="sm"><Link href={`/events/${event.slug}`}>View public page</Link></Button>
           {!isLive(event.status) && (
             <ActionForm action={publishEventAction} success="Event published">

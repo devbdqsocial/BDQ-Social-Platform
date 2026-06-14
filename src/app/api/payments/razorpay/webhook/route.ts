@@ -3,6 +3,7 @@ import { verifyWebhookSignature } from "@/lib/razorpay-signature";
 import { db } from "@/server/db";
 import { fulfillOrder } from "@/server/tickets/service";
 import { fulfillStallBooking } from "@/server/bookings/payment";
+import { fulfillAddOnOrder } from "@/server/addons/service";
 import { logError } from "@/lib/logger";
 import { env } from "@/lib/env";
 
@@ -47,10 +48,15 @@ export async function POST(req: Request) {
     const paidAmountPaise = typeof payment?.amount === "number" ? payment.amount : null;
     if (gatewayOrderId && paymentId) {
       try {
-        // dispatch: a Razorpay order maps to either a ticket Order or a stall Booking
+        // dispatch: a Razorpay order maps to a ticket Order, a stall add-on order, or a stall Booking
         const order = await db.order.findUnique({ where: { gatewayOrderId }, select: { id: true } });
-        if (order) await fulfillOrder(gatewayOrderId, paymentId, fees, paidAmountPaise);
-        else await fulfillStallBooking(gatewayOrderId, paymentId, fees, paidAmountPaise);
+        if (order) {
+          await fulfillOrder(gatewayOrderId, paymentId, fees, paidAmountPaise);
+        } else {
+          const addOnOrder = await db.bookingAddOnOrder.findUnique({ where: { gatewayOrderId }, select: { id: true } });
+          if (addOnOrder) await fulfillAddOnOrder(gatewayOrderId, paymentId, fees, paidAmountPaise);
+          else await fulfillStallBooking(gatewayOrderId, paymentId, fees, paidAmountPaise);
+        }
       } catch (e) {
         // Always 2xx so Razorpay does not retry; the reconcile cron is the safety net.
         logError("webhook.razorpay.fulfil", e, { gatewayOrderId, paymentId });
