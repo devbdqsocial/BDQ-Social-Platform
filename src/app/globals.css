@@ -536,6 +536,15 @@
     .coming-float { animation: coming-float 9s ease-in-out infinite; }
   }
 
+  /* Vendor status spine (vendor-portal.md §3): the current node's lavender dot pulses. */
+  @keyframes vendor-node-pulse {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.15); }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .vendor-node-pulse { animation: vendor-node-pulse 1.2s ease-in-out infinite; }
+  }
+
   /* RPA animated link underline: wipes in from the left on hover/focus. */
   .link-underline {
     background-image: linear-gradient(currentColor, currentColor);

@@ -63,7 +63,7 @@ export function VendorStallReserve({ eventId, stalls, details = {} }: { eventId:
     try {
       const r = await reserveStallAction(eventId, idByLabel[sel]);
       if (!r.ok) throw new Error(r.error ?? "Could not reserve");
-      router.push("/vendor/onboarding?step=contract");
+      router.push("/vendor/home?step=contract");
       router.refresh();
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Could not reserve");
