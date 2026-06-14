@@ -527,9 +527,22 @@ owner walks the designer once and signs off in the session log.
       **offline precache** (sw.js wallet caching → PWA/R7); `/schedule` is a temporary bridge to the
       event schedule until R3.6. Verify: 61f/279t green; build OK; routes 200; wallet session-gated
       → `/login?next=` (authenticated flip/reveal = staging). 0err/10warn.
-- [ ] **R3.5 Public/customer map** (14h): map-system §11b lens (zones, anchors, brand sheet,
-      category chips, search, navigate-to) replacing demo statuses (D2).
-      Verify: `grep assignDemoStatuses src` → dev fixtures only; axe pass.
+- [x] **R3.5 Public/customer map** (14h) ✓ — reframed as a **festival companion guide**, not a GIS
+      tool (per owner steer). **Killed D2:** new `server/map/guide.ts` `getEventGuide()` reads the
+      **real** active published event — its layout + the **brands on BOOKED stalls** (joined through
+      `Booking → VendorProfile`), zones (via `upgradeLayout`+`zoneOf` for the locator), and
+      facilities — **no `assignDemoStatuses`** (now only its dev-fixture file + test; grep clean).
+      `EventGuide` is **discovery-first** (Airbnb-Explore feel): **category chips** (Everything /
+      Food & drink / Shopping / Experience via `bucketOf` + 3 tests), **search** (brands/areas),
+      **brand cards grouped by zone** with a locator ("In Luxury Lane"), a **brand bottom sheet**
+      (category · zone · description · View brand →), a **facilities** quick-find, a **schedule**
+      link, and the real layout via `MapCanvas` (read-only "take a look around", booked stalls
+      relabelled to brand names). Empty state: "the guide goes live closer to the event." No admin
+      concepts / layers / scoring / heatmaps / ops / technical terms. Removed the superseded
+      `MapPreview`. **Flagged:** brand-card **logos** (didn't query assets), interactive
+      tap-brand→map-pulse (map is read-only context; sheet gives the textual locator), offer badge
+      (needs §3.6 Offers), **axe = staging**. Verify: `grep assignDemoStatuses src` → fixtures only
+      ✓; 62f/282t green; build OK; /map 200 with chips+facilities+schedule. 0err/10warn.
 - [ ] **R3.6 Schedule** (8h): now/next via R1.5. Verify: time-mocked now-line test.
 - [ ] **R3.7 Discover + brand detail** (10h). Verify: filter e2e; SEO meta.
 - [ ] **R3.8 Guide + Gallery** (8h, content-gated). Verify: gates behave (≥8 photos, non-empty).
@@ -645,3 +658,4 @@ pages · axe pass.
 | 2026-06-14 | build session 6 (cont.) | R3.2 (landing rebuild) | done; D24 hero art (branded shape, not vendor logo) + D25 real-count binding & cut all "80+" claims + proof band (real counts) + D30 mobile-3-rows; ISR declared but **flagged blocked by nonce-CSP headers() → route stays dynamic**; data-cache + dropped priority img carry LCP | 60f/274t green; build OK; landing 200, claims grep clean |
 | 2026-06-14 | build session 6 (cont.) | R3.3 (event + checkout) | done; **fixed cart-losing login redirect → inline OTP (usePhoneOtp, shared w/ PhoneLogin)** resumes payment with cart intact; scarcity + per-type sold-out + trust strip + recoverable errors; event page rebuilt (above-fold CTA/countdown/availability, brands, venue, policies, final CTA, sticky mobile bar); checkout-audit.md; payment flow untouched; **flagged:** success celebration→R3.4, LCP=staging | 60f/274t green; build OK; event 200 |
 | 2026-06-14 | build session 6 (cont.) | R3.4 (wallet + profile + tabs) | done; success reveal (confetti, once/order, reduced-motion, never-faked) + wallet→/tickets + TicketCard flip (QR no-CLS, a11y) + ics.ts add-to-calendar (+tests) + Web-Share + 4-tab IA + lightweight /profile + login ?next; **deferred:** share image art (satori spike), offline precache (PWA/R7), /schedule bridge until R3.6 | 61f/279t green; build OK; routes 200 |
+| 2026-06-14 | build session 6 (cont.) | R3.5 (customer map → guide) | done; **killed D2** — getEventGuide() real data (booked-stall brands, zones, facilities), discovery-first EventGuide (chips/search/brand cards/sheet/facilities/schedule + read-only MapCanvas); bucketOf +tests; removed superseded MapPreview; **deferred:** logos, tap→map-pulse, offer badge; axe=staging | 62f/282t green; build OK; /map 200; demo grep clean |
