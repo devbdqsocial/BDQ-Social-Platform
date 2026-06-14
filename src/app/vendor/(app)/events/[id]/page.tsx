@@ -10,6 +10,8 @@ import { VendorStallReserve, type StallDetail } from "@/components/vendor/Vendor
 
 export const metadata: Metadata = { title: "Pick a stall" };
 
+const TIER_LABEL: Record<string, string> = { PREMIUM: "Prime spot", STRONG: "Great spot", STANDARD: "Good spot", VALUE: "Value spot" };
+
 export default async function VendorEventStallsPage({ params }: { params: Promise<{ id: string }> }) {
   await requireVendor();
   const { id } = await params;
@@ -43,24 +45,28 @@ export default async function VendorEventStallsPage({ params }: { params: Promis
         zone: v2.zones.length ? zoneOf(el, v2.zones)?.name ?? null : null,
         bullets: sc ? describeStall(sc) : [],
         sizeFt: `${el.widthFt} × ${el.heightFt} ft (${Math.round(el.widthFt * el.heightFt)} sq ft)`,
+        quality: sc ? `${TIER_LABEL[sc.tier] ?? sc.tier} · ${sc.total}/100` : null,
       };
     }
   }
 
   return (
-    <div className="space-y-4">
-      <header className="flex items-center justify-between gap-3">
+    <div className="space-y-[var(--space-xl)]">
+      <header className="flex items-start justify-between gap-[var(--space-lg)]">
         <div>
-          <h1 className="font-display text-3xl font-bold tracking-tight">Pick your stall · {event.name}</h1>
-          <p className="mt-1 text-sm text-muted-foreground text-pretty">
+          <p className="kicker opacity-60">Book a stall</p>
+          <h1 className="f-exat f-h60 mt-1">Pick your stall · {event.name}</h1>
+          <p className="f-paragraph-small mt-[var(--space-sm)] opacity-75 text-pretty">
             Tap an open stall to reserve it. You&apos;ll sign the agreement next; we verify by call and approve you before payment.
           </p>
         </div>
-        <Link href="/vendor/events" className="shrink-0 text-sm text-muted-foreground hover:text-foreground">← All markets</Link>
+        <Link href="/vendor/events" className="link--split f-paragraph-small shrink-0 font-bold">
+          <span className="arrow">←</span> All markets
+        </Link>
       </header>
 
       {mapStalls.length === 0 ? (
-        <p className="text-sm text-muted-foreground">The event layout for this market isn&apos;t ready yet — check back soon.</p>
+        <p className="f-paragraph-small opacity-70">The event layout for this market isn&apos;t ready yet — check back soon.</p>
       ) : (
         <VendorStallReserve eventId={id} stalls={mapStalls} details={details} />
       )}

@@ -13,18 +13,22 @@ interface Props {
   /** Omit both for a read-only view (public event layout). */
   selected?: Set<string>;
   onSelect?: (label: string) => void;
+  /** When set, animate-zoom to this stall (450ms ease-out, 2×) + a 600ms pulse (map-system §11). */
+  focusLabel?: string | null;
 }
 
 const clampScale = (s: number) => Math.min(6, Math.max(0.4, s));
 
 const NO_SELECTION: Set<string> = new Set();
 
-export default function MapCanvas({ layout, statuses, selected = NO_SELECTION, onSelect }: Props) {
+export default function MapCanvas({ layout, statuses, selected = NO_SELECTION, onSelect, focusLabel }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
   const pinch = useRef(0);
+  const raf = useRef(0);
   const [width, setWidth] = useState(960);
   const [scale, setScale] = useState(1);
+  const [pulse, setPulse] = useState(0);
   const [hover, setHover] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [availableOnly, setAvailableOnly] = useState(false);
@@ -54,6 +58,52 @@ export default function MapCanvas({ layout, statuses, selected = NO_SELECTION, o
     const cy = (hit.yFt + hit.heightFt / 2) * pxPerFt;
     stage.position({ x: width / 2 - cx * s, y: height / 2 - cy * s });
   }, [q, layout.elements, pxPerFt, width, height]);
+
+  // Animate-zoom + pulse to a chosen stall (map-system §11). 450ms ease-out to 2× + centre,
+  // then a 600ms shadow pulse. Reduced-motion → jump straight there, no pulse.
+  useEffect(() => {
+    if (!focusLabel) return;
+    const hit = layout.elements.find((e) => e.kind === "stall" && e.label === focusLabel);
+    const stage = stageRef.current;
+    if (!hit || !stage) return;
+    const s = clampScale(2);
+    const cx = (hit.xFt + hit.widthFt / 2) * pxPerFt;
+    const cy = (hit.yFt + hit.heightFt / 2) * pxPerFt;
+    const toX = width / 2 - cx * s;
+    const toY = height / 2 - cy * s;
+
+    const reduce = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) {
+      setScale(s);
+      stage.position({ x: toX, y: toY });
+      return;
+    }
+
+    const from = { x: stage.x(), y: stage.y(), s: stage.scaleX() || scale };
+    const t0 = performance.now();
+    const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+    const animate = (now: number) => {
+      const tz = Math.min(1, (now - t0) / 450);
+      const k = easeOut(tz);
+      setScale(from.s + (s - from.s) * k);
+      stage.position({ x: from.x + (toX - from.x) * k, y: from.y + (toY - from.y) * k });
+      if (tz < 1) {
+        raf.current = requestAnimationFrame(animate);
+      } else {
+        const p0 = performance.now();
+        const pulseStep = (pn: number) => {
+          const tp = Math.min(1, (pn - p0) / 600);
+          setPulse(Math.sin(tp * Math.PI)); // 0 → 1 → 0
+          if (tp < 1) raf.current = requestAnimationFrame(pulseStep);
+          else setPulse(0);
+        };
+        raf.current = requestAnimationFrame(pulseStep);
+      }
+    };
+    raf.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(raf.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusLabel, layout.elements, pxPerFt, width, height]);
 
   const zoom = (factor: number) => setScale((s) => clampScale(s * factor));
   const reset = () => { setScale(1); stageRef.current?.position({ x: 0, y: 0 }); };
@@ -139,6 +189,7 @@ export default function MapCanvas({ layout, statuses, selected = NO_SELECTION, o
             const c = STALL_STATUS_COLORS[status];
             const clickable = !!onSelect && (status === "AVAILABLE" || status === "SELECTED");
             const match = isMatch(el.label);
+            const focused = pulse > 0 && el.label === focusLabel;
             const dimmed = availableOnly && status !== "AVAILABLE" && status !== "SELECTED";
 
             return (
@@ -156,11 +207,11 @@ export default function MapCanvas({ layout, statuses, selected = NO_SELECTION, o
                   width={w}
                   height={h}
                   fill={c.fill}
-                  stroke={match ? "#D69A22" : c.stroke}
-                  strokeWidth={match ? 3 : status === "SELECTED" ? 2 : 1}
+                  stroke={focused ? "#868EFF" : match ? "#D69A22" : c.stroke}
+                  strokeWidth={focused ? 2 + pulse * 2 : match ? 3 : status === "SELECTED" ? 2 : 1}
                   cornerRadius={3}
-                  shadowColor="#D69A22"
-                  shadowBlur={match ? 18 : status === "SELECTED" ? 14 : 0}
+                  shadowColor={focused ? "#868EFF" : "#D69A22"}
+                  shadowBlur={focused ? 14 + pulse * 24 : match ? 18 : status === "SELECTED" ? 14 : 0}
                 />
                 <Text x={x} y={y + h / 2 - 4} width={w} align="center" text={el.label} fontSize={8} fill={c.text} listening={false} />
               </Group>

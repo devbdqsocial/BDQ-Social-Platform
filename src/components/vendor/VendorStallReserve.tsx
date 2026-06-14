@@ -5,7 +5,6 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { stallsToRenderLayout, type StallLike } from "@/lib/map/normalize";
 import { type StallStatus } from "@/lib/stall-colors";
-import { Button } from "@/components/ui/button";
 import { formatPaise } from "@/lib/utils";
 import { StallLegend } from "@/components/map/StallLegend";
 import { reserveStallAction } from "@/app/vendor/(app)/onboarding/actions";
@@ -13,7 +12,10 @@ import { reserveStallAction } from "@/app/vendor/(app)/onboarding/actions";
 const MapCanvas = dynamic(() => import("@/components/map/MapCanvas"), {
   ssr: false,
   loading: () => (
-    <div className="grid h-96 place-items-center rounded-xl border border-border bg-card text-sm text-muted-foreground">
+    <div
+      className="f-paragraph-small grid h-96 place-items-center rounded-[var(--radius-lg)] opacity-70"
+      style={{ border: "1px solid color-mix(in srgb, currentColor 16%, transparent)" }}
+    >
       Loading event layout…
     </div>
   ),
@@ -31,6 +33,8 @@ export interface StallDetail {
   zone: string | null;
   bullets: string[];
   sizeFt: string;
+  /** Spot-quality label from the score tier, e.g. "Prime spot · 86/100" (stall comparison). */
+  quality?: string | null;
 }
 
 const STATUS_COPY: Record<string, string> = { AVAILABLE: "Available", BOOKED: "Taken", HELD: "On hold", PENDING: "Pending", BLOCKED: "Unavailable" };
@@ -75,47 +79,62 @@ export function VendorStallReserve({ eventId, stalls, details = {} }: { eventId:
   const detail = sel ? details[sel] : null;
   const status = sel ? (statuses[sel] ?? "AVAILABLE") : null;
 
+  const chip = "f-paragraph-small rounded-full px-[var(--space-md)] py-[2px] font-bold";
+  const chipStyle = { border: "1px solid color-mix(in srgb, currentColor 28%, transparent)" } as const;
+
   return (
-    <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
-      <div className="space-y-4">
+    <div className="grid gap-[var(--space-lg)] lg:grid-cols-[1fr_320px]">
+      <div className="space-y-[var(--space-lg)]">
         <StallLegend />
-        <MapCanvas layout={layout} statuses={statuses} selected={selected} onSelect={toggle} />
+        <MapCanvas layout={layout} statuses={statuses} selected={selected} onSelect={toggle} focusLabel={sel ?? null} />
       </div>
 
       {/* Stall sheet (map-system §11) — why-this-stall bullets + size + zone, then Reserve. */}
-      <aside className="rounded-xl border border-border bg-card p-5">
+      <aside
+        className="h-fit rounded-[var(--radius-lg)] p-[var(--space-xl)]"
+        style={{ border: "1px solid color-mix(in srgb, currentColor 16%, transparent)", background: "color-mix(in srgb, currentColor 3%, transparent)" }}
+      >
         {!sel ? (
-          <p className="text-sm text-muted-foreground">Tap an open stall on the map to see why it&apos;s a great spot and reserve it.</p>
+          <p className="f-paragraph-small opacity-70 text-pretty">Tap an open stall on the map to see why it&apos;s a great spot and reserve it.</p>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-[var(--space-lg)]">
             <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-primary px-2.5 py-0.5 text-xs font-semibold text-primary-foreground">{sel}</span>
-                {detail?.typeName && <span className="rounded-full border border-border px-2.5 py-0.5 text-xs">{detail.typeName}</span>}
-                {detail?.zone && <span className="rounded-full border border-border px-2.5 py-0.5 text-xs">{detail.zone}</span>}
+              <div className="flex flex-wrap items-center gap-[var(--space-sm)]">
+                <span className="badge-rpa">{sel}</span>
+                {detail?.typeName && <span className={chip} style={chipStyle}>{detail.typeName}</span>}
+                {detail?.zone && <span className={chip} style={chipStyle}>{detail.zone}</span>}
               </div>
-              {price != null && <p className="mt-2 font-display text-2xl font-bold">{formatPaise(price)}</p>}
-              {detail?.sizeFt && <p className="text-sm text-muted-foreground">{detail.sizeFt}</p>}
+              {detail?.quality && <p className="kicker mt-[var(--space-md)]" style={{ color: "var(--light-blue)" }}>{detail.quality}</p>}
+              {price != null && <p className="f-exat f-h42 mt-[var(--space-xs)]">{formatPaise(price)}</p>}
+              {detail?.sizeFt && <p className="f-paragraph-small opacity-70">{detail.sizeFt}</p>}
             </div>
 
             {detail && detail.bullets.length > 0 && (
               <div>
-                <p className="text-xs font-medium text-muted-foreground">Why this stall</p>
-                <ul className="mt-1.5 space-y-1 text-sm">
+                <p className="kicker opacity-60">Why this stall</p>
+                <ul className="mt-[var(--space-sm)] space-y-1">
                   {detail.bullets.map((b, i) => (
-                    <li key={i} className="flex gap-2"><span aria-hidden className="text-primary">·</span>{b}</li>
+                    <li key={i} className="f-paragraph-small flex gap-[var(--space-sm)]">
+                      <span aria-hidden style={{ color: "var(--light-blue)" }}>·</span>{b}
+                    </li>
                   ))}
                 </ul>
               </div>
             )}
 
-            <p className="text-sm"><span className="text-muted-foreground">Status:</span> {STATUS_COPY[status ?? "AVAILABLE"] ?? status}</p>
+            <p className="f-paragraph-small"><span className="opacity-60">Status: </span>{STATUS_COPY[status ?? "AVAILABLE"] ?? status}</p>
 
-            <Button className="w-full" disabled={busy || status !== "AVAILABLE"} onClick={reserve}>
-              {busy ? "Reserving…" : status === "AVAILABLE" ? `Reserve ${sel}` : "Not available"}
-            </Button>
-            {err && <p className="text-sm text-destructive">{err}</p>}
-            <p className="text-xs text-muted-foreground">
+            <button
+              type="button"
+              disabled={busy || status !== "AVAILABLE"}
+              onClick={reserve}
+              data-cursor
+              className="btn btn--lg btn--accent"
+            >
+              <span className="btn__text">{busy ? "Reserving…" : status === "AVAILABLE" ? `Reserve ${sel}` : "Taken"}</span>
+            </button>
+            {err && <p className="f-paragraph-small font-bold" style={{ color: "var(--red)" }}>{err}</p>}
+            <p className="f-paragraph-small opacity-60 text-pretty">
               Reserving holds this stall for you. You&apos;ll sign the agreement next; payment comes after our team approves you.
             </p>
           </div>
