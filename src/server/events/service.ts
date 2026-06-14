@@ -153,6 +153,7 @@ export function getEventWithStalls(id: string) {
     where: { id },
     include: {
       stalls: { include: { stallType: { select: { priceInPaise: true } } }, orderBy: { label: "asc" } },
+      mapLayout: true,
     },
   });
 }

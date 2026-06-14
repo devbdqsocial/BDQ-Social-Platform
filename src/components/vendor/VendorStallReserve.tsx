@@ -25,8 +25,18 @@ interface StallInput extends StallLike {
   priceInPaise: number | null;
 }
 
+/** "Why this stall" detail for the picker sheet (map-system §11, from R2.5.10 scoring). */
+export interface StallDetail {
+  typeName: string;
+  zone: string | null;
+  bullets: string[];
+  sizeFt: string;
+}
+
+const STATUS_COPY: Record<string, string> = { AVAILABLE: "Available", BOOKED: "Taken", HELD: "On hold", PENDING: "Pending", BLOCKED: "Unavailable" };
+
 /** Approve-before-pay: selecting a stall RESERVES it (no payment) and moves to the agreement step. */
-export function VendorStallReserve({ eventId, stalls }: { eventId: string; stalls: StallInput[] }) {
+export function VendorStallReserve({ eventId, stalls, details = {} }: { eventId: string; stalls: StallInput[]; details?: Record<string, StallDetail> }) {
   const router = useRouter();
   const idByLabel = useMemo(() => Object.fromEntries(stalls.map((s) => [s.label, s.id])), [stalls]);
   const priceByLabel = useMemo(() => Object.fromEntries(stalls.map((s) => [s.label, s.priceInPaise])), [stalls]);
@@ -62,20 +72,55 @@ export function VendorStallReserve({ eventId, stalls }: { eventId: string; stall
   };
 
   const price = sel ? priceByLabel[sel] : null;
+  const detail = sel ? details[sel] : null;
+  const status = sel ? (statuses[sel] ?? "AVAILABLE") : null;
 
   return (
-    <div className="space-y-4">
-      <StallLegend />
-      <MapCanvas layout={layout} statuses={statuses} selected={selected} onSelect={toggle} />
-      <div className="flex flex-wrap items-center gap-3">
-        <Button disabled={!sel || busy} onClick={reserve}>
-          {busy ? "Reserving…" : sel ? `Reserve ${sel}${price != null ? ` · ${formatPaise(price)}` : ""}` : "Select an available stall"}
-        </Button>
-        {err && <span className="text-sm text-destructive">{err}</span>}
+    <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+      <div className="space-y-4">
+        <StallLegend />
+        <MapCanvas layout={layout} statuses={statuses} selected={selected} onSelect={toggle} />
       </div>
-      <p className="text-xs text-muted-foreground">
-        Reserving holds this stall for you. You&apos;ll sign the agreement next; payment comes after our team approves you.
-      </p>
+
+      {/* Stall sheet (map-system §11) — why-this-stall bullets + size + zone, then Reserve. */}
+      <aside className="rounded-xl border border-border bg-card p-5">
+        {!sel ? (
+          <p className="text-sm text-muted-foreground">Tap an open stall on the map to see why it&apos;s a great spot and reserve it.</p>
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-primary px-2.5 py-0.5 text-xs font-semibold text-primary-foreground">{sel}</span>
+                {detail?.typeName && <span className="rounded-full border border-border px-2.5 py-0.5 text-xs">{detail.typeName}</span>}
+                {detail?.zone && <span className="rounded-full border border-border px-2.5 py-0.5 text-xs">{detail.zone}</span>}
+              </div>
+              {price != null && <p className="mt-2 font-display text-2xl font-bold">{formatPaise(price)}</p>}
+              {detail?.sizeFt && <p className="text-sm text-muted-foreground">{detail.sizeFt}</p>}
+            </div>
+
+            {detail && detail.bullets.length > 0 && (
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Why this stall</p>
+                <ul className="mt-1.5 space-y-1 text-sm">
+                  {detail.bullets.map((b, i) => (
+                    <li key={i} className="flex gap-2"><span aria-hidden className="text-primary">·</span>{b}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <p className="text-sm"><span className="text-muted-foreground">Status:</span> {STATUS_COPY[status ?? "AVAILABLE"] ?? status}</p>
+
+            <Button className="w-full" disabled={busy || status !== "AVAILABLE"} onClick={reserve}>
+              {busy ? "Reserving…" : status === "AVAILABLE" ? `Reserve ${sel}` : "Not available"}
+            </Button>
+            {err && <p className="text-sm text-destructive">{err}</p>}
+            <p className="text-xs text-muted-foreground">
+              Reserving holds this stall for you. You&apos;ll sign the agreement next; payment comes after our team approves you.
+            </p>
+          </div>
+        )}
+      </aside>
     </div>
   );
 }

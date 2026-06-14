@@ -3,7 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireVendor } from "@/server/auth/guard";
 import { getEventWithStalls } from "@/server/events/service";
-import { VendorStallReserve } from "@/components/vendor/VendorStallReserve";
+import { upgradeLayout } from "@/lib/map/layout-v2";
+import { scoreLayout, describeStall } from "@/server/map/scoring";
+import { zoneOf } from "@/lib/map/zones";
+import { VendorStallReserve, type StallDetail } from "@/components/vendor/VendorStallReserve";
 
 export const metadata: Metadata = { title: "Pick a stall" };
 
@@ -26,6 +29,24 @@ export default async function VendorEventStallsPage({ params }: { params: Promis
     priceInPaise: s.priceInPaise ?? s.stallType?.priceInPaise ?? null,
   }));
 
+  // "Why this stall" (map-system §11, reuses R2.5.10 scoring): score the real layout and surface
+  // describeStall bullets + zone + size, keyed by stall label.
+  const v2 = event.mapLayout?.layoutJson ? upgradeLayout(event.mapLayout.layoutJson) : null;
+  const details: Record<string, StallDetail> = {};
+  if (v2) {
+    const scores = scoreLayout(v2.elements, v2.zones, v2.pathways);
+    for (const el of v2.elements) {
+      if (el.kind !== "stall") continue;
+      const sc = scores.get(el.id);
+      details[el.label] = {
+        typeName: el.type,
+        zone: v2.zones.length ? zoneOf(el, v2.zones)?.name ?? null : null,
+        bullets: sc ? describeStall(sc) : [],
+        sizeFt: `${el.widthFt} × ${el.heightFt} ft (${Math.round(el.widthFt * el.heightFt)} sq ft)`,
+      };
+    }
+  }
+
   return (
     <div className="space-y-4">
       <header className="flex items-center justify-between gap-3">
@@ -41,7 +62,7 @@ export default async function VendorEventStallsPage({ params }: { params: Promis
       {mapStalls.length === 0 ? (
         <p className="text-sm text-muted-foreground">The event layout for this market isn&apos;t ready yet — check back soon.</p>
       ) : (
-        <VendorStallReserve eventId={id} stalls={mapStalls} />
+        <VendorStallReserve eventId={id} stalls={mapStalls} details={details} />
       )}
     </div>
   );

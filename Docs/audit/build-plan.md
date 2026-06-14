@@ -621,6 +621,13 @@ Carryover flags routed to later phases: success share-image art (satori spike), 
 - [ ] **R4.1 RPA rebuild** (28h): home spine + timeline + step forms + leads + contract
       (vendor-portal §3-§7); stall picker sheet with zoom-in + why-bullets + distance chips
       (map-system §11). Verify: dry-run vendor e2e at 390px; copy matches spec.
+  - [x] **R4.1a — stall-picker §11 sheet** (the R2.5.10-dependent piece) ✓ — `getEventWithStalls`
+        now includes the layout; the vendor event page scores it (`scoreLayout`) and passes per-stall
+        **`describeStall` why-bullets** + zone + size to `VendorStallReserve`, which shows a detail
+        sheet on select (label/type/zone chips · price · size · "Why this stall" bullets · status ·
+        Reserve), gated to AVAILABLE. Verify: picker 200; sheet renders; 304t; build OK. **Remaining
+        R4.1:** RPA re-skin of the whole vendor portal (home/timeline/step forms/leads/contract) +
+        map zoom-to-stall pulse + distance-chip split.
 - [ ] **R4.2 Add-ons (M5)** (14h): migration prod-first; vendor flow; webhook dispatch branch;
       stock guard. Verify: e2e add-on order; oversold test; replay no-dup.
 - [ ] **R4.3 SLA surfacing** (6h): UNDER_REVIEW aging + admin tile + vendor wait copy.
