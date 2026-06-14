@@ -618,21 +618,27 @@ Carryover flags routed to later phases: success share-image art (satori spike), 
 
 ## Phase R4 — Vendor surfaces (~52h, after R2; R4.1 sheet needs R2.5.10) — roadmap R4
 
-- [ ] **R4.1 RPA rebuild** (28h): home spine + timeline + step forms + leads + contract
+- [x] **R4.1 RPA rebuild** (28h): home spine + timeline + step forms + leads + contract
       (vendor-portal §3-§7); stall picker sheet with zoom-in + why-bullets + distance chips
-      (map-system §11). Verify: dry-run vendor e2e at 390px; copy matches spec.
+      (map-system §11). Verify: dry-run vendor e2e at 390px; copy matches spec. **DONE 2026-06-14.**
   - [x] **R4.1a — stall-picker §11 sheet** (the R2.5.10-dependent piece) ✓ — `getEventWithStalls`
         now includes the layout; the vendor event page scores it (`scoreLayout`) and passes per-stall
         **`describeStall` why-bullets** + zone + size to `VendorStallReserve`, which shows a detail
         sheet on select (label/type/zone chips · price · size · "Why this stall" bullets · status ·
         Reserve), gated to AVAILABLE. Verify: picker 200; sheet renders; 304t; build OK.
-  - **NEXT SESSION resumes here — finish ALL of R4.1 before any later R4 package; do not
-        context-switch** (owner directive 2026-06-14). Ordered focus for the remainder:
-        (1) **Vendor home** (spine), (2) **Vendor timeline**, (3) **Vendor onboarding flow**,
-        (4) **Vendor preparation flow**, (5) **Stall comparison**, (6) **Map pulse / focus**
-        (zoom-to-stall + 600 ms pulse), (7) **premium RPA visual system** (re-skin the whole vendor
-        portal off the neutral admin theme onto the `.rpa` layer — vendor-portal §3-§7). Resume from
-        the completed stall sheet (commit 3b9272b). Branch: single `main` (prod-gated).
+  - [x] **R4.1b — full portal rebuild** ✓ (commits b7156d5, 6b32d9c, db7f552, 6aa25c8):
+        (1/2) **/home status spine** (`VendorTimeline` six-node done/current/locked + exact §3 copy,
+        call-back wait 48h SLA) merges dashboard+onboarding; `VendorRail` navy `.bg-ink` vendor-only
+        rail (admin ZoneSidebar untouched); layout `.rpa` cream; dashboard/onboarding/index redirect
+        into /home (deep links preserved). (3) **onboarding step forms** off shadcn onto `.rpa`
+        (underline inputs + clip-path `.btn`, shared `rpa-fields`; AssetUploader/KycDocUploader
+        re-skinned). (5/6) **stall picker**: additive `MapCanvas` `focusLabel` → 450ms zoom-to-2× +
+        600ms lavender pulse (reduced-motion safe), spot-quality chip (score tier + /100); picker
+        sheet + markets list re-skinned. (6/7) **leads** RPA QR tile (200px) + per-day chips + copy +
+        print CSS; **profile** now uses shared §4.1 `BrandForm` + brand-page preview; **documents +
+        contract** RPA tiles/badges/Exat/.btn. Note: §4 "preparation flow" = the home lifecycle
+        states (BOOKED prep copy) — add-ons is **R4.2** (deliberately not started). Verify: typecheck
+        + lint (0 err) + 298 tests + prod build all green.
 - [ ] **R4.2 Add-ons (M5)** (14h): migration prod-first; vendor flow; webhook dispatch branch;
       stock guard. Verify: e2e add-on order; oversold test; replay no-dup.
 - [ ] **R4.3 SLA surfacing** (6h): UNDER_REVIEW aging + admin tile + vendor wait copy.
