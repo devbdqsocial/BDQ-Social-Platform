@@ -543,7 +543,19 @@ owner walks the designer once and signs off in the session log.
       tap-brand→map-pulse (map is read-only context; sheet gives the textual locator), offer badge
       (needs §3.6 Offers), **axe = staging**. Verify: `grep assignDemoStatuses src` → fixtures only
       ✓; 62f/282t green; build OK; /map 200 with chips+facilities+schedule. 0err/10warn.
-- [ ] **R3.6 Schedule** (8h): now/next via R1.5. Verify: time-mocked now-line test.
+- [x] **R3.6 Schedule** (8h) ✓ — a **living festival timeline**, not a calendar/table. Reuses
+      R1.5's `resolveNowNext` + `getHomeMode`; new pure `lib/schedule.ts` (`itemPhase`
+      done/live/soon/upcoming, `groupByDay`, `stagesOf`) + **5 time-mocked tests** (now-line
+      boundaries, multi-day split, stage list). `getActiveSchedule()` query → `/schedule` (the real
+      page, **retires the R3.4 bridge**). `ScheduleTimeline` (client, 60s tick): **On now / Up next**
+      horizontal cards (live, pulsing dot), **day pills** (multi-day), **stage filter** chips
+      (`stageOrZone` — the festival-natural "category"), a **vertical timeline** with a live
+      **NOW line** (lavender pulse at the current time, only on today), per-item **phase** styling
+      (done = muted), **Add** to calendar per item (reuses `lib/ics.ts`), and `aria-live` "Now:
+      <title>". Empty state for pre-launch. Mobile-first, discovery-first; no spreadsheet/table/
+      admin/ops views. **Flagged:** filter is by stage/area (ScheduleItem has no category field);
+      "what did I miss" = past items shown muted inline (no separate section). Verify: 5/5 now-line
+      tests; 63f/287t green; build OK; /schedule 200 with live timeline. 0err/10warn.
 - [ ] **R3.7 Discover + brand detail** (10h). Verify: filter e2e; SEO meta.
 - [ ] **R3.8 Guide + Gallery** (8h, content-gated). Verify: gates behave (≥8 photos, non-empty).
 - [ ] **R3.9 Offers surface** (8h). Verify: publish→appears; ended→greys.
@@ -659,3 +671,4 @@ pages · axe pass.
 | 2026-06-14 | build session 6 (cont.) | R3.3 (event + checkout) | done; **fixed cart-losing login redirect → inline OTP (usePhoneOtp, shared w/ PhoneLogin)** resumes payment with cart intact; scarcity + per-type sold-out + trust strip + recoverable errors; event page rebuilt (above-fold CTA/countdown/availability, brands, venue, policies, final CTA, sticky mobile bar); checkout-audit.md; payment flow untouched; **flagged:** success celebration→R3.4, LCP=staging | 60f/274t green; build OK; event 200 |
 | 2026-06-14 | build session 6 (cont.) | R3.4 (wallet + profile + tabs) | done; success reveal (confetti, once/order, reduced-motion, never-faked) + wallet→/tickets + TicketCard flip (QR no-CLS, a11y) + ics.ts add-to-calendar (+tests) + Web-Share + 4-tab IA + lightweight /profile + login ?next; **deferred:** share image art (satori spike), offline precache (PWA/R7), /schedule bridge until R3.6 | 61f/279t green; build OK; routes 200 |
 | 2026-06-14 | build session 6 (cont.) | R3.5 (customer map → guide) | done; **killed D2** — getEventGuide() real data (booked-stall brands, zones, facilities), discovery-first EventGuide (chips/search/brand cards/sheet/facilities/schedule + read-only MapCanvas); bucketOf +tests; removed superseded MapPreview; **deferred:** logos, tap→map-pulse, offer badge; axe=staging | 62f/282t green; build OK; /map 200; demo grep clean |
+| 2026-06-14 | build session 6 (cont.) | R3.6 (schedule timeline) | done; living festival timeline — reuse resolveNowNext + new schedule.ts (itemPhase/groupByDay/stagesOf, 5 time-mocked tests); getActiveSchedule + real /schedule (retires R3.4 bridge); On-now/Up-next cards, day pills, stage filter, live NOW-line, per-item add-to-calendar, aria-live | 63f/287t green; build OK; /schedule 200 |
