@@ -3,6 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getApprovedVendor, getVendorStallLabel } from "@/server/vendors/service";
+import { listVendorOffers } from "@/server/content/offers";
+import { offerPhase, validityLabel } from "@/lib/offer";
 import { primaryLogo, productImages } from "@/lib/vendor-assets";
 import { Reveal } from "@/components/motion/Reveal";
 
@@ -28,6 +30,7 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
   if (!v) notFound();
 
   const stallLabel = await getVendorStallLabel(v.id);
+  const liveOffers = (await listVendorOffers(v.id)).filter((o) => offerPhase({ startsAt: new Date(o.startsAtIso), endsAt: new Date(o.endsAtIso), status: o.status }) === "live");
   const logo = primaryLogo(v.assets);
   const products = productImages(v.assets);
   const socials = (v.socials as { instagram?: string } | null) ?? null;
@@ -80,6 +83,26 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
           </div>
         </div>
       </section>
+
+      {liveOffers.length > 0 && (
+        <section className="gama-2 surface-2 paint py-[var(--space-4xl)]">
+          <div className="wrapper">
+            <h2 className="f-exat f-h42">Live offers</h2>
+            <ul className="mt-[var(--space-lg)] grid gap-[var(--space-lg)] sm:grid-cols-2">
+              {liveOffers.map((o) => (
+                <li key={o.id} className="surface-1 p-[var(--space-lg)]" style={{ border: "1px solid color-mix(in srgb, currentColor 22%, transparent)" }}>
+                  <div className="flex items-center justify-between gap-[var(--space-md)]">
+                    <p className="f-exat f-h32">{o.title}</p>
+                    <span className="badge-rpa">{validityLabel(new Date(o.endsAtIso))}</span>
+                  </div>
+                  <p className="f-paragraph-small mt-[var(--space-xs)] opacity-75">{o.terms}</p>
+                  <Link href="/offers" data-cursor className="f-paragraph-small f-bold t-upper link-underline mt-[var(--space-md)] inline-block" style={{ letterSpacing: "0.06em" }}>Show at stall →</Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      )}
 
       {products.length > 0 && (
         <section className="paint py-[var(--space-5xl)]">

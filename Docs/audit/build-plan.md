@@ -581,7 +581,19 @@ owner walks the designer once and signs off in the session log.
       uses lazy `<img>` (eslint-disabled) not `next/image`. Verify: gates behave — guide shows
       (Timings present), gallery shows hold state (0<8); 5/5 gate tests; 64f/292t green; build OK;
       both 200. 0err/10warn.
-- [ ] **R3.9 Offers surface** (8h). Verify: publish→appears; ended→greys.
+- [x] **R3.9 Offers surface** (8h) ✓ — new **`Offer` model** (+ `OfferKind`/`OfferStatus` enums,
+      vendor/sponsor/event relations; migration applied **local + prod**, client regenerated). Pure
+      `lib/offer.ts` (`offerPhase` upcoming/live/**ended**, `canRedeem` soft cap, `validityLabel`
+      "Tonight only") + **6 tests** lock **publish→appears / ended→greys** (an offer past `endsAt`
+      greys even before the admin auto-end cron). `/offers`: `listVisibleOffers` (PUBLISHED for the
+      active event) → `OffersClient` cards (validity chip, ended ones **greyed "Ended"**) with a
+      full-screen **"Show at stall" redemption takeover** — title, brand, **live clock**
+      (anti-screenshot), **press-&-hold to mark used** → `markOfferUsedAction` (soft
+      `redeemedCount++`, no auth per §3.6); hold state when none. **Closes the R3.7 deferral:** the
+      brand detail now lists the vendor's **live offers**. **Flagged:** admin offer CRUD +
+      DRAFT→PUBLISHED→ENDED + auto-end cron = R5 (§6.1); discover-card/guide offer **badge** still
+      deferred (needs per-vendor offer joins in those queries); hard redemption = V2. Verify:
+      6/6 phase tests; /offers holds at 0 published; 65f/298t green; build OK; both 200. 0err/10warn.
 - [ ] **R3.10 Home modes** (8h): PRE/LIVE/POST wiring. Verify: clock-mocked flips.
 
 **GATE R3:** full anonymous→ticket e2e on phone viewport · budgets green on all 7 customer
@@ -697,3 +709,4 @@ pages · axe pass.
 | 2026-06-14 | build session 6 (cont.) | R3.6 (schedule timeline) | done; living festival timeline — reuse resolveNowNext + new schedule.ts (itemPhase/groupByDay/stagesOf, 5 time-mocked tests); getActiveSchedule + real /schedule (retires R3.4 bridge); On-now/Up-next cards, day pills, stage filter, live NOW-line, per-item add-to-calendar, aria-live | 63f/287t green; build OK; /schedule 200 |
 | 2026-06-14 | build session 6 (cont.) | R3.7 (discover + brand detail) | done; VendorDiscover (search + bucket chips w/ counts + empty state) over /vendors; brand detail stall chip (getVendorStallLabel) + openGraph/twitter SEO + rel noopener; **deferred:** offer badge/list → R3.9 (no Offer model) | 63f/287t green; build OK; vendors+detail 200, og:title present |
 | 2026-06-14 | build session 6 (cont.) | R3.8 (guide + gallery) | done; content-gate.ts (galleryReady≥8 / guideReady non-empty / parseGuideSections, 5 tests); /guide (event timings + SystemSetting sections, gated); **GalleryPhoto model migrated local+prod** + /gallery (masonry + no-lib viewer, gated ≥8); gates verified (guide shows, gallery holds at 0) | 64f/292t green; build OK; both 200 |
+| 2026-06-14 | build session 6 (cont.) | R3.9 (offers) | done; **Offer model migrated local+prod**; offer.ts (offerPhase/canRedeem/validity, 6 tests = publish→appears/ended→greys); /offers (cards + greying + Show-at-stall redemption takeover w/ live clock + press-hold markOfferUsed) + brand-detail live offers (closes R3.7 deferral); **deferred:** admin CRUD/cron→R5, discover badge | 65f/298t green; build OK; /offers holds at 0 |

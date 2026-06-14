@@ -224,9 +224,46 @@ model Event {
   budgets          Budget[]
   expenseSchedules ExpenseSchedule[]
   galleryPhotos    GalleryPhoto[]
+  offers           Offer[]
   mapId            String?
 
   @@index([status])
+}
+
+enum OfferKind {
+  DISCOUNT
+  FREEBIE
+  BUNDLE
+}
+
+enum OfferStatus {
+  DRAFT
+  PUBLISHED
+  ENDED
+}
+
+/** Vendor/sponsor offers (customer-portal §3.6, admin-portal §6.1). Shown to customers only when
+ *  PUBLISHED; greys to "Ended" past `endsAt`. Redemption is a soft count (no auth in V1). */
+model Offer {
+  id              String         @id @default(cuid())
+  eventId         String
+  event           Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  vendorProfileId String?
+  vendorProfile   VendorProfile? @relation(fields: [vendorProfileId], references: [id], onDelete: SetNull)
+  sponsorId       String?
+  sponsor         Sponsor?       @relation(fields: [sponsorId], references: [id], onDelete: SetNull)
+  title           String
+  terms           String
+  kind            OfferKind      @default(DISCOUNT)
+  startsAt        DateTime
+  endsAt          DateTime
+  status          OfferStatus    @default(DRAFT)
+  maxRedemptions  Int?
+  redeemedCount   Int            @default(0)
+  createdAt       DateTime       @default(now())
+
+  @@index([eventId, status, endsAt])
+  @@index([vendorProfileId])
 }
 
 /** Post-event gallery (customer-portal §3.8). Curated in the admin Content group; the public
@@ -496,6 +533,7 @@ model VendorProfile {
   bookings Booking[]
   leads    Lead[]
   expenses Expense[]
+  offers   Offer[]
 }
 
 model VendorKyc {
@@ -586,6 +624,7 @@ model Sponsor {
   paidAt      DateTime?
   note        String?
   createdAt   DateTime          @default(now())
+  offers      Offer[]
 
   @@index([eventId])
 }
