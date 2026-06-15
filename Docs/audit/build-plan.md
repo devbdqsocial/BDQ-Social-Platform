@@ -651,11 +651,19 @@ Carryover flags routed to later phases: success share-image art (satori spike), 
       admin `events/[id]/add-ons` CRUD + orders list + CSV. Tests: `addOnOrdersOpen` unit + gated
       integration (snapshot / oversell race / replay no-dup) — green vs migrated local DB. typecheck +
       lint (0 err) + 302 unit tests + prod build all green.
-- [ ] **R4.3 SLA surfacing** (6h): UNDER_REVIEW aging + admin tile + vendor wait copy.
-      Verify: >48h fixture fires tile.
-- [ ] **R4.4 Lead QR print + day chips** (4h). Verify: print snapshot.
+- [x] **R4.3 SLA surfacing** (6h): UNDER_REVIEW aging + admin tile + vendor wait copy.
+      Verify: >48h fixture fires tile. **DONE 2026-06-15 (commit 28a164e).** Shared
+      `src/lib/vendor-sla.ts` `isReviewOverdue` (48h from contract signing); `getDashboard`
+      `pending.reviewAging` counts signed-but-unapproved vendors past SLA → admin dashboard
+      "Pending tasks" tile; vendor home call-back-wait copy softens once overdue. `isReviewOverdue`
+      unit test (over/under/boundary/unsigned). No migration.
+- [x] **R4.4 Lead QR print + day chips** (4h). Verify: print snapshot. **DONE — shipped within
+      R4.1's leads re-skin (commit 6aa25c8):** 200px QR tile, per-day count chips (`dayChips`
+      "Today: N"), copy-link, and `@media print` (print shows QR + brand name only). Print snapshot
+      is the manual owner check.
 
-**GATE R4:** one real human completes vendor signup→pay on staging with owner watching.
+**GATE R4:** one real human completes vendor signup→pay on staging with owner watching. *(Owner-run
+manual gate — not executable here. R4.1–R4.4 code complete; site stays prod-gated until then.)*
 
 ---
 
