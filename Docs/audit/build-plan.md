@@ -672,8 +672,15 @@ manual gate — not executable here. R4.1–R4.4 code complete; site stays prod-
 - [ ] **R5.1 Diet + nav** (16h): remove Task Center (D3) + budgets/settlements/deep analytics;
       final nav tree (admin-portal §1); POS + Settings in nav (D19); `<ResponsiveTable>` (D28);
       event-detail tabs→routes (D32). Verify: removed routes 404; nav==spec per role.
-- [ ] **R5.2 Command Center** (12h): 6 tiles + alert row + chart + activity (admin-portal §2).
-      Verify: seeded reconciliation test (tiles match seed math).
+      **DEFERRED by owner (2026-06-15): "additive R5 first" — do NOT delete Task Center / budgets /
+      settlements / deep-analytics until the owner explicitly confirms the removals.**
+- [x] **R5.2 Command Center** (12h): 6 tiles + alert row + chart + activity (admin-portal §2).
+      Verify: seeded reconciliation test (tiles match seed math). **DONE 2026-06-15 (commit 88ccf32).**
+      `getCommandCenter` (composes getDashboard + targeted reads) → six event-scoped tiles, a
+      non-zero-only danger alert row (failures 24h · outbox failed · vendors >48h), one 280px
+      revenue chart, a 10-row orders/bookings/check-ins activity feed, auto-refresh 60s on event day.
+      SystemSetting cron/webhook heartbeats feed a system-health block; the actionable "needs
+      attention" feed is retained (additive). Gated DB reconciliation test green vs local DB.
 - [ ] **R5.3 Kiosk mode** (16h): launcher, fullscreen, wake-lock, offline badge, manual entry;
       ops status strip; staff sign-out-everywhere. Verify: kiosk e2e chain; revoke test.
 - [ ] **R5.4 Content group (M3+M4 prod-first)** (18h): Offers CRUD/workflow + auto-END cron,
@@ -681,8 +688,12 @@ manual gate — not executable here. R4.1–R4.4 code complete; site stays prod-
 - [ ] **R5.5 VenueMap consolidation (M6)** (12h): additive create+data-migrate first; drop
       `LayoutTemplate`/`MapElement` one deploy later; library/clone UX (designer = R2.5).
       Verify: clone-to-event intact; post-window drop migration applied.
-- [ ] **R5.6 Event wizard** (10h): 4 steps, resume-safe. Verify: wizard e2e → publish →
-      landing revalidates.
+- [x] **R5.6 Event wizard** (10h): 4 steps, resume-safe. Verify: wizard e2e → publish →
+      landing revalidates. **DONE 2026-06-15 (commit 9659427).** `/admin/events/new` = step 1
+      Basics (creates DRAFT → redirects to `events/[id]/setup?step=tickets`); the setup shell drives
+      Tickets → Map → Review, each saving immediately + URL-reachable (resume-safe), with a
+      back-linkable `WizardSteps` bar. Reuses createEventAction / add+deleteTicketTypeAction /
+      MapAttach / publishEventAction; new `PublishButton` publishes then lands on the event. Additive.
 
 **GATE R5:** owner runs create-event→publish→sell→scan rehearsal entirely from the new console.
 
