@@ -152,3 +152,31 @@ rehearsals, and resolving the prod 500 + scheduler. **My honest recommendation: 
 (and 8) BEFORE most of R6.** R6.1 share-art is the one delight worth interleaving because it compounds
 launch reach. Building the rest of R6 on top of an unvalidated payment/observability base would be
 polishing a car you haven't started.
+
+---
+
+## Post-audit progress (2026-06-15 — owner chose "validation first")
+
+Closed / clarified the **code-side** gaps (config/ops gaps remain founder-owned):
+
+- **✅ Risk #1 FIXED (commit f007a18):** vendor-payment **reconcile safety net** — stall bookings +
+  add-on orders are now swept by `reconcileVendorPayments` (fetch captured Razorpay payment → fulfil
+  idempotently) in `runAllMaintenance` + `/api/cron/reconcile`. Also wired the previously-dead
+  `releaseExpiredPayWindows` (lapsed pay-windows now cancel). Gated integration test proves recovery +
+  idempotency. **Vendor money now has the same safety net as tickets.** Score for "Payment ops
+  readiness" rises 3→6 once the **live webhook is verified** (still founder).
+- **✅ Observability wiring CONFIRMED complete:** `instrumentation.ts` `register()` +
+  `onRequestError`→`captureRequestError` would capture the prod 500 and every `logError`. Fully inert
+  without a DSN. **Only `SENTRY_DSN` (Vercel env) is missing** — a 2-minute founder task, no code gap.
+- **✅ Outbox "4 failures" = false alarm:** they are week-old **local demo-seed** rows (fake
+  recipients, mismatched channel, simulated "SMTP timeout", attempts maxed). Not a production
+  notification problem. Risk #8's outbox half is cleared; WhatsApp-config decision still stands.
+- **Prod 500:** `cld()` ruled out (pure, no env); `listApprovedVendors` already hardened. No safe
+  further code change without a repro — resolution = set the Sentry DSN + verify on an ungated preview.
+
+**Remaining = founder config/ops only** (no more codeable launch-critical gaps I can close): set
+Razorpay **live** keys + webhook (and verify a real capture→webhook→fulfil), set `SENTRY_DSN`, stand up
+a frequent external `/api/cron/tick` trigger, run a ₹1 live purchase + the R4/R5 human rehearsals on an
+ungated preview, fill legal/support placeholders, decide WhatsApp, then flip the gate (redeploy).
+With the reconcile fix + Sentry-ready wiring, **revised readiness ≈ 68/100**; verifying the live
+webhook + setting the DSN would put it ~80.
