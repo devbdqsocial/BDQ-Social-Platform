@@ -134,3 +134,23 @@ export function removeStaffAccess(session: Session, id: string) {
   });
 }
 
+/** Sign a teammate out of every device (bumps tokenVersion) without removing their access. Audited. */
+export function revokeStaffSessions(session: Session, id: string) {
+  return withAudit(session, { action: "REVOKE_SESSIONS", entity: "User", entityId: id }, async () => {
+    const before = await db.user.findUnique({ where: { id }, select: { role: true } });
+    if (before && before.role === "SUPER_ADMIN") {
+      throw new Error("Cannot modify Super Admin accounts.");
+    }
+    if (before && before.role === "ADMIN" && session.role !== "SUPER_ADMIN") {
+      throw new Error("Only Super Admin can modify Admin accounts.");
+    }
+    return {
+      before: null,
+      run: async () => {
+        const u = await db.user.update({ where: { id }, data: { tokenVersion: { increment: 1 } } });
+        return { result: { id }, after: { tokenVersion: u.tokenVersion } };
+      },
+    };
+  });
+}
+

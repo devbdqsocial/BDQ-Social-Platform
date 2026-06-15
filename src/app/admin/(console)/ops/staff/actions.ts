@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import type { Result } from "@/lib/result";
 import { toResult } from "@/server/action";
 import { requireAdminRole } from "@/server/auth/guard";
-import { upsertStaff, removeStaffAccess, StaffEmailTakenError } from "@/server/staff/service";
+import { upsertStaff, removeStaffAccess, revokeStaffSessions, StaffEmailTakenError } from "@/server/staff/service";
 import { isStaffPreset, type StaffPreset } from "@/lib/staff-presets";
 
 /**
@@ -58,6 +58,15 @@ export async function removeStaffAction(formData: FormData): Promise<Result<null
   return toResult(async () => {
     const session = await requireAdminRole();
     await removeStaffAccess(session, String(formData.get("id")));
+    revalidatePath("/admin/ops/staff");
+  });
+}
+
+/** Sign a teammate out of all devices (revoke sessions) — keeps their access, audited. */
+export async function signOutEverywhereAction(formData: FormData): Promise<Result<null>> {
+  return toResult(async () => {
+    const session = await requireAdminRole();
+    await revokeStaffSessions(session, String(formData.get("id")));
     revalidatePath("/admin/ops/staff");
   });
 }

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { fmtDateTime as fmt } from "@/lib/date-formats";
 import { requireAdminRole } from "@/server/auth/guard";
 import { db } from "@/server/db";
+import { getHeartbeat, HEARTBEAT } from "@/server/system/heartbeat";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/page-header";
 
@@ -17,12 +18,33 @@ function Stat({ label, value, bad }: { label: string; value: string | number; ba
   );
 }
 
+function ago(d: Date | null): string {
+  if (!d) return "never";
+  const s = Math.max(0, Math.floor((Date.now() - d.getTime()) / 1000));
+  if (s < 60) return `${s}s ago`;
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+  return `${Math.floor(s / 86400)}d ago`;
+}
+
+/** One chip in the ops status strip (launch-readiness §5.3). */
+function Chip({ label, value, bad }: { label: string; value: string; bad?: boolean }) {
+  return (
+    <div className={`rounded-lg border px-3 py-2 ${bad ? "border-destructive/30 bg-destructive/10" : "border-border bg-card"}`}>
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className={`mt-0.5 text-lg font-semibold ${bad ? "text-destructive" : ""}`}>{value}</p>
+    </div>
+  );
+}
+
 export default async function OpsPage() {
   await requireAdminRole();
   const now = new Date();
   const fifteenAgo = new Date(now.getTime() - 15 * 60 * 1000);
 
-  const [outboxGroups, outboxFails, orderGroups, stuckPending, expiredHolds, activeLimits, lastAudit] = await Promise.all([
+  const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+  const [outboxGroups, outboxFails, orderGroups, stuckPending, expiredHolds, activeLimits, lastAudit, cronAt, webhookAt, captured24h] = await Promise.all([
     db.outbox.groupBy({ by: ["status"], _count: { _all: true } }),
     db.outbox.findMany({ where: { status: "FAILED" }, orderBy: { createdAt: "desc" }, take: 5, select: { id: true, channel: true, toAddress: true, lastError: true, attempts: true } }),
     db.order.groupBy({ by: ["status"], _count: { _all: true } }),
@@ -30,14 +52,26 @@ export default async function OpsPage() {
     db.stall.count({ where: { status: "HELD", holdUntil: { lt: now } } }),
     db.rateLimit.count({ where: { resetAt: { gt: now } } }),
     db.auditLog.findFirst({ orderBy: { createdAt: "desc" }, select: { createdAt: true, action: true } }),
+    getHeartbeat(HEARTBEAT.cron),
+    getHeartbeat(HEARTBEAT.webhook),
+    db.payment.count({ where: { status: "CAPTURED", createdAt: { gte: dayAgo } } }),
   ]);
 
   const ob = Object.fromEntries(outboxGroups.map((g) => [g.status, g._count._all])) as Record<string, number>;
   const ord = Object.fromEntries(orderGroups.map((g) => [g.status, g._count._all])) as Record<string, number>;
+  const cronStale = !cronAt || now.getTime() - cronAt.getTime() > 25 * 60 * 60 * 1000;
 
   return (
     <div className="space-y-8">
       <PageHeader title="System health" description="Live operational signals. Read-only." />
+
+      {/* Ops status strip (launch-readiness §5.3) */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Chip label="Outbox depth" value={String(ob.QUEUED ?? 0)} bad={(ob.QUEUED ?? 0) > 50} />
+        <Chip label="Last cron tick" value={ago(cronAt)} bad={cronStale} />
+        <Chip label="Last webhook" value={ago(webhookAt)} />
+        <Chip label="Payments captured (24h)" value={String(captured24h)} />
+      </div>
 
       <div>
         <h2 className="mb-3 font-display text-lg font-semibold">Notifications (outbox)</h2>

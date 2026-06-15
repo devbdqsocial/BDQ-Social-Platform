@@ -7,7 +7,7 @@ import type { listStaff } from "@/server/staff/service";
 import { DataTable } from "@/components/data-table/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { removeStaffAction } from "@/app/admin/(console)/ops/staff/actions";
+import { removeStaffAction, signOutEverywhereAction } from "@/app/admin/(console)/ops/staff/actions";
 import type { Role } from "@/server/auth/guard";
 
 type Row = Awaited<ReturnType<typeof listStaff>>[number];
@@ -98,12 +98,16 @@ export function StaffTable({ staff, currentUserRole }: StaffTableProps) {
         if (!row.original.active || !canRemove) return null;
 
         return (
-          <ActionForm action={removeStaffAction} success="Access removed">
-            <input type="hidden" name="id" value={row.original.id} />
-            <Button type="submit" variant="ghost" size="sm">
-              Remove access
-            </Button>
-          </ActionForm>
+          <div className="flex items-center justify-end gap-1">
+            <ActionForm action={signOutEverywhereAction} success="Signed out everywhere">
+              <input type="hidden" name="id" value={row.original.id} />
+              <Button type="submit" variant="ghost" size="sm">Sign out everywhere</Button>
+            </ActionForm>
+            <ActionForm action={removeStaffAction} success="Access removed">
+              <input type="hidden" name="id" value={row.original.id} />
+              <Button type="submit" variant="ghost" size="sm">Remove access</Button>
+            </ActionForm>
+          </div>
         );
       },
     },
