@@ -1,5 +1,6 @@
 import "server-only";
 import { db } from "@/server/db";
+import { REVIEW_SLA_MS } from "@/lib/vendor-sla";
 import { getAnalytics } from "./service";
 
 /** Command-center dashboard = the analytics aggregate + dashboard-only extras + a windowed KPI strip. */
@@ -11,13 +12,14 @@ export async function getDashboard(eventId?: string, rangeDays: number | null = 
   const prevSince = new Date(); prevSince.setDate(prevSince.getDate() - 59);
   const startToday = new Date(); startToday.setHours(0, 0, 0, 0);
   const soon = new Date(nowMs + 60 * 60 * 1000);
+  const reviewSla = new Date(nowMs - REVIEW_SLA_MS);
 
   const ev = eventId ? { eventId } : {};
   const checkInEv = eventId ? { ticket: { order: { eventId } } } : {};
   const ticketEv = eventId ? { order: { eventId } } : {};
   const rangePaid = { ...ev, status: "PAID" as const, ...(rangeSince ? { createdAt: { gte: rangeSince } } : {}) };
 
-  const [analytics, vendorGroups, footfallToday, prevRevenueAgg, expiringHolds, failedPayments, rangeRevenueAgg, rangeTickets, rangeFootfall] = await Promise.all([
+  const [analytics, vendorGroups, footfallToday, prevRevenueAgg, expiringHolds, failedPayments, rangeRevenueAgg, rangeTickets, rangeFootfall, reviewAging] = await Promise.all([
     getAnalytics(eventId),
     db.vendorProfile.groupBy({ by: ["approvalStatus"], _count: { _all: true } }),
     db.checkIn.count({ where: { direction: "IN", scannedAt: { gte: startToday }, ...checkInEv } }),
@@ -27,6 +29,8 @@ export async function getDashboard(eventId?: string, rangeDays: number | null = 
     db.order.aggregate({ where: rangePaid, _sum: { total: true }, _count: { _all: true } }),
     db.ticket.aggregate({ _sum: { admitCount: true }, where: { ...ticketEv, ...(rangeSince ? { createdAt: { gte: rangeSince } } : {}) } }).then((a) => a._sum.admitCount ?? 0),
     db.checkIn.aggregate({ _sum: { admitted: true }, where: { direction: "IN", ...checkInEv, ...(rangeSince ? { scannedAt: { gte: rangeSince } } : {}) } }).then((a) => a._sum.admitted ?? 0),
+    // Vendors who signed >48h ago and are still awaiting the call-back approval (SLA breach).
+    db.vendorContract.count({ where: { status: "SIGNED", signedAt: { lt: reviewSla }, vendorProfile: { approvalStatus: { in: ["SUBMITTED", "UNDER_REVIEW"] } } } }),
   ]);
 
   const vendorPipeline = { SUBMITTED: 0, UNDER_REVIEW: 0, APPROVED: 0, REJECTED: 0 } as Record<string, number>;
@@ -54,6 +58,7 @@ export async function getDashboard(eventId?: string, rangeDays: number | null = 
       expiringHolds,
       failedPayments,
       soldOutTypes,
+      reviewAging,
     },
   };
 }

@@ -5,6 +5,7 @@ import { getProfile } from "@/server/vendors/service";
 import { getContract } from "@/server/vendors/contract";
 import { db } from "@/server/db";
 import { primaryLogo } from "@/lib/vendor-assets";
+import { isReviewOverdue } from "@/lib/vendor-sla";
 import { formatPaise } from "@/lib/utils";
 import { Countdown } from "@/components/landing/Countdown";
 import { VendorTimeline, type VendorNode } from "@/components/vendor/VendorTimeline";
@@ -58,6 +59,7 @@ export default async function VendorHome({ searchParams }: { searchParams: Promi
   const approvedForPay = booking?.status === "PENDING_PAYMENT";
   const paid = booking?.status === "BOOKED";
   const rejected = profile.approvalStatus === "REJECTED";
+  const reviewOverdue = isReviewOverdue(contract?.signedAt);
 
   // Linear flow: account → brand → docs → stall → agreement → payment.
   const order = ["account", "brand", "docs", "stall", "contract", "payment"] as const;
@@ -94,7 +96,9 @@ export default async function VendorHome({ searchParams }: { searchParams: Promi
       : approvedForPay && booking?.payBy
         ? `You're approved! Complete payment by ${fmtDateTime(booking.payBy)} to lock Stall ${label}.`
         : signed
-          ? "You're in review. Our team calls within 48 hours — keep your phone close. Nothing else is needed from you."
+          ? reviewOverdue
+            ? "You're in review — thanks for your patience. We're running a little behind on calls, but you're on the list and we'll reach you very soon. Nothing else is needed from you."
+            : "You're in review. Our team calls within 48 hours — keep your phone close. Nothing else is needed from you."
           : "Payment unlocks once our team approves you.";
 
   const nodes: VendorNode[] = order.map((key) => {
@@ -269,7 +273,9 @@ export default async function VendorHome({ searchParams }: { searchParams: Promi
               <div className="space-y-[var(--space-md)]">
                 <p className="f-h32 f-exat">You&apos;re in review.</p>
                 <p className="f-paragraph opacity-80">
-                  Our team calls within 48 hours — keep your phone close. Nothing else is needed from you.
+                  {reviewOverdue
+                    ? "Thanks for your patience — we're running a little behind on calls. You're still on the list and we'll reach you very soon. Nothing else is needed from you."
+                    : "Our team calls within 48 hours — keep your phone close. Nothing else is needed from you."}
                 </p>
                 {contract?.signedAt && <p className="f-paragraph-small opacity-55">Submitted {fmtDateTime(contract.signedAt)}</p>}
               </div>

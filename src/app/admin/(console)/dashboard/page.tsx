@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { fmtCompact as fmtDate } from "@/lib/date-formats";
-import { Clock, Ticket as TicketIcon, UserCheck, XCircle, CheckCircle2, FileText, AlertCircle } from "lucide-react";
+import { Clock, Ticket as TicketIcon, UserCheck, XCircle, CheckCircle2, FileText, AlertCircle, PhoneCall } from "lucide-react";
 import { requireAdmin } from "@/server/auth/guard";
 import { getActiveEvent } from "@/server/admin/event-context";
 import { getDashboard } from "@/server/analytics/dashboard";
@@ -39,6 +39,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
   ];
 
   const tasks = [
+    { n: d.pending.reviewAging, label: "vendor(s) waiting >48h for a call-back — past SLA", href: "/admin/vendors", icon: PhoneCall },
     { n: d.pending.approvals, label: "vendor application(s) awaiting review", href: "/admin/vendors", icon: UserCheck },
     { n: d.pending.expiringHolds, label: "stall hold(s) expiring within the hour", href: "/admin/venue/stalls", icon: Clock },
     { n: d.pending.failedPayments, label: "failed payment(s) in the last 30 days", href: "/admin/analytics", icon: XCircle },
