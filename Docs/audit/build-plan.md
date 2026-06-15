@@ -731,9 +731,19 @@ manual gate — not executable here. R4.1–R4.4 code complete; site stays prod-
 
 - [ ] **R6.1 Ticket reveal + confetti + flip** (12h, needs R3.4). Verify: storyboard timings
       ±10%; reduced-motion jump; plays once.
-- [ ] **R6.2 Share art (M7)** (12h, needs R3.4): generator spike (satori+resvg vs Cloudinary
+- [x] **R6.2 Share art (M7)** (12h, needs R3.4): generator spike (satori+resvg vs Cloudinary
       overlay — acceptance decides, dep authorization in AGENT_RULES), fulfilment hook,
       share/download. Verify: PNG <300KB <800ms; fallback test; **QR never on the image**.
+      **DONE 2026-06-15 (owner's "R6.1" package; commit 433f8f9).** Chose **`next/og` `ImageResponse`**
+      (already used for OG routes — simplest production-safe, no extra dep): `GET
+      /api/share/ticket/[id]?format=story|post` → 1080×1920 / 1080×1350, RPA navy+lavender+yellow,
+      "I'M GOING TO" hierarchy. **QR/PII never on the image** (`getTicketShareData` returns only public
+      fields; 404 on cancelled). Cached (s-maxage 1d); **story ~210KB / post ~162KB (<300KB)**.
+      `TicketShare` client: preview + format toggle + native Web Share (image file) + download +
+      copy-link fallback (never blocks); on the wallet card + a post-purchase callout. Minimal
+      analytics (`track()`→rate-limited `/api/track`). Doc [share-art-architecture.md]. Verified:
+      route renders (visual QA) + typecheck + lint + 312 tests. (Default font for now; Exat is a noted
+      enhancement — dev font-fetch limitation.)
 - [ ] **R6.3 Happening strip + config** (6h, needs R1.5+R5.4). Verify: window/priority tests.
 - [ ] **R6.4 Kiosk celebration** (8h, needs R5.3+R1.2). Verify: fixture page matches state
       table; included in gate drill.
