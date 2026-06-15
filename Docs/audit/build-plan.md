@@ -744,7 +744,17 @@ manual gate — not executable here. R4.1–R4.4 code complete; site stays prod-
       analytics (`track()`→rate-limited `/api/track`). Doc [share-art-architecture.md]. Verified:
       route renders (visual QA) + typecheck + lint + 312 tests. (Default font for now; Exat is a noted
       enhancement — dev font-fetch limitation.)
-- [ ] **R6.3 Happening strip + config** (6h, needs R1.5+R5.4). Verify: window/priority tests.
+- [x] **R6.3 Happening strip + config** (6h, needs R1.5+R5.4). Verify: window/priority tests.
+      **DONE 2026-06-16 (commit f9fe48c).** Customer strip + admin manager built together (no dead
+      controls) — **resolves the R5.4 §6.4 strip config deferral** (a richer `HappeningItem` table
+      replaces the planned `SystemSetting strip:<eventId>`). Migration `20260616000000_happening_item`
+      (local+prod, additive). `getHappeningStrip` merges manual items + live/next schedule
+      (LIVE_NOW/STARTING_SOON≤30m) + live offers → sorted (LIVE_NOW→STARTING_SOON→OFFER→ANNOUNCEMENT→
+      rest, then weight); query-time visibility window (auto-hide). Customer `HappeningStrip` (RPA swipe
+      cards, LIVE pulse, SSR + 60s refresh only when LIVE) on home PRE/LIVE; `/api/happening/[eventId]`
+      feed. Admin `/admin/content/happening` CRUD/publish/archive/weight/window + nav. Analytics
+      (happening_view/click). Gated merge integration test + endpoint verified. Doc:
+      [happening-strip-architecture.md].
 - [ ] **R6.4 Kiosk celebration** (8h, needs R5.3+R1.2). Verify: fixture page matches state
       table; included in gate drill.
 - [ ] **R6.5 Concierge** (12h, needs R5.4): inbound webhook (Meta signature), keyword router,
