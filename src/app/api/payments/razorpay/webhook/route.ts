@@ -4,6 +4,7 @@ import { db } from "@/server/db";
 import { fulfillOrder } from "@/server/tickets/service";
 import { fulfillStallBooking } from "@/server/bookings/payment";
 import { fulfillAddOnOrder } from "@/server/addons/service";
+import { recordHeartbeat, HEARTBEAT } from "@/server/system/heartbeat";
 import { logError } from "@/lib/logger";
 import { env } from "@/lib/env";
 
@@ -24,6 +25,8 @@ export async function POST(req: Request) {
     });
     return NextResponse.json({ ok: false, error: { code: "BAD_SIGNATURE" } }, { status: 400 });
   }
+
+  void recordHeartbeat(HEARTBEAT.webhook); // command-center liveness; never blocks fulfilment
 
   let evt: {
     event?: string;

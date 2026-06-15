@@ -1,6 +1,9 @@
 import "server-only";
 import { db } from "@/server/db";
 import { REVIEW_SLA_MS } from "@/lib/vendor-sla";
+import { liveCheckedIn } from "@/server/checkin/service";
+import { getHeartbeat, HEARTBEAT } from "@/server/system/heartbeat";
+import { formatPaise } from "@/lib/utils";
 import { getAnalytics } from "./service";
 
 /** Command-center dashboard = the analytics aggregate + dashboard-only extras + a windowed KPI strip. */
@@ -60,5 +63,78 @@ export async function getDashboard(eventId?: string, rangeDays: number | null = 
       soldOutTypes,
       reviewAging,
     },
+  };
+}
+
+export interface ActivityItem {
+  kind: "order" | "booking" | "checkin";
+  label: string;
+  sub: string;
+  at: Date;
+}
+
+/**
+ * Command center (admin-portal §2): the six founder tiles + a danger alert row (non-zero only) +
+ * a recent-activity feed, scoped to the event-switcher selection. Composes getDashboard (analytics +
+ * pending/extras) with a few targeted reads. Tiles must reconcile to the seed math (R5.2 test).
+ */
+export async function getCommandCenter(eventId?: string) {
+  const d = await getDashboard(eventId, null);
+  const nowMs = Date.now();
+  const ev = eventId ? { eventId } : {};
+  const since24h = new Date(nowMs - 86400000);
+  const since7d = new Date(nowMs - 7 * 86400000);
+
+  const [feesAgg, sponsorGroups, paymentFailures24h, waitlistAdded7d, live, recentBookings, recentCheckins, cronAt, webhookAt] = await Promise.all([
+    db.payment.aggregate({ _sum: { feePaise: true, taxPaise: true }, where: { status: "CAPTURED" } }),
+    db.sponsor.groupBy({ by: ["tier"], where: { status: { in: ["SIGNED", "PAID"] }, ...ev }, _sum: { amountPaise: true }, _count: { _all: true } }),
+    db.order.count({ where: { ...ev, status: "FAILED", createdAt: { gte: since24h } } }),
+    db.waitlist.count({ where: { createdAt: { gte: since7d }, ...(eventId ? { eventId } : {}) } }),
+    liveCheckedIn(eventId),
+    db.booking.findMany({ where: { ...ev, status: "BOOKED" }, orderBy: { createdAt: "desc" }, take: 6, include: { stall: { select: { label: true } }, event: { select: { name: true } }, vendorProfile: { select: { brandName: true } } } }),
+    db.checkIn.findMany({ where: { direction: "IN", ...(eventId ? { ticket: { order: { eventId } } } : {}) }, orderBy: { scannedAt: "desc" }, take: 6, select: { id: true, scannedAt: true, admitted: true } }),
+    getHeartbeat(HEARTBEAT.cron),
+    getHeartbeat(HEARTBEAT.webhook),
+  ]);
+
+  const fees = (feesAgg._sum.feePaise ?? 0) + (feesAgg._sum.taxPaise ?? 0);
+  const grossPaise = d.kpis.totalRevenue;
+  const soldTotal = d.ticketTypes.reduce((s, t) => s + t.sold, 0);
+  const capacityTotal = d.ticketTypes.reduce((s, t) => s + t.total, 0);
+  const signedPaise = sponsorGroups.reduce((s, g) => s + (g._sum.amountPaise ?? 0), 0);
+  const sponsorCount = sponsorGroups.reduce((s, g) => s + g._count._all, 0);
+
+  const tiles = {
+    revenue: { grossPaise, netPaise: grossPaise - fees },
+    tickets: { sold: soldTotal, total: capacityTotal, spark: d.trend.slice(-14).map((b) => b.revenue) },
+    checkins: { live, pctOfSold: soldTotal ? live / soldTotal : 0 },
+    vendors: { booked: d.stalls.booked, total: d.stalls.total, pendingReview: d.pending.approvals },
+    sponsors: { signedPaise, count: sponsorCount, byTier: sponsorGroups.map((g) => ({ tier: String(g.tier), count: g._count._all })) },
+    waitlist: { total: d.extras.ticketWaitlist + d.extras.stallWaitlist, added7d: waitlistAdded7d },
+  };
+
+  const alerts = [
+    { key: "failures", n: paymentFailures24h, label: "payment failure(s), last 24h", href: "/admin/analytics" },
+    { key: "outbox", n: d.extras.failedNotifications, label: "notification(s) failed in outbox", href: "/admin/ops" },
+    { key: "review", n: d.pending.reviewAging, label: "vendor(s) waiting >48h for a call-back", href: "/admin/vendors" },
+  ].filter((a) => a.n > 0);
+
+  const activity: ActivityItem[] = [
+    ...d.recentOrders.map((o) => ({ kind: "order" as const, label: `Order · ${o.event.name}`, sub: formatPaise(o.total), at: o.createdAt })),
+    ...recentBookings.map((b) => ({ kind: "booking" as const, label: `Stall ${b.stall.label} booked`, sub: b.vendorProfile?.brandName ?? b.event.name, at: b.createdAt })),
+    ...recentCheckins.map((c) => ({ kind: "checkin" as const, label: "Guest checked in", sub: `${c.admitted} admitted`, at: c.scannedAt })),
+  ]
+    .sort((a, b) => b.at.getTime() - a.at.getTime())
+    .slice(0, 10);
+
+  return {
+    tiles,
+    alerts,
+    health: { cronAt, webhookAt },
+    revenueByDay: d.trend,
+    activity,
+    // Passthrough for the retained "needs attention" feed (no extra getDashboard call).
+    pending: d.pending,
+    unsignedContracts: d.extras.totalContracts - d.extras.signedContracts,
   };
 }

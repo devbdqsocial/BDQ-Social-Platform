@@ -7,6 +7,7 @@ import { processOutbox } from "@/server/notifications/outbox";
 import { materializeDueExpenseSchedules } from "@/server/finance/expenses";
 import { getEventPnl } from "@/server/finance/pnl";
 import { notify } from "@/server/notifications/admin";
+import { recordHeartbeat, HEARTBEAT } from "@/server/system/heartbeat";
 import { formatPaise } from "@/lib/utils";
 import { logError } from "@/lib/logger";
 
@@ -133,6 +134,7 @@ export async function pruneStaleRows() {
 
 /** Run every maintenance task; one failing task never aborts the others. */
 export async function runAllMaintenance(): Promise<Record<string, unknown>> {
+  await recordHeartbeat(HEARTBEAT.cron); // command-center liveness (admin-portal §2)
   const tasks: Record<string, () => Promise<unknown>> = {
     reconcile: reconcilePendingPayments,
     releaseHolds: async () => ({ released: await releaseExpiredHolds() }),

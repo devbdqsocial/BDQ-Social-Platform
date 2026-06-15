@@ -1,133 +1,126 @@
 import Link from "next/link";
 import { fmtCompact as fmtDate } from "@/lib/date-formats";
-import { Clock, Ticket as TicketIcon, UserCheck, XCircle, CheckCircle2, FileText, AlertCircle, PhoneCall } from "lucide-react";
+import { Clock, Ticket as TicketIcon, XCircle, CheckCircle2, FileText, ShoppingBag, Store, UserCheck, AlertTriangle } from "lucide-react";
 import { requireAdmin } from "@/server/auth/guard";
 import { getActiveEvent } from "@/server/admin/event-context";
-import { getDashboard } from "@/server/analytics/dashboard";
+import { getCommandCenter } from "@/server/analytics/dashboard";
 import { formatPaise } from "@/lib/utils";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { KpiCard } from "@/components/charts/kpi-card";
 import { ChartCard } from "@/components/charts/chart-card";
-import { DashboardFilter } from "@/components/admin/dashboard-filter";
-import {
-  RevenueAreaChart, TicketTypeBar, VendorPipelineBar, StallOccupancyDonut,
-} from "@/components/charts/dashboard-charts";
+import { AutoRefresh } from "@/components/admin/auto-refresh";
+import { RevenueAreaChart } from "@/components/charts/dashboard-charts";
 
+const pct = (n: number) => `${Math.round(n * 100)}%`;
+const ACTIVITY_ICON = { order: ShoppingBag, booking: Store, checkin: UserCheck } as const;
 
-
-const RANGE_DAYS: Record<string, number | null> = { today: 1, "7d": 7, "30d": 30, all: null };
-const RANGE_LABEL: Record<string, string> = { today: "today", "7d": "last 7 days", "30d": "last 30 days", all: "all time" };
-
-export default async function AdminDashboard({ searchParams }: { searchParams: Promise<{ range?: string }> }) {
+export default async function AdminDashboard() {
   await requireAdmin();
-  const { range } = await searchParams;
-  const rangeKey = range && range in RANGE_DAYS ? range : "30d";
   const { active } = await getActiveEvent();
-  const d = await getDashboard(active?.id, RANGE_DAYS[rangeKey]);
-  const k = d.kpis;
-  const win = RANGE_LABEL[rangeKey];
-  const occ = d.stalls;
-  const vp = d.vendorPipeline;
-  const trendSpark = d.trend.map((b) => b.revenue);
+  const cc = await getCommandCenter(active?.id);
+  const t = cc.tiles;
 
-  const pipeline = [
-    { stage: "Submitted", count: vp.SUBMITTED },
-    { stage: "Under review", count: vp.UNDER_REVIEW },
-    { stage: "Approved", count: vp.APPROVED },
-    { stage: "Rejected", count: vp.REJECTED },
-  ];
+  const now = Date.now();
+  const eventDay = !!active && active.startsAt.getTime() <= now && now <= active.endsAt.getTime();
 
+  const tierSub = t.sponsors.byTier.length
+    ? t.sponsors.byTier.map((x) => `${x.count} ${x.tier.toLowerCase()}`).join(" · ")
+    : "none yet";
+
+  // Retained "needs attention" feed (actionable items not in the alert row / tiles).
   const tasks = [
-    { n: d.pending.reviewAging, label: "vendor(s) waiting >48h for a call-back — past SLA", href: "/admin/vendors", icon: PhoneCall },
-    { n: d.pending.approvals, label: "vendor application(s) awaiting review", href: "/admin/vendors", icon: UserCheck },
-    { n: d.pending.expiringHolds, label: "stall hold(s) expiring within the hour", href: "/admin/venue/stalls", icon: Clock },
-    { n: d.pending.failedPayments, label: "failed payment(s) in the last 30 days", href: "/admin/analytics", icon: XCircle },
-    { n: d.pending.soldOutTypes, label: "ticket type(s) sold out", href: "/admin/analytics", icon: TicketIcon },
-    { n: d.extras.totalContracts - d.extras.signedContracts, label: "vendor contract(s) awaiting signature", href: "/admin/vendors", icon: FileText },
-    { n: d.extras.failedNotifications, label: "failed notification(s) in outbox", href: "/admin/ops", icon: AlertCircle },
-  ].filter((t) => t.n > 0);
+    { n: cc.pending.expiringHolds, label: "stall hold(s) expiring within the hour", href: "/admin/venue/stalls", icon: Clock },
+    { n: cc.pending.soldOutTypes, label: "ticket type(s) sold out", href: "/admin/analytics", icon: TicketIcon },
+    { n: cc.unsignedContracts, label: "vendor contract(s) awaiting signature", href: "/admin/vendors", icon: FileText },
+    { n: cc.pending.failedPayments, label: "failed payment(s), last 30 days", href: "/admin/analytics", icon: XCircle },
+  ].filter((x) => x.n > 0);
 
   return (
     <div className="space-y-6">
+      {eventDay && <AutoRefresh seconds={60} />}
       <PageHeader
-        title="Dashboard"
-        description={active ? `Command center for ${active.name}.` : "Create an event to see live numbers."}
-        actions={<DashboardFilter current={rangeKey} />}
+        title="Command center"
+        description={active ? `Live numbers for ${active.name}.` : "Create an event to see live numbers."}
       />
 
-      {/* KPI strip — windowed to the selected range */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <KpiCard label="Revenue" value={formatPaise(d.range.revenue)} deltaPct={rangeKey === "30d" ? d.revenueDeltaPct ?? undefined : undefined} trend={trendSpark} sub={`${d.range.orders} orders · ${win}`} />
-        <KpiCard label="Tickets sold" value={d.range.tickets} sub={win} />
-        <KpiCard label="Footfall" value={d.range.footfall} sub={`checked in · ${win}`} />
-        <KpiCard label="Vendor occupancy" value={`${occ.booked}/${occ.total}`} sub={`${Math.round(occ.pct * 100)}% of stalls booked`} />
-        <KpiCard label="Pending approvals" value={d.pending.approvals} sub="vendors awaiting review" />
+      {/* Six founder tiles (admin-portal §2) */}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <KpiCard label="Revenue" value={formatPaise(t.revenue.grossPaise)} sub={`${formatPaise(t.revenue.netPaise)} net after fees`} />
+        <KpiCard label="Tickets" value={`${t.tickets.sold}/${t.tickets.total}`} trend={t.tickets.spark} sub="sold · 14d" />
+        <KpiCard label="Check-ins" value={t.checkins.live} sub={`${pct(t.checkins.pctOfSold)} of sold`} />
+        <KpiCard label="Vendors" value={`${t.vendors.booked}/${t.vendors.total}`} sub={`${t.vendors.pendingReview} pending review`} />
+        <KpiCard label="Sponsors" value={formatPaise(t.sponsors.signedPaise)} sub={tierSub} />
+        <KpiCard label="Waitlist" value={t.waitlist.total} sub={`+${t.waitlist.added7d} this week`} />
       </div>
 
-      {/* Charts */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <ChartCard title="Revenue" description="Paid ticket revenue, last 30 days">
-          <RevenueAreaChart data={d.trend} />
-        </ChartCard>
-        <ChartCard title="Ticket sales" description="Sold vs capacity by type">
-          <TicketTypeBar data={d.ticketTypes.map((t) => ({ name: t.name, sold: t.sold, total: t.total }))} />
-        </ChartCard>
-        <ChartCard title="Vendor pipeline" description="Applications by stage">
-          <VendorPipelineBar data={pipeline} />
-        </ChartCard>
-        <ChartCard title="Stall occupancy" description="Live stall status">
-          <StallOccupancyDonut counts={occ.counts} />
-        </ChartCard>
-      </div>
+      {/* Alert row — danger-tinted, only when something is wrong */}
+      {cc.alerts.length > 0 && (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {cc.alerts.map((a) => (
+            <Link
+              key={a.key}
+              href={a.href}
+              className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive transition-colors hover:bg-destructive/15"
+            >
+              <AlertTriangle className="size-4 shrink-0" />
+              <span><span className="font-semibold">{a.n}</span> {a.label}</span>
+            </Link>
+          ))}
+        </div>
+      )}
 
-      {/* Feeds */}
+      {/* Revenue chart + recent activity */}
       <div className="grid gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <ChartCard title="Revenue" description="Paid revenue by day, last 30 days">
+            <div className="h-[280px]"><RevenueAreaChart data={cc.revenueByDay} /></div>
+          </ChartCard>
+        </div>
         <Card>
-          <CardHeader><CardTitle className="text-base">Recent orders</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">Recent activity</CardTitle></CardHeader>
           <CardContent className="space-y-2 text-sm">
-            {d.recentOrders.length === 0 ? (
-              <p className="text-muted-foreground">No paid orders yet.</p>
+            {cc.activity.length === 0 ? (
+              <p className="text-muted-foreground">No activity yet.</p>
             ) : (
-              d.recentOrders.slice(0, 6).map((o) => (
-                <div key={o.id} className="flex items-center justify-between gap-2 border-b border-border pb-2 last:border-0 last:pb-0">
-                  <span className="min-w-0 truncate text-muted-foreground">{o.event.name}</span>
-                  <span className="shrink-0 font-medium">{formatPaise(o.total)}</span>
-                  <span className="shrink-0 text-xs text-muted-foreground">{fmtDate(o.createdAt)}</span>
-                </div>
-              ))
+              cc.activity.map((a, i) => {
+                const Icon = ACTIVITY_ICON[a.kind];
+                return (
+                  <div key={i} className="flex items-center gap-2 border-b border-border pb-2 last:border-0 last:pb-0">
+                    <Icon className="size-4 shrink-0 text-muted-foreground" />
+                    <span className="min-w-0 flex-1 truncate">{a.label}</span>
+                    <span className="shrink-0 text-muted-foreground">{a.sub}</span>
+                    <span className="shrink-0 text-xs text-muted-foreground">{fmtDate(a.at)}</span>
+                  </div>
+                );
+              })
             )}
           </CardContent>
         </Card>
+      </div>
 
+      {/* Needs attention + system health */}
+      <div className="grid gap-4 lg:grid-cols-2">
         <Card>
-          <CardHeader><CardTitle className="text-base">Pending tasks</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">Needs attention</CardTitle></CardHeader>
           <CardContent className="space-y-2 text-sm">
             {tasks.length === 0 ? (
               <p className="flex items-center gap-2 text-muted-foreground"><CheckCircle2 className="size-4 text-success" /> Nothing pending.</p>
             ) : (
-              tasks.map((t) => (
-                <Link key={t.label} href={t.href} className="flex items-center gap-2 rounded-md px-1 py-1 hover:bg-muted">
-                  <t.icon className="size-4 shrink-0 text-muted-foreground" />
-                  <span><span className="font-semibold">{t.n}</span> {t.label}</span>
+              tasks.map((task) => (
+                <Link key={task.label} href={task.href} className="flex items-center gap-2 rounded-md px-1 py-1 hover:bg-muted">
+                  <task.icon className="size-4 shrink-0 text-muted-foreground" />
+                  <span><span className="font-semibold">{task.n}</span> {task.label}</span>
                 </Link>
               ))
             )}
           </CardContent>
         </Card>
-
         <Card>
-          <CardHeader><CardTitle className="text-base">At a glance</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">System health</CardTitle></CardHeader>
           <CardContent className="space-y-2 text-sm">
-            <Row label="Total revenue" value={formatPaise(k.totalRevenue)} />
-            <Row label="Online / Offline split" value={`${formatPaise(d.extras.onlineRevenue)} / ${formatPaise(d.extras.offlineRevenue)}`} />
-            <Row label="Stall revenue" value={formatPaise(k.stallRevenue)} />
-            <Row label="Approved vendors" value={String(k.approvedVendors)} />
-            <Row label="Avg order value" value={formatPaise(k.avgOrderValue)} />
-            <Row label="Checked in" value={`${k.checkedIn} (${Math.round(k.attendanceRate * 100)}%)`} />
-            <Row label="Comp tickets issued" value={String(d.extras.compsCount)} />
-            <Row label="Waitlist (Tickets/Stalls)" value={`${d.extras.ticketWaitlist} / ${d.extras.stallWaitlist}`} />
-            <Row label="Outbox delivery rate" value={`${Math.round(d.extras.deliveryRate * 100)}%`} />
+            <HealthRow label="Last cron tick" at={cc.health.cronAt} />
+            <HealthRow label="Last webhook received" at={cc.health.webhookAt} />
           </CardContent>
         </Card>
       </div>
@@ -135,11 +128,11 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function HealthRow({ label, at }: { label: string; at: Date | null }) {
   return (
     <div className="flex items-center justify-between border-b border-border pb-2 last:border-0 last:pb-0">
       <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium">{value}</span>
+      <span className="font-medium">{at ? fmtDate(at) : "—"}</span>
     </div>
   );
 }
