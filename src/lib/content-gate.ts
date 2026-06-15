@@ -13,6 +13,25 @@ export interface GuideSection {
   body: string[];
 }
 
+/** The fixed, title-locked sections the admin guide editor manages (admin-portal §6.3). These
+ *  complement the event-derived baseline (Getting there / Timings) added in getGuide. */
+export const GUIDE_HEADINGS = ["Food & drink", "Family & kids", "Accessibility", "What to bring", "House rules", "FAQ"] as const;
+
+/** Build the `guide:<eventId>` JSON from the editor's per-section bodies (one line each). */
+export function serializeGuide(bodies: string[]): string {
+  const sections = GUIDE_HEADINGS.map((heading, i) => ({
+    heading,
+    body: (bodies[i] ?? "").split("\n").map((l) => l.trim()).filter(Boolean),
+  }));
+  return JSON.stringify({ sections });
+}
+
+/** Read each fixed section's body back as editor text (joined lines), for prefilling the form. */
+export function guideBodiesFromSections(sections: GuideSection[]): string[] {
+  const byHeading = new Map(sections.map((s) => [s.heading, s.body.join("\n")]));
+  return GUIDE_HEADINGS.map((h) => byHeading.get(h) ?? "");
+}
+
 /** Trim + drop empty body lines, then drop any section missing a heading or all-empty body. */
 export function cleanSections(sections: GuideSection[]): GuideSection[] {
   return sections
