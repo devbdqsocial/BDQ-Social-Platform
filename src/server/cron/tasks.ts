@@ -2,7 +2,9 @@ import "server-only";
 import { db } from "@/server/db";
 import { fetchCapturedPayment } from "@/lib/razorpay";
 import { fulfillOrder } from "@/server/tickets/service";
-import { releaseExpiredHolds } from "@/server/bookings/service";
+import { releaseExpiredHolds, releaseExpiredPayWindows } from "@/server/bookings/service";
+import { fulfillStallBooking } from "@/server/bookings/payment";
+import { fulfillAddOnOrder } from "@/server/addons/service";
 import { processOutbox } from "@/server/notifications/outbox";
 import { materializeDueExpenseSchedules } from "@/server/finance/expenses";
 import { getEventPnl } from "@/server/finance/pnl";
@@ -46,6 +48,55 @@ export async function reconcilePendingPayments() {
     }
   }
   return { scanned: pending.length, fulfilled, expired };
+}
+
+/**
+ * Safety net for missed webhooks on the VENDOR money paths — stall bookings + add-on orders, which
+ * are otherwise webhook-only (launch-readiness-report §5/§7). Mirrors reconcilePendingPayments:
+ * fetch the captured Razorpay payment for each PENDING_PAYMENT order and fulfil idempotently (dedupe
+ * by Payment.gatewayRef). Then cancel bookings whose 48h pay window has lapsed (this also wires
+ * releaseExpiredPayWindows, which was previously unreferenced).
+ */
+export async function reconcileVendorPayments() {
+  const cutoff = new Date(Date.now() - 2 * 60 * 1000); // give webhooks ~2 min first
+  let fulfilled = 0;
+
+  const bookings = await db.booking.findMany({
+    where: { status: "PENDING_PAYMENT", gatewayOrderId: { not: null }, createdAt: { lt: cutoff } },
+    select: { gatewayOrderId: true },
+    take: 100,
+  });
+  for (const b of bookings) {
+    try {
+      const cap = await fetchCapturedPayment(b.gatewayOrderId!);
+      if (cap) {
+        await fulfillStallBooking(b.gatewayOrderId!, cap.id, { feePaise: cap.feePaise, taxPaise: cap.taxPaise });
+        fulfilled++;
+      }
+    } catch {
+      // Razorpay unconfigured or transient → leave for the next sweep
+    }
+  }
+
+  const addOnOrders = await db.bookingAddOnOrder.findMany({
+    where: { status: "PENDING_PAYMENT", gatewayOrderId: { not: null }, createdAt: { lt: cutoff } },
+    select: { gatewayOrderId: true },
+    take: 100,
+  });
+  for (const o of addOnOrders) {
+    try {
+      const cap = await fetchCapturedPayment(o.gatewayOrderId!);
+      if (cap) {
+        await fulfillAddOnOrder(o.gatewayOrderId!, cap.id, { feePaise: cap.feePaise, taxPaise: cap.taxPaise });
+        fulfilled++;
+      }
+    } catch {
+      // leave for the next sweep
+    }
+  }
+
+  const released = await releaseExpiredPayWindows();
+  return { stalls: bookings.length, addOns: addOnOrders.length, fulfilled, released };
 }
 
 /** Event-day reminders: enqueue one email per paid customer for events within 24h, then drain. */
@@ -138,6 +189,7 @@ export async function runAllMaintenance(): Promise<Record<string, unknown>> {
   await recordHeartbeat(HEARTBEAT.cron); // command-center liveness (admin-portal §2)
   const tasks: Record<string, () => Promise<unknown>> = {
     reconcile: reconcilePendingPayments,
+    reconcileVendor: reconcileVendorPayments,
     releaseHolds: async () => ({ released: await releaseExpiredHolds() }),
     notifyRetry: async () => processOutbox(50),
     reminders: sendEventReminders,
