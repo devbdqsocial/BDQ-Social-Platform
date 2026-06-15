@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { icsHref } from "@/lib/ics";
+import { TicketShare } from "@/components/tickets/TicketShare";
 
 /**
  * Wallet flip card (delight.md §4). Front = QR + essentials; back = details, add-to-calendar,
@@ -45,14 +46,6 @@ export function TicketCard({ d }: { d: TicketCardData }) {
   const dateLine = start.toLocaleString("en-IN", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
   const ics = icsHref({ uid: d.ticketId, title: d.eventName, start, location: d.location ?? undefined, url: d.eventUrl, description: `Your ${d.typeName} ticket — admits ${d.admitCount}.` });
-
-  const share = async () => {
-    const text = `I'm going to ${d.eventName} — ${dateLine}.`;
-    try {
-      if (navigator.share) await navigator.share({ title: d.eventName, text, url: d.eventUrl });
-      else if (navigator.clipboard) await navigator.clipboard.writeText(`${text} ${d.eventUrl ?? ""}`.trim());
-    } catch { /* user cancelled — no-op */ }
-  };
 
   const faceBase = "absolute inset-0 flex gap-[var(--space-xl)] p-[var(--space-xl)]";
   const t = reduced ? "opacity .15s ease" : "transform .6s var(--ease-swift, cubic-bezier(.4,0,.2,1))";
@@ -106,7 +99,7 @@ export function TicketCard({ d }: { d: TicketCardData }) {
             </div>
             <div className="flex flex-wrap items-center gap-[var(--space-lg)]" onClick={(e) => e.stopPropagation()}>
               <a href={ics} download={`${d.eventName.replace(/\s+/g, "-").toLowerCase()}.ics`} className="f-paragraph-small f-bold t-upper link-underline" style={{ letterSpacing: "0.06em" }}>Add to calendar</a>
-              <button type="button" onClick={share} className="f-paragraph-small f-bold t-upper link-underline" style={{ letterSpacing: "0.06em" }}>Share</button>
+              <TicketShare ticketId={d.ticketId} eventName={d.eventName} shareUrl={d.eventUrl} variant="link" />
             </div>
             <p className="f-paragraph-small opacity-50">All sales final.</p>
           </div>

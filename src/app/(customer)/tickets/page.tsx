@@ -9,6 +9,7 @@ import { AutoRefresh } from "@/components/admin/auto-refresh";
 import { RpaPageHeader, RpaEmpty } from "@/components/landing/RpaPageHeader";
 import { TicketCard } from "@/components/tickets/TicketCard";
 import { TicketReveal } from "@/components/tickets/TicketReveal";
+import { TicketShare } from "@/components/tickets/TicketShare";
 
 export const metadata: Metadata = { title: "Tickets" };
 export const dynamic = "force-dynamic";
@@ -41,6 +42,16 @@ export default async function WalletPage({ searchParams }: { searchParams: Promi
         )}
 
         <RpaPageHeader kicker="Your wallet" title="Tickets" lede="Show the QR code at the gate — that's your way in." />
+
+        {revealOrder && (
+          <div className="gama-2 surface-2 paint mt-[var(--space-2xl)] flex flex-wrap items-center justify-between gap-[var(--space-lg)] rounded-[var(--radius-lg)] p-[var(--space-xl)]">
+            <div className="min-w-0">
+              <p className="kicker opacity-75">You&apos;re going</p>
+              <p className="f-h32 f-exat mt-1">Make it official — share your pass</p>
+            </div>
+            <TicketShare ticketId={revealOrder.t.id} eventName={revealOrder.t.order.event.name} shareUrl={`/events/${revealOrder.t.order.event.slug}`} variant="button" />
+          </div>
+        )}
 
         {confirming && (
           <div className="gama-1 bg-1 paint mt-[var(--space-2xl)] flex items-center gap-[var(--space-xl)] overflow-hidden rounded-[var(--radius-lg)] p-[var(--space-xl)]">
