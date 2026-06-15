@@ -44,6 +44,7 @@ export const NAV_GROUPS: NavGroup[] = [
   ]},
   { label: "Operations", icon: Zap, items: [
     { label: "Check-in Scanner", href: "/admin/ops/checkin", section: "checkin" },
+    { label: "Kiosk Mode", href: "/admin/kiosk", section: "checkin" },
     { label: "Live Monitor", href: "/admin/ops/monitor", section: "ops" },
     { label: "Task Center", href: "/admin/ops/tasks", section: "ops" },
     { label: "Staff Management", href: "/admin/ops/staff", section: "staff" },
