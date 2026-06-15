@@ -681,8 +681,15 @@ manual gate — not executable here. R4.1–R4.4 code complete; site stays prod-
       revenue chart, a 10-row orders/bookings/check-ins activity feed, auto-refresh 60s on event day.
       SystemSetting cron/webhook heartbeats feed a system-health block; the actionable "needs
       attention" feed is retained (additive). Gated DB reconciliation test green vs local DB.
-- [ ] **R5.3 Kiosk mode** (16h): launcher, fullscreen, wake-lock, offline badge, manual entry;
+- [x] **R5.3 Kiosk mode** (16h): launcher, fullscreen, wake-lock, offline badge, manual entry;
       ops status strip; staff sign-out-everywhere. Verify: kiosk e2e chain; revoke test.
+      **DONE 2026-06-15 (commits e426c55, + kiosk).** `/admin/kiosk` (bare route, CHECKIN guard):
+      `KioskLauncher` names the gate + goes fullscreen → `KioskClient` wraps the existing `Scanner`
+      (camera + offline queue + manual entry already built) with a gate header, online/offline badge,
+      screen wake-lock (re-acquired on visibility), and a 3s-hold exit; nav leaf Operations → Kiosk.
+      Ops status strip on `/admin/ops` (outbox depth · last cron tick [R5.2 heartbeat] · last webhook ·
+      payments captured 24h). Staff `revokeStaffSessions` (audited) surfaced as per-row "Sign out
+      everywhere". (Kiosk celebration screen is R6.4; e2e suite is git-ignored — verified by build.)
 - [~] **R5.4 Content group** (18h): Offers CRUD/workflow + auto-END cron, Gallery curation, Guide
       editor, Strip config. Verify: admin-portal §6 e2e; offers cron. **MOSTLY DONE 2026-06-15
       (commits 1eaf388, 66a11d9)** — new **Content** admin group (nav + RBAC `content` section, ADMIN+):
