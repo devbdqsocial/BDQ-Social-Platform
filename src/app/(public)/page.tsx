@@ -4,6 +4,8 @@ import { listPublished } from "@/server/events/service";
 import { listApprovedVendors } from "@/server/vendors/service";
 import { sponsorsForEventPublic } from "@/server/sponsors/service";
 import { getHomeMode } from "@/lib/home-mode";
+import { getHappeningStrip } from "@/server/content/happening";
+import { HappeningStrip } from "@/components/events/HappeningStrip";
 import { homeFocus } from "@/lib/home-content";
 import { primaryLogo } from "@/lib/vendor-assets";
 import { formatPaise } from "@/lib/utils";
@@ -48,6 +50,8 @@ export default async function LandingPage() {
   // Lifecycle orchestration (R3.10): the home shifts focus PRE → LIVE → POST, same page + nav.
   const mode = getHomeMode(event ? { startsAt: event.startsAt, endsAt: event.endsAt, status: event.status } : null);
   const focus = homeFocus(mode);
+  // Happening strip (R6.3): the event heartbeat. Hidden POST; PRE shows upcoming, LIVE refreshes.
+  const happenings = event && mode !== "POST" ? await getHappeningStrip(event.id) : [];
 
   return (
     <div>
@@ -115,6 +119,11 @@ export default async function LandingPage() {
           </div>
         )}
       </section>
+
+      {/* ============ HAPPENING STRIP (R6.3) — the event heartbeat, PRE/LIVE only ============ */}
+      {event && happenings.length > 0 && (
+        <HappeningStrip eventId={event.id} initial={happenings} live={mode === "LIVE"} />
+      )}
 
       {/* ============ PROOF BAND (R3.2) — real counts, no static claims ============ */}
       {(brands.length > 0 || sponsors.length > 0) && (

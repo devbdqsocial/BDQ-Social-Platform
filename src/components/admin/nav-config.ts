@@ -41,6 +41,7 @@ export const NAV_GROUPS: NavGroup[] = [
     { label: "Offers", href: "/admin/content/offers", section: "content" },
     { label: "Gallery", href: "/admin/content/gallery", section: "content" },
     { label: "Guide", href: "/admin/content/guide", section: "content" },
+    { label: "Happening", href: "/admin/content/happening", section: "content" },
   ]},
   { label: "Operations", icon: Zap, items: [
     { label: "Check-in Scanner", href: "/admin/ops/checkin", section: "checkin" },

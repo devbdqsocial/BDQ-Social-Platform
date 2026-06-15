@@ -545,6 +545,17 @@
     .vendor-node-pulse { animation: vendor-node-pulse 1.2s ease-in-out infinite; }
   }
 
+  /* Happening strip (R6.3): hide the horizontal scrollbar; pulse the LIVE_NOW dot. */
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  @keyframes happening-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: 0.45; transform: scale(0.6); }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .happening-pulse { animation: happening-pulse 1.4s ease-in-out infinite; }
+  }
+
   /* RPA animated link underline: wipes in from the left on hover/focus. */
   .link-underline {
     background-image: linear-gradient(currentColor, currentColor);

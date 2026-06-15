@@ -292,3 +292,22 @@ export const updateOfferSchema = z
   .refine(endsAfterStart, { message: "End must be after start." });
 export type CreateOfferInput = z.infer<typeof createOfferSchema>;
 export type UpdateOfferInput = z.infer<typeof updateOfferSchema>;
+
+/** Happening strip items (R6.3). Admin creates the manual kinds; LIVE_NOW/STARTING_SOON/OFFER are
+ *  auto-sourced from schedule/offers but allowed here for flexibility. Title ≤80 (strip is glanceable). */
+const happeningKind = z.enum(["LIVE_NOW", "STARTING_SOON", "OFFER", "ANNOUNCEMENT", "SPONSOR", "ACTIVITY", "WORKSHOP", "PERFORMANCE", "FACILITY"]);
+const happeningFields = {
+  eventId: id,
+  kind: happeningKind,
+  emoji: z.string().max(8).optional(),
+  title: z.string().min(1).max(80),
+  detail: z.string().max(120).optional(),
+  href: z.string().max(200).optional(),
+  priority: z.coerce.number().int().min(0).max(100).default(0),
+  startsAt: z.coerce.date().nullish(),
+  endsAt: z.coerce.date().nullish(),
+};
+export const createHappeningSchema = z.object(happeningFields);
+export const updateHappeningSchema = z.object({ ...happeningFields, id });
+export type CreateHappeningInput = z.infer<typeof createHappeningSchema>;
+export type UpdateHappeningInput = z.infer<typeof updateHappeningSchema>;

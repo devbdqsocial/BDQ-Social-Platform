@@ -226,6 +226,7 @@ model Event {
   galleryPhotos    GalleryPhoto[]
   offers           Offer[]
   addOns           StallAddOn[]
+  happenings       HappeningItem[]
   mapId            String?
 
   @@index([status])
@@ -937,5 +938,41 @@ model BookingAddOn {
 
   @@index([orderId])
   @@index([addOnId])
+}
+
+// ── Happening Strip (R6.3 / customer-portal §3) ──────────────────────────────────────────────
+// The event "heartbeat": manual items (announcements, sponsor, facility…) the admin schedules.
+// Schedule items + live offers are merged in at query time (server/content/happening.ts) — not
+// duplicated here. Visibility is a query-time window (auto-hide/expire); no stale content.
+enum HappeningKind {
+  LIVE_NOW
+  STARTING_SOON
+  OFFER
+  ANNOUNCEMENT
+  SPONSOR
+  ACTIVITY
+  WORKSHOP
+  PERFORMANCE
+  FACILITY
+}
+
+model HappeningItem {
+  id        String        @id @default(cuid())
+  eventId   String
+  event     Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  kind      HappeningKind @default(ANNOUNCEMENT)
+  emoji     String?
+  title     String
+  detail    String?
+  href      String?
+  priority  Int           @default(0) // manual weight within a kind (higher first)
+  startsAt  DateTime? // visibility window opens (null = immediately)
+  endsAt    DateTime? // visibility window closes / auto-expire (null = until unpublished)
+  published Boolean       @default(false)
+  archived  Boolean       @default(false)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([eventId, published, archived])
 }
 
