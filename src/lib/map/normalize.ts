@@ -1,5 +1,5 @@
 import type { EditorElement } from "@/lib/map/designer-ops";
-import type { RenderLayout, StatusMap } from "@/lib/map/render-types";
+import type { RenderElement, RenderLayout, StatusMap } from "@/lib/map/render-types";
 import type { StallStatus } from "@/lib/stall-colors";
 
 /**
@@ -86,4 +86,36 @@ export function stallsToRenderLayout(
   }
 
   return { layout: { version: 1, canvas, elements }, statuses };
+}
+
+/**
+ * Canonical lens transform (R5.5 Phase 6): the single venue document (`LayoutV2`) → the renderer's
+ * `RenderLayout`. The booking/customer/vendor lens can render directly from the venue document
+ * instead of re-deriving from DB `Stall` rows. `stallsToRenderLayout` stays as the DB-`Stall`
+ * fast-path (status comes from the live booking table). Typed structurally to avoid import coupling;
+ * `LayoutV2` satisfies it.
+ */
+export function layoutToRenderLayout(
+  layout: { canvas: { widthFt: number; heightFt: number }; elements: EditorElement[] },
+): { layout: RenderLayout; statuses: StatusMap } {
+  const elements: RenderElement[] = layout.elements.map((el) => ({
+    kind: el.kind === "infra" ? "infra" : "stall",
+    type: el.type,
+    label: el.label,
+    xFt: el.xFt,
+    yFt: el.yFt,
+    widthFt: el.widthFt,
+    heightFt: el.heightFt,
+    rotation: el.rotation,
+  }));
+
+  const statuses: StatusMap = {};
+  for (const el of layout.elements) {
+    if (el.kind !== "infra" && el.status) statuses[el.label] = el.status as StallStatus;
+  }
+
+  return {
+    layout: { version: 2, canvas: { widthFt: layout.canvas.widthFt, heightFt: layout.canvas.heightFt }, elements },
+    statuses,
+  };
 }

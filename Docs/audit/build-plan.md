@@ -704,9 +704,18 @@ manual gate — not executable here. R4.1–R4.4 code complete; site stays prod-
         (it's **R6.3**), so its config would be an inert control. Homepage content is already operable
         via Events/Vendors/Sponsors. Build the strip config alongside R6.3 (it stores `strip:<eventId>`).
       No migration needed (Offer + GalleryPhoto already existed from R3).
-- [ ] **R5.5 VenueMap consolidation (M6)** (12h): additive create+data-migrate first; drop
+- [x] **R5.5 VenueMap consolidation (M6)** (12h): additive create+data-migrate first; drop
       `LayoutTemplate`/`MapElement` one deploy later; library/clone UX (designer = R2.5).
-      Verify: clone-to-event intact; post-window drop migration applied.
+      Verify: clone-to-event intact; post-window drop migration applied. **DONE 2026-06-15 (additive
+      only; owner chose "designate EventMap").** Audit [venue-map-audit.md] found `EventMap` is the
+      de-facto canonical model → **designated `EventMap` as `VenueMap`** via `src/server/venue/service.ts`
+      (`VenueMap` type, canonical CRUD, `loadVenueLayout` one read entry). Additive `EventMap.legacyTemplateId`
+      (migration `20260615..venue_map_legacy_template_id`, local+prod). `scripts/venue-backfill.mjs` folded
+      `LayoutTemplate`→`VenueMap` (idempotent; local 1, prod 0) — **legacy models/rows kept, no drops**.
+      Render entry consolidated: `layoutToRenderLayout(LayoutV2)` (Stall fast-path retained). Formal
+      `VenueLens` (admin/vendor/customer/operations) + `applyLens`. Docs: [venue-map-architecture.md].
+      Tests: lens unit (4) + gated backfill integration; full suite green; no consumers rewired (no
+      regressions). **Dropping LayoutTemplate/MapElement is explicitly a LATER package (one deploy on).**
 - [x] **R5.6 Event wizard** (10h): 4 steps, resume-safe. Verify: wizard e2e → publish →
       landing revalidates. **DONE 2026-06-15 (commit 9659427).** `/admin/events/new` = step 1
       Basics (creates DRAFT → redirects to `events/[id]/setup?step=tickets`); the setup shell drives
