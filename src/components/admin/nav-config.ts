@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, Calendar, Map, Ticket, Store, Zap, IndianRupee, TrendingUp, BarChart3, Settings,
+  LayoutDashboard, Calendar, Map, Ticket, Store, Zap, IndianRupee, TrendingUp, BarChart3, Settings, Megaphone,
   type LucideIcon,
 } from "lucide-react";
 import type { ConsoleSection } from "@/lib/console-access";
@@ -36,6 +36,11 @@ export const NAV_GROUPS: NavGroup[] = [
   { label: "Vendors", icon: Store, items: [
     { label: "Applications", href: "/admin/vendors", section: "vendors" },
     { label: "Add Vendor", href: "/admin/vendors/new", section: "vendors" },
+  ]},
+  { label: "Content", icon: Megaphone, items: [
+    { label: "Offers", href: "/admin/content/offers", section: "content" },
+    { label: "Gallery", href: "/admin/content/gallery", section: "content" },
+    { label: "Guide", href: "/admin/content/guide", section: "content" },
   ]},
   { label: "Operations", icon: Zap, items: [
     { label: "Check-in Scanner", href: "/admin/ops/checkin", section: "checkin" },

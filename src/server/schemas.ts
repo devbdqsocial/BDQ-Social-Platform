@@ -267,3 +267,28 @@ export const addOnOrderSchema = z.object({
 export type CreateAddOnInput = z.infer<typeof createAddOnSchema>;
 export type UpdateAddOnInput = z.infer<typeof updateAddOnSchema>;
 export type AddOnOrderInput = z.infer<typeof addOnOrderSchema>;
+
+/** Offers (R5.4 / admin-portal §6.1). Linked to a vendor OR a sponsor (exactly one). */
+const offerFields = {
+  eventId: id,
+  vendorProfileId: id.nullish(),
+  sponsorId: id.nullish(),
+  title: z.string().min(1).max(60),
+  terms: z.string().min(1).max(200),
+  kind: z.enum(["DISCOUNT", "FREEBIE", "BUNDLE"]),
+  startsAt: z.coerce.date(),
+  endsAt: z.coerce.date(),
+  maxRedemptions: z.coerce.number().int().positive().nullish(),
+};
+const oneLink = (o: { vendorProfileId?: string | null; sponsorId?: string | null }) => Boolean(o.vendorProfileId) !== Boolean(o.sponsorId);
+const endsAfterStart = (o: { startsAt: Date; endsAt: Date }) => o.endsAt > o.startsAt;
+export const createOfferSchema = z
+  .object(offerFields)
+  .refine(oneLink, { message: "Link the offer to a vendor OR a sponsor (one)." })
+  .refine(endsAfterStart, { message: "End must be after start." });
+export const updateOfferSchema = z
+  .object({ ...offerFields, id })
+  .refine(oneLink, { message: "Link the offer to a vendor OR a sponsor (one)." })
+  .refine(endsAfterStart, { message: "End must be after start." });
+export type CreateOfferInput = z.infer<typeof createOfferSchema>;
+export type UpdateOfferInput = z.infer<typeof updateOfferSchema>;

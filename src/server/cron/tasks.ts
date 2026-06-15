@@ -7,6 +7,7 @@ import { processOutbox } from "@/server/notifications/outbox";
 import { materializeDueExpenseSchedules } from "@/server/finance/expenses";
 import { getEventPnl } from "@/server/finance/pnl";
 import { notify } from "@/server/notifications/admin";
+import { autoEndDueOffers } from "@/server/content/admin-offers";
 import { recordHeartbeat, HEARTBEAT } from "@/server/system/heartbeat";
 import { formatPaise } from "@/lib/utils";
 import { logError } from "@/lib/logger";
@@ -140,6 +141,7 @@ export async function runAllMaintenance(): Promise<Record<string, unknown>> {
     releaseHolds: async () => ({ released: await releaseExpiredHolds() }),
     notifyRetry: async () => processOutbox(50),
     reminders: sendEventReminders,
+    endOffers: autoEndDueOffers,
     recurringExpenses: async () => ({ created: await materializeDueExpenseSchedules() }),
     financeDigest: sendFinanceDigest,
     cleanup: pruneStaleRows,

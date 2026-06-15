@@ -5,7 +5,7 @@ import type { Permission, Role } from "@/server/auth/guard";
 export type ConsoleSection =
   | "overview" | "events" | "map" | "vendors" | "checkin" | "staff" | "audit"
   | "analytics" | "coupons" | "comps" | "sponsors" | "waitlist" | "platform-waitlist" | "ops"
-  | "tickets" | "finance" | "growth";
+  | "tickets" | "finance" | "growth" | "content";
 
 const REQUIRES: Record<ConsoleSection, { superAdminOnly?: boolean; perm?: Permission }> = {
   overview: {},
@@ -25,6 +25,7 @@ const REQUIRES: Record<ConsoleSection, { superAdminOnly?: boolean; perm?: Permis
   vendors: { perm: "VENDOR_VIEW" },
   growth: { perm: "VENDOR_VIEW" },
   checkin: { perm: "CHECKIN" },
+  content: { superAdminOnly: true }, // ADMIN+ manage offers/gallery/guide; STAFF blocked
 };
 
 export function canAccessSection(o: { role: Role; permissions: Permission[] }, section: ConsoleSection): boolean {
