@@ -729,6 +729,12 @@ manual gate — not executable here. R4.1–R4.4 code complete; site stays prod-
 
 ## Phase R6 — Delight (~46h; deps per package) — delight.md
 
+> Owner-framed R6 packages (numbering differs from the build-plan rows below): **R6.1 Share art ✓**
+> (= build-plan R6.2, commit 433f8f9) · **R6.3 Happening strip ✓** (= row R6.3, f9fe48c) · **R6.4
+> Live Event Mode ✓** (festival-companion utility grid on the LIVE home; enhances R3.10 home modes +
+> R6.3 strip; commit acb3047 — no separate build-plan row). Pending owner packages: R6.2 Premium
+> success experience, R6.5 Post-event memories, R6.6 micro-delight audit.
+
 - [ ] **R6.1 Ticket reveal + confetti + flip** (12h, needs R3.4). Verify: storyboard timings
       ±10%; reduced-motion jump; plays once.
 - [x] **R6.2 Share art (M7)** (12h, needs R3.4): generator spike (satori+resvg vs Cloudinary
