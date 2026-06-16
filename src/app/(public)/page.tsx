@@ -7,6 +7,7 @@ import { getHomeMode } from "@/lib/home-mode";
 import { getHappeningStrip } from "@/server/content/happening";
 import { HappeningStrip } from "@/components/events/HappeningStrip";
 import { FestivalCompanion } from "@/components/landing/FestivalCompanion";
+import { PostEventMemories } from "@/components/landing/PostEventMemories";
 import { homeFocus } from "@/lib/home-content";
 import { primaryLogo } from "@/lib/vendor-assets";
 import { formatPaise } from "@/lib/utils";
@@ -128,6 +129,9 @@ export default async function LandingPage() {
 
       {/* ============ FESTIVAL COMPANION (R6.4) — utility-first quick-nav when LIVE ============ */}
       {event && mode === "LIVE" && <FestivalCompanion />}
+
+      {/* ============ POST-EVENT MEMORIES (R6.5) — attendance → memories when the event ends ====== */}
+      {event && mode === "POST" && <PostEventMemories eventName={event.name} brandCount={brands.length} sponsorCount={sponsors.length} />}
 
       {/* ============ PROOF BAND (R3.2) — real counts, no static claims ============ */}
       {(brands.length > 0 || sponsors.length > 0) && (
