@@ -731,9 +731,10 @@ manual gate — not executable here. R4.1–R4.4 code complete; site stays prod-
 
 > Owner-framed R6 packages (numbering differs from the build-plan rows below): **R6.1 Share art ✓**
 > (= build-plan R6.2, commit 433f8f9) · **R6.3 Happening strip ✓** (= row R6.3, f9fe48c) · **R6.4
-> Live Event Mode ✓** (festival-companion utility grid on the LIVE home; enhances R3.10 home modes +
-> R6.3 strip; commit acb3047 — no separate build-plan row). Pending owner packages: R6.2 Premium
-> success experience, R6.5 Post-event memories, R6.6 micro-delight audit.
+> Live Event Mode ✓** (festival-companion utility grid on the LIVE home, acb3047) · **R6.5 Post-event
+> memories ✓** (gallery preview + brands + next-edition + momentum on the POST home, 871ef49). R6.4+R6.5
+> enhance R3.10 home modes — no separate build-plan rows; the home now has the full PRE→LIVE→POST arc.
+> Pending owner packages: R6.2 Premium success experience, R6.6 micro-delight audit.
 
 - [ ] **R6.1 Ticket reveal + confetti + flip** (12h, needs R3.4). Verify: storyboard timings
       ±10%; reduced-motion jump; plays once.
