@@ -734,8 +734,12 @@ manual gate — not executable here. R4.1–R4.4 code complete; site stays prod-
 > Live Event Mode ✓** (festival-companion utility grid on the LIVE home, acb3047) · **R6.5 Post-event
 > memories ✓** (gallery preview + brands + next-edition + momentum on the POST home, 871ef49) · **R6.2
 > Premium success experience ✓** (wallet `ArrivalGuide` countdown + arrival essentials + reveal
-> "See you <date>" beat, e0f5a9c). R6.2/R6.4/R6.5 enhance R3.10 home modes / the wallet — no separate
-> build-plan rows; the home has the full PRE→LIVE→POST arc. **Only R6.6 micro-delight audit pending.**
+> "See you <date>" beat, e0f5a9c) · **R6.6 Micro-delight audit ✓** (premium `RpaLoading` skeletons +
+> loading.tsx on the 10 key customer routes — killed the blank-flash-on-nav dead moment; empty/success
+> states were already warm, 2c5212e). **Phase R6 (all six owner-framed packages) COMPLETE.** Customer
+> journey is premium end-to-end: share art → reveal+anticipation → arrival guide → live companion →
+> post-event memories, with skeletons everywhere. Remaining = founder launch gates only (Razorpay live
+> webhook, SENTRY_DSN, scheduler, ₹1 purchase, legal) + the deferred R5.1 console deletions.
 
 - [ ] **R6.1 Ticket reveal + confetti + flip** (12h, needs R3.4). Verify: storyboard timings
       ±10%; reduced-motion jump; plays once.
