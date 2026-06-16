@@ -6,6 +6,7 @@ import { sponsorsForEventPublic } from "@/server/sponsors/service";
 import { getHomeMode } from "@/lib/home-mode";
 import { getHappeningStrip } from "@/server/content/happening";
 import { HappeningStrip } from "@/components/events/HappeningStrip";
+import { FestivalCompanion } from "@/components/landing/FestivalCompanion";
 import { homeFocus } from "@/lib/home-content";
 import { primaryLogo } from "@/lib/vendor-assets";
 import { formatPaise } from "@/lib/utils";
@@ -124,6 +125,9 @@ export default async function LandingPage() {
       {event && happenings.length > 0 && (
         <HappeningStrip eventId={event.id} initial={happenings} live={mode === "LIVE"} />
       )}
+
+      {/* ============ FESTIVAL COMPANION (R6.4) — utility-first quick-nav when LIVE ============ */}
+      {event && mode === "LIVE" && <FestivalCompanion />}
 
       {/* ============ PROOF BAND (R3.2) — real counts, no static claims ============ */}
       {(brands.length > 0 || sponsors.length > 0) && (
