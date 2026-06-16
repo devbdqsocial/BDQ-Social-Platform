@@ -10,6 +10,7 @@ import { RpaPageHeader, RpaEmpty } from "@/components/landing/RpaPageHeader";
 import { TicketCard } from "@/components/tickets/TicketCard";
 import { TicketReveal } from "@/components/tickets/TicketReveal";
 import { TicketShare } from "@/components/tickets/TicketShare";
+import { ArrivalGuide } from "@/components/tickets/ArrivalGuide";
 
 export const metadata: Metadata = { title: "Tickets" };
 export const dynamic = "force-dynamic";
@@ -28,6 +29,12 @@ export default async function WalletPage({ searchParams }: { searchParams: Promi
   ]);
   const withQr = await Promise.all(tickets.map(async (t) => ({ t, qr: await toQrDataUrl(t.qrToken) })));
 
+  // Soonest not-yet-ended event among the wallet's tickets → arrival guide / anticipation (R6.2).
+  const soonest = withQr
+    .map((x) => x.t.order.event)
+    .filter((e) => e.startsAt.getTime() + 12 * 60 * 60 * 1000 > Date.now())
+    .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime())[0];
+
   // Reveal plays only when the order's tickets are actually PAID (present below) — never faked.
   const revealOrder = revealId ? withQr.find((x) => x.t.order.id === revealId) : undefined;
   // Otherwise, a client-confirmed-but-webhook-pending order shows the confirming state (failure #8).
@@ -38,10 +45,16 @@ export default async function WalletPage({ searchParams }: { searchParams: Promi
       <div className="wrapper max-w-[62rem]">
         {confirming && <AutoRefresh seconds={5} />}
         {revealOrder && (
-          <TicketReveal orderId={revealOrder.t.order.id} eventName={revealOrder.t.order.event.name} admitCount={revealOrder.t.admitCount} />
+          <TicketReveal orderId={revealOrder.t.order.id} eventName={revealOrder.t.order.event.name} admitCount={revealOrder.t.admitCount} startsAtIso={revealOrder.t.order.event.startsAt.toISOString()} />
         )}
 
         <RpaPageHeader kicker="Your wallet" title="Tickets" lede="Show the QR code at the gate — that's your way in." />
+
+        {soonest && (
+          <div className="mt-[var(--space-2xl)]">
+            <ArrivalGuide eventName={soonest.name} startsAtIso={soonest.startsAt.toISOString()} location={soonest.location} />
+          </div>
+        )}
 
         {revealOrder && (
           <div className="gama-2 surface-2 paint mt-[var(--space-2xl)] flex flex-wrap items-center justify-between gap-[var(--space-lg)] rounded-[var(--radius-lg)] p-[var(--space-xl)]">

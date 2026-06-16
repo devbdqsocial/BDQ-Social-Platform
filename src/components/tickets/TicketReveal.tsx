@@ -11,7 +11,10 @@ import { useEffect, useRef, useState } from "react";
 
 const CONFETTI = ["#868EFF", "#3FA66A", "#E8B23A", "#FF58AC"];
 
-export function TicketReveal({ orderId, eventName, admitCount }: { orderId: string; eventName: string; admitCount: number }) {
+export function TicketReveal({ orderId, eventName, admitCount, startsAtIso }: { orderId: string; eventName: string; admitCount: number; startsAtIso?: string }) {
+  const seeYou = startsAtIso
+    ? new Intl.DateTimeFormat("en-IN", { weekday: "long", day: "numeric", month: "long", timeZone: "Asia/Kolkata" }).format(new Date(startsAtIso))
+    : null;
   const [show, setShow] = useState(false);
   const [reduced, setReduced] = useState(false);
   const startedRef = useRef(0);
@@ -72,6 +75,7 @@ export function TicketReveal({ orderId, eventName, admitCount }: { orderId: stri
       <p className="f-paragraph mt-[var(--space-lg)] max-w-[40ch] opacity-85">
         {eventName}{admitCount > 1 ? ` · admits ${admitCount}` : ""} — your QR is in your wallet below.
       </p>
+      {seeYou && <p className="kicker mt-[var(--space-md)] opacity-70">See you {seeYou}</p>}
       <button type="button" onClick={() => setShow(false)} className="btn mt-[var(--space-2xl)]" data-cursor>
         <span className="btn__text">See my tickets</span>
       </button>
