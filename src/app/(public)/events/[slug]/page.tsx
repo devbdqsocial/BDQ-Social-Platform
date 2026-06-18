@@ -13,6 +13,8 @@ import { TicketCheckout } from "@/components/tickets/TicketCheckout";
 import { SponsorStrip } from "@/components/landing/SponsorStrip";
 import { NotifyMe } from "@/components/events/NotifyMe";
 import { StickyBuyBar } from "@/components/events/StickyBuyBar";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { eventLd, breadcrumbLd } from "@/lib/seo/jsonld";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +34,18 @@ const POLICIES: [string, string][] = [
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const event = await getBySlug(slug);
-  return { title: event?.name ?? "Event" };
+  if (!event) return { title: "Event" };
+  const description =
+    event.description?.trim() ||
+    `${event.name} — a curated lifestyle night market${event.location ? ` in ${event.location}` : " in Vadodara"}. Book tickets and meet handpicked brands over food and live music.`;
+  const url = `/events/${slug}`;
+  return {
+    title: event.name,
+    description,
+    alternates: { canonical: url },
+    openGraph: { type: "website", url, title: event.name, description },
+    twitter: { card: "summary_large_image", title: event.name, description },
+  };
 }
 
 export default async function EventDetailPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -62,6 +75,25 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
 
   return (
     <div style={themeStyle}>
+      <JsonLd
+        data={[
+          eventLd({
+            name: event.name,
+            slug: event.slug,
+            description: event.description,
+            location: event.location,
+            startsAt: event.startsAt,
+            endsAt: event.endsAt,
+            ticketTypes: event.ticketTypes,
+            performers: event.schedule.map((s) => s.performer),
+          }),
+          breadcrumbLd([
+            { name: "Home", path: "/" },
+            { name: "Events", path: "/events" },
+            { name: event.name, path: `/events/${event.slug}` },
+          ]),
+        ]}
+      />
       {/* ===== HERO — sell the night, CTA above the fold ===== */}
       <section className="gama-1 bg-1 paint flex min-h-[78svh] items-end py-[var(--space-5xl)]">
         <div className="wrapper">

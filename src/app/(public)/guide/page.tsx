@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { getGuide } from "@/server/content/service";
 
-export const metadata: Metadata = { title: "Festival guide" };
+export const metadata: Metadata = {
+  title: "Festival Guide",
+  description: "Know before you go — timings, getting there, food, family, accessibility, and house rules for BDQ Social in Vadodara.",
+  alternates: { canonical: "/guide" },
+};
 export const dynamic = "force-dynamic";
 
 const anchor = (h: string) => h.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");

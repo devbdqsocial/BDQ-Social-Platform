@@ -2,7 +2,11 @@ import type { Metadata } from "next";
 import { listVisibleOffers } from "@/server/content/offers";
 import { OffersClient } from "@/components/events/OffersClient";
 
-export const metadata: Metadata = { title: "Offers" };
+export const metadata: Metadata = {
+  title: "Offers & Deals",
+  description: "Live brand offers and deals at BDQ Social — exclusive discounts from curated vendors during Vadodara's night market.",
+  alternates: { canonical: "/offers" },
+};
 export const dynamic = "force-dynamic";
 
 export default async function OffersPage() {

@@ -8,8 +8,9 @@ import { SplitReveal } from "@/components/motion/SplitReveal";
 import { VendorDiscover } from "@/components/vendors/VendorDiscover";
 
 export const metadata: Metadata = {
-  title: "Brands",
-  description: "Handpicked indie brands — fusion wear, jewellery, decor, food, and experiences.",
+  title: "Brands & Vendors in Vadodara",
+  description: "Handpicked indie brands at BDQ Social Vadodara — fusion wear, jewellery, decor, food, and experiences. Meet the curated vendors of the city's premium night market.",
+  alternates: { canonical: "/vendors" },
 };
 export const dynamic = "force-dynamic";
 

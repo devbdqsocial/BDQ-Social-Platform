@@ -7,6 +7,8 @@ import { listVendorOffers } from "@/server/content/offers";
 import { offerPhase, validityLabel } from "@/lib/offer";
 import { primaryLogo, productImages } from "@/lib/vendor-assets";
 import { Reveal } from "@/components/motion/Reveal";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { breadcrumbLd } from "@/lib/seo/jsonld";
 
 export const dynamic = "force-dynamic";
 
@@ -15,10 +17,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const v = await getApprovedVendor(id);
   if (!v) return { title: "Brand" };
   const logo = primaryLogo(v.assets);
-  const description = v.description ?? `Meet ${v.brandName} at BDQ Social.`;
+  const description = v.description ?? `Meet ${v.brandName}${v.category ? `, ${v.category.toLowerCase()},` : ""} at BDQ Social — Vadodara's curated lifestyle night market.`;
   return {
     title: v.brandName,
     description,
+    alternates: { canonical: `/vendors/${id}` },
     openGraph: { title: v.brandName, description, type: "profile", images: logo ? [logo] : undefined },
     twitter: { card: logo ? "summary_large_image" : "summary", title: v.brandName, description },
   };
@@ -37,6 +40,13 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
 
   return (
     <>
+      <JsonLd
+        data={breadcrumbLd([
+          { name: "Home", path: "/" },
+          { name: "Brands", path: "/vendors" },
+          { name: v.brandName, path: `/vendors/${v.id}` },
+        ])}
+      />
       <section className="gama-1 bg-1 paint flex min-h-[85svh] items-end py-[var(--space-5xl)]">
         <div className="wrapper w-full">
           <Link href="/vendors" data-cursor className="f-paragraph-small f-bold t-upper" style={{ letterSpacing: "0.14em" }}>
@@ -111,7 +121,7 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
             <Reveal stagger className="mt-[var(--space-3xl)] grid grid-cols-2 gap-[var(--grid-gap)] sm:grid-cols-3">
               {products.map((src, i) => (
                 <div key={i} className="svg svg--form2 w-full">
-                  <Image src={src} alt="" fill className="svg__img" sizes="33vw" />
+                  <Image src={src} alt={`${v.brandName}${v.category ? ` — ${v.category}` : ""} product ${i + 1}`} fill className="svg__img" sizes="33vw" />
                 </div>
               ))}
             </Reveal>

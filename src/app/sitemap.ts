@@ -16,7 +16,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/`, lastModified: now, priority: 1 },
     { url: `${base}/events`, lastModified: now, priority: 0.9 },
     { url: `${base}/vendors`, lastModified: now, priority: 0.7 },
+    { url: `${base}/things-to-do-in-vadodara`, lastModified: now, priority: 0.7 },
+    { url: `${base}/night-markets-vadodara`, lastModified: now, priority: 0.7 },
+    { url: `${base}/guide`, lastModified: now, priority: 0.6 },
+    { url: `${base}/schedule`, lastModified: now, priority: 0.5 },
     { url: `${base}/map`, lastModified: now, priority: 0.5 },
+    { url: `${base}/offers`, lastModified: now, priority: 0.4 },
+    { url: `${base}/gallery`, lastModified: now, priority: 0.4 },
     ...["/about", "/contact", "/privacy", "/terms", "/refunds", "/shipping", "/vendor-terms"].map(
       (p) => ({ url: `${base}${p}`, lastModified: now, priority: 0.3 }),
     ),

@@ -2,7 +2,11 @@ import type { Metadata } from "next";
 import { getEventGuide } from "@/server/map/guide";
 import { EventGuide } from "@/components/map/EventGuide";
 
-export const metadata: Metadata = { title: "Explore the event" };
+export const metadata: Metadata = {
+  title: "Event Map & Venue",
+  description: "Explore the BDQ Social venue layout in Vadodara — find brands, stages, food, and stalls before you arrive.",
+  alternates: { canonical: "/map" },
+};
 export const dynamic = "force-dynamic";
 
 export default async function MapPage() {

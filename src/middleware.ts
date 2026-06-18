@@ -15,7 +15,7 @@ type Zone = "public" | "vendor" | "admin";
 
 // Policy/contact pages stay reachable even in coming-soon mode (Razorpay verification + legal access).
 // "/offline" is precached by sw.js — rewriting it to coming-soon would poison the offline cache.
-const ALWAYS_PUBLIC = ["/privacy", "/terms", "/refunds", "/shipping", "/contact", "/about", "/vendor-terms", "/unsubscribe", "/offline"];
+const ALWAYS_PUBLIC = ["/privacy", "/terms", "/refunds", "/shipping", "/contact", "/about", "/vendor-terms", "/unsubscribe", "/offline", "/things-to-do-in-vadodara", "/night-markets-vadodara"];
 
 function resolveZone(req: NextRequest): Zone {
   const override = req.nextUrl.searchParams.get("zone");

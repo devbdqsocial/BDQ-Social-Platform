@@ -19,9 +19,22 @@ import { Marquee } from "@/components/motion/Marquee";
 import { WordmarkWall } from "@/components/motion/WordmarkWall";
 import { PinnedServices } from "@/components/motion/PinnedServices";
 import { BrandsCarousel } from "@/components/motion/BrandsCarousel";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { faqLd } from "@/lib/seo/jsonld";
+import type { Metadata } from "next";
 
 // ISR (R3.2): statically cached, revalidated every 5 min — landing has no per-request data.
 export const revalidate = 300;
+
+export const metadata: Metadata = { alternates: { canonical: "/" } };
+
+// Single source for the home FAQ — rendered as <details> and emitted as FAQPage schema.
+const HOME_FAQS: readonly (readonly [string, string])[] = [
+  ["When is it?", "An evening event — gates open in the late afternoon and we go into the night, the weekend before Diwali."],
+  ["How do I get in?", "Book online and we'll send a QR code to your phone. Show it at the gate — that's it."],
+  ["Can I get a refund?", "All sales are final, so pick your date with confidence. No refunds."],
+  ["Is there food?", "Plenty. A full food court with the city's best cafés, bakers, and street food."],
+];
 
 // Angled RPA tab button.
 function Btn({ href, children }: { href: string; children: React.ReactNode }) {
@@ -57,6 +70,7 @@ export default async function LandingPage() {
 
   return (
     <div>
+      <JsonLd data={faqLd(HOME_FAQS)} />
       {/* ============ HERO (cabecera--home) — navy / light-blue ============ */}
       <section className="gama-1 bg-1 paint relative flex min-h-[100svh] items-center overflow-hidden">
         <div className="wrapper grid w-full items-center gap-[var(--space-3xl)] py-[var(--space-5xl)] lg:grid-cols-2">
@@ -228,12 +242,7 @@ export default async function LandingPage() {
         <div className="wrapper max-w-[60rem]">
           <h2 className="f-exat f-h60">Good to know</h2>
           <div className="mt-[var(--space-2xl)]">
-            {[
-              ["When is it?", "An evening event — gates open in the late afternoon and we go into the night, the weekend before Diwali."],
-              ["How do I get in?", "Book online and we'll send a QR code to your phone. Show it at the gate — that's it."],
-              ["Can I get a refund?", "All sales are final, so pick your date with confidence. No refunds."],
-              ["Is there food?", "Plenty. A full food court with the city's best cafés, bakers, and street food."],
-            ].map(([q, a]) => (
+            {HOME_FAQS.map(([q, a]) => (
               <details key={q} className="group py-[var(--space-lg)]" style={{ borderTop: "1px solid var(--color)" }}>
                 <summary className="f-exat flex cursor-pointer list-none items-center justify-between gap-[var(--space-lg)] f-h60">
                   {q}

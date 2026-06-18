@@ -4,11 +4,14 @@ import { CustomerTabBar } from "@/components/nav/CustomerTabBar";
 import { MotionProviders } from "@/components/motion/MotionProviders";
 import { WordmarkWall } from "@/components/motion/WordmarkWall";
 import { getSession } from "@/server/auth/guard";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { organizationLd, webSiteLd } from "@/lib/seo/jsonld";
 
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
   return (
     <div className="rpa flex min-h-dvh flex-col">
+      <JsonLd data={[organizationLd(), webSiteLd()]} />
       <MotionProviders />
       <PublicHeader signedIn={!!session} />
 
@@ -29,7 +32,8 @@ export default async function PublicLayout({ children }: { children: React.React
           </div>
           <div className="flex flex-wrap gap-[var(--space-3xl)]">
             {[
-              ["Explore", [["Events & tickets", "/events"], ["Meet the brands", "/vendors"], ["Event layout", "/map"]]],
+              ["Explore", [["Events & tickets", "/events"], ["Meet the brands", "/vendors"], ["Event layout", "/map"], ["Festival guide", "/guide"]]],
+              ["Vadodara", [["Things to do in Vadodara", "/things-to-do-in-vadodara"], ["Night markets in Vadodara", "/night-markets-vadodara"]]],
               ["Partners", [["Sell with us", "/vendor/login"], ["Sign in", "/login"], ["About us", "/about"], ["Contact", "/contact"]]],
               ["Legal", [["Privacy", "/privacy"], ["Terms", "/terms"], ["Refunds", "/refunds"], ["Shipping", "/shipping"], ["Vendor terms", "/vendor-terms"]]],
             ].map(([heading, items]) => (

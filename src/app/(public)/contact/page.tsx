@@ -3,7 +3,11 @@ import { ContactForm } from "@/components/contact/ContactForm";
 import { Reveal } from "@/components/motion/Reveal";
 import { LEGAL } from "@/lib/legal";
 
-export const metadata: Metadata = { title: "Contact Us" };
+export const metadata: Metadata = {
+  title: "Contact Us",
+  description: "Get in touch with BDQ Social — questions about tickets, brands, sponsorship, or exhibiting at Vadodara's curated night market.",
+  alternates: { canonical: "/contact" },
+};
 
 export default function ContactPage() {
   return (

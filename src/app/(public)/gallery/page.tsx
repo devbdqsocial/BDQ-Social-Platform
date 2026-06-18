@@ -3,7 +3,11 @@ import { getGalleryPhotos } from "@/server/content/service";
 import { galleryReady } from "@/lib/content-gate";
 import { GalleryGrid } from "@/components/events/GalleryGrid";
 
-export const metadata: Metadata = { title: "Gallery" };
+export const metadata: Metadata = {
+  title: "Gallery",
+  description: "Moments from BDQ Social — photos from Vadodara's curated lifestyle festival and night market.",
+  alternates: { canonical: "/gallery" },
+};
 export const dynamic = "force-dynamic";
 
 export default async function GalleryPage() {

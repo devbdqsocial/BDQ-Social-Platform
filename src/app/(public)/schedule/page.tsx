@@ -2,7 +2,11 @@ import type { Metadata } from "next";
 import { getActiveSchedule } from "@/server/events/schedule";
 import { ScheduleTimeline } from "@/components/events/ScheduleTimeline";
 
-export const metadata: Metadata = { title: "What's on" };
+export const metadata: Metadata = {
+  title: "Event Schedule",
+  description: "The full schedule for BDQ Social — set times, stages, and what's on through the evening at Vadodara's curated lifestyle night market.",
+  alternates: { canonical: "/schedule" },
+};
 export const dynamic = "force-dynamic";
 
 export default async function SchedulePage() {
