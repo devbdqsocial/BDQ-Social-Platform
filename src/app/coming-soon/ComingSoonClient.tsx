@@ -1,29 +1,40 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useRef, useState } from "react";
 import { joinPlatformWaitlist } from "@/actions/waitlist";
-import { timeLeft, type TimeLeft } from "@/lib/countdown";
-import { SplitReveal } from "@/components/motion/SplitReveal";
-import { WordmarkWall } from "@/components/motion/WordmarkWall";
+import { phone10, digitsCapped } from "@/lib/validators";
+import { useFieldValidation } from "@/lib/use-field-validation";
+import { InviteCountdown } from "./InviteCountdown";
 
-const pad = (n: number) => String(n).padStart(2, "0");
+// "The Invitation" coming-soon gate (bespoke, off-RPA). Luxury paper-invitation look with an
+// accessible light/dark toggle (sun/moon, top-right). Plumbing unchanged — submits the same
+// FormData to joinPlatformWaitlist. Colours come from .cs-invite tokens (AA contrast both themes).
 
-/** rAF count-up to `target`; jumps straight to the value when motion is reduced. */
-function useCountUp(target: number, animate: boolean) {
-  const [n, setN] = useState(animate ? 0 : target);
-  useEffect(() => {
-    if (!animate || target <= 0) { setN(target); return; }
-    let raf = 0;
-    const t0 = performance.now();
-    const tick = (now: number) => {
-      const p = Math.min(1, (now - t0) / 1200);
-      setN(Math.round(target * (1 - Math.pow(1 - p, 3))));
-      if (p < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [target, animate]);
-  return n;
+const reveal = (d: string) => ({ "--d": d }) as React.CSSProperties;
+
+function ArrowRight() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M5 12h14M13 6l6 6-6 6" />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
+    </svg>
+  );
+}
+
+function SunIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+    </svg>
+  );
 }
 
 export function ComingSoonClient({ count, targetIso }: { count: number; targetIso: string | null }) {
@@ -31,135 +42,180 @@ export function ComingSoonClient({ count, targetIso }: { count: number; targetIs
   const [message, setMessage] = useState("");
   const [interestedInStall, setInterestedInStall] = useState(false);
   const [submittedPhone, setSubmittedPhone] = useState("");
-  const [reduced, setReduced] = useState(false);
+  const [phone, setPhone] = useState("");
+  const phoneField = useFieldValidation(phone10);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const successRef = useRef<HTMLParagraphElement>(null);
 
-  useEffect(() => { setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches); }, []);
-
-  // Dynamic target from the next event (R3.1) — reuse the tested countdown lib, no hardcoded date.
-  const target = useMemo(() => (targetIso ? new Date(targetIso) : null), [targetIso]);
-  const [left, setLeft] = useState<TimeLeft | null>(() => (target ? timeLeft(target) : null));
+  // Resolve preferred theme after mount (SSR renders light → no hydration mismatch).
   useEffect(() => {
-    if (!target) return;
-    const id = setInterval(() => setLeft(timeLeft(target)), 1000);
-    return () => clearInterval(id);
-  }, [target]);
+    const saved = localStorage.getItem("cs-theme");
+    if (saved === "dark" || saved === "light") setTheme(saved);
+    else if (window.matchMedia("(prefers-color-scheme: dark)").matches) setTheme("dark");
+  }, []);
 
-  const shownCount = useCountUp(count, !reduced);
+  useEffect(() => {
+    if (status === "success") successRef.current?.focus();
+  }, [status]);
+
+  const toggleTheme = () =>
+    setTheme((t) => {
+      const next = t === "light" ? "dark" : "light";
+      localStorage.setItem("cs-theme", next);
+      return next;
+    });
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!phoneField.validate(phone)) return; // 10-digit rule, blocks before submit
     setStatus("loading");
     const formData = new FormData(e.currentTarget);
     formData.set("interestedInStall", String(interestedInStall));
-    const phone = formData.get("phone") as string;
     const result = await joinPlatformWaitlist(formData);
     if (result.error) {
       setStatus("error");
       setMessage(result.error);
     } else {
-      setStatus("success");
       setSubmittedPhone(phone);
+      setStatus("success");
     }
   };
 
-  const units = left
-    ? [
-        { label: "Days", value: left.days },
-        { label: "Hrs", value: left.hours },
-        { label: "Min", value: left.mins },
-        { label: "Sec", value: left.secs },
-      ]
-    : [];
-
   return (
-    <div className="rpa gama-1 bg-1 bg-ink relative flex min-h-[100svh] items-center overflow-hidden" style={{ color: "var(--color)" }}>
-      {/* animated lavender glow + low-opacity wordmark texture + floating branded shape */}
-      <div aria-hidden className="coming-glow pointer-events-none absolute inset-0" style={{ background: "radial-gradient(55% 45% at 28% 8%, rgba(134,142,255,0.20), transparent 70%)" }} />
-      <WordmarkWall rows={6} mobileRows={4} duration={34} rowClassName="f-h133" className="pointer-events-none absolute inset-0 flex flex-col justify-between py-[var(--space-lg)] opacity-[0.05]" />
-      <div aria-hidden className="coming-float pointer-events-none absolute right-[-8%] top-[8%] hidden w-[46vw] max-w-[640px] lg:block" style={{ opacity: 0.9 }}>
-        <div className="svg svg--form11 w-full"><div className="svg__bg" /></div>
-      </div>
+    <main
+      data-theme={theme}
+      className="cs-invite relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-6 py-[clamp(2.5rem,7vh,4rem)]"
+    >
+      <div aria-hidden className="cs-frame cs-reveal" style={reveal("0s")} />
 
-      <main id="main" className="wrapper relative z-10 w-full py-[var(--space-5xl)]">
-        <div className="max-w-[42rem]">
-          <span className="kicker block">Vadodara&apos;s most anticipated social experience</span>
+      <button
+        type="button"
+        onClick={toggleTheme}
+        aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
+        className="fixed z-30 grid size-9 place-items-center rounded-full transition-opacity duration-300 hover:opacity-60"
+        style={{ top: "clamp(20px,4vw,40px)", right: "clamp(20px,4vw,40px)", border: "1px solid var(--line)", color: "var(--ink)" }}
+      >
+        {theme === "light" ? <MoonIcon /> : <SunIcon />}
+      </button>
 
-          <SplitReveal as="h1" mode="chars" className="f-exat mt-[var(--space-lg)] max-w-[15ch] f-h133">
-            The next great gathering is coming
-          </SplitReveal>
+      <div className="relative z-10 flex w-full max-w-[40rem] flex-col items-center text-center">
+        <span className="cs-reveal text-[0.7rem] uppercase" style={{ ...reveal("0s"), letterSpacing: "0.36em", color: "var(--ink-soft)" }}>
+          BDQ Social
+        </span>
 
-          <p className="f-paragraph mt-[var(--space-lg)] max-w-[46ch] opacity-85">
-            Curated markets, live experiences, creators, food and music — and the people who turn a night into a memory.
-          </p>
+        <span className="cs-reveal mt-[clamp(1.6rem,5vh,2.6rem)] text-[0.7rem] uppercase" style={{ ...reveal("0.1s"), letterSpacing: "0.38em", color: "var(--accent-text)" }}>
+          Limited Invitation
+        </span>
 
-          {left && !left.done && (
-            <div className="mt-[var(--space-2xl)] flex gap-[var(--space-2xl)]">
-              {units.map((u) => (
-                <div key={u.label}>
-                  <div className="f-exat tabular-nums f-h76">{pad(u.value)}</div>
-                  <div className="kicker opacity-65">{u.label}</div>
-                </div>
-              ))}
-            </div>
-          )}
+        <h1 className="cs-serif cs-reveal mt-[1rem]" style={{ ...reveal("0.2s"), fontSize: "clamp(1.9rem,5vw,3.4rem)", fontWeight: 500, lineHeight: 1.12, color: "var(--ink)" }}>
+          Something Beautiful Is Gathering.
+        </h1>
 
+        <p className="cs-reveal mt-[1.15rem] max-w-[36rem]" style={{ ...reveal("0.3s"), color: "var(--ink-soft)", fontSize: "clamp(0.92rem,2.4vw,1.04rem)", lineHeight: 1.65 }}>
+          An unforgettable evening of exceptional brands, remarkable food, live music and the city&apos;s most inspiring people.
+        </p>
+
+        <div className="cs-reveal mt-[clamp(1.8rem,5vh,2.6rem)] flex w-full max-w-[20rem] items-center gap-3" style={reveal("0.4s")}>
+          <span className="cs-rule cs-reveal-draw" style={reveal("0.5s")} />
+          <span className="cs-diamond shrink-0" />
+          <span className="cs-rule cs-reveal-draw" style={reveal("0.5s")} />
+        </div>
+
+        <InviteCountdown targetIso={targetIso} />
+
+        <div className="cs-reveal mt-[clamp(2rem,6vh,3rem)] w-full max-w-[26rem]" style={reveal("0.6s")}>
           {status === "success" ? (
-            <div className="mt-[var(--space-2xl)] max-w-[34rem] rounded-[var(--radius-lg)] p-[var(--space-xl)]" style={{ border: "1px solid var(--color)" }}>
-              <p className="f-exat f-h42">You&apos;re on the list.</p>
-              <p className="f-paragraph-small mt-[var(--space-sm)] opacity-80">
-                We&apos;ll WhatsApp {submittedPhone || "you"} the moment we go live.
+            <div className="px-[1.6rem] py-[1.5rem]" style={{ border: "1px solid var(--line)" }}>
+              <p ref={successRef} tabIndex={-1} className="cs-serif outline-none" style={{ fontSize: "clamp(1.4rem,4vw,1.8rem)", color: "var(--ink)" }}>
+                Your invitation is reserved.
+              </p>
+              <p className="mt-[0.6rem] text-[0.9rem]" style={{ color: "var(--ink-soft)", lineHeight: 1.6 }}>
+                We&apos;ll WhatsApp {submittedPhone || "you"} the moment doors open.
               </p>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="mt-[var(--space-2xl)] max-w-[34rem]">
-              {/* Capture — prefix + number same size/baseline, Join inline beside the field on every screen */}
-              <div className="flex items-end gap-[var(--space-md)]">
-                <div className="flex min-w-0 flex-1 items-baseline gap-[var(--space-sm)] pb-[var(--space-sm)]" style={{ borderBottom: "1px solid var(--color)" }}>
-                  <span className="f-exat shrink-0 tabular-nums f-h32">+91</span>
-                  <input
-                    type="tel"
-                    name="phone"
-                    inputMode="numeric"
-                    autoComplete="tel-national"
-                    placeholder="98765 43210"
-                    required
-                    disabled={status === "loading"}
-                    className="f-exat w-full min-w-0 bg-transparent tabular-nums outline-none placeholder:opacity-40 disabled:opacity-50 f-h32"
-                    style={{ color: "var(--color)" }}
-                  />
-                </div>
-                <button type="submit" disabled={status === "loading"} className="btn btn--accent shrink-0" data-cursor>
-                  <span className="btn__text">{status === "loading" ? "Joining…" : "Join"}</span>
+            <form onSubmit={handleSubmit}>
+              <p className="mb-[0.9rem] text-[0.6rem] uppercase" style={{ letterSpacing: "0.32em", color: "var(--ink-soft)" }}>
+                Request your invitation
+              </p>
+
+              <div className="flex items-baseline gap-2 pb-2" style={{ borderBottom: "1px solid var(--field-line)" }}>
+                <span className="cs-serif shrink-0" style={{ fontSize: "1.15rem", color: "var(--ink)" }}>+91</span>
+                <input
+                  type="tel"
+                  name="phone"
+                  inputMode="numeric"
+                  autoComplete="tel-national"
+                  placeholder="9876543210"
+                  required
+                  maxLength={10}
+                  value={phone}
+                  onChange={(e) => {
+                    setPhone(digitsCapped(10)(e.target.value));
+                    phoneField.clear();
+                  }}
+                  onBlur={() => phone && phoneField.validate(phone)}
+                  aria-invalid={!!phoneField.error}
+                  disabled={status === "loading"}
+                  className="cs-serif w-full min-w-0 bg-transparent outline-none placeholder:opacity-35 disabled:opacity-50"
+                  style={{ fontSize: "1.15rem", color: "var(--ink)", letterSpacing: "0.05em" }}
+                />
+                <button
+                  type="submit"
+                  disabled={status === "loading"}
+                  aria-label="Request invitation"
+                  className="shrink-0 transition-opacity duration-300 hover:opacity-60 disabled:opacity-40"
+                  style={{ color: "var(--accent-text)" }}
+                >
+                  {status === "loading" ? (
+                    <span className="text-[0.7rem] uppercase" style={{ letterSpacing: "0.2em" }}>Sending</span>
+                  ) : (
+                    <ArrowRight />
+                  )}
                 </button>
               </div>
+
+              {phoneField.error && (
+                <p role="alert" className="mt-[0.55rem] text-[0.72rem]" style={{ color: "var(--error)" }}>
+                  {phoneField.error}
+                </p>
+              )}
 
               <button
                 type="button"
                 onClick={() => setInterestedInStall((v) => !v)}
                 aria-pressed={interestedInStall}
-                className="f-paragraph-small mt-[var(--space-lg)] flex items-center gap-[var(--space-sm)]"
-                data-cursor
+                className="mt-[1.1rem] flex items-center gap-[0.6rem] text-[0.62rem] uppercase"
+                style={{ letterSpacing: "0.16em", color: "var(--ink-soft)" }}
               >
-                <span className="grid size-[1.15em] shrink-0 place-items-center rounded-[3px] border" style={{ borderColor: "var(--color)", background: interestedInStall ? "var(--color)" : "transparent" }}>
-                  {interestedInStall && <span className="size-[0.5em]" style={{ background: "var(--bgcolor)" }} />}
+                <span
+                  className="grid size-[0.95rem] shrink-0 place-items-center"
+                  style={{ border: "1px solid var(--field-line)", background: interestedInStall ? "var(--gold)" : "transparent" }}
+                >
+                  {interestedInStall && <span className="size-[0.4rem]" style={{ background: "var(--paper)" }} />}
                 </span>
-                <span className="f-bold t-upper" style={{ letterSpacing: "0.08em" }}>I want to exhibit my brand at the event</span>
+                I would like to exhibit my brand
               </button>
 
-              {status === "error" && <p role="alert" className="f-paragraph-small mt-[var(--space-md)] opacity-90">{message}</p>}
+              {status === "error" && (
+                <p role="alert" className="mt-[0.9rem] text-[0.8rem]" style={{ color: "var(--ink)" }}>
+                  {message}
+                </p>
+              )}
+
+              {count > 0 && (
+                <p className="mt-[1.2rem] text-[0.62rem] uppercase" style={{ letterSpacing: "0.2em", color: "var(--ink-soft)" }}>
+                  {count.toLocaleString()} already requested
+                </p>
+              )}
             </form>
           )}
-
-          {count > 0 && status !== "success" && (
-            <p className="f-paragraph-small mt-[var(--space-xl)] flex items-center gap-[var(--space-sm)] opacity-85">
-              <span aria-hidden className="coming-glow inline-block size-2 rounded-full" style={{ background: "var(--color)" }} />
-              <b className="tabular-nums">{shownCount.toLocaleString()}</b> already on the waitlist
-            </p>
-          )}
         </div>
-      </main>
 
-      <div className="kicker absolute inset-x-0 bottom-[var(--space-lg)] z-10 text-center opacity-55">© {new Date().getFullYear()} BDQ Social · Vadodara</div>
-    </div>
+        <p className="cs-reveal mt-[clamp(2rem,6vh,3rem)] text-[0.6rem] uppercase" style={{ ...reveal("0.7s"), letterSpacing: "0.28em", color: "var(--ink-soft)" }}>
+          Vadodara · Autumn 2026
+        </p>
+      </div>
+    </main>
   );
 }

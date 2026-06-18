@@ -536,6 +536,62 @@
     .coming-float { animation: coming-float 9s ease-in-out infinite; }
   }
 
+  /* Coming-soon "Invitation" gate (bespoke, off-RPA). Luxury paper-invitation look: warm bone
+     paper, ink text, one antique-gold accent. Colors live here as vars (kept out of JSX → no raw
+     hex in style props). Light by default; an oxblood-dark variant is just a re-point of these vars. */
+  .cs-invite {
+    --paper: #F4F0E8;
+    --paper-deep: #E7E0D1;
+    --ink: #201B16;
+    --ink-soft: #6B5F52;
+    --gold: #B6894C;       /* decorative accent (frame, rules, diamond) */
+    --gold-soft: #D7B777;
+    --accent-text: #7E5F26; /* accessible gold for eyebrow/arrow text (AA on paper) */
+    --error: #B23A2E; /* validation message (AA on paper) */
+    --line: color-mix(in srgb, var(--gold) 42%, transparent); /* decorative hairlines */
+    --field-line: var(--ink-soft); /* functional borders (input/checkbox) — AA contrast */
+    background-color: var(--paper);
+    color: var(--ink);
+    /* soft paper vignette + a faint warm centre glow (no pixel grain → CSP-safe) */
+    background-image:
+      radial-gradient(120% 90% at 50% 42%, transparent 58%, color-mix(in srgb, var(--paper-deep) 70%, transparent) 100%),
+      radial-gradient(60% 45% at 50% 30%, color-mix(in srgb, var(--gold-soft) 14%, transparent), transparent 70%);
+    font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+    transition: background-color 0.5s ease, color 0.5s ease;
+  }
+  /* Dark "after dusk" variant — re-points raw colours; --line/--field-line/gradients auto-follow. */
+  .cs-invite[data-theme="dark"] {
+    --paper: #15110D;
+    --paper-deep: #0C0906;
+    --ink: #ECE3D2;
+    --ink-soft: #B0A088;
+    --gold: #CBA25C;
+    --gold-soft: #E2C68A;
+    --accent-text: #D9B36A;
+    --error: #E8897B;
+  }
+  .cs-serif { font-family: var(--font-serif), Georgia, "Times New Roman", serif; }
+  /* engraved card frame inset from the viewport edges */
+  .cs-frame { position: fixed; inset: clamp(12px, 3vw, 30px); border: 1px solid var(--line); pointer-events: none; }
+  .cs-frame::before { content: ""; position: absolute; inset: 5px; border: 1px solid color-mix(in srgb, var(--gold) 18%, transparent); }
+  /* hairline divider with a tiny centre diamond */
+  .cs-rule { height: 1px; width: 100%; background: linear-gradient(90deg, transparent, var(--line) 18%, var(--line) 82%, transparent); }
+  .cs-diamond { width: 6px; height: 6px; rotate: 45deg; background: var(--gold); }
+
+  /* Barely-there entrance: staged fade-up, CSS-only (no JS timeline). Reduced-motion shows it static. */
+  @keyframes cs-rise {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes cs-draw {
+    from { opacity: 0; transform: scaleX(0.4); }
+    to   { opacity: 1; transform: scaleX(1); }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .cs-reveal { opacity: 0; animation: cs-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards; animation-delay: var(--d, 0s); }
+    .cs-reveal-draw { opacity: 0; animation: cs-draw 1.1s cubic-bezier(0.22, 1, 0.36, 1) forwards; animation-delay: var(--d, 0s); }
+  }
+
   /* Vendor status spine (vendor-portal.md §3): the current node's lavender dot pulses. */
   @keyframes vendor-node-pulse {
     0%, 100% { transform: scale(1); }
