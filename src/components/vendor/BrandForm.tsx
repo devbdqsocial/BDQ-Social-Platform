@@ -7,6 +7,8 @@ import { saveProfileAction } from "@/app/vendor/(app)/profile/actions";
 import { AssetUploader } from "@/components/vendor/AssetUploader";
 import { RpaField, RpaInput, RpaTextarea, RpaSelect, RpaSubmit } from "@/components/vendor/rpa-fields";
 import { PRODUCT_CATEGORIES } from "@/server/schemas";
+import { phoneE164Optional, urlOptional, instagramHandle } from "@/lib/validators";
+import { useFieldValidation } from "@/lib/use-field-validation";
 
 export type BrandProfile = {
   brandName: string;
@@ -26,12 +28,18 @@ export function BrandForm({ profile }: { profile: BrandProfile }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const brandDefault = profile.brandName === "New vendor" ? "" : profile.brandName;
+  const whatsappField = useFieldValidation(phoneE164Optional);
+  const websiteField = useFieldValidation(urlOptional);
+  const instagramField = useFieldValidation(instagramHandle);
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    // whatsapp is enforced server-side too, so block on it; website/instagram stay advisory hints.
+    if (!whatsappField.validate(fd.get("whatsapp"))) return;
     setBusy(true);
     try {
-      await saveProfileAction(new FormData(e.currentTarget));
+      await saveProfileAction(fd);
       toast.success("Brand details saved");
       router.refresh();
     } catch (err) {
@@ -55,10 +63,25 @@ export function BrandForm({ profile }: { profile: BrandProfile }) {
           </RpaSelect>
         </RpaField>
         <RpaField label="Contact person"><RpaInput name="contactPerson" defaultValue={profile.contactPerson ?? ""} /></RpaField>
-        <RpaField label="WhatsApp"><RpaInput name="whatsapp" defaultValue={profile.whatsapp ?? ""} placeholder="+91 98765 43210" /></RpaField>
-        <RpaField label="City / area"><RpaInput name="city" defaultValue={profile.city ?? ""} placeholder="Vadodara" /></RpaField>
-        <RpaField label="Website"><RpaInput name="website" defaultValue={profile.website ?? ""} placeholder="https://" /></RpaField>
-        <RpaField label="Instagram"><RpaInput name="instagram" defaultValue={profile.instagram ?? ""} placeholder="@yourhandle" /></RpaField>
+        <RpaField label="WhatsApp" error={whatsappField.error}>
+          <RpaInput name="whatsapp" type="tel" inputMode="tel" maxLength={16} defaultValue={profile.whatsapp ?? ""} placeholder="9876543210"
+            aria-invalid={!!whatsappField.error}
+            onInput={() => whatsappField.clear()}
+            onBlur={(e) => whatsappField.validate(e.currentTarget.value)} />
+        </RpaField>
+        <RpaField label="City / area"><RpaInput name="city" maxLength={80} defaultValue={profile.city ?? ""} placeholder="Vadodara" /></RpaField>
+        <RpaField label="Website" error={websiteField.error}>
+          <RpaInput name="website" type="url" maxLength={200} defaultValue={profile.website ?? ""} placeholder="https://"
+            aria-invalid={!!websiteField.error}
+            onInput={() => websiteField.clear()}
+            onBlur={(e) => websiteField.validate(e.currentTarget.value)} />
+        </RpaField>
+        <RpaField label="Instagram" error={instagramField.error}>
+          <RpaInput name="instagram" maxLength={30} defaultValue={profile.instagram ?? ""} placeholder="@yourhandle"
+            aria-invalid={!!instagramField.error}
+            onInput={() => instagramField.clear()}
+            onBlur={(e) => instagramField.validate(e.currentTarget.value)} />
+        </RpaField>
       </div>
       <RpaField label="What do you sell? *">
         <RpaTextarea name="products" required rows={2} defaultValue={profile.products ?? ""} placeholder="e.g. handmade silver jewellery, kurtis, candles" />

@@ -11,11 +11,24 @@ const UNDERLINE_STYLE: React.CSSProperties = {
   color: "var(--color)",
 };
 
-export function RpaField({ label, children }: { label: React.ReactNode; children: React.ReactNode }) {
+export function RpaField({
+  label,
+  error,
+  children,
+}: {
+  label: React.ReactNode;
+  error?: string | null;
+  children: React.ReactNode;
+}) {
   return (
     <label className="block space-y-[var(--space-sm)]">
       <span className="f-paragraph-small block font-bold">{label}</span>
       {children}
+      {error && (
+        <span className="f-paragraph-small block" style={{ color: "var(--red)" }}>
+          {error}
+        </span>
+      )}
     </label>
   );
 }

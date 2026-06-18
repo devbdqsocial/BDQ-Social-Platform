@@ -1,15 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import { email as emailSchema } from "@/lib/validators";
+import { useFieldValidation } from "@/lib/use-field-validation";
 
 /** Sold-out "notify me" capture → POST /api/waitlist. */
 export function NotifyMe({ eventId }: { eventId: string }) {
   const [contact, setContact] = useState("");
   const [state, setState] = useState<"idle" | "busy" | "done" | "error">("idle");
+  const emailField = useFieldValidation(emailSchema);
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!contact.trim()) return;
+    if (!emailField.validate(contact)) return;
     setState("busy");
     try {
       const r = await fetch("/api/waitlist", {
@@ -32,19 +35,25 @@ export function NotifyMe({ eventId }: { eventId: string }) {
       <input
         type="email"
         value={contact}
-        onChange={(e) => setContact(e.target.value)}
+        onChange={(e) => {
+          setContact(e.target.value);
+          emailField.clear();
+        }}
+        onBlur={() => contact && emailField.validate(contact)}
         placeholder="you@email.com"
         required
+        maxLength={160}
         aria-label="Email address"
+        aria-invalid={!!emailField.error}
         className="f-paragraph min-w-[16rem] flex-1 bg-transparent pb-[var(--space-sm)] outline-none placeholder:opacity-50"
         style={{ borderBottom: "1px solid var(--color)", color: "var(--color)" }}
       />
       <button type="submit" className="btn" data-cursor disabled={state === "busy"}>
         <span className="btn__text">{state === "busy" ? "Adding…" : "Notify me"}</span>
       </button>
-      {state === "error" && (
+      {(emailField.error || state === "error") && (
         <p role="alert" className="f-paragraph-small f-bold w-full" style={{ color: "var(--red)" }}>
-          Something went wrong — try again.
+          {emailField.error ?? "Something went wrong — try again."}
         </p>
       )}
     </form>

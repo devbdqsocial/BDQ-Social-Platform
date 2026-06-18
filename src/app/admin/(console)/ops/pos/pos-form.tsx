@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Plus, Minus } from "lucide-react";
+import { phone10, emailOptional, digitsCapped } from "@/lib/validators";
+import { useFieldValidation } from "@/lib/use-field-validation";
 import { issueOfflineTickets, type OfflineCartItem } from "./pos-actions";
 
 interface TicketType {
@@ -22,7 +24,9 @@ export function POSForm({ eventId, ticketTypes }: { eventId: string; ticketTypes
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  
+  const phoneField = useFieldValidation(phone10);
+  const emailField = useFieldValidation(emailOptional);
+
   const [cart, setCart] = useState<Record<string, number>>({});
 
   const handleAdd = (id: string) => {
@@ -50,6 +54,9 @@ export function POSForm({ eventId, ticketTypes }: { eventId: string; ticketTypes
 
   const handleSubmit = async (mode: "OFFLINE" | "ONLINE") => {
     if (items.length === 0) return;
+    const phoneOk = phoneField.validate(phone);
+    const emailOk = emailField.validate(email);
+    if (!phoneOk || !emailOk) return;
     setLoading(true);
     try {
       await issueOfflineTickets({
@@ -91,12 +98,32 @@ export function POSForm({ eventId, ticketTypes }: { eventId: string; ticketTypes
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
-                <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91 9999999999" />
+                <Input
+                  id="phone"
+                  value={phone}
+                  inputMode="numeric"
+                  maxLength={10}
+                  placeholder="9876543210"
+                  aria-invalid={!!phoneField.error}
+                  onChange={(e) => { setPhone(digitsCapped(10)(e.target.value)); phoneField.clear(); }}
+                  onBlur={() => phone && phoneField.validate(phone)}
+                />
+                {phoneField.error && <p className="text-xs text-destructive">{phoneField.error}</p>}
               </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email (Optional)</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="john@example.com" />
+              <Input
+                id="email"
+                type="email"
+                maxLength={160}
+                value={email}
+                placeholder="john@example.com"
+                aria-invalid={!!emailField.error}
+                onChange={(e) => { setEmail(e.target.value); emailField.clear(); }}
+                onBlur={() => email && emailField.validate(email)}
+              />
+              {emailField.error && <p className="text-xs text-destructive">{emailField.error}</p>}
             </div>
           </CardContent>
         </Card>

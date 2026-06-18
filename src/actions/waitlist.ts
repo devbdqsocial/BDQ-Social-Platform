@@ -2,18 +2,19 @@
 
 import { db } from "@/server/db";
 import { revalidatePath } from "next/cache";
+import { phone10, normalizePhone } from "@/lib/validators";
 
 export async function joinPlatformWaitlist(formData: FormData) {
-  const phone = formData.get("phone");
   const interestedInStall = formData.get("interestedInStall") === "true";
 
-  if (!phone || typeof phone !== "string" || phone.length < 5) {
-    return { error: "Invalid phone number." };
+  // Exactly 10 digits (first 6-9); stored as E.164 (+91…) to match the rest of the app.
+  const parsed = phone10.safeParse(formData.get("phone"));
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Enter a valid 10-digit mobile number." };
   }
+  const formattedPhone = normalizePhone(parsed.data);
 
   try {
-    const formattedPhone = phone.replace(/\D/g, "");
-
     const existing = await db.waitlist.findFirst({
       where: {
         source: "PLATFORM",

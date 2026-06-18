@@ -31,7 +31,7 @@ export default async function CouponsPage() {
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Code" className="sm:col-span-2">
-            <Input name="code" required placeholder="SAVE20" />
+            <Input name="code" required placeholder="SAVE20" maxLength={20} pattern="[A-Za-z0-9]{3,20}" title="3-20 letters or numbers" className="uppercase" />
           </Field>
           <Field label="Type">
             <Select name="type" defaultValue="PERCENT">

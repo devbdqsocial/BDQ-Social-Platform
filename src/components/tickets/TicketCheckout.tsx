@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { formatPaise } from "@/lib/utils";
 import { openCheckout } from "@/lib/razorpay-checkout";
 import { usePhoneOtp } from "@/components/auth/usePhoneOtp";
+import { phone10, otp6, digitsCapped } from "@/lib/validators";
+import { useFieldValidation } from "@/lib/use-field-validation";
 import { quoteOrderAction } from "@/app/(public)/events/[slug]/actions";
 
 interface TicketType {
@@ -26,6 +28,9 @@ const LOW_STOCK = 10; // show "only N left" at/under this
 export function TicketCheckout({ eventId, ticketTypes }: { eventId: string; ticketTypes: TicketType[] }) {
   const router = useRouter();
   const otp = usePhoneOtp("checkout-recaptcha");
+  const phoneField = useFieldValidation(phone10);
+  const otpField = useFieldValidation(otp6);
+  const localPhone = otp.phone.replace(/^\+91/, "");
   const [qty, setQty] = useState<Record<string, number>>({});
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -146,9 +151,10 @@ export function TicketCheckout({ eventId, ticketTypes }: { eventId: string; tick
           <input
             type="text"
             value={couponInput}
-            onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+            onChange={(e) => setCouponInput(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
             placeholder="COUPON CODE"
             aria-label="Coupon code"
+            maxLength={20}
             disabled={applying}
             className="f-paragraph-small f-bold w-full max-w-[16ch] bg-transparent pb-[2px] uppercase outline-none disabled:opacity-50"
             style={{ borderBottom: "1px solid currentColor", letterSpacing: "0.08em" }}
@@ -195,19 +201,32 @@ export function TicketCheckout({ eventId, ticketTypes }: { eventId: string; tick
           <p className="f-paragraph-small mt-[2px] opacity-70">We&apos;ll text a one-time code. Your tickets are held — no need to start over.</p>
           {!otp.confirmation ? (
             <div className="mt-[var(--space-md)] flex flex-wrap items-end gap-[var(--space-md)]">
-              <input type="tel" inputMode="tel" value={otp.phone} onChange={(e) => otp.setPhone(e.target.value)} aria-label="Phone number"
-                className="f-paragraph w-full max-w-[18ch] bg-transparent pb-[4px] outline-none" style={{ borderBottom: "1px solid currentColor" }} />
-              <button type="button" className="btn" data-cursor disabled={otp.loading} onClick={() => void otp.sendOtp()}>
+              <div className="flex items-baseline gap-[var(--space-xs)] pb-[4px]" style={{ borderBottom: "1px solid currentColor" }}>
+                <span className="f-paragraph opacity-70">+91</span>
+                <input type="tel" inputMode="numeric" autoComplete="tel-national" maxLength={10} value={localPhone} aria-label="Phone number"
+                  aria-invalid={!!phoneField.error}
+                  onChange={(e) => { otp.setPhone("+91" + digitsCapped(10)(e.target.value)); phoneField.clear(); }}
+                  onBlur={() => localPhone && phoneField.validate(localPhone)}
+                  placeholder="9876543210"
+                  className="f-paragraph w-full max-w-[14ch] bg-transparent outline-none" />
+              </div>
+              <button type="button" className="btn" data-cursor disabled={otp.loading} onClick={() => { if (phoneField.validate(localPhone)) void otp.sendOtp(); }}>
                 <span className="btn__text">{otp.loading ? "Sending…" : "Send code"}</span>
               </button>
+              {phoneField.error && <p role="alert" className="f-paragraph-small f-bold w-full" style={{ color: "var(--red)" }}>{phoneField.error}</p>}
             </div>
           ) : (
             <div className="mt-[var(--space-md)] flex flex-wrap items-end gap-[var(--space-md)]">
-              <input inputMode="numeric" value={otp.code} onChange={(e) => otp.setCode(e.target.value)} placeholder="6-digit code" aria-label="One-time code"
+              <input inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={otp.code}
+                onChange={(e) => { otp.setCode(digitsCapped(6)(e.target.value)); otpField.clear(); }}
+                onBlur={() => otp.code && otpField.validate(otp.code)}
+                aria-invalid={!!otpField.error}
+                placeholder="6-digit code" aria-label="One-time code"
                 className="f-paragraph w-full max-w-[12ch] bg-transparent pb-[4px] text-center tracking-[0.4em] outline-none" style={{ borderBottom: "1px solid currentColor" }} />
-              <button type="button" className="btn" data-cursor disabled={otp.loading || otp.code.trim().length < 4} onClick={() => void verifyAndPay()}>
+              <button type="button" className="btn" data-cursor disabled={otp.loading || otp.code.length !== 6} onClick={() => { if (otpField.validate(otp.code)) void verifyAndPay(); }}>
                 <span className="btn__text">{otp.loading ? "Verifying…" : "Verify & pay"}</span>
               </button>
+              {otpField.error && <p role="alert" className="f-paragraph-small f-bold w-full" style={{ color: "var(--red)" }}>{otpField.error}</p>}
             </div>
           )}
           {otp.status && <p className="f-paragraph-small mt-[var(--space-sm)] opacity-75">{otp.status}</p>}

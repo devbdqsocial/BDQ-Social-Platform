@@ -47,10 +47,10 @@ export default async function CompsPage() {
             <Input name="holderName" placeholder="Sponsor / guest name" />
           </Field>
           <Field label="Recipient phone" hint="Optional.">
-            <Input name="holderPhone" />
+            <Input name="holderPhone" inputMode="numeric" maxLength={10} pattern="[6-9][0-9]{9}" title="10-digit mobile number" placeholder="9876543210" />
           </Field>
           <Field label="Recipient email" hint="Optional — emails the tickets.">
-            <Input name="holderEmail" type="email" />
+            <Input name="holderEmail" type="email" maxLength={160} />
           </Field>
           <Button type="submit" className="w-fit sm:col-span-2" disabled={!hasTypes}>Generate</Button>
           {!hasTypes && <p className="text-xs text-muted-foreground sm:col-span-2">Add a ticket type to an event first.</p>}

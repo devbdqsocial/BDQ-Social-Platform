@@ -7,14 +7,15 @@ const db = new PrismaClient();
 
 const testEventId = "test_waitlist_ev_id";
 const testPhone = "9999999999";
+const testPhoneE164 = "+919999999999"; // how the action now stores it
 
 async function cleanUp() {
   await db.waitlist.deleteMany({
     where: {
       OR: [
         { eventId: testEventId },
-        { phone: testPhone },
-        { contact: testPhone },
+        { phone: { in: [testPhone, testPhoneE164] } },
+        { contact: { in: [testPhone, testPhoneE164] } },
       ],
     },
   });
@@ -71,13 +72,27 @@ describe.runIf(process.env.RUN_DB_TESTS === "1")("Unified Waitlist Integration",
     const entry = await db.waitlist.findFirst({
       where: {
         source: "PLATFORM",
-        phone: testPhone,
+        phone: testPhoneE164,
       },
     });
 
     expect(entry).toBeDefined();
     expect(entry?.type).toBe("STALL");
-    expect(entry?.phone).toBe(testPhone);
-    expect(entry?.contact).toBe(testPhone);
+    expect(entry?.phone).toBe(testPhoneE164);
+    expect(entry?.contact).toBe(testPhoneE164);
+  });
+});
+
+// Validation path returns before any DB call, so this runs without RUN_DB_TESTS.
+describe("joinPlatformWaitlist phone validation", () => {
+  it("rejects more than 10 digits", async () => {
+    const fd = new FormData();
+    fd.set("phone", "98765432109");
+    expect("error" in (await joinPlatformWaitlist(fd))).toBe(true);
+  });
+  it("rejects fewer than 10 digits / non-numeric", async () => {
+    const fd = new FormData();
+    fd.set("phone", "12345");
+    expect("error" in (await joinPlatformWaitlist(fd))).toBe(true);
   });
 });

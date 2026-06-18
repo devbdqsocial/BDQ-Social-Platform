@@ -1,4 +1,17 @@
 import { z } from "zod";
+import {
+  phoneE164,
+  phoneE164Optional,
+  emailOptional,
+  couponCode,
+  panOptional,
+  gstinOptional,
+  fssaiOptional,
+  MAX_PAISE,
+} from "@/lib/validators";
+
+// Phone normalisation lives in the shared validator layer (client + server share one rule).
+export { normalizePhone } from "@/lib/validators";
 
 /**
  * Input schemas for the API/server-action contracts (Docs/API.md). Used by withValidation.
@@ -24,8 +37,8 @@ export const createEventSchema = z.object({
 
 export const ticketTypeSchema = z.object({
   name: z.string().min(1),
-  priceInPaise: paise,
-  earlyPricePaise: paise.optional(),
+  priceInPaise: paise.max(MAX_PAISE, "Price is too large"),
+  earlyPricePaise: paise.max(MAX_PAISE, "Price is too large").optional(),
   totalQty: z.number().int().positive(),
   attendeesPer: z.number().int().positive().default(1),
 });
@@ -52,17 +65,23 @@ export const createOrderSchema = z.object({
   utm: z.record(z.string(), z.string()).optional(),
 });
 
-export const couponSchema = z.object({
-  code: z.string().trim().min(3),
-  type: z.enum(["FLAT", "PERCENT"]),
-  value: z.number().int().nonnegative(),
-  maxUses: z.number().int().positive().optional(),
-  perUserLimit: z.number().int().positive().default(1),
-  minOrder: paise.optional(),
-  startsAt: z.coerce.date().optional(),
-  endsAt: z.coerce.date().optional(),
-  active: z.boolean().default(true),
-});
+export const couponSchema = z
+  .object({
+    code: couponCode,
+    type: z.enum(["FLAT", "PERCENT"]),
+    value: z.number().int().nonnegative(),
+    maxUses: z.number().int().positive().optional(),
+    perUserLimit: z.number().int().positive().default(1),
+    minOrder: paise.optional(),
+    startsAt: z.coerce.date().optional(),
+    endsAt: z.coerce.date().optional(),
+    active: z.boolean().default(true),
+  })
+  // PERCENT value is a 0-100 percentage; FLAT value is paise (bounded to the retail ceiling).
+  .refine((c) => (c.type === "PERCENT" ? c.value <= 100 : c.value <= MAX_PAISE), {
+    message: "Discount value is out of range",
+    path: ["value"],
+  });
 
 export const scheduleItemSchema = z.object({
   startsAt: z.coerce.date(),
@@ -117,8 +136,8 @@ export const leadSchema = z
   .object({
     vendorProfileId: id,
     name: z.string().trim().max(120).optional(),
-    phone: z.string().trim().max(20).optional(),
-    email: z.string().trim().email().max(120).optional().or(z.literal("").transform(() => undefined)),
+    phone: phoneE164Optional,
+    email: emailOptional,
     consent: z.coerce.boolean().default(true),
   })
   .refine((d) => d.phone || d.email, { message: "Add a phone or email" });
@@ -156,7 +175,7 @@ export const vendorProfileSchema = z.object({
   website: optionalText(200),
   instagram: optionalText(120),
   contactPerson: optionalText(120),
-  whatsapp: optionalText(20),
+  whatsapp: phoneE164Optional,
   city: optionalText(80),
 });
 
@@ -166,21 +185,8 @@ export const contractSignSchema = z.object({
   agree: z.coerce.boolean().refine((v) => v === true, { message: "You must agree to the terms to sign" }),
 });
 
-/** Normalise to E.164 (+91…) to match the format Firebase returns on phone login. */
-export function normalizePhone(raw: string): string {
-  const t = raw.trim();
-  let digits = t.replace(/\D/g, "");
-  if (!t.startsWith("+") && digits.startsWith("0")) {
-    digits = digits.substring(1);
-  }
-  if (t.startsWith("+")) return `+${digits}`;
-  if (digits.length === 10) return `+91${digits}`;
-  if (digits.length === 12 && digits.startsWith("91")) return `+${digits}`;
-  return `+${digits}`;
-}
-
 export const adminCreateVendorSchema = z.object({
-  phone: z.string().transform(normalizePhone).pipe(z.string().regex(/^\+\d{10,15}$/, "Enter a valid phone number")),
+  phone: phoneE164,
   name: z.string().trim().max(120).optional(),
   brandName: z.string().min(2),
   category: z.string().optional(),
@@ -191,9 +197,9 @@ export const adminCreateVendorSchema = z.object({
 
 /** KYC is verify-only (no GST billing) — BUSINESS-RULES §2.5. */
 export const vendorKycSchema = z.object({
-  pan: z.string().trim().min(10).max(10).optional(),
-  fssai: z.string().trim().optional(),
-  gstin: z.string().trim().optional(),
+  pan: panOptional,
+  fssai: fssaiOptional,
+  gstin: gstinOptional,
 });
 
 /** Finance ledger (cost side). Money is integer paise; the action converts rupee inputs first. */
@@ -254,7 +260,7 @@ export type SettlementInput = z.infer<typeof settlementSchema>;
 export const createAddOnSchema = z.object({
   eventId: id,
   name: z.string().min(1).max(60),
-  pricePaise: paise.refine((n) => n > 0, "Price required"),
+  pricePaise: paise.refine((n) => n > 0, "Price required").refine((n) => n <= MAX_PAISE, "Price is too large"),
   maxPerBooking: z.coerce.number().int().min(1).max(50).default(5),
   stock: z.coerce.number().int().nonnegative().nullish(),
   active: z.boolean().default(true),
