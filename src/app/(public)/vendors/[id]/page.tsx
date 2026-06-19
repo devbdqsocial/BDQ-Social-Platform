@@ -7,6 +7,8 @@ import { listVendorOffers } from "@/server/content/offers";
 import { offerPhase, validityLabel } from "@/lib/offer";
 import { primaryLogo, productImages } from "@/lib/vendor-assets";
 import { Reveal } from "@/components/motion/Reveal";
+import { SplitReveal } from "@/components/motion/SplitReveal";
+import { Magnetic } from "@/components/motion/Magnetic";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbLd } from "@/lib/seo/jsonld";
 
@@ -47,7 +49,7 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
           { name: v.brandName, path: `/vendors/${v.id}` },
         ])}
       />
-      <section className="gama-1 bg-1 paint flex min-h-[85svh] items-end py-[var(--space-5xl)]">
+      <section data-header-mode="light" className="gama-1 bg-1 paint flex min-h-[85svh] items-end py-[var(--space-5xl)]">
         <div className="wrapper w-full">
           <Link href="/vendors" data-cursor className="f-paragraph-small f-bold t-upper" style={{ letterSpacing: "0.14em" }}>
             ← All brands
@@ -57,9 +59,9 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
               {v.category && (
                 <span className="f-paragraph-small f-bold t-upper" style={{ letterSpacing: "0.18em" }}>{v.category}</span>
               )}
-              <h1 className="f-exat mt-[var(--space-sm)] f-h133">
+              <SplitReveal as="h1" mode="chars" className="f-exat mt-[var(--space-sm)] f-h133">
                 {v.brandName}
-              </h1>
+              </SplitReveal>
               {v.description && (
                 <p className="f-paragraph mt-[var(--space-lg)] max-w-[48ch]">{v.description}</p>
               )}
@@ -120,7 +122,7 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
             <h2 className="f-exat f-h60">The goods</h2>
             <Reveal stagger className="mt-[var(--space-3xl)] grid grid-cols-2 gap-[var(--grid-gap)] sm:grid-cols-3">
               {products.map((src, i) => (
-                <div key={i} className="svg svg--form2 w-full">
+                <div key={i} className="svg svg--form2 media-zoom w-full">
                   <Image src={src} alt={`${v.brandName}${v.category ? ` — ${v.category}` : ""} product ${i + 1}`} fill className="svg__img" sizes="33vw" />
                 </div>
               ))}
@@ -135,9 +137,11 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
             Find {v.brandName} at the market.
           </h2>
           <div className="mt-[var(--space-2xl)] flex justify-center">
-            <Link href="/events" className="btn" data-cursor>
-              <span className="btn__text">Get tickets</span>
-            </Link>
+            <Magnetic>
+              <Link href="/events" className="btn btn--lg" data-cursor>
+                <span className="btn__text">Get tickets</span>
+              </Link>
+            </Magnetic>
           </div>
         </div>
       </section>

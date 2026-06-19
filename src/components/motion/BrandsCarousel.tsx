@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { CARD_SHAPES } from "@/lib/shapes";
+
 type Brand = { id: string; brandName: string; logo: string | null };
 
 /**
@@ -14,10 +16,10 @@ export function BrandsCarousel({ brands }: { brands: Brand[] }) {
       className="-mx-[var(--wrapper-padd)] flex snap-x snap-mandatory gap-5 overflow-x-auto px-[var(--wrapper-padd)] pb-[var(--space-md)] sm:gap-7 lg:gap-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       aria-label="Featured brands"
     >
-      {brands.map((v) => (
+      {brands.map((v, i) => (
         <li key={v.id} className="w-[74%] flex-none snap-start sm:w-[40%] lg:w-[28.5%]">
           <Link href={`/vendors/${v.id}`} data-cursor="view" className="block select-none">
-            <div className="svg svg--form2 media-zoom media-tint w-full">
+            <div className={`svg ${CARD_SHAPES[i % CARD_SHAPES.length]} media-zoom media-tint w-full`}>
               {v.logo ? (
                 <Image src={v.logo} alt={v.brandName} fill className="svg__img" sizes="33vw" />
               ) : (

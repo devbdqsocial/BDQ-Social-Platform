@@ -8,6 +8,10 @@ import { primaryLogo } from "@/lib/vendor-assets";
 import { formatPaise } from "@/lib/utils";
 import { fmtDateFull, fmtTime, fmtDayLabel } from "@/lib/date-formats";
 import { Countdown } from "@/components/landing/Countdown";
+import { Reveal } from "@/components/motion/Reveal";
+import { SplitReveal } from "@/components/motion/SplitReveal";
+import { Magnetic } from "@/components/motion/Magnetic";
+import { BdqWorld } from "@/components/motion/BdqWorld";
 import { BookingFloorPlan } from "@/components/map/BookingFloorPlan";
 import { TicketCheckout } from "@/components/tickets/TicketCheckout";
 import { SponsorStrip } from "@/components/landing/SponsorStrip";
@@ -23,7 +27,7 @@ const time = fmtTime;
 const dayLabel = fmtDayLabel;
 
 const POLICIES: [string, string][] = [
-  ["Refunds", "All sales are final — no refunds or exchanges. Pick your date with confidence."],
+  ["Support", "Need help with your booking? Contact support with your order reference and we will guide you through the available options."],
   ["Entry", "Your QR code is your ticket. Show it at the gate from your phone — one QR admits your whole group."],
   ["Security", "Bag checks at entry for everyone's safety. No outside alcohol; please travel light."],
   ["Parking", "On-site and nearby parking available. Arrive a little early on peak evenings."],
@@ -95,28 +99,31 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
         ]}
       />
       {/* ===== HERO — sell the night, CTA above the fold ===== */}
-      <section className="gama-1 bg-1 paint flex min-h-[78svh] items-end py-[var(--space-5xl)]">
-        <div className="wrapper">
-          <span className="kicker">{availLabel}{event.location ? ` · ${event.location}` : ""}</span>
-          <h1 className="f-exat mt-[var(--space-sm)] f-h133">{event.name}</h1>
-          <div className="mt-[var(--space-lg)] flex flex-wrap items-center gap-[var(--space-lg)]">
-            <span className="kicker">{fmt(event.startsAt)}</span>
-            {priceLabel && <span className="kicker">Tickets {priceLabel}</span>}
-          </div>
-          {event.description && <p className="f-paragraph mt-[var(--space-lg)] max-w-[52ch]">{event.description}</p>}
-          <div className="mt-[var(--space-xl)]"><Countdown target={event.startsAt.toISOString()} /></div>
-          <div id="event-hero-cta" className="mt-[var(--space-xl)] flex flex-wrap items-center gap-[var(--space-lg)]">
-            {hasTickets && !soldOut && (
-              <a href="#tickets" className="btn btn--lg" data-cursor><span className="btn__text">Get tickets</span></a>
-            )}
-            <Link href="/vendors" className="kicker link-underline" data-cursor>See the brands →</Link>
-          </div>
+      <section data-header-mode="light" className="gama-1 bg-1 paint relative flex min-h-[78svh] items-end overflow-hidden py-[var(--space-5xl)]">
+        <BdqWorld tint="var(--light-blue)" className="opacity-25" />
+        <div className="wrapper relative z-10">
+          <Reveal><span className="kicker">{availLabel}{event.location ? ` · ${event.location}` : ""}</span></Reveal>
+          <SplitReveal as="h1" mode="chars" className="f-exat mt-[var(--space-sm)] f-h133">{event.name}</SplitReveal>
+          <Reveal stagger delay={0.15}>
+            <div className="mt-[var(--space-lg)] flex flex-wrap items-center gap-[var(--space-lg)]">
+              <span className="kicker">{fmt(event.startsAt)}</span>
+              {priceLabel && <span className="kicker">Tickets {priceLabel}</span>}
+            </div>
+            {event.description && <p className="f-paragraph mt-[var(--space-lg)] max-w-[52ch]">{event.description}</p>}
+            <div className="mt-[var(--space-xl)]"><Countdown target={event.startsAt.toISOString()} /></div>
+            <div id="event-hero-cta" className="mt-[var(--space-xl)] flex flex-wrap items-center gap-[var(--space-lg)]">
+              {hasTickets && !soldOut && (
+                <Magnetic><a href="#tickets" className="btn btn--lg" data-cursor><span className="btn__text">Get tickets</span></a></Magnetic>
+              )}
+              <Link href="/vendors" className="kicker link-underline" data-cursor>See the brands →</Link>
+            </div>
+          </Reveal>
         </div>
       </section>
 
       {/* ===== TICKETS ===== */}
       <section id="tickets" className="paint py-[var(--space-5xl)]" style={{ scrollMarginTop: "var(--space-xl)" }}>
-        <div className="wrapper max-w-[62rem]">
+        <div className="wrapper max-w-[var(--w-content)]">
           <h2 className="f-exat mb-[var(--space-lg)] f-h42">Get your tickets</h2>
           {!hasTickets ? (
             <p className="f-paragraph p-[var(--space-xl)] text-center opacity-70" style={{ border: "1px dashed var(--color)" }}>
@@ -167,7 +174,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
       {/* ===== SCHEDULE ===== */}
       {event.schedule.length > 0 && (
         <section id="schedule" className="paint py-[var(--space-5xl)]" style={{ scrollMarginTop: "var(--space-xl)" }}>
-          <div className="wrapper max-w-[62rem]">
+          <div className="wrapper max-w-[var(--w-content)]">
             <h2 className="f-exat f-h60">What&apos;s happening</h2>
             <div className="mt-[var(--space-2xl)] space-y-[var(--space-2xl)]">
               {Object.entries(
@@ -199,7 +206,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
 
       {/* ===== VENUE & ARRIVAL ===== */}
       <section className="gama-1 bg-2 paint py-[var(--space-5xl)]">
-        <div className="wrapper max-w-[62rem]">
+        <div className="wrapper max-w-[var(--w-content)]">
           <h2 className="f-exat f-h60">Getting there</h2>
           <div className="mt-[var(--space-lg)] grid gap-[var(--space-xl)] sm:grid-cols-2">
             <div><p className="kicker opacity-70">Venue</p><p className="f-paragraph mt-[var(--space-xs)]">{event.location ?? "Vadodara"}</p></div>
@@ -218,7 +225,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
 
       {/* ===== POLICIES (trust) ===== */}
       <section className="paint py-[var(--space-5xl)]">
-        <div className="wrapper max-w-[62rem]">
+        <div className="wrapper max-w-[var(--w-content)]">
           <h2 className="f-exat f-h60">Good to know</h2>
           <div className="mt-[var(--space-2xl)]">
             {POLICIES.map(([q, a]) => (
@@ -236,7 +243,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
 
       {sponsors.length > 0 && (
         <section className="paint pb-[var(--space-5xl)]">
-          <div className="wrapper max-w-[62rem]"><SponsorStrip sponsors={sponsors} /></div>
+          <div className="wrapper max-w-[var(--w-content)]"><SponsorStrip sponsors={sponsors} /></div>
         </section>
       )}
 

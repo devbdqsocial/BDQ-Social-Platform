@@ -58,7 +58,7 @@ export function PhoneLogin({
               />
             </div>
           </label>
-          {phoneField.error && <p className="text-sm text-destructive">{phoneField.error}</p>}
+          {phoneField.error && <p role="alert" className="text-sm text-destructive">{phoneField.error}</p>}
           <Button className="w-full" disabled={loading} onClick={send}>
             {loading ? "Sending…" : "Send OTP"}
           </Button>
@@ -82,14 +82,14 @@ export function PhoneLogin({
               className="mt-1 h-11 w-full rounded-md border border-border bg-background px-3 text-center text-lg tracking-[0.4em] aria-invalid:border-destructive"
             />
           </label>
-          {otpField.error && <p className="text-sm text-destructive">{otpField.error}</p>}
+          {otpField.error && <p role="alert" className="text-sm text-destructive">{otpField.error}</p>}
           <Button className="w-full" disabled={loading} onClick={verifyCode}>
             {loading ? "Verifying…" : "Verify & continue"}
           </Button>
         </>
       )}
 
-      {status && <p className="text-sm text-muted-foreground">{status}</p>}
+      {status && <p role="status" aria-live="polite" className="text-sm text-muted-foreground">{status}</p>}
       <div id="recaptcha" />
     </div>
   );

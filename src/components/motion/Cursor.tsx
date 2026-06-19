@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 import { gsap } from "@/lib/gsap";
 
 // RPA custom cursor (#mouse): a yellow dot that follows with lerp 0.2 (mix-blend-mode:difference,
-// styled in globals.css), shrinking over interactive targets. Pointer-fine only; off on touch/reduced.
+// styled in globals.css), expanding over interactive targets. Pointer-fine only; off on touch/reduced.
 export function Cursor() {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -31,6 +31,7 @@ export function Cursor() {
     // Invisible until the pointer actually moves — otherwise the dot sits mid-viewport on load.
     el.style.opacity = "0";
     let seen = false;
+    let activeTarget: Element | null = null;
     const onMove = (e: MouseEvent) => {
       mouse.x = e.clientX;
       mouse.y = e.clientY;
@@ -45,7 +46,8 @@ export function Cursor() {
       t instanceof Element ? t.closest("a, button, [role='button'], [data-cursor]") : null;
     const onOver = (e: MouseEvent) => {
       const t = findTarget(e.target);
-      if (!t) return;
+      if (!t || t === activeTarget) return;
+      activeTarget = t;
       el.classList.add("is-hover");
       // data-cursor="view" (etc.) selects a sized variant in CSS.
       const variant = t.getAttribute("data-cursor");
@@ -53,10 +55,12 @@ export function Cursor() {
       else delete el.dataset.state;
     };
     const onOut = (e: MouseEvent) => {
-      if (findTarget(e.target)) {
-        el.classList.remove("is-hover");
-        delete el.dataset.state;
-      }
+      if (!activeTarget) return;
+      const nextTarget = findTarget(e.relatedTarget);
+      if (nextTarget === activeTarget) return;
+      activeTarget = null;
+      el.classList.remove("is-hover");
+      delete el.dataset.state;
     };
 
     document.documentElement.classList.add("cursor-none");

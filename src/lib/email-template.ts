@@ -34,7 +34,7 @@ export function ticketEmailHtml(o: {
       <p style="margin:0;color:#6F6552">${o.eventName}</p>
       <p style="margin:2px 0 0;color:#6F6552;font-size:14px">${o.when}${o.location ? ` · ${o.location}` : ""}</p>
       <table style="width:100%;border-collapse:collapse;margin-top:20px">${rows}</table>
-      <p style="margin:20px 0 0;color:#6F6552;font-size:13px">Your QR ticket${o.tickets.length > 1 ? "s are" : " is"} attached — show ${o.tickets.length > 1 ? "them" : "it"} at the gate. All sales are final.</p>
+      <p style="margin:20px 0 0;color:#6F6552;font-size:13px">Your QR ticket${o.tickets.length > 1 ? "s are" : " is"} attached - show ${o.tickets.length > 1 ? "them" : "it"} at the gate. Contact support if you need help with your order.</p>
     </div>
   </div>
 </body></html>`;

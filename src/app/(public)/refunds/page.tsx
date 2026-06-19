@@ -12,11 +12,10 @@ export default function RefundsPage() {
         you acknowledge and accept it.
       </p>
 
-      <h2>All sales are final</h2>
+      <h2>Refund policy</h2>
       <p>
-        All ticket and stall purchases are <strong>final and non-refundable</strong>. We do not offer
-        refunds, cancellations, or exchanges for change of mind, inability to attend, late arrival, or
-        partial attendance.
+        Ticket and stall purchases are confirmed at checkout and are not refundable for change of mind,
+        inability to attend, late arrival, or partial attendance.
       </p>
 
       <h2>Event cancellation or rescheduling by the organiser</h2>

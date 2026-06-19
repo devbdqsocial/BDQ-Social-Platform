@@ -14,7 +14,8 @@ import { formatPaise } from "@/lib/utils";
 import { Countdown } from "@/components/landing/Countdown";
 import { Reveal } from "@/components/motion/Reveal";
 import { SplitReveal } from "@/components/motion/SplitReveal";
-import { Parallax } from "@/components/motion/Parallax";
+import { Magnetic } from "@/components/motion/Magnetic";
+import { FestivalScene } from "@/components/motion/FestivalScene";
 import { Marquee } from "@/components/motion/Marquee";
 import { WordmarkWall } from "@/components/motion/WordmarkWall";
 import { PinnedServices } from "@/components/motion/PinnedServices";
@@ -32,7 +33,7 @@ export const metadata: Metadata = { alternates: { canonical: "/" } };
 const HOME_FAQS: readonly (readonly [string, string])[] = [
   ["When is it?", "An evening event — gates open in the late afternoon and we go into the night, the weekend before Diwali."],
   ["How do I get in?", "Book online and we'll send a QR code to your phone. Show it at the gate — that's it."],
-  ["Can I get a refund?", "All sales are final, so pick your date with confidence. No refunds."],
+  ["Need help with a ticket?", "Contact BDQ support with your order reference and we will guide you through the available options for your booking."],
   ["Is there food?", "Plenty. A full food court with the city's best cafés, bakers, and street food."],
 ];
 
@@ -72,7 +73,7 @@ export default async function LandingPage() {
     <div>
       <JsonLd data={faqLd(HOME_FAQS)} />
       {/* ============ HERO (cabecera--home) — navy / light-blue ============ */}
-      <section className="gama-1 bg-1 paint relative flex min-h-[100svh] items-center overflow-hidden">
+      <section data-header-mode="light" className="gama-1 bg-1 paint relative flex min-h-[100svh] items-center overflow-hidden">
         <div className="wrapper grid w-full items-center gap-[var(--space-3xl)] py-[var(--space-5xl)] lg:grid-cols-2">
           <div>
             <Reveal>
@@ -93,7 +94,7 @@ export default async function LandingPage() {
               )}
               {event && focus.showCountdown && <div className="mt-[var(--space-md)]"><Countdown target={event.startsAt.toISOString()} /></div>}
               <div className="mt-[var(--space-xl)] flex flex-wrap items-center gap-[var(--space-lg)]">
-                <Btn href={focus.primary.href}>{focus.primary.label}</Btn>
+                <Magnetic><Btn href={focus.primary.href}>{focus.primary.label}</Btn></Magnetic>
                 {focus.secondary.map((a) => <Btn key={a.href} href={a.href}>{a.label}</Btn>)}
                 {minPrice != null && focus.showTicketPrice && (
                   <span className="f-paragraph-small">from {formatPaise(minPrice)}</span>
@@ -102,13 +103,12 @@ export default async function LandingPage() {
             </Reveal>
           </div>
 
-          {/* Intentional RPA key art (D24): the branded form shape, not a borrowed vendor logo. */}
-          <Reveal effect="clip" className="hidden lg:block">
-            <Parallax amount={10}>
-              <div className="svg svg--form11 media-tint mx-auto w-[80%]">
-                <div className="svg__bg" />
-              </div>
-            </Parallax>
+          {/* RIGHT = the experience: a cinematic night-market scene (CSS/SVG) that carries the hero's
+              visual weight — moon, string lights, lanterns, venue silhouette, pointer parallax. */}
+          <Reveal effect="clip">
+            <div className="relative min-h-[38svh] w-full overflow-hidden rounded-[var(--radius-lg)] sm:min-h-[44svh] lg:min-h-[64svh]">
+              <FestivalScene tone="night" className="absolute inset-0" />
+            </div>
           </Reveal>
         </div>
 
@@ -239,7 +239,7 @@ export default async function LandingPage() {
 
       {/* ============ FAQ — cream / ink ============ */}
       <section className="paint py-[var(--space-5xl)]">
-        <div className="wrapper max-w-[60rem]">
+        <div className="wrapper max-w-[var(--w-content)]">
           <h2 className="f-exat f-h60">Good to know</h2>
           <div className="mt-[var(--space-2xl)]">
             {HOME_FAQS.map(([q, a]) => (

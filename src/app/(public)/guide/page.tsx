@@ -14,8 +14,8 @@ export default async function GuidePage() {
   const guide = await getGuide();
 
   return (
-    <section className="paint py-[var(--space-4xl)]">
-      <div className="wrapper max-w-[52rem]">
+    <section data-header-mode="dark" className="paint py-[var(--space-4xl)]">
+      <div className="wrapper max-w-[var(--w-prose)]">
         <span className="kicker opacity-70">Know before you go</span>
         <h1 className="f-exat mt-[var(--space-sm)] f-h76">Festival guide</h1>
 

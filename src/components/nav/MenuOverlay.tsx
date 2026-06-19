@@ -33,9 +33,11 @@ export function MenuOverlay({
   // move focus to the first link on open, and hand it back to the opener on close.
   useEffect(() => {
     if (!open) return;
+    const root = document.documentElement;
     const opener = document.activeElement as HTMLElement | null;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    root.dataset.menuOpen = "true";
 
     const focusables = () =>
       Array.from(
@@ -60,6 +62,7 @@ export function MenuOverlay({
     };
     window.addEventListener("keydown", onKey);
     return () => {
+      delete root.dataset.menuOpen;
       document.body.style.overflow = prev;
       window.removeEventListener("keydown", onKey);
       opener?.focus();
@@ -93,7 +96,7 @@ export function MenuOverlay({
       aria-hidden={!open}
       inert={!open || undefined}
       className={cn(
-        "fixed inset-0 z-[120] flex flex-col transition-[opacity,transform] duration-500 ease-[cubic-bezier(0.76,0,0.24,1)]",
+        "fixed inset-0 z-[var(--z-menu)] flex flex-col overflow-y-auto overscroll-contain transition-[opacity,transform] duration-500 ease-[cubic-bezier(0.76,0,0.24,1)]",
         open ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-full opacity-0",
       )}
       style={
@@ -106,16 +109,16 @@ export function MenuOverlay({
         } as React.CSSProperties
       }
     >
-      <div className="flex items-center justify-between px-[var(--wrapper-padd)] py-[var(--space-lg)]">
-        <Link href="/" onClick={onClose} data-cursor className="f-exat f-h32">
+      <div className="flex items-center justify-between px-[var(--wrapper-padd)] py-[calc(var(--space-lg)+env(safe-area-inset-top,0px))]">
+        <Link href="/" onClick={onClose} data-cursor="menu" className="f-exat f-h32">
           BDQ<span style={{ color: "var(--green)" }}>.</span>
         </Link>
         <button
           type="button"
           onClick={onClose}
           aria-label="Close menu"
-          data-cursor
-          className="relative grid size-10 place-items-center"
+          data-cursor="menu"
+          className="relative grid size-12 place-items-center"
         >
           <span className="absolute block h-[2px] w-7 rotate-45" style={{ background: "currentColor" }} />
           <span className="absolute block h-[2px] w-7 -rotate-45" style={{ background: "currentColor" }} />
@@ -124,7 +127,7 @@ export function MenuOverlay({
 
       <nav ref={nav} className="wrapper flex flex-1 flex-col justify-center gap-[var(--space-md)]">
         {links.map((l, i) => (
-          <Link key={l.href} href={l.href} onClick={onClose} data-cursor className="group flex w-fit items-baseline gap-[var(--space-lg)]">
+          <Link key={l.href} href={l.href} onClick={onClose} data-cursor="menu" className="group flex w-fit items-baseline gap-[var(--space-lg)]">
             <span className="kicker">{String(i + 1).padStart(2, "0")}</span>
             <span className="block overflow-hidden">
               <span
@@ -138,19 +141,19 @@ export function MenuOverlay({
         ))}
       </nav>
 
-      <div className="wrapper flex flex-wrap items-center justify-between gap-[var(--space-lg)] py-[var(--space-xl)]" style={{ borderTop: "1px solid color-mix(in srgb, currentColor 25%, transparent)" }}>
-        <div className="f-paragraph-small f-bold flex items-center gap-[var(--space-xl)]">
-          <a href="https://instagram.com/bdqsocial" target="_blank" rel="noreferrer" data-cursor className="link-underline t-upper" style={{ letterSpacing: "0.12em" }}>
+      <div className="wrapper flex flex-wrap items-center justify-between gap-[var(--space-lg)] py-[var(--space-xl)] max-[430px]:items-start" style={{ borderTop: "1px solid color-mix(in srgb, currentColor 25%, transparent)" }}>
+        <div className="f-paragraph-small f-bold flex flex-wrap items-center gap-[var(--space-lg)] max-[430px]:flex-col max-[430px]:items-start">
+          <a href="https://instagram.com/bdqsocial" target="_blank" rel="noreferrer" data-cursor="menu" className="link-underline t-upper" style={{ letterSpacing: "0.12em" }}>
             Instagram
           </a>
           {signedIn ? (
             <>
-              <Link href="/dashboard" onClick={onClose} data-cursor className="link-underline t-upper" style={{ letterSpacing: "0.12em" }}>
+              <Link href="/dashboard" onClick={onClose} data-cursor="menu" className="link-underline t-upper" style={{ letterSpacing: "0.12em" }}>
                 My tickets
               </Link>
               <button
                 type="button"
-                data-cursor
+                data-cursor="menu"
                 onClick={() => {
                   onClose();
                   onSignOut();
@@ -162,14 +165,14 @@ export function MenuOverlay({
               </button>
             </>
           ) : (
-            <Link href="/login" onClick={onClose} data-cursor className="link-underline t-upper" style={{ letterSpacing: "0.12em" }}>
+            <Link href="/login" onClick={onClose} data-cursor="menu" className="link-underline t-upper" style={{ letterSpacing: "0.12em" }}>
               Sign in
             </Link>
           )}
           <ThemeToggle />
         </div>
         <Magnetic>
-          <Link href="/contact" onClick={onClose} data-cursor className="btn">
+          <Link href="/contact" onClick={onClose} data-cursor="cta" className="btn">
             <span className="btn__text">Let&apos;s talk</span>
           </Link>
         </Magnetic>

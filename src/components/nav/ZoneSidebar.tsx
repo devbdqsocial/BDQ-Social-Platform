@@ -57,7 +57,7 @@ export function ZoneSidebar({
         href={it.href}
         onClick={onClick}
         className={cn(
-          "rounded-md px-3 py-2 text-sm transition-colors",
+          "flex min-h-11 items-center rounded-md px-3 py-2 text-sm transition-colors",
           isActive(it.href, i)
             ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
             : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
@@ -83,7 +83,7 @@ export function ZoneSidebar({
           type="button"
           onClick={() => setOpen(true)}
           aria-label="Open menu"
-          className="grid size-9 place-items-center rounded-md text-sidebar-foreground hover:bg-sidebar-accent"
+          className="grid size-11 place-items-center rounded-md text-sidebar-foreground hover:bg-sidebar-accent"
         >
           <Menu className="size-5" />
         </button>
@@ -102,7 +102,7 @@ export function ZoneSidebar({
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close menu"
-                className="grid size-9 place-items-center rounded-md text-sidebar-foreground hover:bg-sidebar-accent"
+                className="grid size-11 place-items-center rounded-md text-sidebar-foreground hover:bg-sidebar-accent"
               >
                 <X className="size-5" />
               </button>

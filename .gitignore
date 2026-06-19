@@ -58,3 +58,8 @@ Docs/PLAN-*.md
 
 # Mirrored third-party reference site (not shipped)
 reference/
+
+# local dev/process logs + scratch artifacts (not shipped)
+/dev-server*.log
+/rpa-*.log
+/artifacts/

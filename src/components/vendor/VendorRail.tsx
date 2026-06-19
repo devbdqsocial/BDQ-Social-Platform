@@ -37,7 +37,7 @@ export function VendorRail({ items, footer }: { items: RailItem[]; footer?: Reac
           href={it.href}
           onClick={onClick}
           aria-current={active ? "page" : undefined}
-          className="f-paragraph rounded-md px-3 py-2 font-bold transition-colors"
+          className="f-paragraph flex min-h-11 items-center rounded-md px-3 py-2 font-bold transition-colors"
           style={
             active
               ? { background: "color-mix(in srgb, var(--light-blue) 18%, transparent)", color: "var(--light-blue)" }
@@ -70,12 +70,12 @@ export function VendorRail({ items, footer }: { items: RailItem[]; footer?: Reac
           type="button"
           onClick={() => setOpen(true)}
           aria-label="Open menu"
-          className="grid size-9 place-items-center rounded-md"
+          className="grid size-11 place-items-center rounded-md"
         >
           <Menu className="size-5" />
         </button>
         {brandMark}
-        <span className="size-9" aria-hidden />
+        <span className="size-11" aria-hidden />
       </div>
 
       {/* Mobile drawer */}
@@ -92,7 +92,7 @@ export function VendorRail({ items, footer }: { items: RailItem[]; footer?: Reac
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close menu"
-                className="grid size-9 place-items-center rounded-md"
+                className="grid size-11 place-items-center rounded-md"
               >
                 <X className="size-5" />
               </button>

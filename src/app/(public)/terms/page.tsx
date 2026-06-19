@@ -34,10 +34,10 @@ export default function TermsPage() {
         gateway; your order is confirmed only after payment is verified.
       </p>
 
-      <h2>All sales final</h2>
+      <h2>Refund policy</h2>
       <p>
-        All ticket and stall purchases are <strong>final and non-refundable</strong>. Please review
-        the <a href="/refunds">Cancellation &amp; Refund Policy</a> before purchasing.
+        Ticket and stall purchases follow our{" "}
+        <a href="/refunds">Cancellation &amp; Refund Policy</a>. Please review it before purchasing.
       </p>
 
       <h2>Vendors</h2>

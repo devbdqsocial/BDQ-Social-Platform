@@ -7,6 +7,7 @@ import { openCheckout } from "@/lib/razorpay-checkout";
 import { usePhoneOtp } from "@/components/auth/usePhoneOtp";
 import { phone10, otp6, digitsCapped } from "@/lib/validators";
 import { useFieldValidation } from "@/lib/use-field-validation";
+import { Magnetic } from "@/components/motion/Magnetic";
 import { quoteOrderAction } from "@/app/(public)/events/[slug]/actions";
 
 interface TicketType {
@@ -120,11 +121,15 @@ export function TicketCheckout({ eventId, ticketTypes }: { eventId: string; tick
         {ticketTypes.map((t, i) => {
           const soldOut = t.remaining <= 0;
           const low = t.remaining > 0 && t.remaining <= LOW_STOCK;
+          const selected = (qty[t.id] ?? 0) > 0;
           return (
             <li
               key={t.id}
-              className="flex items-center justify-between gap-[var(--space-lg)] py-[var(--space-lg)]"
-              style={i > 0 ? { borderTop: "1px solid color-mix(in srgb, currentColor 30%, transparent)" } : undefined}
+              className="flex items-center justify-between gap-[var(--space-lg)] rounded-[var(--radius-md)] px-[var(--space-md)] py-[var(--space-lg)] transition-colors duration-200"
+              style={{
+                ...(i > 0 ? { borderTop: "1px solid color-mix(in srgb, currentColor 30%, transparent)" } : {}),
+                ...(selected ? { background: "color-mix(in srgb, currentColor 7%, transparent)" } : {}),
+              }}
             >
               <div>
                 <p className="f-paragraph f-bold">{t.name}</p>
@@ -188,9 +193,11 @@ export function TicketCheckout({ eventId, ticketTypes }: { eventId: string; tick
           <p className="kicker mt-[var(--space-xs)] opacity-70">{count} ticket{count === 1 ? "" : "s"}</p>
         </div>
         {!authStep && (
-          <button type="button" className="btn" data-cursor disabled={!count || busy} onClick={() => void placeOrder()}>
-            <span className="btn__text">{busy ? "Starting…" : "Buy tickets"}</span>
-          </button>
+          <Magnetic>
+            <button type="button" className="btn btn--lg" data-cursor disabled={!count || busy} onClick={() => void placeOrder()}>
+              <span className="btn__text">{busy ? "Starting…" : "Buy tickets"}</span>
+            </button>
+          </Magnetic>
         )}
       </div>
 
@@ -229,7 +236,7 @@ export function TicketCheckout({ eventId, ticketTypes }: { eventId: string; tick
               {otpField.error && <p role="alert" className="f-paragraph-small f-bold w-full" style={{ color: "var(--red)" }}>{otpField.error}</p>}
             </div>
           )}
-          {otp.status && <p className="f-paragraph-small mt-[var(--space-sm)] opacity-75">{otp.status}</p>}
+          {otp.status && <p role="status" aria-live="polite" className="f-paragraph-small mt-[var(--space-sm)] opacity-75">{otp.status}</p>}
           <button type="button" className="f-paragraph-small mt-[var(--space-sm)] opacity-60 link-underline" onClick={() => { setAuthStep(false); otp.reset(); }}>Back</button>
           <div id="checkout-recaptcha" />
         </div>
@@ -244,7 +251,7 @@ export function TicketCheckout({ eventId, ticketTypes }: { eventId: string; tick
       <ul className="mt-[var(--space-md)] flex flex-wrap gap-x-[var(--space-lg)] gap-y-[var(--space-xs)] opacity-75">
         <li className="f-paragraph-small">🔒 Secure payment via Razorpay</li>
         <li className="f-paragraph-small">Instant QR ticket to your phone</li>
-        <li className="f-paragraph-small">All sales final — no refunds</li>
+        <li className="f-paragraph-small">Support available for payment issues</li>
       </ul>
       <p className="f-paragraph-small mt-[var(--space-xs)] opacity-60">Buying 6 or more? Bulk savings apply automatically.</p>
     </div>

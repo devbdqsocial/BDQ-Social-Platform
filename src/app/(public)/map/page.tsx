@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { getEventGuide } from "@/server/map/guide";
+import { Reveal } from "@/components/motion/Reveal";
+import { SplitReveal } from "@/components/motion/SplitReveal";
 import { EventGuide } from "@/components/map/EventGuide";
 
 export const metadata: Metadata = {
@@ -13,13 +15,15 @@ export default async function MapPage() {
   const guide = await getEventGuide();
 
   return (
-    <section className="paint py-[var(--space-4xl)]">
-      <div className="wrapper max-w-[64rem]">
-        <span className="kicker opacity-70">{guide?.event.location ?? "The venue"}</span>
-        <h1 className="f-exat mt-[var(--space-sm)] f-h76">Explore {guide?.event.name ?? "the event"}</h1>
-        <p className="f-paragraph mt-[var(--space-md)] max-w-[52ch] opacity-80">
-          Find the brands you love, the food you&apos;ll queue for, and everything happening across the venue.
-        </p>
+    <section data-header-mode="dark" className="paint py-[var(--space-4xl)]">
+      <div className="wrapper max-w-[var(--w-content)]">
+        <Reveal><span className="kicker opacity-70">{guide?.event.location ?? "The venue"}</span></Reveal>
+        <SplitReveal as="h1" className="f-exat mt-[var(--space-sm)] f-h76">Explore {guide?.event.name ?? "the event"}</SplitReveal>
+        <Reveal delay={0.1}>
+          <p className="f-paragraph mt-[var(--space-md)] max-w-[52ch] opacity-80">
+            Find the brands you love, the food you&apos;ll queue for, and everything happening across the venue.
+          </p>
+        </Reveal>
 
         <div className="mt-[var(--space-2xl)]">
           {!guide || (!guide.hasLayout && guide.brands.length === 0) ? (
