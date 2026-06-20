@@ -1,9 +1,12 @@
 import { PrismaClient } from "@prisma/client";
-import { scryptSync, randomBytes } from "crypto";
+import { scryptSync, randomBytes, createHash } from "crypto";
 import { generateSecret, generateSync } from "otplib";
 
+// Matches src/lib/backup-codes.ts: sha256 of the code lowercased with non-alphanumerics stripped.
+const hashBackupCode = (code) => createHash("sha256").update(code.toLowerCase().replace(/[^a-z0-9]/g, "")).digest("hex");
+
 // Proves admin sign-in: correct password + TOTP -> 200 + session cookie; wrong code -> 401;
-// a non-admin credential -> 401. Needs the dev server running.
+// a non-admin credential -> 401; a backup code works once then is rejected. Needs the dev server running.
 // Run: npm run dev (another shell) then node --env-file=.env scripts/verify-admin-login.mjs
 
 const db = new PrismaClient();
@@ -53,7 +56,17 @@ async function main() {
     console.log(`non-admin: ${nonAdmin.status}`);
     if (nonAdmin.status !== 401) throw new Error("FAIL: customer was allowed into admin");
 
-    console.log("OK: admin login (password + TOTP) + rejects wrong code + rejects non-admin");
+    // 4) backup code works once, then is consumed (single-use)
+    await db.user.update({ where: { id: admin.id }, data: { recoveryCodes: [hashBackupCode("backup01")] } });
+    await db.rateLimit.deleteMany({ where: { key: "admin-auth:local" } });
+    const recover = await post({ email: adminEmail, password, backupCode: "backup01" });
+    console.log(`backup code (1st use): ${recover.status}`);
+    if (recover.status !== 200) throw new Error("FAIL: valid backup code was not accepted");
+    const reuse = await post({ email: adminEmail, password, backupCode: "backup01" });
+    console.log(`backup code (reuse): ${reuse.status}`);
+    if (reuse.status !== 401) throw new Error("FAIL: backup code was accepted twice (not single-use)");
+
+    console.log("OK: admin login (password + TOTP) + rejects wrong code + rejects non-admin + single-use backup code");
   } finally {
     await db.user.deleteMany({ where: { id: { in: [admin.id, cust.id] } } });
   }

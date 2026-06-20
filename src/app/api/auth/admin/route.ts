@@ -4,7 +4,8 @@ import { z } from "zod";
 import { db } from "@/server/db";
 import { verifyPassword } from "@/lib/password";
 import { verifyCode } from "@/lib/totp";
-import { createSession } from "@/server/auth/session";
+import { consumeBackupCode } from "@/lib/backup-codes";
+import { createSession, createSetupCookie } from "@/server/auth/session";
 import { enforceRateLimit } from "@/lib/ratelimit";
 import { logError } from "@/lib/logger";
 
@@ -14,9 +15,12 @@ const bodySchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
   code: z.string().trim().optional(),
+  backupCode: z.string().trim().optional(),
 });
 
 const FAIL = NextResponse.json({ ok: false, error: { code: "UNAUTHENTICATED" } }, { status: 401 });
+// Password is correct but this admin has no 2FA yet — the client redirects to /admin/setup-2fa to enroll.
+const SETUP = NextResponse.json({ ok: false, error: { code: "SETUP_2FA" } }, { status: 401 });
 
 /** Admin/staff sign-in: email + password + TOTP. Generic failures (no user enumeration). */
 export async function POST(req: Request) {
@@ -54,10 +58,25 @@ export async function POST(req: Request) {
       .includes(email);
 
   if (!exempt) {
-    // SUPER_ADMIN and ADMIN must have 2FA; any user with it enabled must pass it.
-    if ((user.role === "SUPER_ADMIN" || user.role === "ADMIN") && !user.totpEnabled) return FAIL;
+    // Admins/super-admins without 2FA aren't rejected — they're issued a setup ticket and sent to enroll
+    // (covers invited accounts and first login). Password was already verified above.
+    if ((user.role === "SUPER_ADMIN" || user.role === "ADMIN") && !user.totpEnabled) {
+      await createSetupCookie(user.id);
+      return SETUP;
+    }
     if (user.totpEnabled) {
-      if (!body.code || !user.totpSecret || !verifyCode(body.code, user.totpSecret)) return FAIL;
+      let passed = false;
+      if (body.backupCode) {
+        // Recovery path: a one-time backup code, consumed (removed) on success.
+        const remaining = consumeBackupCode(user.recoveryCodes, body.backupCode);
+        if (remaining) {
+          await db.user.update({ where: { id: user.id }, data: { recoveryCodes: remaining } });
+          passed = true;
+        }
+      } else if (body.code && user.totpSecret && verifyCode(body.code, user.totpSecret)) {
+        passed = true;
+      }
+      if (!passed) return FAIL;
     }
   }
 

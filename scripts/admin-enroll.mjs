@@ -15,7 +15,7 @@ function hashPassword(pw) {
   return `${salt}:${scryptSync(pw, salt, 64).toString("hex")}`;
 }
 
-function otpauthUrl(account, secret, issuer = "EventPortal") {
+function otpauthUrl(account, secret, issuer = "BDQSocial") {
   const label = `${encodeURIComponent(issuer)}:${encodeURIComponent(account)}`;
   return `otpauth://totp/${label}?secret=${secret}&issuer=${encodeURIComponent(issuer)}`;
 }

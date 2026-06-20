@@ -24,12 +24,22 @@ export default async function AdminProfilePage() {
 
   const user = await db.user.findUnique({
     where: { id: session.userId },
-    select: { name: true, email: true, phone: true, role: true, totpEnabled: true }
+    select: { name: true, designation: true, email: true, phone: true, whatsapp: true, role: true, totpEnabled: true, prefs: true }
   });
 
   if (!user) {
     return null;
   }
+
+  // Sign-in history is already captured as audit rows on every admin login.
+  const logins = await db.auditLog.findMany({
+    where: { actorId: session.userId, action: "admin.login" },
+    orderBy: { createdAt: "desc" },
+    take: 10,
+    select: { createdAt: true, ip: true, userAgent: true },
+  });
+  const loginHistory = logins.map((l) => ({ at: l.createdAt.toISOString(), ip: l.ip, ua: l.userAgent }));
+  const prefs = (user.prefs ?? {}) as { locale?: string | null; timezone?: string | null; dateFormat?: string | null; currency?: string | null };
 
   return (
     <div className="space-y-6">
@@ -47,32 +57,35 @@ export default async function AdminProfilePage() {
               <CardDescription>Update your display name, contact number, or sign-in credentials.</CardDescription>
             </CardHeader>
             <CardContent>
-              <ProfileForm initialData={{ name: user.name, email: user.email, phone: user.phone }} />
+              <ProfileForm
+                initialData={{
+                  name: user.name,
+                  designation: user.designation,
+                  email: user.email,
+                  phone: user.phone,
+                  whatsapp: user.whatsapp,
+                  prefs,
+                }}
+                totpEnabled={user.totpEnabled}
+                role={user.role}
+                loginHistory={loginHistory}
+              />
             </CardContent>
           </Card>
         </div>
 
-        {/* Right Column: Cards for other settings, 2FA, and logout */}
+        {/* Right Column: Cards for other settings and logout */}
         <div className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-sm font-semibold">
                 <Shield className="size-4 text-primary" />
-                Security & Verification
+                System Role
               </CardTitle>
-              <CardDescription>Platform access control status.</CardDescription>
+              <CardDescription>Your access level.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-1 text-sm">
-                <p className="font-medium">System Role</p>
-                <p className="font-mono text-xs px-2 py-0.5 bg-muted rounded-md w-fit mt-1">{user.role}</p>
-              </div>
-              <div className="grid gap-1 text-sm">
-                <p className="font-medium">Two-Factor Authentication</p>
-                <p className="text-muted-foreground text-xs mt-1">
-                  {user.totpEnabled ? "Enabled (Authenticator App)" : "Disabled (Not recommended)"}
-                </p>
-              </div>
+            <CardContent>
+              <p className="font-mono text-xs px-2 py-0.5 bg-muted rounded-md w-fit">{user.role}</p>
             </CardContent>
           </Card>
 
@@ -86,10 +99,10 @@ export default async function AdminProfilePage() {
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground mb-4">
-                Access convenience fees, database backup tools, and platform settings.
+                Organization, roles, staff, audit logs, and system health.
               </p>
               <Button asChild variant="outline" className="w-full text-xs h-9">
-                <Link href="/admin/system/settings">Go to Global Settings</Link>
+                <Link href="/admin/settings">Go to Settings</Link>
               </Button>
             </CardContent>
           </Card>

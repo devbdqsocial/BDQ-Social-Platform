@@ -7,6 +7,9 @@ import type { Permission, Role, Session } from "./guard";
 /** App session = a jose-signed httpOnly cookie (SESSION_SECRET). The app is the session authority. */
 
 const COOKIE = "bdq_session";
+/** Short-lived cookie that proves a password check passed but 2FA isn't set up yet — grants only the setup flow. */
+const SETUP_COOKIE = "bdq_setup";
+const SETUP_TTL = 60 * 10; // 10 minutes
 const DAY = 60 * 60 * 24;
 /** Shorter window for privileged accounts; customers keep the 7-day session (BUSINESS-RULES §6). */
 const ttlSeconds = (role: Role) =>
@@ -71,4 +74,40 @@ export async function revokeSessions(userId: string): Promise<void> {
 
 export async function clearSession(): Promise<void> {
   (await cookies()).delete(COOKIE);
+}
+
+/**
+ * 2FA-setup ticket: issued when an admin's password is correct but they have no 2FA yet (invite/first
+ * login). It is NOT a session — it only authorises the enrolment flow at /admin/setup-2fa.
+ */
+export async function createSetupCookie(userId: string): Promise<void> {
+  const token = await new SignJWT({ purpose: "setup" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setSubject(userId)
+    .setIssuedAt()
+    .setExpirationTime(`${SETUP_TTL}s`)
+    .sign(secret());
+  (await cookies()).set(SETUP_COOKIE, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: SETUP_TTL,
+  });
+}
+
+export async function readSetupUserId(): Promise<string | null> {
+  const token = (await cookies()).get(SETUP_COOKIE)?.value;
+  if (!token) return null;
+  try {
+    const { payload } = await jwtVerify(token, secret());
+    if (payload.purpose !== "setup") return null;
+    return (payload.sub as string) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function clearSetupCookie(): Promise<void> {
+  (await cookies()).delete(SETUP_COOKIE);
 }

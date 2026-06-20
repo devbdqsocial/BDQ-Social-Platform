@@ -5,6 +5,8 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
+import { SiteAnalytics } from "@/components/analytics/SiteAnalytics";
+import { getSeoSettings } from "@/server/settings/service";
 
 // Body/UI = Inter (RPA `--f-inter`). Admin keeps Geist. Display = self-hosted Exat-Bold (RPA `--f-exat`).
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
@@ -18,23 +20,25 @@ const exat = localFont({
 
 const domain = process.env.APP_BASE_DOMAIN;
 const siteUrl = domain && !domain.includes("localhost") ? `https://${domain}` : "http://localhost:3000";
-const description = "Vadodara's premium curated lifestyle festival & night market — indie brands, gourmet food, and live music.";
+const DEFAULT_TITLE = "BDQ Social — Curated Night Market, Vadodara";
+const DEFAULT_DESC = "Vadodara's premium curated lifestyle festival & night market — indie brands, gourmet food, and live music.";
 
-export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
-  title: { default: "BDQ Social — Curated Night Market, Vadodara", template: "%s · BDQ Social" },
-  description,
-  keywords: ["night market", "Vadodara", "festival", "indie brands", "live music", "BDQ Social"],
-  icons: { icon: "/icon.svg" },
-  openGraph: {
-    type: "website",
-    siteName: "BDQ Social",
-    title: "BDQ Social — Curated Night Market, Vadodara",
+// Admin-editable SEO overrides the defaults below (Settings › SEO); blank fields keep the defaults.
+export async function generateMetadata(): Promise<Metadata> {
+  const seo = await getSeoSettings();
+  const title = seo.title || DEFAULT_TITLE;
+  const description = seo.description || DEFAULT_DESC;
+  const images = seo.ogImage ? [{ url: seo.ogImage }] : undefined;
+  return {
+    metadataBase: new URL(siteUrl),
+    title: { default: title, template: "%s · BDQ Social" },
     description,
-    locale: "en_IN",
-  },
-  twitter: { card: "summary_large_image", title: "BDQ Social", description },
-};
+    keywords: ["night market", "Vadodara", "festival", "indie brands", "live music", "BDQ Social"],
+    icons: { icon: "/icon.svg" },
+    openGraph: { type: "website", siteName: "BDQ Social", title, description, locale: "en_IN", images },
+    twitter: { card: "summary_large_image", title: seo.title || "BDQ Social", description, images },
+  };
+}
 
 export const viewport: Viewport = { themeColor: "#01065B" };
 
@@ -51,6 +55,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           {children}
         </ThemeProvider>
         <ServiceWorkerRegister />
+        <SiteAnalytics nonce={nonce} />
       </body>
     </html>
   );

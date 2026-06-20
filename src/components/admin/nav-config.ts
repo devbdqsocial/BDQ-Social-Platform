@@ -76,6 +76,7 @@ export const NAV_GROUPS: NavGroup[] = [
     { label: "Customers", href: "/admin/analytics/customers", section: "analytics" },
   ]},
   { label: "System", icon: Settings, items: [
+    { label: "Settings", href: "/admin/settings", section: "settings" },
     { label: "Audit Logs", href: "/admin/system/audit", section: "audit" },
     { label: "Roles & Permissions", href: "/admin/system/roles", section: "staff" },
     { label: "Notifications", href: "/admin/system/notifications", section: "overview" },

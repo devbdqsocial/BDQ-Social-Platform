@@ -28,8 +28,19 @@ function; the rest activate a feature and stay dormant until set.
 2. `npm run db:deploy` (applies migrations via `prisma migrate deploy`).
 3. `npm run db:seed` (once — creates the seed admin + demo events). Safe to skip in a clean prod and
    create real data via the admin console instead.
-4. Enrol the super-admin's 2FA: `node --env-file=.env scripts/admin-enroll.mjs you@domain.com "<password>"`
-   then scan the printed QR. (`postinstall` runs `prisma generate` on Vercel automatically.)
+4. Bootstrap the first super-admin **against the PROD database** (the #1 login bug is enrolling in the
+   local `.env` DB but signing into prod — a different Neon instance). Pull the prod URL with
+   `vercel env pull`, then:
+   - Confirm which DB you're pointed at: `DATABASE_URL="<prod>" node scripts/admin-doctor.mjs`
+     (prints the host + which admins can sign in there).
+   - Enrol: `DATABASE_URL="<prod>" node scripts/admin-enroll.mjs you@domain.com "<password>"` and scan
+     **only the freshly printed QR** (re-running rotates the secret and invalidates old QRs).
+   Do **not** use `scripts/setup-live.mjs` for prod — its password-only admin is rejected on prod (2FA
+   is mandatory for SUPER_ADMIN/ADMIN). After this one bootstrap, manage everything in-app:
+   - **My Profile › Account** — enable/reset 2FA and regenerate backup codes (no scripts).
+   - **Staff › Invite by email** — new admins set their own password + 2FA from a secure link
+     (needs `RESEND_API_KEY`/`EMAIL_FROM`); first login without 2FA is auto-routed to `/admin/setup-2fa`.
+   - Locked out? Sign in with a saved **backup code** in place of the authenticator code.
 
 ## 3. Vercel + DNS
 

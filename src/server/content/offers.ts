@@ -4,6 +4,7 @@ import { db } from "@/server/db";
 import { listPublished } from "@/server/events/service";
 import { primaryLogo } from "@/lib/vendor-assets";
 import { canRedeem } from "@/lib/offer";
+import { featureEnabled } from "@/server/settings/service";
 
 export interface OfferDto {
   id: string;
@@ -43,6 +44,7 @@ const toDto = (o: Row): OfferDto => ({
 
 /** PUBLISHED offers for the active event (time-greying is done client-side via `offerPhase`). */
 export async function listVisibleOffers(): Promise<OfferDto[]> {
+  if (!(await featureEnabled("offers"))) return [];
   const [event] = await listPublished();
   if (!event) return [];
   const rows = await db.offer.findMany({ where: { eventId: event.id, status: "PUBLISHED" }, orderBy: { endsAt: "asc" }, select });
@@ -51,6 +53,7 @@ export async function listVisibleOffers(): Promise<OfferDto[]> {
 
 /** Nav/section gate — does the active event have any published offer? */
 export async function hasPublishedOffers(): Promise<boolean> {
+  if (!(await featureEnabled("offers"))) return false;
   const [event] = await listPublished();
   if (!event) return false;
   return (await db.offer.count({ where: { eventId: event.id, status: "PUBLISHED" } })) > 0;

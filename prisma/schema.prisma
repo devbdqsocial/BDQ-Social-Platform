@@ -175,7 +175,16 @@ model User {
   passwordHash String?
   totpSecret   String?
   totpEnabled  Boolean      @default(false)
+  // Secret held mid-enrolment (self-service 2FA) until a code confirms it; promoted to totpSecret on confirm.
+  totpPendingSecret String?
+  // SHA-256 hashes of one-time backup codes; one is consumed (removed) per recovery login.
+  recoveryCodes String[]     @default([])
   tokenVersion Int          @default(0)
+  // Admin/staff profile + preferences (self-service My Profile).
+  photoUrl     String?
+  designation  String?
+  whatsapp     String?
+  prefs        Json?
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
