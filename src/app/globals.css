@@ -1,8 +1,8 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 @import "tw-animate-css";
 
 /* Docs are full of class-like literals (e.g. `p-[var(--space-*)]`) that Tailwind v4's
-   auto source scan treats as candidates — one invalid token 500s every dev render. */
+   auto source scan treats as candidates â€” one invalid token 500s every dev render. */
 @source not "../../Docs";
 @source not "../../scripts";
 @source not "../../e2e";
@@ -25,7 +25,7 @@
 }
 
 @theme {
-  /* Admin micro type scale (below text-xs) — the campaign builder's dense controls use these
+  /* Admin micro type scale (below text-xs) â€” the campaign builder's dense controls use these
      (text-2xs/3xs/4xs); without these defs Tailwind v4 emits no rule and the text mis-sizes. */
   --text-2xs: 0.6875rem; --text-2xs--line-height: 1rem;
   --text-3xs: 0.625rem;  --text-3xs--line-height: 0.875rem;
@@ -33,16 +33,16 @@
 }
 
 /*
-  BDQ Social design tokens — RPA Comunicación direction (see Docs/design.md).
+  BDQ Social design tokens â€” RPA ComunicaciÃ³n direction (see Docs/design.md).
   Customer-facing brand: navy (primary) / lavender (secondary+accent) on cream. Near-black ink text.
   Components consume the SEMANTIC vars below (shadcn-compatible names), so light/dark + white-label
   is a single swap. Money/UI never hardcodes raw hex.
   NOTE: the warm clay/pine/gold palette is retired here; the admin `.admin` scope below stays
-  neutral OKLCH (and keeps the no-purple rule). Lavender is an accent/fill only — never small text.
+  neutral OKLCH (and keeps the no-purple rule). Lavender is an accent/fill only â€” never small text.
 */
 
 @theme inline {
-  /* semantic → CSS vars */
+  /* semantic â†’ CSS vars */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -88,7 +88,7 @@
   --color-cream-50: #FBFAF6;  --color-cream-100: #F4F2EC; --color-cream-200: #ECEAE2;
   --color-cream-300: #E4E2DA; --color-ink: #14141A;
 
-  /* map stall status — CANONICAL source is src/lib/stall-colors.ts (konva needs literals);
+  /* map stall status â€” CANONICAL source is src/lib/stall-colors.ts (konva needs literals);
      these mirror it for the few CSS consumers. Change there first. */
   --color-stall-available: #3FA66A;
   --color-stall-held: #E8B23A;
@@ -100,7 +100,7 @@
   --font-sans: var(--font-inter);
   --font-display: var(--font-exat);
 
-  /* RPA named palette → Tailwind utilities (bg-dark-blue, text-green, …) */
+  /* RPA named palette â†’ Tailwind utilities (bg-dark-blue, text-green, â€¦) */
   --color-dark-blue: #01065B;  --color-light-blue: #868EFF;
   --color-dark-green: #1A3526; --color-green: #92FF73;
   --color-yellow: #D0F95F;     --color-pink: #FF58AC;
@@ -119,7 +119,7 @@
   --shadow-glow: 0 0 32px rgba(134, 142, 255, 0.35);
 }
 
-/* LIGHT (default) — RPA cream + navy ink */
+/* LIGHT (default) â€” RPA cream + navy ink */
 :root {
   --background: #F4F2EC;
   --foreground: #14141A;
@@ -155,7 +155,7 @@
   --sidebar-ring: #868EFF;
 }
 
-/* DARK (night) — deep navy ink */
+/* DARK (night) â€” deep navy ink */
 .dark {
   --background: #070814;
   --foreground: #ECEAE2;
@@ -192,7 +192,7 @@
 
 /* =================================================================================
    RPA SYSTEM (customer-facing). Scoped to `.rpa` so admin/shadcn stay on rem/16px.
-   Palette + fonts in @theme inline above. See plan Part II §0–§4.
+   Palette + fonts in @theme inline above. See plan Part II Â§0â€“Â§4.
    ================================================================================= */
 :root {
   /* palette (raw, for direct var use inside the RPA layer) */
@@ -205,17 +205,17 @@
   --f-bold: 700;
   --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  /* fluid root size for the RPA zone (design-system §1.2: one clamp(), no vw breakpoints;
+  /* fluid root size for the RPA zone (design-system Â§1.2: one clamp(), no vw breakpoints;
      em tokens below scale off this) */
   --fsize: clamp(0.875rem, 0.55rem + 0.9vw, 1.25rem);
-  /* type scale — em (relative to --fsize when inside .rpa) */
+  /* type scale â€” em (relative to --fsize when inside .rpa) */
   --paragraph-small: 0.75em; --paragraph: 1em;
   --h32: 1.3333em; --h42: 1.75em; --h60: 2.5em; --h76: 3.1667em;
   --h100: 4.1667em; --h133: 5.5417em; --h235: 9.7917em;
   --lh-paragraph-small: 1.3; --lh-paragraph: 1.3;
   --lh-h32: 1.15; --lh-h42: 1.15; --lh-h60: 1.05; --lh-h76: 1.05;
   --lh-h100: 1.05; --lh-h133: 1.05; --lh-h235: 1.05;
-  /* spacing — em */
+  /* spacing â€” em */
   --space-none: 0; --space-xs: 0.1667em; --space-sm: 0.3333em; --space-md: 0.6667em;
   --space-lg: 1em; --space-xl: 1.3333em; --space-2xl: 2em; --space-3xl: 2.6667em;
   --space-4xl: 4em; --space-5xl: 6em;
@@ -229,7 +229,7 @@
   --z-menu: 120;
   --z-cursor: 150;
 }
-/* Display-size overrides only — the base size is the clamp() above (design-system §1.2). */
+/* Display-size overrides only â€” the base size is the clamp() above (design-system Â§1.2). */
 @media (max-width: 950px)  { :root { --h235: 6.25em; --h133: 4.1667em; --h100: 2.9166em; } }
 @media (max-width: 576px)  { :root { --h235: 3.3333em; --h133: 2.5em; --h76: 2.3333em; --h60: 1.9166em; } }
 
@@ -243,7 +243,7 @@
   -webkit-font-smoothing: antialiased;
 }
 .rpa :is(h1, h2, h3, h4, h5, h6) { font-family: var(--f-exat); font-weight: var(--f-bold); line-height: 1.05; }
-/* iOS zoom guard: form fields never render below 16px (design-system §1.2 input floor). */
+/* iOS zoom guard: form fields never render below 16px (design-system Â§1.2 input floor). */
 .rpa :is(input, select, textarea) { font-size: max(1rem, 1em); }
 
 /* Color-section classes: set --bgcolor/--color; `.filter` tints imagery to the accent (verbatim). */
@@ -317,7 +317,7 @@
   z-index: 1;
 }
 
-/* Custom cursor (#mouse) — mix-blend difference, follows via GSAP. z per design-system §1.6. */
+/* Custom cursor (#mouse) â€” mix-blend difference, follows via GSAP. z per design-system Â§1.6. */
 #mouse {
   position: fixed; top: 0; left: 0; z-index: var(--z-cursor); pointer-events: none;
   width: 1.4rem; height: 1.4rem; mix-blend-mode: difference; will-change: transform;
@@ -375,7 +375,7 @@ html[data-menu-open="true"] #mouse .mouse__dot {
 }
 .rpa .media-tint .svg__img { filter: saturate(.92) contrast(1.02); }
 
-/* Uppercase tracked micro-label (kicker) — replaces ad-hoc inline letter-spacing. */
+/* Uppercase tracked micro-label (kicker) â€” replaces ad-hoc inline letter-spacing. */
 .rpa .kicker {
   font-size: var(--paragraph-small); line-height: var(--lh-paragraph-small);
   font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em;
@@ -457,12 +457,12 @@ html[data-menu-open="true"] #mouse .mouse__dot {
 .rpa .link--split:hover .arrow { transform: translateX(0.25em); }
 
 /* `.wall` is a semantic hook only (WordmarkWall rows are selected via `.wall .marquee`).
-   No positioning here — it would out-rank Tailwind's layered `absolute` utility. */
+   No positioning here â€” it would out-rank Tailwind's layered `absolute` utility. */
 
 /* =============================== end RPA system =============================== */
 
 /*
-  ADMIN console scope — neutral OKLCH theme (shadcn default, the reference dashboard's palette).
+  ADMIN console scope â€” neutral OKLCH theme (shadcn default, the reference dashboard's palette).
   Only the admin zone (root div `.admin`) gets these; customer/landing/vendor keep the warm palette.
   Brand split is enforced by the scope; never edit the warm :root/.dark tokens above for admin.
 */
@@ -501,7 +501,7 @@ html[data-menu-open="true"] #mouse .mouse__dot {
   --success: oklch(0.7 0.14 163);       --warning: oklch(0.79 0.15 80);  --info: oklch(0.7 0.12 220);
   --border: oklch(1 0 0 / 10%);         --input: oklch(1 0 0 / 15%);     --ring: oklch(0.556 0 0);
   --chart-1: oklch(0.488 0.243 264.376); --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);  --chart-4: oklch(0.828 0.189 84.429); /* was violet 303.9 → amber (no purple rule) */
+  --chart-3: oklch(0.769 0.188 70.08);  --chart-4: oklch(0.828 0.189 84.429); /* was violet 303.9 â†’ amber (no purple rule) */
   --chart-5: oklch(0.645 0.246 16.439);
   --sidebar: oklch(0.145 0 0);          --sidebar-foreground: oklch(0.708 0 0);
   --sidebar-primary: oklch(0.985 0 0);  --sidebar-primary-foreground: oklch(0.205 0 0);
@@ -565,7 +565,7 @@ html[data-menu-open="true"] #mouse .mouse__dot {
     to   { transform: translate3d(-50%, 0, 0); }
   }
 
-  /* Ticket reveal (delight §1): navy takeover wipes up, headline rises. */
+  /* Ticket reveal (delight Â§1): navy takeover wipes up, headline rises. */
   @keyframes reveal-wipe {
     from { clip-path: inset(100% 0 0 0); }
     to   { clip-path: inset(0 0 0 0); }
@@ -590,7 +590,7 @@ html[data-menu-open="true"] #mouse .mouse__dot {
     .coming-float { animation: coming-float 9s ease-in-out infinite; }
   }
 
-  /* "Living BDQ world": CSS/SVG hero atmosphere — breathing glow + drifting lantern/firefly motes.
+  /* "Living BDQ world": CSS/SVG hero atmosphere â€” breathing glow + drifting lantern/firefly motes.
      No bitmaps, no JS. --world-tint drives colour (defaults to currentColor); used on the landing
      and coming-soon heroes. Mark aria-hidden in markup; fully static under reduced-motion. */
   .bdq-world { position: absolute; inset: 0; overflow: hidden; pointer-events: none; --world-tint: currentColor; }
@@ -627,9 +627,9 @@ html[data-menu-open="true"] #mouse .mouse__dot {
     .bdq-world__mote:nth-child(9) { animation-duration: 11s; animation-delay: -4.5s; }
   }
 
-  /* FestivalScene: the hero's RIGHT-SIDE EXPERIENCE — a bold cinematic night-market panel.
+  /* FestivalScene: the hero's RIGHT-SIDE EXPERIENCE â€” a bold cinematic night-market panel.
      Pure CSS/SVG, high-contrast (bright lights on a dark sky). Pointer parallax via --px/--py
-     (set in JS, pointer-fine only). Decorative (aria-hidden). Reduced-motion → fully static. */
+     (set in JS, pointer-fine only). Decorative (aria-hidden). Reduced-motion â†’ fully static. */
   .fest-scene {
     overflow: hidden; isolation: isolate; --px: 0; --py: 0;
     --fest-sky-1: #11196e; --fest-sky-2: #05072a;
@@ -708,114 +708,503 @@ html[data-menu-open="true"] #mouse .mouse__dot {
     .fest-mote    { animation: fest-twinkle 2.4s ease-in-out infinite; }
   }
 
-  /* Coming-soon "Invitation" gate (bespoke, off-RPA). Luxury paper-invitation look: warm bone
-     paper, ink text, one antique-gold accent. Colors live here as vars (kept out of JSX → no raw
-     hex in style props). Light by default; an oxblood-dark variant is just a re-point of these vars. */
-  .cs-invite {
-    --paper: #F4F0E8;
-    --paper-deep: #E7E0D1;
-    --ink: #201B16;
-    --ink-soft: #6B5F52;
-    --gold: #B6894C;       /* decorative accent (frame, rules, diamond) */
-    --gold-soft: #D7B777;
-    --accent-text: #7E5F26; /* accessible gold for eyebrow/arrow text (AA on paper) */
-    --error: #B23A2E; /* validation message (AA on paper) */
-    --line: color-mix(in srgb, var(--gold) 42%, transparent); /* decorative hairlines */
-    --field-line: var(--ink-soft); /* functional borders (input/checkbox) — AA contrast */
-    /* invitation type scale — consolidates the page's ad-hoc text-[0.x rem] sizes (P1.3). */
-    --cs-fs-micro: 0.62rem; /* eyebrow micro-labels, counts */
-    --cs-fs-label: 0.7rem;  /* form labels, status */
-    --cs-fs-note: 0.85rem;  /* notes, validation, success sub */
-    background-color: var(--paper);
-    color: var(--ink);
-    /* soft paper vignette + a faint warm centre glow (no pixel grain → CSP-safe) */
+  .market-soon {
+    --market-ink: #F4F2EC;
+    --market-muted: color-mix(in srgb, var(--light-blue) 74%, white);
+    --market-soft: color-mix(in srgb, var(--light-blue) 48%, white);
+    --market-line: color-mix(in srgb, var(--light-blue) 30%, transparent);
+    --market-panel: color-mix(in srgb, var(--dark-blue) 86%, transparent);
+    color: var(--market-ink);
+    color-scheme: dark;
+    background: var(--dark-blue);
+    isolation: isolate;
+  }
+  .market-backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .market-backdrop__image,
+  .market-backdrop__wash,
+  .market-backdrop__sweep,
+  .market-backdrop__dots {
+    position: absolute;
+    inset: 0;
+  }
+  .market-backdrop__image {
+    inset: -2%;
     background-image:
-      radial-gradient(120% 90% at 50% 42%, transparent 58%, color-mix(in srgb, var(--paper-deep) 70%, transparent) 100%),
-      radial-gradient(60% 45% at 50% 30%, color-mix(in srgb, var(--gold-soft) 14%, transparent), transparent 70%);
-    font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-    transition: background-color 0.5s ease, color 0.5s ease;
+      linear-gradient(90deg, color-mix(in srgb, var(--dark-blue) 90%, transparent) 0 35%, color-mix(in srgb, var(--dark-blue) 54%, transparent) 72%, color-mix(in srgb, var(--dark-blue) 82%, transparent)),
+      linear-gradient(180deg, color-mix(in srgb, var(--dark-blue) 62%, transparent), color-mix(in srgb, var(--dark-blue) 92%, transparent)),
+      var(--market-bg-image, linear-gradient(135deg, var(--dark-blue), #050b68 54%, color-mix(in srgb, var(--dark-red) 70%, var(--dark-blue))));
+    background-position: center;
+    background-size: cover;
+    transform: scale(1.02);
   }
-  /* Dark "after dusk" variant — re-points raw colours; --line/--field-line/gradients auto-follow. */
-  .cs-invite[data-theme="dark"] {
-    --paper: #15110D;
-    --paper-deep: #0C0906;
-    --ink: #ECE3D2;
-    --ink-soft: #B0A088;
-    --gold: #CBA25C;
-    --gold-soft: #E2C68A;
-    --accent-text: #D9B36A;
-    --error: #E8897B;
+  .market-backdrop__wash {
+    background:
+      radial-gradient(60% 70% at 74% 18%, color-mix(in srgb, var(--pink) 28%, transparent), transparent 62%),
+      radial-gradient(50% 58% at 12% 82%, color-mix(in srgb, var(--green) 18%, transparent), transparent 68%),
+      linear-gradient(0deg, color-mix(in srgb, black 18%, transparent), transparent 44%);
   }
-  .cs-serif { font-family: var(--font-serif), Georgia, "Times New Roman", serif; }
-  /* engraved card frame inset from the viewport edges */
-  .cs-frame { position: fixed; inset: clamp(12px, 3vw, 30px); border: 1px solid var(--line); pointer-events: none; }
-  .cs-frame::before { content: ""; position: absolute; inset: 5px; border: 1px solid color-mix(in srgb, var(--gold) 18%, transparent); }
-  /* hairline divider with a tiny centre diamond */
-  .cs-rule { height: 1px; width: 100%; background: linear-gradient(90deg, transparent, var(--line) 18%, var(--line) 82%, transparent); }
-  .cs-diamond { width: 6px; height: 6px; rotate: 45deg; background: var(--gold); }
+  .market-backdrop__sweep {
+    width: 36rem;
+    height: 120%;
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--market-ink) 11%, transparent), transparent);
+    filter: blur(18px);
+    opacity: 0.22;
+    transform: translate3d(-35%, -10%, 0) rotate(14deg);
+  }
+  .market-backdrop__sweep--two {
+    left: auto;
+    right: -10%;
+    opacity: 0.18;
+    transform: translate3d(16%, 8%, 0) rotate(-18deg);
+  }
+  .market-backdrop__dots { width: 100%; height: 100%; }
+  .market-backdrop__dot { transform-origin: center; }
+  .market-backdrop__dot--ink { fill: var(--market-ink); }
+  .market-backdrop__dot--green { fill: var(--green); }
+  .market-backdrop__dot--pink { fill: var(--pink); }
+  .market-backdrop__dot--yellow { fill: var(--yellow); }
+  .market-backdrop__dot--blue { fill: var(--light-blue); }
+  .market-soon__hero {
+    min-height: 100svh;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(22rem, 37rem);
+    align-items: center;
+    gap: clamp(1.4rem, 4vw, 4.5rem);
+    padding-block: clamp(1.2rem, 4svh, 4rem);
+  }
+  .market-soon__copy { max-width: 65rem; }
+  .market-soon__topline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-sm);
+    color: var(--market-muted);
+  }
+  .market-soon__topline > span:not(:first-child) {
+    border: 1px solid var(--market-line);
+    border-radius: 999px;
+    padding: 0.34em 0.76em;
+    background: color-mix(in srgb, var(--dark-blue) 44%, transparent);
+    font-size: var(--paragraph-small);
+    line-height: var(--lh-paragraph-small);
+    font-weight: 700;
+  }
+  .market-soon__title {
+    max-width: 14ch;
+    font-size: clamp(3rem, 5.7vw, 6rem);
+    line-height: 0.88;
+    letter-spacing: 0;
+    text-wrap: balance;
+  }
+  .market-soon__deck {
+    max-width: 46ch;
+    color: color-mix(in srgb, var(--market-ink) 88%, transparent);
+  }
+  .market-soon__mix {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.42rem 0.7rem;
+    max-width: 58rem;
+  }
+  .market-soon__mix span {
+    font-family: var(--f-exat);
+    font-size: clamp(1.1rem, 2.1vw, 2.2rem);
+    line-height: 0.94;
+    color: var(--market-ink);
+    text-shadow: 0 0 2rem color-mix(in srgb, var(--dark-blue) 74%, transparent);
+  }
+  .market-soon__mix span:not(:last-child)::after {
+    content: "/";
+    margin-left: 0.7rem;
+    color: var(--green);
+  }
+  .market-pass {
+    position: relative;
+    display: grid;
+    align-content: stretch;
+    gap: clamp(0.7rem, 1.4vw, 1rem);
+    width: min(100%, 37rem);
+    min-height: min(78svh, 44rem);
+    justify-self: end;
+    overflow: hidden;
+    border: 1px solid var(--market-line);
+    border-radius: 26px;
+    padding: clamp(0.9rem, 2vw, 1.25rem);
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--dark-blue) 92%, transparent), color-mix(in srgb, var(--dark-blue) 78%, black)),
+      color-mix(in srgb, var(--dark-blue) 82%, transparent);
+    box-shadow: 0 2rem 6rem color-mix(in srgb, black 38%, transparent);
+    backdrop-filter: blur(18px);
+  }
+  .market-pass::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    background:
+      linear-gradient(115deg, color-mix(in srgb, var(--green) 30%, transparent), transparent 28% 58%, color-mix(in srgb, var(--pink) 24%, transparent)),
+      linear-gradient(180deg, color-mix(in srgb, white 10%, transparent), transparent 36%);
+    opacity: 0.32;
+  }
+  .market-pass__invite,
+  .market-soon__success,
+  .market-categories {
+    position: relative;
+    z-index: 1;
+    border: 1px solid var(--market-line);
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--dark-blue) 74%, transparent);
+  }
+  .market-pass__invite { padding: clamp(1rem, 2.2vw, 1.35rem); }
+  .market-soon__success {
+    overflow: hidden;
+    padding: clamp(1.2rem, 4vw, 1.8rem);
+  }
+  .market-soon__success::after {
+    content: "STAMPED";
+    position: absolute;
+    right: 1rem;
+    bottom: 0.8rem;
+    color: var(--green);
+    font-family: var(--f-exat);
+    font-size: clamp(1.6rem, 4vw, 3rem);
+    line-height: 1;
+    opacity: 0.28;
+    transform: rotate(-10deg);
+  }
+  .market-soon__form-head {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: var(--space-md);
+  }
+  .market-soon__form-head > p:last-child {
+    max-width: 14ch;
+    color: var(--green);
+    font-size: var(--paragraph-small);
+    line-height: var(--lh-paragraph-small);
+    font-weight: 700;
+    text-align: right;
+  }
+  .market-soon__phone {
+    display: flex;
+    align-items: center;
+    gap: 0.72em;
+    min-height: 4rem;
+    border-bottom: 2px solid var(--green);
+    color: var(--market-ink);
+  }
+  .market-soon__phone > span,
+  .market-soon__phone input {
+    font-family: var(--f-exat);
+    font-size: clamp(1.3rem, 4vw, 2rem);
+    line-height: 1;
+  }
+  .market-soon__phone input {
+    width: 100%;
+    color: inherit;
+    letter-spacing: 0.02em;
+  }
+  .market-soon__submit {
+    display: grid;
+    min-width: 3rem;
+    min-height: 3rem;
+    place-items: center;
+    border-radius: 999px;
+    background: var(--yellow);
+    color: var(--dark-blue);
+    font-size: var(--paragraph-small);
+    font-weight: 700;
+    text-transform: uppercase;
+    transition: transform 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+  }
+  .market-soon__submit:hover { transform: scale(1.06); background: var(--green); }
+  .market-soon__submit:disabled { opacity: 0.55; transform: none; }
+  .market-soon__stall {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin-top: var(--space-md);
+    color: var(--market-muted);
+    font-size: var(--paragraph-small);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .market-soon__stall > span {
+    display: grid;
+    width: 1.08rem;
+    height: 1.08rem;
+    place-items: center;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+  }
+  .market-soon__stall > span[data-active="true"] { background: var(--pink); color: var(--dark-blue); }
+  .market-soon__stall > span > span {
+    width: 0.42rem;
+    height: 0.42rem;
+    border-radius: 999px;
+    background: currentColor;
+  }
+  .market-soon__error { color: var(--red); }
+  .market-categories {
+    display: grid;
+    gap: var(--space-sm);
+    margin-top: auto;
+    padding: clamp(0.95rem, 2vw, 1.25rem);
+  }
+  .market-categories__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+  }
+  .market-category-card:last-child { grid-column: auto; }
+  .market-category-card {
+    --tone: var(--green);
+    position: relative;
+    display: grid;
+    gap: 0.15rem;
+    overflow: hidden;
+    min-height: clamp(4rem, 8svh, 5.3rem);
+    padding: 0.78rem 0.9rem;
+    border: 1px solid color-mix(in srgb, var(--tone) 38%, transparent);
+    border-radius: 16px;
+    color: var(--market-ink);
+    isolation: isolate;
+  }
+  .market-category-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(90deg, color-mix(in srgb, var(--tone) 42%, transparent), transparent 72%),
+      color-mix(in srgb, var(--dark-blue) 70%, transparent);
+    opacity: 0.44;
+  }
+  .market-category-card > span {
+    font-family: var(--f-exat);
+    font-size: clamp(1.35rem, 3.5vw, 2.55rem);
+    line-height: 0.9;
+    letter-spacing: 0;
+  }
+  .market-category-card small {
+    color: color-mix(in srgb, var(--market-ink) 74%, transparent);
+    font-size: var(--paragraph-small);
+    font-weight: 800;
+    line-height: 1.1;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .market-category-card[data-tone="pink"] { --tone: var(--pink); }
+  .market-category-card[data-tone="yellow"] { --tone: var(--yellow); color: var(--market-ink); }
+  .market-category-card[data-tone="green"] { --tone: var(--green); }
+  .market-category-card[data-tone="blue"] { --tone: var(--light-blue); }
+  .market-category-card[data-tone="red"] { --tone: var(--red); }
+  .market-marquee {
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+    border-block: 1px solid var(--market-line);
+    background: color-mix(in srgb, var(--dark-blue) 90%, black);
+    color: color-mix(in srgb, var(--light-blue) 58%, transparent);
+  }
+  .market-marquee > div {
+    display: flex;
+    width: max-content;
+    gap: var(--space-2xl);
+    padding-block: clamp(1rem, 3vw, 1.7rem);
+  }
+  .market-marquee span {
+    font-family: var(--f-exat);
+    font-size: clamp(2.3rem, 7vw, 6rem);
+    line-height: 0.9;
+    white-space: nowrap;
+  }
 
-  /* Barely-there entrance: staged fade-up, CSS-only (no JS timeline). Reduced-motion shows it static. */
-  @keyframes cs-rise {
-    from { opacity: 0; transform: translateY(10px); }
-    to   { opacity: 1; transform: translateY(0); }
+  .portal-countdown {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.44rem;
   }
-  @keyframes cs-draw {
-    from { opacity: 0; transform: scaleX(0.4); }
-    to   { opacity: 1; transform: scaleX(1); }
+  .portal-countdown__tile,
+  .portal-countdown--soon {
+    position: relative;
+    overflow: hidden;
+    min-height: clamp(4.1rem, 7vw, 5.5rem);
+    border: 1px solid color-mix(in srgb, var(--dark-blue) 16%, transparent);
+    border-radius: 16px;
+    color: var(--dark-blue);
+    isolation: isolate;
+  }
+  .portal-countdown__tile {
+    display: grid;
+    align-content: end;
+    padding: clamp(0.66rem, 1.5vw, 0.9rem);
+  }
+  .portal-countdown__tile::before {
+    content: "";
+    position: absolute;
+    inset: -45%;
+    z-index: -1;
+    background: color-mix(in srgb, white 26%, transparent);
+    transform: rotate(18deg);
+  }
+  .portal-countdown__tile:nth-child(1) { background: var(--light-blue); }
+  .portal-countdown__tile:nth-child(2) { background: var(--green); }
+  .portal-countdown__tile:nth-child(3) { background: var(--yellow); }
+  .portal-countdown__tile:nth-child(4) { background: var(--pink); }
+  .portal-countdown__value {
+    display: block;
+    font-family: var(--f-exat);
+    font-size: clamp(1.75rem, 4.6vw, 3rem);
+    line-height: 0.82;
+    font-variant-numeric: tabular-nums;
+  }
+  .portal-countdown__label {
+    display: block;
+    margin-top: 0.42rem;
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    line-height: 1.1;
+    text-transform: uppercase;
+  }
+  .portal-countdown--soon {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-height: auto;
+    align-items: flex-start;
+    justify-content: center;
+    padding: clamp(1rem, 2.5vw, 1.35rem);
+    background: var(--yellow);
+    box-shadow: 0 1.2rem 3rem color-mix(in srgb, black 24%, transparent);
+  }
+  .portal-countdown--soon p {
+    font-family: var(--f-exat);
+    font-size: clamp(2rem, 3.3vw, 3.25rem);
+    line-height: 0.9;
+    white-space: nowrap;
+  }
+  .portal-countdown--soon span {
+    font-size: var(--paragraph-small);
+    font-weight: 900;
+    line-height: var(--lh-paragraph-small);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  @keyframes market-dot-twinkle {
+    0%, 100% { opacity: 0.42; transform: scale(0.82); }
+    50% { opacity: 1; transform: scale(1.18); }
+  }
+  @keyframes market-sweep-one {
+    0%, 100% { opacity: 0.14; transform: translate3d(-44%, -10%, 0) rotate(14deg); }
+    50% { opacity: 0.3; transform: translate3d(56%, -6%, 0) rotate(14deg); }
+  }
+  @keyframes market-sweep-two {
+    0%, 100% { opacity: 0.12; transform: translate3d(22%, 8%, 0) rotate(-18deg); }
+    50% { opacity: 0.26; transform: translate3d(-54%, 2%, 0) rotate(-18deg); }
+  }
+  @keyframes market-pass-glow {
+    0%, 100% { opacity: 0.22; }
+    50% { opacity: 0.48; }
+  }
+  @keyframes market-category-active {
+    0%, 18%, 100% { opacity: 0.44; }
+    5%, 12% { opacity: 0.92; }
+  }
+  @keyframes market-category-word {
+    0%, 18%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+    5%, 12% { transform: translate3d(0.24rem, 0, 0) scale(1.02); }
+  }
+  @keyframes market-marquee-run {
+    to { transform: translateX(-33.333%); }
+  }
+  @keyframes market-count-pop {
+    from { opacity: 0; transform: translateY(0.18em) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes market-stamp {
+    from { opacity: 0; transform: rotate(-10deg) scale(1.25); }
+    to { opacity: 0.28; transform: rotate(-10deg) scale(1); }
   }
   @media (prefers-reduced-motion: no-preference) {
-    .cs-reveal { opacity: 0; animation: cs-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards; animation-delay: var(--d, 0s); }
-    .cs-reveal-draw { opacity: 0; animation: cs-draw 1.1s cubic-bezier(0.22, 1, 0.36, 1) forwards; animation-delay: var(--d, 0s); }
+    .market-backdrop__dot { animation: market-dot-twinkle 6.5s ease-in-out infinite; }
+    .market-backdrop__sweep--one { animation: market-sweep-one 14s ease-in-out infinite; }
+    .market-backdrop__sweep--two { animation: market-sweep-two 17s ease-in-out infinite; }
+    .market-pass::before { animation: market-pass-glow 5.6s ease-in-out infinite; }
+    .market-category-card::before { animation: market-category-active 12.5s ease-in-out infinite; animation-delay: calc(var(--i) * 2.5s); }
+    .market-category-card > span { animation: market-category-word 12.5s ease-in-out infinite; animation-delay: calc(var(--i) * 2.5s); }
+    .market-marquee > div { animation: market-marquee-run 34s linear infinite; }
+    .portal-countdown__value { animation: market-count-pop 0.24s ease-out; }
+    .market-soon__success::after { animation: market-stamp 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
   }
-
-  /* Vendor status spine (vendor-portal.md §3): the current node's lavender dot pulses. */
-  @keyframes vendor-node-pulse {
-    0%, 100% { transform: scale(1); }
-    50%      { transform: scale(1.15); }
+  @media (max-width: 999px) {
+    .market-soon__hero {
+      grid-template-columns: 1fr;
+      align-content: start;
+      min-height: auto;
+      padding-block: clamp(1rem, 3svh, 1.8rem);
+      gap: var(--space-lg);
+    }
+    .market-pass { justify-self: stretch; width: min(100%, 40rem); min-height: auto; }
+    .market-soon__title { max-width: 12ch; font-size: clamp(3rem, 12vw, 5rem); }
+    .market-categories__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .market-category-card:last-child { grid-column: span 2; }
+    .market-category-card { min-height: 4.6rem; }
+    .market-category-card small { display: none; }
   }
-  @media (prefers-reduced-motion: no-preference) {
-    .vendor-node-pulse { animation: vendor-node-pulse 1.2s ease-in-out infinite; }
+  @media (max-width: 620px) {
+    .market-soon__hero { gap: var(--space-md); }
+    .market-soon__title { max-width: 100%; font-size: clamp(2.25rem, 12vw, 3rem); line-height: 0.9; }
+    .market-soon__deck { max-width: 34ch; }
+    .market-soon__mix { display: none; }
+    .market-pass { border-radius: 22px; padding: 0.74rem; }
+    .market-pass__invite { padding: 1rem; }
+    .market-soon__form-head { display: block; }
+    .market-soon__form-head > p:last-child { margin-top: 0.35rem; max-width: none; text-align: left; }
+    .portal-countdown { gap: 0.34rem; }
+    .portal-countdown__tile { min-height: 3.9rem; padding: 0.55rem; }
+    .portal-countdown__value { font-size: clamp(1.45rem, 8.5vw, 2.2rem); }
+    .portal-countdown__label { font-size: 0.56rem; letter-spacing: 0.06em; }
+    .portal-countdown--soon { padding: 0.9rem 1rem; }
+    .portal-countdown--soon p { max-width: none; font-size: clamp(1.45rem, 6.1vw, 1.95rem); white-space: nowrap; }
+    .portal-countdown--soon span { font-size: 0.68rem; }
+    .market-soon__phone { min-height: 3.65rem; }
+    .market-categories { padding: 0.9rem; }
+    .market-categories__grid {
+      display: flex;
+      flex-wrap: wrap;
+      grid-template-columns: none;
+      overflow: visible;
+      padding-bottom: 0;
+      scrollbar-width: none;
+    }
+    .market-categories__grid::-webkit-scrollbar { display: none; }
+    .market-category-card:last-child { grid-column: auto; }
+    .market-category-card {
+      flex: 1 1 calc(50% - 0.45rem);
+      min-height: 3.45rem;
+      padding: 0.62rem 0.72rem;
+    }
+    .market-category-card:nth-child(3),
+    .market-category-card:nth-child(5) {
+      flex-basis: 100%;
+    }
+    .market-category-card > span { font-size: clamp(1.3rem, 7vw, 1.75rem); }
+    .market-marquee { margin-top: var(--space-md); }
   }
-
-  /* Happening strip (R6.3): hide the horizontal scrollbar; pulse the LIVE_NOW dot. */
-  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-  .no-scrollbar::-webkit-scrollbar { display: none; }
-
-  /* Premium loading skeleton (R6.6): tints to the surface's currentColor; shimmer, reduced-motion safe. */
-  .skeleton {
-    position: relative; overflow: hidden;
-    background: color-mix(in srgb, currentColor 10%, transparent);
-    border-radius: var(--radius-md);
-  }
-  .skeleton::after {
-    content: ""; position: absolute; inset: 0; transform: translateX(-100%);
-    background: linear-gradient(90deg, transparent, color-mix(in srgb, currentColor 9%, transparent), transparent);
-  }
-  @media (prefers-reduced-motion: no-preference) {
-    .skeleton::after { animation: skeleton-shimmer 1.5s ease-in-out infinite; }
-  }
-  @keyframes skeleton-shimmer { to { transform: translateX(100%); } }
-  @keyframes happening-pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50%      { opacity: 0.45; transform: scale(0.6); }
-  }
-  @media (prefers-reduced-motion: no-preference) {
-    .happening-pulse { animation: happening-pulse 1.4s ease-in-out infinite; }
-  }
-
-  /* RPA animated link underline: wipes in from the left on hover/focus. */
-  .link-underline {
-    background-image: linear-gradient(currentColor, currentColor);
-    background-position: 0 100%;
-    background-repeat: no-repeat;
-    background-size: 0% 1.5px;
-    transition: background-size 0.35s cubic-bezier(0.25, 1, 0.5, 1);
-  }
-  .link-underline:hover,
-  .link-underline:focus-visible {
-    background-size: 100% 1.5px;
-  }
-
   /* Hide the native cursor where the custom cursor is active (pointer-fine only). */
   .cursor-none {
     cursor: none;

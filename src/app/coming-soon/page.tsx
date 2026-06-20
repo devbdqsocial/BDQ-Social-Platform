@@ -5,11 +5,13 @@ import { ComingSoonClient } from "./ComingSoonClient";
 export const dynamic = "force-dynamic";
 
 export default async function ComingSoonPage() {
-  // Countdown target is dynamic (R3.1): the next upcoming published/live event's start, never hardcoded.
   const [count, events] = await Promise.all([
     db.waitlist.count({ where: { source: "PLATFORM" } }),
     listPublished(),
   ]);
-  const targetIso = events[0]?.startsAt.toISOString() ?? null;
-  return <ComingSoonClient count={count} targetIso={targetIso} />;
+  const next = events[0];
+  const event = next
+    ? { name: next.name, location: next.location, startsAtIso: next.startsAt.toISOString() }
+    : null;
+  return <ComingSoonClient count={count} event={event} />;
 }
