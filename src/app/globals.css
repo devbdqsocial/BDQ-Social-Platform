@@ -729,9 +729,16 @@ html[data-menu-open="true"] #mouse .mouse__dot {
   .market-backdrop__image,
   .market-backdrop__wash,
   .market-backdrop__sweep,
+  .market-backdrop__scene,
   .market-backdrop__dots {
     position: absolute;
     inset: 0;
+  }
+  /* FestivalScene used as an atmosphere layer: drop its own sky so the page's navy shows through;
+     only the moon, string lights, lanterns, fireflies and horizon enrich the backdrop. */
+  .market-backdrop__scene {
+    background: transparent;
+    opacity: 0.7;
   }
   .market-backdrop__image {
     inset: -2%;
@@ -878,6 +885,46 @@ html[data-menu-open="true"] #mouse .mouse__dot {
     line-height: 1;
     opacity: 0.28;
     transform: rotate(-10deg);
+  }
+  .market-soon__rank {
+    font-size: var(--paragraph);
+    color: color-mix(in srgb, var(--light-blue) 92%, white);
+  }
+  .market-soon__rank span {
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    line-height: 1;
+    margin-right: 0.25em;
+    color: var(--yellow);
+  }
+  .market-soon__share {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+  .market-soon__share-wa,
+  .market-soon__share-copy {
+    font-size: var(--paragraph-small);
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.55em 1em;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: transform 0.18s ease, opacity 0.18s ease;
+  }
+  .market-soon__share-wa {
+    background: var(--green);
+    color: var(--dark-blue);
+    text-decoration: none;
+  }
+  .market-soon__share-copy {
+    background: transparent;
+    color: var(--market-ink);
+    border: 1px solid var(--market-line);
+  }
+  .market-soon__share-wa:hover,
+  .market-soon__share-copy:hover {
+    transform: translateY(-2px);
   }
   .market-soon__form-head {
     display: flex;
@@ -1100,6 +1147,36 @@ html[data-menu-open="true"] #mouse .mouse__dot {
     font-size: var(--paragraph-small);
     font-weight: 900;
     line-height: var(--lh-paragraph-small);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  /* Doors-open state: the countdown becomes a live entry CTA. */
+  .portal-countdown--live {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    align-items: flex-start;
+    justify-content: center;
+    padding: clamp(1rem, 2.5vw, 1.35rem);
+    background: var(--green);
+    color: var(--dark-blue);
+    text-decoration: none;
+    box-shadow: 0 1.2rem 3rem color-mix(in srgb, black 24%, transparent);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .portal-countdown--live:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 1.6rem 3.4rem color-mix(in srgb, black 30%, transparent);
+  }
+  .portal-countdown--live p {
+    font-family: var(--f-exat);
+    font-size: clamp(2rem, 3.3vw, 3.25rem);
+    line-height: 0.9;
+    white-space: nowrap;
+  }
+  .portal-countdown--live span {
+    font-size: var(--paragraph-small);
+    font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 0.08em;
   }

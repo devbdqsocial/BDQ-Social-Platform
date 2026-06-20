@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { timeLeft, type TimeLeft } from "@/lib/countdown";
 
@@ -34,7 +35,17 @@ export function PortalCountdown({ targetIso }: { targetIso: string | null }) {
     return () => clearInterval(id);
   }, [target]);
 
-  if (!target || !left || left.done) {
+  // Doors open: the clock has run out for a real event → invite people in.
+  if (target && left?.done) {
+    return (
+      <Link className="portal-countdown portal-countdown--live" href="/" aria-label="Doors are open. Enter BDQ Social.">
+        <p>Doors are open.</p>
+        <span>Enter BDQ Social →</span>
+      </Link>
+    );
+  }
+
+  if (!target || !left) {
     return (
       <div className="portal-countdown portal-countdown--soon" aria-label="Date reveal soon. Invite window opening soon">
         <p>Date reveal soon.</p>

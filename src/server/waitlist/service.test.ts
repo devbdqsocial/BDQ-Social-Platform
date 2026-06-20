@@ -67,7 +67,11 @@ describe.runIf(process.env.RUN_DB_TESTS === "1")("Unified Waitlist Integration",
     formData.set("interestedInStall", "true");
 
     const result = await joinPlatformWaitlist(formData);
-    expect(result.success).toBe(true);
+    expect("ok" in result && result.ok).toBe(true);
+    if ("ok" in result) {
+      expect(result.alreadyJoined).toBe(false);
+      expect(result.position).toBeGreaterThan(0);
+    }
 
     const entry = await db.waitlist.findFirst({
       where: {
@@ -80,6 +84,10 @@ describe.runIf(process.env.RUN_DB_TESTS === "1")("Unified Waitlist Integration",
     expect(entry?.type).toBe("STALL");
     expect(entry?.phone).toBe(testPhoneE164);
     expect(entry?.contact).toBe(testPhoneE164);
+
+    // Re-submitting the same number is recognised, not duplicated.
+    const again = await joinPlatformWaitlist(formData);
+    expect("ok" in again && again.alreadyJoined).toBe(true);
   });
 });
 

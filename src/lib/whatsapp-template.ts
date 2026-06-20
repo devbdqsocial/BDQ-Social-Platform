@@ -6,3 +6,8 @@ export function buildTicketWhatsApp(o: {
 }): string[] {
   return [o.eventName, String(o.ticketCount), o.ticketsUrl];
 }
+
+/** Waitlist confirmation template body variables ({{1}} = link to the site). */
+export function buildWaitlistWhatsApp(o: { url: string }): string[] {
+  return [o.url];
+}

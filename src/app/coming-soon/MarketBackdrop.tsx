@@ -1,5 +1,7 @@
 "use client";
 
+import { FestivalScene } from "@/components/motion/FestivalScene";
+
 type Dot = {
   x: number;
   y: number;
@@ -55,6 +57,8 @@ export function MarketBackdrop() {
     <div className="market-backdrop" aria-hidden>
       <div className="market-backdrop__image" />
       <div className="market-backdrop__wash" />
+      {/* Cinematic night-market atmosphere (moon, string lights, lanterns, fireflies) behind the dots. */}
+      <FestivalScene tone="gold" className="market-backdrop__scene" />
       <div className="market-backdrop__sweep market-backdrop__sweep--one" />
       <div className="market-backdrop__sweep market-backdrop__sweep--two" />
       <svg className="market-backdrop__dots" viewBox="0 0 100 100" preserveAspectRatio="none">

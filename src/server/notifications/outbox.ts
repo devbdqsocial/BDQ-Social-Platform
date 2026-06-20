@@ -4,7 +4,7 @@ import { resendConfigured, sendEmail } from "@/lib/resend";
 import { whatsAppConfigured, sendWhatsAppText } from "@/lib/whatsapp";
 import { channelsFor } from "@/lib/notify-channels";
 import { buildReminderEmail, buildTicketEmail, buildFinanceDigestEmail } from "@/server/notifications/email";
-import { sendTicketWhatsApp } from "@/server/notifications/whatsapp";
+import { sendTicketWhatsApp, sendWaitlistWhatsApp } from "@/server/notifications/whatsapp";
 import { bumpCampaignStat } from "@/server/campaigns/stats";
 import { campaignEmailHtml } from "@/lib/email-template";
 import { unsubscribeUrl } from "@/lib/unsubscribe-token";
@@ -94,6 +94,8 @@ export async function processOutbox(limit = 20): Promise<{ sent: number; failed:
         }
         if (row.campaignId) await bumpCampaignStat(row.campaignId, "delivered");
         await sleep(CAMPAIGN_THROTTLE_MS);
+      } else if (row.template === "waitlist") {
+        if (row.channel === "WHATSAPP") await sendWaitlistWhatsApp(row.toAddress);
       } else {
         if (!payload.orderId) throw new Error("missing orderId");
         if (row.channel === "EMAIL") {

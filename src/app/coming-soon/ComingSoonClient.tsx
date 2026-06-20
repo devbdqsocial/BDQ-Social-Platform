@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { joinPlatformWaitlist } from "@/actions/waitlist";
 import { phone10, digitsCapped } from "@/lib/validators";
 import { useFieldValidation } from "@/lib/use-field-validation";
+import { trackWaitlistSignup } from "@/lib/analytics-events";
 import { Magnetic } from "@/components/motion/Magnetic";
 import { SplitReveal } from "@/components/motion/SplitReveal";
 import { MarketBackdrop } from "./MarketBackdrop";
@@ -24,6 +25,7 @@ const CATEGORIES = [
 ] as const;
 
 const MARQUEE = [...CATEGORIES.map((item) => item.label), "Vadodara"];
+const SHARE_TEXT = "I just got my invite to BDQ Social — Vadodara's curated night market. Get yours:";
 
 function ArrowRight() {
   return (
@@ -33,11 +35,22 @@ function ArrowRight() {
   );
 }
 
-export function ComingSoonClient({ count, event }: { count: number; event: ComingSoonEvent | null }) {
+function Spinner() {
+  return (
+    <svg className="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2.5" opacity="0.25" />
+      <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function ComingSoonClient({ count, event, whatsappEnabled }: { count: number; event: ComingSoonEvent | null; whatsappEnabled: boolean }) {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
   const [interestedInStall, setInterestedInStall] = useState(false);
-  const [submittedPhone, setSubmittedPhone] = useState("");
+  const [alreadyJoined, setAlreadyJoined] = useState(false);
+  const [position, setPosition] = useState<number | null>(null);
+  const [copied, setCopied] = useState(false);
   const [phone, setPhone] = useState("");
   const phoneField = useFieldValidation(phone10);
   const successRef = useRef<HTMLDivElement>(null);
@@ -65,12 +78,27 @@ export function ComingSoonClient({ count, event }: { count: number; event: Comin
     const formData = new FormData(e.currentTarget);
     formData.set("interestedInStall", String(interestedInStall));
     const result = await joinPlatformWaitlist(formData);
-    if (result.error) {
+    if ("error" in result) {
       setStatus("error");
       setMessage(result.error);
-    } else {
-      setSubmittedPhone(phone);
-      setStatus("success");
+      return;
+    }
+    setAlreadyJoined(result.alreadyJoined);
+    setPosition(result.position);
+    setStatus("success");
+    if (!result.alreadyJoined) trackWaitlistSignup(interestedInStall ? "STALL" : "TICKET");
+  };
+
+  const shareUrl = () => (typeof window !== "undefined" ? window.location.origin : "");
+  const whatsappShareHref = `https://wa.me/?text=${encodeURIComponent(`${SHARE_TEXT} ${shareUrl()}`)}`;
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* clipboard blocked — ignore */
     }
   };
 
@@ -115,13 +143,28 @@ export function ComingSoonClient({ count, event }: { count: number; event: Comin
           <div className="market-pass__invite">
             {status === "success" ? (
               <div ref={successRef} tabIndex={-1} className="market-soon__success outline-none">
-                <p className="f-exat f-h42">You&apos;re on the invite list.</p>
+                <p className="f-exat f-h42">{alreadyJoined ? "You're already in." : "You're on the invite list."}</p>
                 <p className="f-paragraph-small mt-[var(--space-sm)]">
-                  We&apos;ll WhatsApp {submittedPhone || "you"} when the doors open.
+                  {whatsappEnabled
+                    ? "We'll WhatsApp you the moment the doors open."
+                    : "We'll be in touch the moment the doors open."}
                 </p>
+                {position ? (
+                  <p className="market-soon__rank mt-[var(--space-md)]">
+                    <span className="f-exat">#{position.toLocaleString("en-IN")}</span> in line
+                  </p>
+                ) : null}
+                <div className="market-soon__share mt-[var(--space-md)]">
+                  <a className="market-soon__share-wa" href={whatsappShareHref} target="_blank" rel="noopener noreferrer">
+                    Share on WhatsApp
+                  </a>
+                  <button type="button" className="market-soon__share-copy" onClick={copyLink} aria-live="polite">
+                    {copied ? "Link copied" : "Copy link"}
+                  </button>
+                </div>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} aria-live="polite">
+              <form onSubmit={handleSubmit} aria-busy={status === "loading"}>
                 <div className="market-soon__form-head">
                   <p className="kicker">Request your invite</p>
                   {count > 0 ? <p>{count.toLocaleString("en-IN")} already requested access</p> : null}
@@ -156,7 +199,7 @@ export function ComingSoonClient({ count, event }: { count: number; event: Comin
                       aria-label="Request invitation"
                       className="market-soon__submit"
                     >
-                      {status === "loading" ? <span>Sending</span> : <ArrowRight />}
+                      {status === "loading" ? <Spinner /> : <ArrowRight />}
                     </button>
                   </Magnetic>
                 </label>
