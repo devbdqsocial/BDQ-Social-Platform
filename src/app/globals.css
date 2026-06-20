@@ -738,7 +738,7 @@ html[data-menu-open="true"] #mouse .mouse__dot {
      only the moon, string lights, lanterns, fireflies and horizon enrich the backdrop. */
   .market-backdrop__scene {
     background: transparent;
-    opacity: 0.7;
+    opacity: 0.4;
   }
   .market-backdrop__image {
     inset: -2%;
