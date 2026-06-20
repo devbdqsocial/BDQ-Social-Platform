@@ -8,7 +8,12 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Reveal } from "@/components/motion/Reveal";
 import { SplitReveal } from "@/components/motion/SplitReveal";
 
-export const metadata: Metadata = { title: "Events" };
+export const metadata: Metadata = {
+  title: "Events & Tickets in Vadodara",
+  description:
+    "Upcoming BDQ Social events in Vadodara — book tickets to the city's premium curated lifestyle festival and night market: handpicked brands, gourmet food, and live music.",
+  alternates: { canonical: "/events" },
+};
 export const dynamic = "force-dynamic";
 
 export default async function EventsPage() {

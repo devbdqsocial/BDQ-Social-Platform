@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Bucket } from "@/server/map/guide";
+import { CARD_SHAPES } from "@/lib/shapes";
 
 export interface DiscoverVendor {
   id: string;
@@ -55,9 +56,9 @@ export function VendorDiscover({ vendors }: { vendors: DiscoverVendor[] }) {
         <p className="f-paragraph py-[var(--space-2xl)] opacity-70">Nothing for &ldquo;{q}&rdquo; — try another category.</p>
       ) : (
         <div className="grid grid-cols-2 gap-[var(--grid-gap)] sm:grid-cols-3 lg:grid-cols-4">
-          {filtered.map((v) => (
+          {filtered.map((v, i) => (
             <Link key={v.id} href={`/vendors/${v.id}`} data-cursor className="block">
-              <div className="svg svg--form2 w-full">
+              <div className={`svg ${CARD_SHAPES[i % CARD_SHAPES.length]} media-zoom w-full`}>
                 {v.logo ? (
                   <Image src={v.logo} alt={v.brandName} fill className="svg__img" sizes="(max-width:768px) 50vw, 25vw" />
                 ) : (

@@ -16,7 +16,7 @@ function Unit({ value, label }: { value: string; label: string }) {
           </span>
         ))}
       </div>
-      <span className="mt-[0.8rem] text-[0.58rem] uppercase" style={{ letterSpacing: "0.28em", color: "var(--ink-soft)" }}>
+      <span className="mt-[0.8rem] text-[var(--cs-fs-micro)] uppercase" style={{ letterSpacing: "0.28em", color: "var(--ink-soft)" }}>
         {label}
       </span>
     </div>
@@ -45,7 +45,7 @@ export function InviteCountdown({ targetIso }: { targetIso: string | null }) {
 
   return (
     <div className="cs-reveal mt-[clamp(1.6rem,4vh,2.3rem)]" style={{ "--d": "0.5s" } as React.CSSProperties}>
-      <p className="mb-[1.1rem] text-[0.6rem] uppercase" style={{ letterSpacing: "0.32em", color: "var(--ink-soft)" }}>
+      <p className="mb-[1.1rem] text-[var(--cs-fs-micro)] uppercase" style={{ letterSpacing: "0.32em", color: "var(--ink-soft)" }}>
         Doors open in
       </p>
       <div

@@ -29,13 +29,13 @@ export function PublicHeader({ signedIn = false }: { signedIn?: boolean }) {
   return (
     <>
       <header
-        className="pointer-events-none fixed inset-x-0 top-0 z-[110]"
+        className="rpa-header pointer-events-none fixed inset-x-0 top-0 z-[var(--z-header)]"
         style={{ color: "var(--header-color, var(--foreground))" }}
       >
         <div className="flex items-center justify-between px-[var(--wrapper-padd)] py-[var(--space-lg)]">
           <Link
             href="/"
-            data-cursor
+            data-cursor="link"
             className="f-exat f-h32 pointer-events-auto"
           >
             BDQ<span style={{ color: "var(--green)" }}>.</span>
@@ -44,8 +44,8 @@ export function PublicHeader({ signedIn = false }: { signedIn?: boolean }) {
           <div className="pointer-events-auto flex items-center gap-[var(--space-lg)]">
             <Link
               href="/events"
-              data-cursor
-              className="f-paragraph-small f-bold hidden t-upper sm:inline-block"
+              data-cursor="link"
+              className="f-paragraph-small f-bold link-underline hidden t-upper sm:inline-block"
               style={{ letterSpacing: "0.14em" }}
             >
               Tickets
@@ -56,11 +56,11 @@ export function PublicHeader({ signedIn = false }: { signedIn?: boolean }) {
               aria-label="Open menu"
               aria-expanded={open}
               aria-controls="menu-overlay"
-              data-cursor
-              className="group flex h-6 w-9 flex-col items-end justify-center gap-[5px]"
+              data-cursor="menu"
+              className="group flex size-12 flex-col items-end justify-center gap-[5px]"
             >
-              <span className="block h-[2px] w-full transition-all duration-300 group-hover:w-2/3" style={{ background: "currentColor" }} />
-              <span className="block h-[2px] w-2/3 transition-all duration-300 group-hover:w-full" style={{ background: "currentColor" }} />
+              <span className="block h-[2px] w-9 transition-[width,background-color] duration-300 group-hover:w-6" style={{ background: "currentColor" }} />
+              <span className="block h-[2px] w-6 transition-[width,background-color] duration-300 group-hover:w-9" style={{ background: "currentColor" }} />
             </button>
           </div>
         </div>
@@ -75,8 +75,8 @@ export function PublicHeader({ signedIn = false }: { signedIn?: boolean }) {
       />
 
       {/* Persistent "Let's talk" CTA — desktop only (mobile has the bottom tab bar). */}
-      <Magnetic className="fixed bottom-[var(--space-xl)] right-[var(--space-xl)] z-[90] hidden sm:block">
-        <Link href="/contact" data-cursor className="btn btn--accent pointer-events-auto">
+      <Magnetic className="fixed bottom-[var(--space-xl)] right-[var(--space-xl)] z-[var(--z-floating-cta)] hidden sm:block">
+        <Link href="/contact" data-cursor="cta" className="btn btn--accent pointer-events-auto">
           <span className="btn__text">Let&apos;s talk</span>
         </Link>
       </Magnetic>

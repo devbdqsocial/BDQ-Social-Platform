@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { joinPlatformWaitlist } from "@/actions/waitlist";
 import { phone10, digitsCapped } from "@/lib/validators";
 import { useFieldValidation } from "@/lib/use-field-validation";
+import { Magnetic } from "@/components/motion/Magnetic";
+import { FestivalScene } from "@/components/motion/FestivalScene";
 import { InviteCountdown } from "./InviteCountdown";
 
 // "The Invitation" coming-soon gate (bespoke, off-RPA). Luxury paper-invitation look with an
@@ -84,7 +86,7 @@ export function ComingSoonClient({ count, targetIso }: { count: number; targetIs
   return (
     <main
       data-theme={theme}
-      className="cs-invite relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-6 py-[clamp(2.5rem,7vh,4rem)]"
+      className="cs-invite relative min-h-[100svh] overflow-hidden"
     >
       <div aria-hidden className="cs-frame cs-reveal" style={reveal("0s")} />
 
@@ -98,12 +100,13 @@ export function ComingSoonClient({ count, targetIso }: { count: number; targetIs
         {theme === "light" ? <MoonIcon /> : <SunIcon />}
       </button>
 
-      <div className="relative z-10 flex w-full max-w-[40rem] flex-col items-center text-center">
-        <span className="cs-reveal text-[0.7rem] uppercase" style={{ ...reveal("0s"), letterSpacing: "0.36em", color: "var(--ink-soft)" }}>
+      <div className="relative z-10 mx-auto grid min-h-[100svh] w-full max-w-[80rem] items-center gap-[clamp(2rem,5vw,4rem)] px-[clamp(1.25rem,5vw,6rem)] py-[clamp(2.5rem,7vh,4rem)] lg:grid-cols-2">
+        <div className="flex w-full max-w-[40rem] flex-col items-center text-center lg:items-start lg:text-left">
+        <span className="cs-reveal text-[var(--cs-fs-label)] uppercase" style={{ ...reveal("0s"), letterSpacing: "0.36em", color: "var(--ink-soft)" }}>
           BDQ Social
         </span>
 
-        <span className="cs-reveal mt-[clamp(1.6rem,5vh,2.6rem)] text-[0.7rem] uppercase" style={{ ...reveal("0.1s"), letterSpacing: "0.38em", color: "var(--accent-text)" }}>
+        <span className="cs-reveal mt-[clamp(1.6rem,5vh,2.6rem)] text-[var(--cs-fs-label)] uppercase" style={{ ...reveal("0.1s"), letterSpacing: "0.38em", color: "var(--accent-text)" }}>
           Limited Invitation
         </span>
 
@@ -129,13 +132,13 @@ export function ComingSoonClient({ count, targetIso }: { count: number; targetIs
               <p ref={successRef} tabIndex={-1} className="cs-serif outline-none" style={{ fontSize: "clamp(1.4rem,4vw,1.8rem)", color: "var(--ink)" }}>
                 Your invitation is reserved.
               </p>
-              <p className="mt-[0.6rem] text-[0.9rem]" style={{ color: "var(--ink-soft)", lineHeight: 1.6 }}>
+              <p className="mt-[0.6rem] text-[var(--cs-fs-note)]" style={{ color: "var(--ink-soft)", lineHeight: 1.6 }}>
                 We&apos;ll WhatsApp {submittedPhone || "you"} the moment doors open.
               </p>
             </div>
           ) : (
             <form onSubmit={handleSubmit}>
-              <p className="mb-[0.9rem] text-[0.6rem] uppercase" style={{ letterSpacing: "0.32em", color: "var(--ink-soft)" }}>
+              <p className="mb-[0.9rem] text-[var(--cs-fs-micro)] uppercase" style={{ letterSpacing: "0.32em", color: "var(--ink-soft)" }}>
                 Request your invitation
               </p>
 
@@ -160,23 +163,25 @@ export function ComingSoonClient({ count, targetIso }: { count: number; targetIs
                   className="cs-serif w-full min-w-0 bg-transparent outline-none placeholder:opacity-35 disabled:opacity-50"
                   style={{ fontSize: "1.15rem", color: "var(--ink)", letterSpacing: "0.05em" }}
                 />
-                <button
-                  type="submit"
-                  disabled={status === "loading"}
-                  aria-label="Request invitation"
-                  className="shrink-0 transition-opacity duration-300 hover:opacity-60 disabled:opacity-40"
-                  style={{ color: "var(--accent-text)" }}
-                >
-                  {status === "loading" ? (
-                    <span className="text-[0.7rem] uppercase" style={{ letterSpacing: "0.2em" }}>Sending</span>
-                  ) : (
-                    <ArrowRight />
-                  )}
-                </button>
+                <Magnetic className="shrink-0" strength={0.5}>
+                  <button
+                    type="submit"
+                    disabled={status === "loading"}
+                    aria-label="Request invitation"
+                    className="transition-opacity duration-300 hover:opacity-60 disabled:opacity-40"
+                    style={{ color: "var(--accent-text)" }}
+                  >
+                    {status === "loading" ? (
+                      <span className="text-[var(--cs-fs-label)] uppercase" style={{ letterSpacing: "0.2em" }}>Sending</span>
+                    ) : (
+                      <ArrowRight />
+                    )}
+                  </button>
+                </Magnetic>
               </div>
 
               {phoneField.error && (
-                <p role="alert" className="mt-[0.55rem] text-[0.72rem]" style={{ color: "var(--error)" }}>
+                <p role="alert" className="mt-[0.55rem] text-[var(--cs-fs-label)]" style={{ color: "var(--error)" }}>
                   {phoneField.error}
                 </p>
               )}
@@ -185,7 +190,7 @@ export function ComingSoonClient({ count, targetIso }: { count: number; targetIs
                 type="button"
                 onClick={() => setInterestedInStall((v) => !v)}
                 aria-pressed={interestedInStall}
-                className="mt-[1.1rem] flex items-center gap-[0.6rem] text-[0.62rem] uppercase"
+                className="mt-[1.1rem] flex items-center gap-[0.6rem] text-[var(--cs-fs-micro)] uppercase"
                 style={{ letterSpacing: "0.16em", color: "var(--ink-soft)" }}
               >
                 <span
@@ -198,13 +203,13 @@ export function ComingSoonClient({ count, targetIso }: { count: number; targetIs
               </button>
 
               {status === "error" && (
-                <p role="alert" className="mt-[0.9rem] text-[0.8rem]" style={{ color: "var(--ink)" }}>
+                <p role="alert" className="mt-[0.9rem] text-[var(--cs-fs-note)]" style={{ color: "var(--ink)" }}>
                   {message}
                 </p>
               )}
 
               {count > 0 && (
-                <p className="mt-[1.2rem] text-[0.62rem] uppercase" style={{ letterSpacing: "0.2em", color: "var(--ink-soft)" }}>
+                <p className="mt-[1.2rem] text-[var(--cs-fs-micro)] uppercase" style={{ letterSpacing: "0.2em", color: "var(--ink-soft)" }}>
                   {count.toLocaleString()} already requested
                 </p>
               )}
@@ -212,9 +217,15 @@ export function ComingSoonClient({ count, targetIso }: { count: number; targetIs
           )}
         </div>
 
-        <p className="cs-reveal mt-[clamp(2rem,6vh,3rem)] text-[0.6rem] uppercase" style={{ ...reveal("0.7s"), letterSpacing: "0.28em", color: "var(--ink-soft)" }}>
+        <p className="cs-reveal mt-[clamp(2rem,6vh,3rem)] text-[var(--cs-fs-micro)] uppercase" style={{ ...reveal("0.9s"), letterSpacing: "0.28em", color: "var(--ink-soft)" }}>
           Vadodara · Autumn 2026
         </p>
+        </div>
+
+        {/* RIGHT = the experience: a cinematic "window into the night" beside the invitation. */}
+        <div className="cs-reveal relative min-h-[38svh] w-full overflow-hidden rounded-[8px] lg:min-h-[64svh]" style={reveal("0.35s")}>
+          <FestivalScene tone="gold" className="absolute inset-0" />
+        </div>
       </div>
     </main>
   );

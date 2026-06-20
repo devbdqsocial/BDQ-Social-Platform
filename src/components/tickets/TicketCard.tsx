@@ -101,7 +101,7 @@ export function TicketCard({ d }: { d: TicketCardData }) {
               <a href={ics} download={`${d.eventName.replace(/\s+/g, "-").toLowerCase()}.ics`} className="f-paragraph-small f-bold t-upper link-underline" style={{ letterSpacing: "0.06em" }}>Add to calendar</a>
               <TicketShare ticketId={d.ticketId} eventName={d.eventName} shareUrl={d.eventUrl} variant="link" />
             </div>
-            <p className="f-paragraph-small opacity-50">All sales final.</p>
+            <p className="f-paragraph-small opacity-50">Keep your QR ready for entry.</p>
           </div>
         </div>
       </button>

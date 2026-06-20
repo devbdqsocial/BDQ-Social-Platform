@@ -6,6 +6,7 @@
 @source not "../../Docs";
 @source not "../../scripts";
 @source not "../../e2e";
+@source not "../../artifacts";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -21,6 +22,14 @@
     from { height: var(--radix-collapsible-content-height); }
     to { height: 0; }
   }
+}
+
+@theme {
+  /* Admin micro type scale (below text-xs) — the campaign builder's dense controls use these
+     (text-2xs/3xs/4xs); without these defs Tailwind v4 emits no rule and the text mis-sizes. */
+  --text-2xs: 0.6875rem; --text-2xs--line-height: 1rem;
+  --text-3xs: 0.625rem;  --text-3xs--line-height: 0.875rem;
+  --text-4xs: 0.5625rem; --text-4xs--line-height: 0.8125rem;
 }
 
 /*
@@ -210,7 +219,15 @@
   --space-none: 0; --space-xs: 0.1667em; --space-sm: 0.3333em; --space-md: 0.6667em;
   --space-lg: 1em; --space-xl: 1.3333em; --space-2xl: 2em; --space-3xl: 2.6667em;
   --space-4xl: 4em; --space-5xl: 6em;
-  --grid-gap: 1.1667em; --wrapper-padd: var(--space-lg);
+  --grid-gap: 1.1667em; --wrapper-padd: clamp(1.25rem, 5vw, 6rem);
+  /* Content column widths (design-system): one for utility/lists/stacked sections, one for
+     long-form reading. Replaces the old ad-hoc 52/56/60/62/64rem values so widths are consistent. */
+  --w-content: 72rem; --w-prose: 64rem;
+  /* Shared top-layer order for public chrome. */
+  --z-floating-cta: 90;
+  --z-header: 110;
+  --z-menu: 120;
+  --z-cursor: 150;
 }
 /* Display-size overrides only — the base size is the clamp() above (design-system §1.2). */
 @media (max-width: 950px)  { :root { --h235: 6.25em; --h133: 4.1667em; --h100: 2.9166em; } }
@@ -280,19 +297,49 @@
 .rpa .col-10 { width: calc((99.9vw - var(--wrapper-padd)*2 - var(--grid-gap)*11)/12 * 10 + var(--grid-gap)*9); }
 .rpa .col-12 { width: 100%; }
 
+.rpa-header {
+  transition: color .24s ease;
+}
+.rpa-header::before {
+  content: "";
+  position: absolute;
+  inset: .75rem var(--wrapper-padd) auto var(--wrapper-padd);
+  height: calc(var(--space-lg) * 3.25);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--header-bg, transparent) 82%, transparent);
+  opacity: var(--header-backplate-opacity, 0);
+  pointer-events: none;
+  transition: opacity .24s ease, background .24s ease;
+  backdrop-filter: blur(16px);
+}
+.rpa-header > * {
+  position: relative;
+  z-index: 1;
+}
+
 /* Custom cursor (#mouse) — mix-blend difference, follows via GSAP. z per design-system §1.6. */
 #mouse {
-  position: fixed; top: 0; left: 0; z-index: 100; pointer-events: none;
+  position: fixed; top: 0; left: 0; z-index: var(--z-cursor); pointer-events: none;
   width: 1.4rem; height: 1.4rem; mix-blend-mode: difference; will-change: transform;
-  transition: width .33s var(--ease-bounce), height .33s var(--ease-bounce);
+  transition: opacity .2s ease, width .33s var(--ease-bounce), height .33s var(--ease-bounce);
 }
 #mouse .mouse__dot {
   width: 100%; height: 100%; border-radius: 999px; background: var(--yellow);
   transform: translate(-50%, -50%);
+  transition: background-color .25s ease, transform .33s var(--ease-bounce);
 }
 /* Hover EXPANDS (reference behaviour); data-cursor="view" cards get the big variant. */
 #mouse.is-hover { width: 3.4rem; height: 3.4rem; }
 #mouse.is-hover[data-state="view"] { width: 4.8rem; height: 4.8rem; }
+#mouse.is-hover[data-state="menu"] { width: 4.15rem; height: 4.15rem; }
+#mouse.is-hover[data-state="cta"] { width: 4.55rem; height: 4.55rem; }
+#mouse.is-hover[data-state="link"] { width: 3rem; height: 3rem; }
+html[data-menu-open="true"] #mouse {
+  mix-blend-mode: normal;
+}
+html[data-menu-open="true"] #mouse .mouse__dot {
+  background: var(--green);
+}
 @media (hover: none), (pointer: coarse) { #mouse { display: none; } }
 
 /* SVG clip-path "form" mask system. */
@@ -313,6 +360,8 @@
 .rpa .svg--form12 { aspect-ratio: 638/588; clip-path: url(#svg-form12); }
 .rpa .svg--form13 { aspect-ratio: 654/452; clip-path: url(#svg-form13); }
 .rpa .svg--form14 { aspect-ratio: 400/212; clip-path: url(#svg-form14); }
+.rpa .svg--form15 { aspect-ratio: 1051/344; clip-path: url(#svg-form15); }
+.rpa .svg--form15-mob { aspect-ratio: 351/282; clip-path: url(#svg-form15-mob); }
 
 /* Image treatments (used with the mask system above).
    media-zoom: inner image swells on link/card hover. media-tint: subtle wash of the
@@ -373,7 +422,12 @@
   position: absolute; bottom: 0; left: 0; width: 70%; height: 40%;
   font-size: var(--paragraph-small); font-weight: 700; color: var(--btn-fg);
   display: grid; place-items: center; letter-spacing: -0.025em; white-space: nowrap;
-  transition: all .33s var(--ease-bounce);
+  transition:
+    bottom .33s var(--ease-bounce),
+    left .33s var(--ease-bounce),
+    width .33s var(--ease-bounce),
+    height .33s var(--ease-bounce),
+    color .2s ease;
 }
 .rpa .btn:hover .btn__text, .rpa .btn.hover .btn__text { bottom: 21%; left: 20%; width: 58%; height: 31%; }
 .rpa .btn:disabled { opacity: .45; cursor: default; }
@@ -536,6 +590,124 @@
     .coming-float { animation: coming-float 9s ease-in-out infinite; }
   }
 
+  /* "Living BDQ world": CSS/SVG hero atmosphere — breathing glow + drifting lantern/firefly motes.
+     No bitmaps, no JS. --world-tint drives colour (defaults to currentColor); used on the landing
+     and coming-soon heroes. Mark aria-hidden in markup; fully static under reduced-motion. */
+  .bdq-world { position: absolute; inset: 0; overflow: hidden; pointer-events: none; --world-tint: currentColor; }
+  .bdq-world::before {
+    content: ""; position: absolute; inset: -12%;
+    background:
+      radial-gradient(38% 34% at 52% 42%, color-mix(in srgb, var(--world-tint) 20%, transparent), transparent 70%),
+      radial-gradient(54% 48% at 30% 72%, color-mix(in srgb, var(--world-tint) 9%, transparent), transparent 75%);
+  }
+  .bdq-world__mote {
+    position: absolute; width: 6px; height: 6px; border-radius: 999px; opacity: 0.55;
+    background: color-mix(in srgb, var(--world-tint) 80%, transparent);
+    box-shadow: 0 0 12px 2px color-mix(in srgb, var(--world-tint) 40%, transparent);
+  }
+  .bdq-world__mote:nth-child(1) { left: 14%; top: 22%; }
+  .bdq-world__mote:nth-child(2) { left: 80%; top: 16%; width: 4px; height: 4px; opacity: 0.4; }
+  .bdq-world__mote:nth-child(3) { left: 62%; top: 34%; width: 8px; height: 8px; }
+  .bdq-world__mote:nth-child(4) { left: 28%; top: 58%; width: 5px; height: 5px; opacity: 0.45; }
+  .bdq-world__mote:nth-child(5) { left: 88%; top: 62%; }
+  .bdq-world__mote:nth-child(6) { left: 46%; top: 78%; width: 4px; height: 4px; opacity: 0.4; }
+  .bdq-world__mote:nth-child(7) { left: 18%; top: 84%; width: 7px; height: 7px; opacity: 0.5; }
+  .bdq-world__mote:nth-child(8) { left: 72%; top: 82%; width: 5px; height: 5px; opacity: 0.45; }
+  .bdq-world__mote:nth-child(9) { left: 50%; top: 12%; width: 5px; height: 5px; opacity: 0.5; }
+  @media (prefers-reduced-motion: no-preference) {
+    .bdq-world::before { animation: coming-glow 8s ease-in-out infinite; }
+    .bdq-world__mote { animation: coming-float 9s ease-in-out infinite; }
+    .bdq-world__mote:nth-child(2) { animation-duration: 11s; animation-delay: -2s; }
+    .bdq-world__mote:nth-child(3) { animation-duration: 8s;  animation-delay: -4s; }
+    .bdq-world__mote:nth-child(4) { animation-duration: 12s; animation-delay: -1s; }
+    .bdq-world__mote:nth-child(5) { animation-duration: 10s; animation-delay: -5s; }
+    .bdq-world__mote:nth-child(6) { animation-duration: 9s;  animation-delay: -3s; }
+    .bdq-world__mote:nth-child(7) { animation-duration: 13s; animation-delay: -6s; }
+    .bdq-world__mote:nth-child(8) { animation-duration: 10s; animation-delay: -2.5s; }
+    .bdq-world__mote:nth-child(9) { animation-duration: 11s; animation-delay: -4.5s; }
+  }
+
+  /* FestivalScene: the hero's RIGHT-SIDE EXPERIENCE — a bold cinematic night-market panel.
+     Pure CSS/SVG, high-contrast (bright lights on a dark sky). Pointer parallax via --px/--py
+     (set in JS, pointer-fine only). Decorative (aria-hidden). Reduced-motion → fully static. */
+  .fest-scene {
+    overflow: hidden; isolation: isolate; --px: 0; --py: 0;
+    --fest-sky-1: #11196e; --fest-sky-2: #05072a;
+    --fest-moon: #d7dbff; --fest-moon-glow: #868eff;
+    --fest-bulb-a: #ffd98a; --fest-bulb-b: #92ff73; --fest-bulb-c: #ff58ac;
+    --fest-lantern: #ffb05c; --fest-sil: #03051c;
+    background: radial-gradient(130% 95% at 72% 8%, var(--fest-sky-1), var(--fest-sky-2) 68%);
+  }
+  .fest-scene[data-tone="gold"] {
+    --fest-sky-1: #3a2566; --fest-sky-2: #150b2b;
+    --fest-moon: #ffe9b8; --fest-moon-glow: #e6a64e;
+    --fest-bulb-a: #ffcf7a; --fest-bulb-b: #ffd98a; --fest-bulb-c: #ffb0d0;
+    --fest-lantern: #ff8a4c; --fest-sil: #0c0717;
+  }
+  .fest-scene > * { position: absolute; }
+  .fest-stars {
+    inset: 0;
+    background-image:
+      radial-gradient(1.6px 1.6px at 18% 16%, #ffffffcc, transparent 60%),
+      radial-gradient(1.4px 1.4px at 32% 28%, #ffffff99, transparent 60%),
+      radial-gradient(1.2px 1.2px at 54% 14%, #ffffffaa, transparent 60%),
+      radial-gradient(1.6px 1.6px at 68% 24%, #ffffff88, transparent 60%),
+      radial-gradient(1.3px 1.3px at 84% 12%, #ffffffaa, transparent 60%),
+      radial-gradient(1.2px 1.2px at 44% 36%, #ffffff77, transparent 60%);
+    transform: translate3d(calc(var(--px) * 4px), calc(var(--py) * 4px), 0);
+  }
+  .fest-moon {
+    top: 11%; right: 13%; width: 34%; max-width: 220px; aspect-ratio: 1; border-radius: 50%;
+    background: radial-gradient(circle at 38% 36%, var(--fest-moon), color-mix(in srgb, var(--fest-moon) 55%, transparent) 58%, transparent 72%);
+    box-shadow: 0 0 70px 22px color-mix(in srgb, var(--fest-moon-glow) 55%, transparent),
+                0 0 150px 55px color-mix(in srgb, var(--fest-moon-glow) 26%, transparent);
+    transform: translate3d(calc(var(--px) * 16px), calc(var(--py) * 12px), 0);
+  }
+  .fest-strings { inset: 0; transform: translate3d(calc(var(--px) * 9px), calc(var(--py) * 7px), 0); }
+  .fest-wire { position: absolute; inset: 0; width: 100%; height: 100%;
+    fill: none; stroke: color-mix(in srgb, #ffffff 22%, transparent); stroke-width: 0.5; }
+  .fest-bulb {
+    position: absolute; width: 9px; height: 9px; border-radius: 50%; transform: translate(-50%, -50%);
+    background: var(--fest-bulb-a); box-shadow: 0 0 10px 2px color-mix(in srgb, var(--fest-bulb-a) 75%, transparent);
+  }
+  .fest-bulb[data-c="b"] { background: var(--fest-bulb-b); box-shadow: 0 0 10px 2px color-mix(in srgb, var(--fest-bulb-b) 75%, transparent); }
+  .fest-bulb[data-c="c"] { background: var(--fest-bulb-c); box-shadow: 0 0 10px 2px color-mix(in srgb, var(--fest-bulb-c) 75%, transparent); }
+  .fest-lanterns { inset: 0; transform: translate3d(calc(var(--px) * 22px), calc(var(--py) * 15px), 0); }
+  .fest-lantern {
+    position: absolute; border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, color-mix(in srgb, var(--fest-lantern) 92%, white), var(--fest-lantern) 55%, color-mix(in srgb, var(--fest-lantern) 26%, transparent) 82%);
+    box-shadow: 0 0 24px 7px color-mix(in srgb, var(--fest-lantern) 50%, transparent);
+  }
+  .fest-motes { inset: 0; transform: translate3d(calc(var(--px) * 30px), calc(var(--py) * 22px), 0); }
+  .fest-mote { position: absolute; width: 4px; height: 4px; border-radius: 50%;
+    background: #fff; box-shadow: 0 0 8px 2px #ffffffaa; opacity: 0.7; }
+  .fest-silhouette { inset: 0; transform: translate3d(calc(var(--px) * 5px), 0, 0); }
+  .fest-silhouette svg { position: absolute; bottom: 0; width: 100%; height: 46%; }
+  .fest-silhouette path { fill: var(--fest-sil); }
+  .fest-win { position: absolute; width: 4px; height: 5px; border-radius: 1px;
+    background: var(--fest-bulb-a); box-shadow: 0 0 7px 1px color-mix(in srgb, var(--fest-bulb-a) 70%, transparent); }
+  .fest-fog { inset: auto 0 0 0; height: 40%;
+    background: linear-gradient(to top, color-mix(in srgb, var(--fest-sky-2) 96%, transparent), transparent); }
+  .fest-scene::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+    box-shadow: inset 0 0 90px 24px color-mix(in srgb, var(--fest-sky-2) 60%, transparent); }
+
+  @keyframes fest-bright { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.18); } }
+  @keyframes fest-twinkle { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+  @keyframes fest-rise {
+    0%   { transform: translateY(8%);  opacity: 0.5; }
+    50%  { opacity: 1; }
+    100% { transform: translateY(-10%); opacity: 0.5; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .fest-scene > * { transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
+    .fest-moon   { animation: fest-bright 6s ease-in-out infinite; }
+    .fest-bulb   { animation: fest-twinkle 3s ease-in-out infinite; }
+    .fest-bulb:nth-child(odd) { animation-delay: -1.5s; }
+    .fest-bulb:nth-child(3n)  { animation-duration: 4.2s; animation-delay: -0.8s; }
+    .fest-lantern { animation: fest-rise var(--rise, 14s) ease-in-out infinite; }
+    .fest-mote    { animation: fest-twinkle 2.4s ease-in-out infinite; }
+  }
+
   /* Coming-soon "Invitation" gate (bespoke, off-RPA). Luxury paper-invitation look: warm bone
      paper, ink text, one antique-gold accent. Colors live here as vars (kept out of JSX → no raw
      hex in style props). Light by default; an oxblood-dark variant is just a re-point of these vars. */
@@ -550,6 +722,10 @@
     --error: #B23A2E; /* validation message (AA on paper) */
     --line: color-mix(in srgb, var(--gold) 42%, transparent); /* decorative hairlines */
     --field-line: var(--ink-soft); /* functional borders (input/checkbox) — AA contrast */
+    /* invitation type scale — consolidates the page's ad-hoc text-[0.x rem] sizes (P1.3). */
+    --cs-fs-micro: 0.62rem; /* eyebrow micro-labels, counts */
+    --cs-fs-label: 0.7rem;  /* form labels, status */
+    --cs-fs-note: 0.85rem;  /* notes, validation, success sub */
     background-color: var(--paper);
     color: var(--ink);
     /* soft paper vignette + a faint warm centre glow (no pixel grain → CSP-safe) */

@@ -73,7 +73,7 @@ function Field({
             style={{ color: "var(--color)" }}
           />
         )}
-        <label htmlFor={id} className="pointer-events-none absolute left-0 origin-left transition-all duration-300" style={labelStyle}>
+        <label htmlFor={id} className="pointer-events-none absolute left-0 origin-left transition-[top,font-size] duration-300" style={labelStyle}>
           {label}
         </label>
       </div>

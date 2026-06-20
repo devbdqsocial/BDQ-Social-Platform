@@ -72,11 +72,11 @@ export function TicketReveal({ orderId, eventName, admitCount, startsAtIso }: { 
       <canvas ref={canvasRef} aria-hidden className="pointer-events-none absolute inset-0 h-full w-full" />
       <span className="kicker opacity-80">You&apos;re going</span>
       <h2 className="f-exat mt-[var(--space-sm)] max-w-[14ch] f-h133" style={{ animation: reduced ? undefined : "reveal-rise .6s .3s var(--ease-bounce, ease) both" }}>You&apos;re in.</h2>
-      <p className="f-paragraph mt-[var(--space-lg)] max-w-[40ch] opacity-85">
+      <p className="f-paragraph mt-[var(--space-lg)] max-w-[40ch] opacity-85" style={{ animation: reduced ? undefined : "reveal-rise .6s .55s var(--ease-out, ease) both" }}>
         {eventName}{admitCount > 1 ? ` · admits ${admitCount}` : ""} — your QR is in your wallet below.
       </p>
-      {seeYou && <p className="kicker mt-[var(--space-md)] opacity-70">See you {seeYou}</p>}
-      <button type="button" onClick={() => setShow(false)} className="btn mt-[var(--space-2xl)]" data-cursor>
+      {seeYou && <p className="kicker mt-[var(--space-md)] opacity-70" style={{ animation: reduced ? undefined : "reveal-rise .6s .7s var(--ease-out, ease) both" }}>See you {seeYou}</p>}
+      <button type="button" onClick={() => setShow(false)} className="btn mt-[var(--space-2xl)]" data-cursor style={{ animation: reduced ? undefined : "reveal-rise .6s .85s var(--ease-out, ease) both" }}>
         <span className="btn__text">See my tickets</span>
       </button>
       <span className="kicker absolute bottom-[var(--space-xl)] opacity-50">Tap anywhere to continue</span>

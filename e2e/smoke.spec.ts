@@ -22,8 +22,8 @@ test.describe("public pages render", () => {
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     const stallList = page.getByText(/Stall list/i); // a11y map fallback (collapsed <details>)
     await expect(stallList).toBeVisible();
-    await stallList.click(); // expand to reveal the keyboard hold buttons
-    await expect(page.getByRole("button", { name: /Hold stall/i }).first()).toBeVisible();
+    await stallList.click(); // expand to reveal the read-only stall availability list
+    await expect(page.getByText(/Stall .+ available/i).first()).toBeVisible();
   });
 
   test("brands", async ({ page }) => {

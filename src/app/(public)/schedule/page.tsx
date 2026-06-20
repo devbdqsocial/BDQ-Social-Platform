@@ -1,21 +1,29 @@
 import type { Metadata } from "next";
 import { getActiveSchedule } from "@/server/events/schedule";
+import { Reveal } from "@/components/motion/Reveal";
+import { SplitReveal } from "@/components/motion/SplitReveal";
 import { ScheduleTimeline } from "@/components/events/ScheduleTimeline";
 
-export const metadata: Metadata = { title: "What's on" };
+export const metadata: Metadata = {
+  title: "Event Schedule",
+  description: "The full schedule for BDQ Social — set times, stages, and what's on through the evening at Vadodara's curated lifestyle night market.",
+  alternates: { canonical: "/schedule" },
+};
 export const dynamic = "force-dynamic";
 
 export default async function SchedulePage() {
   const event = await getActiveSchedule();
 
   return (
-    <section className="paint py-[var(--space-4xl)]">
-      <div className="wrapper max-w-[56rem]">
-        <span className="kicker opacity-70">{event?.location ?? "The festival"}</span>
-        <h1 className="f-exat mt-[var(--space-sm)] f-h76">What&apos;s on</h1>
-        <p className="f-paragraph mt-[var(--space-md)] max-w-[48ch] opacity-80">
-          The full evening, hour by hour — see what&apos;s live, what&apos;s next, and save the sets you don&apos;t want to miss.
-        </p>
+    <section data-header-mode="dark" className="paint py-[var(--space-4xl)]">
+      <div className="wrapper max-w-[var(--w-content)]">
+        <Reveal><span className="kicker opacity-70">{event?.location ?? "The festival"}</span></Reveal>
+        <SplitReveal as="h1" className="f-exat mt-[var(--space-sm)] f-h76">What&apos;s on</SplitReveal>
+        <Reveal delay={0.1}>
+          <p className="f-paragraph mt-[var(--space-md)] max-w-[48ch] opacity-80">
+            The full evening, hour by hour — see what&apos;s live, what&apos;s next, and save the sets you don&apos;t want to miss.
+          </p>
+        </Reveal>
 
         <div className="mt-[var(--space-2xl)]">
           {!event ? (

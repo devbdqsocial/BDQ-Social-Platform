@@ -5,7 +5,11 @@ import { SplitReveal } from "@/components/motion/SplitReveal";
 import { PinnedConcepts } from "@/components/motion/PinnedConcepts";
 import { LEGAL } from "@/lib/legal";
 
-export const metadata: Metadata = { title: "About Us" };
+export const metadata: Metadata = {
+  title: "About Us",
+  description: "BDQ Social is Vadodara's premium curated lifestyle festival and night market — handpicked indie brands, gourmet food, and live music, one unforgettable evening a year.",
+  alternates: { canonical: "/about" },
+};
 
 const WHAT: [string, string][] = [
   ["Curated, not crowded", "Every brand is handpicked. No filler stalls, no hard sell — just makers worth your evening."],

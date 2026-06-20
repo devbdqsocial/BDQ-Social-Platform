@@ -42,7 +42,7 @@ export default async function WalletPage({ searchParams }: { searchParams: Promi
 
   return (
     <section className="paint py-[var(--space-5xl)]">
-      <div className="wrapper max-w-[62rem]">
+      <div className="wrapper max-w-[var(--w-content)]">
         {confirming && <AutoRefresh seconds={5} />}
         {revealOrder && (
           <TicketReveal orderId={revealOrder.t.order.id} eventName={revealOrder.t.order.event.name} admitCount={revealOrder.t.admitCount} startsAtIso={revealOrder.t.order.event.startsAt.toISOString()} />
