@@ -1,7 +1,8 @@
 import "server-only";
 import { Resend } from "resend";
+import { db } from "@/server/db";
 
-/** Resend adapter — transactional email. API key + From are env-only (never stored in the DB). */
+/** Resend adapter — transactional email. API key stays env-only; sender can be overridden in settings. */
 
 let instance: Resend | null = null;
 
@@ -21,6 +22,11 @@ export interface EmailAttachment {
   content: Buffer | string;
 }
 
+async function emailFrom(): Promise<string> {
+  const row = await db.systemSetting.findUnique({ where: { key: "EMAIL_FROM" }, select: { value: true } }).catch(() => null);
+  return row?.value?.trim() || process.env.EMAIL_FROM || "BDQ Social <hello@bdqsocial.com>";
+}
+
 export async function sendEmail(opts: {
   to: string;
   subject: string;
@@ -28,7 +34,7 @@ export async function sendEmail(opts: {
   attachments?: EmailAttachment[];
   tags?: { name: string; value: string }[];
 }): Promise<{ id: string }> {
-  const from = process.env.EMAIL_FROM ?? "Event Portal <onboarding@resend.dev>";
+  const from = await emailFrom();
   const { data, error } = await getClient().emails.send({
     from,
     to: opts.to,
