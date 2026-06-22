@@ -13,8 +13,13 @@ const CREAM = "#F4F2EC";
 const YELLOW = "#D0F95F";
 
 export default async function Image() {
-  const events = await listPublished();
-  const next = events[0];
+  // Resilient to a missing DB at build time (CI prerenders this with no database) — fall back gracefully.
+  let next: Awaited<ReturnType<typeof listPublished>>[number] | undefined;
+  try {
+    next = (await listPublished())[0];
+  } catch {
+    next = undefined;
+  }
   const dateLine = next
     ? new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "long", timeZone: "Asia/Kolkata" }).format(next.startsAt)
     : "Doors open soon";
