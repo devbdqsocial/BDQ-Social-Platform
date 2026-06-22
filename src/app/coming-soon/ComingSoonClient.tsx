@@ -130,16 +130,12 @@ export function ComingSoonClient({ count, event, whatsappEnabled }: { count: num
             A curated after-dark gathering designed to make the city feel new.
           </p>
 
-          {count > 0 ? (
-            <p className="market-soon__count mt-[var(--space-lg)]">
-              {count.toLocaleString("en-IN")} already requested access
-            </p>
-          ) : null}
+          <div className="market-soon__clock mt-[var(--space-lg)]">
+            <PortalCountdown targetIso={event?.startsAtIso ?? null} />
+          </div>
         </div>
 
         <aside className="market-pass" aria-label="Request an invite">
-          <PortalCountdown targetIso={event?.startsAtIso ?? null} />
-
           <div className="market-pass__invite">
             {status === "success" ? (
               <div ref={successRef} tabIndex={-1} className="market-soon__success outline-none">
@@ -165,7 +161,10 @@ export function ComingSoonClient({ count, event, whatsappEnabled }: { count: num
               </div>
             ) : (
               <form onSubmit={handleSubmit} aria-busy={status === "loading"}>
-                <p className="kicker">Request your invite</p>
+                <div className="market-soon__form-head">
+                  <p className="kicker">Request your invite</p>
+                  {count > 0 ? <p>{count.toLocaleString("en-IN")} already requested access</p> : null}
+                </div>
 
                 <label className="market-soon__phone mt-[var(--space-md)]">
                   <span>+91</span>

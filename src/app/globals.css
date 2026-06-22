@@ -813,13 +813,7 @@ html[data-menu-open="true"] #mouse .mouse__dot {
     max-width: 46ch;
     color: color-mix(in srgb, var(--market-ink) 88%, transparent);
   }
-  .market-soon__count {
-    color: var(--green);
-    font-family: var(--f-exat);
-    font-size: var(--paragraph-small);
-    font-weight: 700;
-    letter-spacing: 0.01em;
-  }
+  .market-soon__clock { max-width: 34rem; }
   .market-pass {
     position: relative;
     display: grid;
@@ -914,6 +908,20 @@ html[data-menu-open="true"] #mouse .mouse__dot {
   .market-soon__share-wa:hover,
   .market-soon__share-copy:hover {
     transform: translateY(-2px);
+  }
+  .market-soon__form-head {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: var(--space-md);
+  }
+  .market-soon__form-head > p:last-child {
+    max-width: 14ch;
+    color: var(--green);
+    font-size: var(--paragraph-small);
+    line-height: var(--lh-paragraph-small);
+    font-weight: 700;
+    text-align: right;
   }
   .market-soon__phone {
     display: flex;
@@ -1223,6 +1231,8 @@ html[data-menu-open="true"] #mouse .mouse__dot {
     .market-soon__deck { max-width: 34ch; }
     .market-pass { border-radius: 22px; padding: 0.74rem; }
     .market-pass__invite { padding: 1rem; }
+    .market-soon__form-head { display: block; }
+    .market-soon__form-head > p:last-child { margin-top: 0.35rem; max-width: none; text-align: left; }
     .portal-countdown { gap: 0.34rem; }
     .portal-countdown__tile { min-height: 3.9rem; padding: 0.55rem; }
     .portal-countdown__value { font-size: clamp(1.45rem, 8.5vw, 2.2rem); }
