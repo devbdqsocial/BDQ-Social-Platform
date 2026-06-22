@@ -115,7 +115,7 @@ export function ComingSoonClient({ count, event, whatsappEnabled }: { count: num
           <div className="market-soon__topline">
             <span className="kicker">BDQ Social</span>
             <span>{event?.location ?? "Vadodara"}</span>
-            <span>{eventDate}</span>
+            {event ? <span>{eventDate}</span> : null}
           </div>
 
           <SplitReveal as="h1" className="f-exat market-soon__title mt-[var(--space-md)]">
@@ -127,14 +127,14 @@ export function ComingSoonClient({ count, event, whatsappEnabled }: { count: num
           </SplitReveal>
 
           <p className="f-paragraph market-soon__deck mt-[var(--space-md)]">
-            A curated after-dark gathering of brands, food, experiences, music, and performances designed to make the city feel new.
+            A curated after-dark gathering designed to make the city feel new.
           </p>
 
-          <div className="market-soon__mix mt-[var(--space-lg)]" aria-label="Market mix">
-            {CATEGORIES.map((item) => (
-              <span key={item.label}>{item.label}</span>
-            ))}
-          </div>
+          {count > 0 ? (
+            <p className="market-soon__count mt-[var(--space-lg)]">
+              {count.toLocaleString("en-IN")} already requested access
+            </p>
+          ) : null}
         </div>
 
         <aside className="market-pass" aria-label="Request an invite">
@@ -165,10 +165,7 @@ export function ComingSoonClient({ count, event, whatsappEnabled }: { count: num
               </div>
             ) : (
               <form onSubmit={handleSubmit} aria-busy={status === "loading"}>
-                <div className="market-soon__form-head">
-                  <p className="kicker">Request your invite</p>
-                  {count > 0 ? <p>{count.toLocaleString("en-IN")} already requested access</p> : null}
-                </div>
+                <p className="kicker">Request your invite</p>
 
                 <label className="market-soon__phone mt-[var(--space-md)]">
                   <span>+91</span>
