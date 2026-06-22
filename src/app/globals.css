@@ -770,13 +770,17 @@ html[data-menu-open="true"] #mouse .mouse__dot {
     opacity: 0.18;
     transform: translate3d(16%, 8%, 0) rotate(-18deg);
   }
-  .market-backdrop__dots { width: 100%; height: 100%; }
-  .market-backdrop__dot { transform-origin: center; }
-  .market-backdrop__dot--ink { fill: var(--market-ink); }
-  .market-backdrop__dot--green { fill: var(--green); }
-  .market-backdrop__dot--pink { fill: var(--pink); }
-  .market-backdrop__dot--yellow { fill: var(--yellow); }
-  .market-backdrop__dot--blue { fill: var(--light-blue); }
+  .market-backdrop__dot {
+    position: absolute;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    transform-origin: center;
+  }
+  .market-backdrop__dot--ink { background: var(--market-ink); }
+  .market-backdrop__dot--green { background: var(--green); }
+  .market-backdrop__dot--pink { background: var(--pink); }
+  .market-backdrop__dot--yellow { background: var(--yellow); }
+  .market-backdrop__dot--blue { background: var(--light-blue); }
   .market-soon__hero {
     min-height: 100svh;
     display: grid;
@@ -1063,6 +1067,18 @@ html[data-menu-open="true"] #mouse .mouse__dot {
     font-size: clamp(2.3rem, 7vw, 6rem);
     line-height: 0.9;
     white-space: nowrap;
+  }
+  .market-footer {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    color: var(--market-muted);
+    font-size: var(--paragraph-small);
+    padding: var(--space-lg) var(--space-md) calc(var(--space-lg) + env(safe-area-inset-bottom, 0px));
+  }
+  /* Cookie banner clears the customer-app bottom tab bar only where that bar exists (mobile). */
+  @media (max-width: 639px) {
+    .has-bottombar { --cookie-bottom-gap: 3.5rem; }
   }
 
   .portal-countdown {

@@ -243,6 +243,10 @@ export function ComingSoonClient({ count, event, whatsappEnabled }: { count: num
           ))}
         </div>
       </div>
+
+      <footer className="market-footer relative z-10">
+        <p>Crafted with Love ❤️ By Digitanomics LLP · © 2026</p>
+      </footer>
     </main>
   );
 }

@@ -61,19 +61,23 @@ export function MarketBackdrop() {
       <FestivalScene tone="gold" className="market-backdrop__scene" />
       <div className="market-backdrop__sweep market-backdrop__sweep--one" />
       <div className="market-backdrop__sweep market-backdrop__sweep--two" />
-      <svg className="market-backdrop__dots" viewBox="0 0 100 100" preserveAspectRatio="none">
+      <div className="market-backdrop__dots">
         {DOTS.map((dot, i) => (
-          <circle
+          <span
             key={i}
             className={`market-backdrop__dot ${toneClass[dot.tone]}`}
-            cx={dot.x}
-            cy={dot.y}
-            r={dot.r}
-            opacity={dot.opacity}
-            style={{ animationDelay: dot.delay }}
+            style={{
+              left: `${dot.x}%`,
+              top: `${dot.y}%`,
+              width: `${dot.r * 2}%`,
+              marginLeft: `${-dot.r}%`,
+              marginTop: `${-dot.r}%`,
+              opacity: dot.opacity,
+              animationDelay: dot.delay,
+            }}
           />
         ))}
-      </svg>
+      </div>
     </div>
   );
 }

@@ -31,14 +31,14 @@ export function CookieBanner() {
     <div
       role="dialog"
       aria-label="Cookie notice"
-      className="fixed left-[var(--space-lg)] z-[80] flex max-w-[calc(100vw-2*var(--space-lg))] items-center gap-[var(--space-md)] rounded-full py-[0.5em] pl-[1.1em] pr-[0.7em] shadow-[0_10px_30px_rgba(0,0,0,0.3)] bottom-[calc(var(--space-lg)+env(safe-area-inset-bottom,0px)+3.5rem)] sm:bottom-[calc(var(--space-lg)+env(safe-area-inset-bottom,0px))]"
+      className="fixed left-[var(--space-md)] right-[var(--space-md)] z-[80] flex max-w-[calc(100vw-2*var(--space-md))] items-center gap-[var(--space-md)] rounded-2xl py-[0.5em] pl-[1.1em] pr-[0.7em] shadow-[0_10px_30px_rgba(0,0,0,0.3)] bottom-[calc(var(--space-lg)+env(safe-area-inset-bottom,0px)+var(--cookie-bottom-gap,0px))] sm:left-[var(--space-lg)] sm:right-auto sm:rounded-full"
       style={{
         background: "var(--color-ink)",
         color: "var(--color-cream-100)",
         fontSize: "var(--paragraph-small)",
       }}
     >
-      <p className="whitespace-nowrap">
+      <p className="sm:whitespace-nowrap">
         🍪 Cookies keep BDQ working ·{" "}
         <Link href="/privacy" data-cursor className="underline opacity-80 hover:opacity-100">
           Privacy
