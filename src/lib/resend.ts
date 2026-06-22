@@ -20,6 +20,8 @@ export function resendConfigured(): boolean {
 export interface EmailAttachment {
   filename: string;
   content: Buffer | string;
+  contentType?: string;
+  contentId?: string;
 }
 
 async function emailFrom(): Promise<string> {

@@ -33,8 +33,11 @@ export default async function CompSheetPage({ params }: { params: Promise<{ orde
       <div className="grid gap-4 sm:grid-cols-2">
         {tickets.map(({ t, qr }) => (
           <div key={t.id} className="flex items-center gap-4 rounded-lg border border-border p-4">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={qr} alt="Ticket QR" className="size-28 shrink-0 rounded-lg bg-white p-1.5" />
+            <div className="shrink-0 rounded-xl border bg-background p-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={qr} alt="Ticket QR" className="size-28 rounded-md bg-white" />
+              <p className="mt-1 text-center text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">Scan</p>
+            </div>
             <div className="min-w-0 text-sm">
               <p className="font-medium">{t.ticketType.name}</p>
               <p className="text-muted-foreground">{t.holderName ?? "Guest"}</p>

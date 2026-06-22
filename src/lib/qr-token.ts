@@ -11,6 +11,12 @@ import { env } from "@/lib/env";
 
 /** Allow check-in up to this long after the event ends, then the token is dead. */
 const GRACE_MS = 12 * 60 * 60 * 1000;
+export const TICKET_QR_OPTIONS = {
+  errorCorrectionLevel: "H",
+  margin: 2,
+  width: 360,
+  color: { dark: "#01065B", light: "#FFFFFF" },
+} as const;
 
 const defaultSecret = () => {
   const s = env.QR_TOKEN_SECRET ?? env.SESSION_SECRET;
@@ -58,5 +64,9 @@ export function verifyTicketToken(
 }
 
 export function toQrDataUrl(token: string): Promise<string> {
-  return QRCode.toDataURL(token, { errorCorrectionLevel: "M", margin: 1, width: 320 });
+  return QRCode.toDataURL(token, TICKET_QR_OPTIONS);
+}
+
+export function toQrBuffer(token: string): Promise<Buffer> {
+  return QRCode.toBuffer(token, TICKET_QR_OPTIONS);
 }

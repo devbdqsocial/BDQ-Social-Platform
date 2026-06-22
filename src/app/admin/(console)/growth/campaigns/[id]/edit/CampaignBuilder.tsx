@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input, Textarea, Select } from "@/components/ui/input";
 import { toast } from "sonner";
+import { campaignEmailHtml } from "@/lib/email-template";
 import { 
   Tv, 
   Smartphone, 
@@ -245,6 +246,10 @@ export function CampaignBuilder({ campaign: initialCampaign }: { campaign: Campa
     { name: "Failed", value: failedVal, color: "#ef4444" },
     { name: "Pending", value: pendingVal, color: "#6b7280" }
   ];
+  const emailPreviewBody = body
+    ? resolvePreviewVariables(body)
+    : `<p style="margin:0;color:#626682;font-style:italic">Type message text to see live rendering.</p>`;
+  const emailPreviewHtml = campaignEmailHtml({ body: emailPreviewBody, unsubscribeUrl: "#" });
 
   return (
     <div className="grid gap-6 lg:grid-cols-5 items-start">
@@ -673,18 +678,12 @@ export function CampaignBuilder({ campaign: initialCampaign }: { campaign: Campa
                   </div>
                 </div>
 
-                {/* Email Body Iframe Sandbox Simulation */}
-                <div className="bg-white text-gray-800 p-4 h-[300px] overflow-y-auto text-sm">
-                  {body ? (
-                    <div 
-                      dangerouslySetInnerHTML={{ 
-                        __html: resolvePreviewVariables(body) 
-                      }} 
-                    />
-                  ) : (
-                    <span className="text-xs text-muted-foreground italic">Type message text to see live rendering.</span>
-                  )}
-                </div>
+                <iframe
+                  title="Email preview"
+                  srcDoc={emailPreviewHtml}
+                  sandbox=""
+                  className="h-[360px] w-full bg-white"
+                />
               </div>
             ) : (
               /* WhatsApp Device Simulator (iOS messaging bubble layout) */

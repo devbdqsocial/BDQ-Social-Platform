@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { signTicketToken, verifyTicketToken } from "./qr-token";
+import { signTicketToken, toQrBuffer, toQrDataUrl, verifyTicketToken } from "./qr-token";
 
 const SECRET = "test-secret";
 
@@ -38,5 +38,14 @@ describe("ticket token", () => {
   it("treats a token without an expiry as non-expiring", () => {
     const token = signTicketToken("t1", SECRET);
     expect(verifyTicketToken(token, SECRET)).toEqual({ valid: true, ticketId: "t1" });
+  });
+
+  it("generates scannable QR image outputs without changing the token", async () => {
+    const token = signTicketToken("ticket_123", SECRET);
+    const [dataUrl, buffer] = await Promise.all([toQrDataUrl(token), toQrBuffer(token)]);
+
+    expect(dataUrl).toMatch(/^data:image\/png;base64,/);
+    expect(buffer.subarray(1, 4).toString("ascii")).toBe("PNG");
+    expect(verifyTicketToken(token, SECRET)).toEqual({ valid: true, ticketId: "ticket_123" });
   });
 });

@@ -5,9 +5,8 @@ import { icsHref } from "@/lib/ics";
 import { TicketShare } from "@/components/tickets/TicketShare";
 
 /**
- * Wallet flip card (delight.md §4). Front = QR + essentials; back = details, add-to-calendar,
- * share, terms. Flips on tap/Enter (3D rotateY); reduced-motion = crossfade. Both faces stay in
- * the DOM (a11y), the hidden one is `aria-hidden`. QR has explicit dims (no CLS — design-debt D20).
+ * Wallet flip card (delight.md section 4). Front = QR + essentials; back = details,
+ * add-to-calendar, share, terms. Flips on tap/Enter; reduced-motion = crossfade.
  */
 
 export interface TicketCardData {
@@ -38,14 +37,17 @@ export function TicketCard({ d }: { d: TicketCardData }) {
 
   const flip = () => {
     setFlipped((f) => !f);
-    if (hint) { setHint(false); sessionStorage.setItem("ticketHint", "1"); }
+    if (hint) {
+      setHint(false);
+      sessionStorage.setItem("ticketHint", "1");
+    }
   };
 
   const used = d.status === "CHECKED_IN";
   const start = new Date(d.startsAtIso);
   const dateLine = start.toLocaleString("en-IN", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
-  const ics = icsHref({ uid: d.ticketId, title: d.eventName, start, location: d.location ?? undefined, url: d.eventUrl, description: `Your ${d.typeName} ticket — admits ${d.admitCount}.` });
+  const ics = icsHref({ uid: d.ticketId, title: d.eventName, start, location: d.location ?? undefined, url: d.eventUrl, description: `Your ${d.typeName} ticket - admits ${d.admitCount}.` });
 
   const faceBase = "absolute inset-0 flex gap-[var(--space-xl)] p-[var(--space-xl)]";
   const t = reduced ? "opacity .15s ease" : "transform .6s var(--ease-swift, cubic-bezier(.4,0,.2,1))";
@@ -59,13 +61,13 @@ export function TicketCard({ d }: { d: TicketCardData }) {
         aria-label={flipped ? "Show QR code" : "Show ticket details"}
         data-cursor
         className="relative block w-full text-left"
-        style={{ minHeight: QR + 48 }}
+        style={{ minHeight: QR + 88 }}
       >
         <div
           className="relative h-full w-full"
           style={{ transformStyle: reduced ? undefined : "preserve-3d", transition: t, transform: reduced ? undefined : `rotateY(${flipped ? 180 : 0}deg)` }}
         >
-          {/* FRONT — QR + essentials */}
+          {/* FRONT - QR + essentials */}
           <div
             aria-hidden={flipped}
             className={`gama-1 bg-1 paint relative items-center overflow-hidden rounded-[var(--radius-lg)] ${faceBase}`}
@@ -73,19 +75,25 @@ export function TicketCard({ d }: { d: TicketCardData }) {
           >
             <div className="min-w-0 flex-1">
               <p className="f-exat f-h42">{d.eventName}</p>
-              <p className="f-paragraph-small mt-[var(--space-xs)] opacity-70">{d.typeName} · {dateLine}</p>
+              <p className="f-paragraph-small mt-[var(--space-xs)] opacity-70">{d.typeName} - {dateLine}</p>
               <div className="mt-[var(--space-md)] flex flex-wrap items-center gap-[var(--space-md)]">
                 <span className={used ? "badge-rpa badge-rpa--muted" : "badge-rpa"}>{used ? "Checked in" : "Valid"}</span>
                 {d.admitCount > 1 && <span className="badge-rpa">Admits {d.admitCount}</span>}
               </div>
             </div>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={d.qr} alt="Ticket QR" width={QR} height={QR} className="shrink-0 rounded-lg bg-white p-1.5" style={{ width: QR, height: QR }} />
-            <span aria-hidden className="absolute bottom-[var(--space-sm)] right-[var(--space-md)] opacity-50">⟲</span>
+            <div className="shrink-0 rounded-2xl border-2 border-[#868EFF] bg-white p-2 shadow-[0_12px_28px_rgba(1,6,91,0.18)]">
+              <div className="rounded-xl border border-[#01065B]/15 bg-white p-1">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={d.qr} alt="Ticket QR" width={QR} height={QR} className="block rounded-lg bg-white" style={{ width: QR, height: QR }} />
+              </div>
+              <p className="mt-1 text-center text-[10px] font-black uppercase tracking-[0.12em] text-[#01065B]">Scan at entry</p>
+              <p className="text-center text-[10px] font-bold text-[#626682]">#{d.ticketId.slice(0, 8)}</p>
+            </div>
+            <span aria-hidden className="absolute bottom-[var(--space-sm)] right-[var(--space-md)] opacity-50">Flip</span>
             {hint && <span className="kicker absolute bottom-[var(--space-sm)] left-[var(--space-md)] opacity-60">Tap for details</span>}
           </div>
 
-          {/* BACK — details + actions */}
+          {/* BACK - details + actions */}
           <div
             aria-hidden={!flipped}
             className={`surface-2 paint flex-col justify-between rounded-[var(--radius-lg)] ${faceBase}`}
@@ -95,7 +103,7 @@ export function TicketCard({ d }: { d: TicketCardData }) {
               <p className="kicker opacity-70">Order #{d.orderId.slice(0, 8)}</p>
               {d.holderPhone && <p className="f-paragraph-small opacity-80">Holder {d.holderPhone}</p>}
               {d.location && <p className="f-paragraph-small opacity-80">{d.location}</p>}
-              <p className="f-paragraph-small opacity-60">Gates open in the late afternoon — show this QR at entry.</p>
+              <p className="f-paragraph-small opacity-60">Gates open in the late afternoon - show this QR at entry.</p>
             </div>
             <div className="flex flex-wrap items-center gap-[var(--space-lg)]" onClick={(e) => e.stopPropagation()}>
               <a href={ics} download={`${d.eventName.replace(/\s+/g, "-").toLowerCase()}.ics`} className="f-paragraph-small f-bold t-upper link-underline" style={{ letterSpacing: "0.06em" }}>Add to calendar</a>

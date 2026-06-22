@@ -1,11 +1,11 @@
 import { fmtDateTime, fmtDateFull } from "@/lib/date-formats";
 import "server-only";
-import QRCode from "qrcode";
 import { db } from "@/server/db";
 import type { EmailAttachment } from "@/lib/resend";
-import { ticketEmailHtml, ticketEmailSubject } from "@/lib/email-template";
+import { financeDigestEmailHtml, reminderEmailHtml, ticketEmailHtml, ticketEmailSubject } from "@/lib/email-template";
 import { getEventPnl } from "@/server/finance/pnl";
 import { formatPaise } from "@/lib/utils";
+import { toQrBuffer } from "@/lib/qr-token";
 
 export interface BuiltEmail {
   subject: string;
@@ -24,24 +24,30 @@ export async function buildTicketEmail(orderId: string): Promise<BuiltEmail | nu
   });
   if (!order || order.tickets.length === 0) return null;
 
-  const when = fmtDateTime(order.event.startsAt);
-
-  const attachments = await Promise.all(
-    order.tickets.map(async (t, i) => ({
-      filename: `ticket-${i + 1}.png`,
-      content: await QRCode.toBuffer(t.qrToken, { width: 320, margin: 1 }),
-    })),
-  );
+  const ticketsUrl = `https://${process.env.APP_BASE_DOMAIN ?? "bdqsocial.com"}/tickets`;
+  const tickets = order.tickets.map((t, i) => ({
+    ticket: t,
+    ref: t.id.slice(0, 8),
+    cid: `ticket-${i + 1}-${t.id}@bdqsocial`,
+  }));
 
   return {
     subject: ticketEmailSubject(order.event.name),
     html: ticketEmailHtml({
       eventName: order.event.name,
-      when,
+      when: fmtDateTime(order.event.startsAt),
       location: order.event.location,
-      tickets: order.tickets.map((t) => ({ type: t.ticketType.name, ref: t.id.slice(0, 8) })),
+      tickets: tickets.map(({ ticket, ref, cid }) => ({ type: ticket.ticketType.name, ref, qrCid: cid })),
+      ticketsUrl,
     }),
-    attachments,
+    attachments: await Promise.all(
+      tickets.map(async ({ ticket, cid }) => ({
+        filename: `${cid}.png`,
+        content: await toQrBuffer(ticket.qrToken),
+        contentType: "image/png",
+        contentId: cid,
+      })),
+    ),
   };
 }
 
@@ -50,21 +56,20 @@ export async function buildFinanceDigestEmail(eventId: string): Promise<BuiltEma
   const event = await db.event.findUnique({ where: { id: eventId }, select: { name: true } });
   if (!event) return null;
   const p = await getEventPnl(eventId);
-  const row = (l: string, v: string) =>
-    `<tr><td style="padding:4px 12px 4px 0">${l}</td><td style="padding:4px 0;text-align:right;font-weight:600">${v}</td></tr>`;
 
   return {
-    subject: `Finance digest — ${event.name}`,
-    html: `<div style="font-family:sans-serif;max-width:520px"><h2>${event.name} — P&L snapshot</h2>
-<table style="width:100%;border-collapse:collapse;font-size:14px">
-${row("Net revenue", formatPaise(p.netRevenue))}
-${row("Gateway fees", `−${formatPaise(p.totalFees)}`)}
-${row("Expenses", `−${formatPaise(p.expensesTotal)}`)}
-${row("Net profit", formatPaise(p.netProfit))}
-${row("Margin", `${(p.marginPct * 100).toFixed(1)}%`)}
-${row("ROI", p.roiPct == null ? "—" : `${(p.roiPct * 100).toFixed(1)}%`)}
-</table>
-<p style="font-size:12px;color:#666">Revenue is net of Razorpay fees. Open the console for the full breakdown.</p></div>`,
+    subject: `Finance digest - ${event.name}`,
+    html: financeDigestEmailHtml({
+      eventName: event.name,
+      rows: [
+        { label: "Net revenue", value: formatPaise(p.netRevenue), emphasis: true },
+        { label: "Gateway fees", value: `-${formatPaise(p.totalFees)}` },
+        { label: "Expenses", value: `-${formatPaise(p.expensesTotal)}` },
+        { label: "Net profit", value: formatPaise(p.netProfit), emphasis: true },
+        { label: "Margin", value: `${(p.marginPct * 100).toFixed(1)}%` },
+        { label: "ROI", value: p.roiPct == null ? "-" : `${(p.roiPct * 100).toFixed(1)}%` },
+      ],
+    }),
     attachments: [],
   };
 }
@@ -74,15 +79,16 @@ export async function buildReminderEmail(eventId: string): Promise<BuiltEmail | 
   const event = await db.event.findUnique({ where: { id: eventId }, select: { name: true, location: true, startsAt: true } });
   if (!event) return null;
 
-  const when = fmtDateFull(event.startsAt);
   const ticketsUrl = `https://${process.env.APP_BASE_DOMAIN ?? "bdqsocial.com"}/tickets`;
 
   return {
-    subject: `See you soon — ${event.name}`,
-    html: `<div style="font-family:sans-serif;max-width:480px"><h2>${event.name} is almost here</h2>
-<p><strong>${when}</strong>${event.location ? ` · ${event.location}` : ""}</p>
-<p>Have your QR ticket ready at the gate.</p>
-<p><a href="${ticketsUrl}" style="display:inline-block;background:#01065B;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none">View my tickets</a></p></div>`,
+    subject: `See you soon - ${event.name}`,
+    html: reminderEmailHtml({
+      eventName: event.name,
+      when: fmtDateFull(event.startsAt),
+      location: event.location,
+      ticketsUrl,
+    }),
     attachments: [],
   };
 }

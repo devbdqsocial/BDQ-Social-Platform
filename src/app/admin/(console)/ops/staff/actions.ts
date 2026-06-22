@@ -8,6 +8,7 @@ import { upsertStaff, removeStaffAccess, revokeStaffSessions, StaffEmailTakenErr
 import { isStaffPreset, type StaffPreset } from "@/lib/staff-presets";
 import { createInviteToken, inviteUrl } from "@/server/auth/invite";
 import { resendConfigured, sendEmail } from "@/lib/resend";
+import { staffInviteEmailHtml } from "@/lib/email-template";
 
 /**
  * Saves or updates a teammate's user account in the system.
@@ -86,10 +87,7 @@ export async function inviteStaffAction(formData: FormData): Promise<Result<null
     await sendEmail({
       to: email,
       subject: "You're invited to the BDQ Social admin portal",
-      html: `<p>You've been added to the BDQ Social admin portal.</p>
-        <p>Set your password and enable two-factor in one step:</p>
-        <p><a href="${url}">${url}</a></p>
-        <p>This link expires in 72 hours.</p>`,
+      html: staffInviteEmailHtml({ url, role }),
     });
     revalidatePath("/admin/ops/staff");
   });
