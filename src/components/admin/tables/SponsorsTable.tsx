@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import type { listSponsors, SponsorWithFinance } from "@/server/sponsors/service";
+import type { SponsorWithFinance } from "@/server/sponsors/service";
 import Image from "next/image";
 import Link from "next/link";
 import { DataTable } from "@/components/data-table/data-table";

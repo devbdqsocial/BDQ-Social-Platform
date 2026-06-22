@@ -80,7 +80,7 @@ describe.runIf(process.env.RUN_DB_TESTS === "1")("Event Archiving Integration", 
       update: {},
       create: { id: "customer_seed", role: "CUSTOMER", email: "customer@example.com", name: "Demo Customer" }
     });
-    const vendor = await db.user.upsert({
+    await db.user.upsert({
       where: { id: "vendor_seed" },
       update: {},
       create: { id: "vendor_seed", role: "VENDOR", name: "Demo Vendor" }

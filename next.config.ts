@@ -20,9 +20,15 @@ const securityHeaders = [
 const apiCsp = { key: "Content-Security-Policy", value: enforcedCsp };
 const devCsp = { key: "Content-Security-Policy-Report-Only", value: enforcedCsp };
 
+const immutable = { key: "Cache-Control", value: "public, max-age=31536000, immutable" };
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [{ protocol: "https", hostname: "res.cloudinary.com" }],
+  },
+  // Tree-shake big barrel imports (icons + chart/date libs) so admin pages ship less JS.
+  experimental: {
+    optimizePackageImports: ["lucide-react", "recharts", "date-fns", "radix-ui"],
   },
   // Next 15 streams metadata into <body> for dynamic pages; head-only parsers (Lighthouse — whose
   // UA is a plain Moto G/Mac Chrome string no bot regex can catch — plus naive SEO/preview tools)
@@ -30,12 +36,18 @@ const nextConfig: NextConfig = {
   // costs nothing: match every UA to restore classic behavior.
   htmlLimitedBots: /./,
   async headers() {
+    // Hashed, content-addressed assets can be cached forever by the browser/CDN.
+    const immutableAssets = [
+      { source: "/_next/static/:path*", headers: [immutable] },
+      { source: "/assets/:path*", headers: [immutable] },
+    ];
     return isProd
       ? [
           { source: "/:path*", headers: securityHeaders },
           { source: "/api/:path*", headers: [apiCsp] },
+          ...immutableAssets,
         ]
-      : [{ source: "/:path*", headers: [...securityHeaders, devCsp] }];
+      : [{ source: "/:path*", headers: [...securityHeaders, devCsp] }, ...immutableAssets];
   },
 };
 

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { gsap } from "@/lib/gsap";
 import { WordmarkWall } from "./WordmarkWall";
 
 const SERVICES: { n: string; title: string; body: string; gama: string }[] = [

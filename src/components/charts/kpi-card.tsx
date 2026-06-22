@@ -1,9 +1,13 @@
 "use client";
 
-import { Area, AreaChart, ResponsiveContainer } from "recharts";
+import dynamic from "next/dynamic";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+
+// recharts (~150KB) is fetched only when a KPI actually has a trend to draw — keeps the card,
+// used on 10+ admin pages, light.
+const Sparkline = dynamic(() => import("./Sparkline").then((m) => m.Sparkline), { ssr: false });
 
 export interface KpiCardProps {
   label: string;
@@ -32,11 +36,7 @@ export function KpiCard({ label, value, deltaPct, trend, sub }: KpiCardProps) {
         {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
         {series.length > 1 && (
           <div className="h-8 w-20">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={series} margin={{ top: 2, bottom: 2, left: 0, right: 0 }}>
-                <Area type="monotone" dataKey="v" stroke="var(--chart-1)" fill="var(--chart-1)" fillOpacity={0.15} strokeWidth={1.5} isAnimationActive={false} />
-              </AreaChart>
-            </ResponsiveContainer>
+            <Sparkline data={series} />
           </div>
         )}
       </div>

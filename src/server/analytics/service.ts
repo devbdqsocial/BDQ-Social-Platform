@@ -1,10 +1,11 @@
 import "server-only";
+import { unstable_cache } from "next/cache";
 import { db } from "@/server/db";
 import { bucketByDay, tally } from "@/lib/analytics-buckets";
 
 /** Read-only aggregates for the admin analytics dashboard. Optional per-event scope. Money = paise. */
 
-export async function getAnalytics(eventId?: string) {
+async function computeAnalytics(eventId?: string) {
   const orderWhere = eventId ? { eventId } : {};
   const paidWhere = { ...orderWhere, status: "PAID" as const };
   const ticketWhere = eventId ? { order: { eventId } } : {};
@@ -37,8 +38,9 @@ export async function getAnalytics(eventId?: string) {
     db.ticket.aggregate({ _sum: { admitCount: true }, where: ticketWhere }).then((a) => a._sum.admitCount ?? 0),
     db.checkIn.aggregate({ _sum: { admitted: true }, where: { direction: "IN", ticket: ticketWhere } }).then((a) => a._sum.admitted ?? 0),
     db.order.groupBy({ by: ["status"], where: orderWhere, _count: { _all: true } }),
-    db.order.findMany({ where: { ...paidWhere, createdAt: { gte: since } }, select: { createdAt: true, total: true } }),
-    db.order.findMany({ where: paidWhere, select: { userId: true, utm: true } }),
+    db.order.findMany({ where: { ...paidWhere, createdAt: { gte: since } }, select: { createdAt: true, total: true }, take: 20000 }),
+    // Cap the customer/UTM scan so a large order table can't blow up the dashboard (most-recent paid orders).
+    db.order.findMany({ where: paidWhere, select: { userId: true, utm: true }, orderBy: { createdAt: "desc" }, take: 50000 }),
     db.order.groupBy({ by: ["discountSource"], where: paidWhere, _count: { _all: true }, _sum: { discount: true } }),
     db.ticketType.findMany({
       where: eventId ? { eventId } : {},
@@ -182,3 +184,14 @@ export async function getAnalytics(eventId?: string) {
     },
   };
 }
+
+/**
+ * Cached analytics (60s, keyed by eventId). Non-sensitive aggregates shared by all admins; the page
+ * still runs requireAdmin/requirePermission per-request before calling this. Saves ~20 queries on
+ * repeat dashboard/analytics navigations.
+ */
+export const getAnalytics = unstable_cache(
+  (eventId?: string) => computeAnalytics(eventId),
+  ["admin-analytics"],
+  { revalidate: 60, tags: ["analytics"] },
+);

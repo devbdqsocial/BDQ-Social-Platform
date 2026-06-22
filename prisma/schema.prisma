@@ -483,6 +483,7 @@ model Payment {
 
   @@index([orderId])
   @@index([createdAt]) // reconciliation/date-range queries
+  @@index([status, createdAt]) // admin finance aggregates (captured payments by date)
 }
 
 model Coupon {
@@ -626,6 +627,7 @@ model CheckIn {
   scannedAt    DateTime         @default(now())
 
   @@index([ticketId])
+  @@index([direction, scannedAt]) // dashboard gate/time-range check-in aggregates
 }
 
 model Sponsor {

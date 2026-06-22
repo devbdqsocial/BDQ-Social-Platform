@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { db } from "@/server/db";
 
@@ -15,15 +16,16 @@ export interface ActiveEventLite {
   endsAt: Date;
 }
 
-export function listAdminEvents(): Promise<ActiveEventLite[]> {
+/** Request-scoped: the layout + every event-scoped page reuse one query per render. */
+export const listAdminEvents = cache((): Promise<ActiveEventLite[]> => {
   return db.event.findMany({
     orderBy: { startsAt: "desc" },
     select: { id: true, name: true, slug: true, status: true, startsAt: true, endsAt: true },
   });
-}
+});
 
-/** Resolve the active event from the cookie, else fall back to LIVE → upcoming → latest. */
-export async function getActiveEvent(): Promise<{ active: ActiveEventLite | null; events: ActiveEventLite[] }> {
+/** Resolve the active event from the cookie, else fall back to LIVE → upcoming → latest. (deduped per request) */
+export const getActiveEvent = cache(async (): Promise<{ active: ActiveEventLite | null; events: ActiveEventLite[] }> => {
   const events = await listAdminEvents();
   if (events.length === 0) return { active: null, events };
   const id = (await cookies()).get(ACTIVE_EVENT_COOKIE)?.value;
@@ -35,7 +37,7 @@ export async function getActiveEvent(): Promise<{ active: ActiveEventLite | null
     events.find((e) => e.status === "PUBLISHED") ??
     events[0];
   return { active: byCookie ?? fallback, events };
-}
+});
 
 /** Convenience: the active event id (or null) for service queries. */
 export async function getActiveEventId(): Promise<string | null> {

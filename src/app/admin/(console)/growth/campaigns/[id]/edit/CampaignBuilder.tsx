@@ -29,7 +29,9 @@ import {
   Heading1,
   Heading2
 } from "lucide-react";
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
+import dynamic from "next/dynamic";
+
+const DeliveryDonut = dynamic(() => import("@/components/charts/DeliveryDonut").then((m) => m.DeliveryDonut), { ssr: false });
 
 interface ContactItem {
   name: string | null;
@@ -569,24 +571,7 @@ export function CampaignBuilder({ campaign: initialCampaign }: { campaign: Campa
             {/* Recharts Pie Donut visualization */}
             {campaign.sentCount > 0 && (
               <div className="h-44 w-full flex items-center justify-center relative">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={chartData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={45}
-                      outerRadius={60}
-                      paddingAngle={4}
-                      dataKey="value"
-                    >
-                      {chartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
+                <DeliveryDonut data={chartData} />
                 <div className="absolute flex flex-col items-center justify-center">
                   <span className="text-2xs text-muted-foreground">Deliverability</span>
                   <span className="text-base font-bold">

@@ -3,7 +3,7 @@ import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Breadcrumbs } from "./breadcrumbs";
 import { EventSwitcher } from "./event-switcher";
-import { CommandPalette } from "./command-palette";
+import { CommandPaletteLoader } from "./command-palette-loader";
 import { NotificationsBell } from "./notifications-bell";
 
 interface Ev { id: string; name: string; status: string }
@@ -25,7 +25,7 @@ export function AdminHeader({
       <div className="hidden min-w-0 md:block"><Breadcrumbs /></div>
       <div className="ml-auto flex items-center gap-2">
         <EventSwitcher active={active} events={events} />
-        <CommandPalette allowed={allowed} />
+        <CommandPaletteLoader allowed={allowed} />
         <NotificationsBell count={notifCount} items={notifItems} />
         <ThemeToggle />
       </div>

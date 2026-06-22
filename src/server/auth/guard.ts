@@ -3,6 +3,8 @@
  * Session resolution is stubbed in P0; Firebase verify + httpOnly session land in slice 2.
  */
 
+import { cache } from "react";
+
 export type Role = "CUSTOMER" | "VENDOR" | "STAFF" | "ADMIN" | "SUPER_ADMIN";
 export type Permission =
   | "CHECKIN"
@@ -22,11 +24,16 @@ export interface Session {
   permissions: Permission[];
 }
 
-/** Resolve the current session from the signed httpOnly cookie. */
-export async function getSession(): Promise<Session | null> {
+/**
+ * Resolve the current session from the signed httpOnly cookie.
+ * Request-scoped memoization (React cache): the layout + page guards share ONE read per request,
+ * so the privileged tokenVersion DB check runs once per request instead of 2–3×. Still per-request —
+ * the next request re-reads, so tokenVersion-based revocation stays instant.
+ */
+export const getSession = cache(async (): Promise<Session | null> => {
   const { readSession } = await import("./session");
   return readSession();
-}
+});
 
 /** Fixed ids of the seeded accounts (see prisma/seed.mjs). */
 export const SEED_ADMIN_ID = "admin_seed";

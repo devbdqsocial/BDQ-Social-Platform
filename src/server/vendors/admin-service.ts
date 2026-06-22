@@ -10,6 +10,7 @@ import type { Session } from "@/server/auth/guard";
 export function listVendors() {
   return db.vendorProfile.findMany({
     orderBy: { createdAt: "desc" },
+    take: 1000,
     include: {
       user: { select: { phone: true, email: true } },
       _count: { select: { bookings: true } },

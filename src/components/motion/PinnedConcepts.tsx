@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { gsap } from "@/lib/gsap";
 
 const STEPS: { word: string; body: string; gama: string }[] = [
   { word: "Arrive", body: "Gates open in the late afternoon. Golden hour, easy energy, the night ahead of you.", gama: "gama-1 bg-1" },

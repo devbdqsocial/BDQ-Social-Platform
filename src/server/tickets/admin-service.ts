@@ -3,10 +3,13 @@ import { db } from "@/server/db";
 
 /** Admin read-views over orders + tickets. Read-only; money is integer paise. */
 
+// Bounded to the most-recent 1000 to avoid loading an unbounded result set into the admin table.
+// (Server-side paging is the follow-up if an event exceeds this; realistic events are far smaller.)
 export function listOrdersForEvent(eventId: string) {
   return db.order.findMany({
     where: { eventId },
     orderBy: { createdAt: "desc" },
+    take: 1000,
     select: {
       id: true,
       status: true,
@@ -38,6 +41,7 @@ export function listTicketsForEvent(eventId: string) {
   return db.ticket.findMany({
     where: { order: { eventId } },
     orderBy: { createdAt: "desc" },
+    take: 1000,
     select: {
       id: true,
       holderName: true,
