@@ -8,7 +8,7 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { TotpEnroll } from "@/components/auth/TotpEnroll";
 import { setInvitePassword, startInviteEnrollment, confirmInviteEnrollment } from "./actions";
 
-/** Two-step invite: set password → enroll 2FA → session created → dashboard. */
+/** Two-step invite: set password, enroll 2FA, save backup codes, then sign in. */
 export function AcceptInvite({ token, needsPassword }: { token: string; needsPassword: boolean }) {
   const router = useRouter();
   const [step, setStep] = useState<"password" | "2fa">(needsPassword ? "password" : "2fa");
@@ -52,8 +52,8 @@ export function AcceptInvite({ token, needsPassword }: { token: string; needsPas
       start={() => startInviteEnrollment(token)}
       confirm={(code) => confirmInviteEnrollment(token, code)}
       autoStart
-      finalCta="Continue to dashboard"
-      onDone={() => { router.push("/admin/dashboard"); router.refresh(); }}
+      finalCta="Go to sign in"
+      onDone={() => { router.replace("/admin/login"); router.refresh(); }}
     />
   );
 }

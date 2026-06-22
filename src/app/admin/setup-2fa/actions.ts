@@ -4,7 +4,7 @@ import QRCode from "qrcode";
 import { db } from "@/server/db";
 import { generateSecret, otpauthUrl, verifyCode } from "@/lib/totp";
 import { generateBackupCodes } from "@/lib/backup-codes";
-import { readSetupUserId, createSession, clearSetupCookie } from "@/server/auth/session";
+import { readSetupUserId, clearSetupCookie } from "@/server/auth/session";
 
 /** First-login / post-invite 2FA setup, authorised by the short-lived `bdq_setup` cookie (not a session). */
 
@@ -28,7 +28,7 @@ export async function confirmSetup(code: string): Promise<{ backupCodes: string[
   const userId = await setupUser();
   const user = await db.user.findUnique({
     where: { id: userId },
-    select: { totpPendingSecret: true, role: true, permissions: true },
+    select: { totpPendingSecret: true },
   });
   if (!user?.totpPendingSecret) throw new Error("Start setup again — no pending authenticator.");
   if (!verifyCode(code.trim(), user.totpPendingSecret)) {
@@ -39,8 +39,9 @@ export async function confirmSetup(code: string): Promise<{ backupCodes: string[
     where: { id: userId },
     data: { totpSecret: user.totpPendingSecret, totpEnabled: true, totpPendingSecret: null, recoveryCodes: hashes },
   });
-  // Now grant the real session and drop the setup ticket.
-  await createSession({ userId, role: user.role, permissions: user.permissions });
-  await clearSetupCookie();
   return { backupCodes: plain };
+}
+
+export async function finishSetup(): Promise<void> {
+  await clearSetupCookie();
 }

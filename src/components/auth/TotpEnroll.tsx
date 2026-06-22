@@ -6,14 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { digitsCapped } from "@/lib/validators";
+import { BackupCodesReveal } from "@/components/auth/BackupCodesReveal";
 
 type StartResult = { secret: string; otpauthUrl: string; qrDataUrl: string };
 
 /**
- * Self-service authenticator enrolment, reused by the profile Security panel, the invite accept page, and
- * first-login setup. Flow: fetch a QR (start) → user scans → confirm a current code → reveal one-time
- * backup codes. `start`/`confirm` are context-specific (profile vs invite vs setup); this component only
- * drives the UI.
+ * Self-service authenticator enrollment, reused by profile security, invite acceptance,
+ * and first-login setup.
  */
 export function TotpEnroll({
   start,
@@ -24,7 +23,7 @@ export function TotpEnroll({
 }: {
   start: () => Promise<StartResult>;
   confirm: (code: string) => Promise<{ backupCodes: string[] }>;
-  onDone: () => void;
+  onDone: () => void | Promise<void>;
   finalCta?: string;
   autoStart?: boolean;
 }) {
@@ -62,7 +61,7 @@ export function TotpEnroll({
       setCodes(backupCodes);
       setPhase("done");
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "That code didn't match.");
+      setErr(e instanceof Error ? e.message : "That code did not match.");
     } finally {
       setBusy(false);
     }
@@ -72,27 +71,15 @@ export function TotpEnroll({
     return (
       <div className="grid gap-3">
         {err && <p className="text-sm text-destructive">{err}</p>}
-        <Button onClick={begin} disabled={busy}>{busy ? "Starting…" : "Enable two-factor"}</Button>
+        <Button onClick={begin} disabled={busy}>{busy ? "Starting..." : "Enable two-factor"}</Button>
       </div>
     );
   }
 
   if (phase === "done") {
-    return (
-      <div className="grid gap-3">
-        <p className="text-sm font-medium">Save your backup codes</p>
-        <p className="text-xs text-muted-foreground">
-          Each code works once if you lose your authenticator. Store them somewhere safe — they won’t be shown again.
-        </p>
-        <div className="grid grid-cols-2 gap-2 rounded-md border bg-muted/40 p-3 font-mono text-sm">
-          {codes.map((c) => <span key={c}>{c}</span>)}
-        </div>
-        <Button onClick={onDone}>{finalCta}</Button>
-      </div>
-    );
+    return <BackupCodesReveal codes={codes} finalCta={finalCta} onDone={onDone} />;
   }
 
-  // phase === "qr"
   return (
     <div className="grid gap-4">
       <p className="text-sm text-muted-foreground">
@@ -103,7 +90,7 @@ export function TotpEnroll({
       )}
       {data?.secret && (
         <p className="text-xs text-muted-foreground">
-          Can’t scan? Enter this key manually: <span className="font-mono break-all">{data.secret}</span>
+          Cannot scan? Enter this key manually: <span className="font-mono break-all">{data.secret}</span>
         </p>
       )}
       <Field label="6-digit code">
@@ -117,7 +104,7 @@ export function TotpEnroll({
         />
       </Field>
       {err && <p className="text-sm text-destructive">{err}</p>}
-      <Button onClick={verify} disabled={busy || code.length !== 6}>{busy ? "Verifying…" : "Verify & enable"}</Button>
+      <Button onClick={verify} disabled={busy || code.length !== 6}>{busy ? "Verifying..." : "Verify and enable"}</Button>
     </div>
   );
 }

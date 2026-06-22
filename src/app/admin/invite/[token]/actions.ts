@@ -5,7 +5,6 @@ import { db } from "@/server/db";
 import { hashPassword } from "@/lib/password";
 import { generateSecret, otpauthUrl, verifyCode } from "@/lib/totp";
 import { generateBackupCodes } from "@/lib/backup-codes";
-import { createSession } from "@/server/auth/session";
 import { readInviteToken } from "@/server/auth/invite";
 
 /** Invite acceptance: set your own password, then enroll 2FA. Token is single-use while passwordHash is null. */
@@ -44,6 +43,5 @@ export async function confirmInviteEnrollment(token: string, code: string): Prom
     where: { id: user.id },
     data: { totpSecret: user.totpPendingSecret, totpEnabled: true, totpPendingSecret: null, recoveryCodes: hashes },
   });
-  await createSession({ userId: user.id, role: user.role, permissions: user.permissions });
   return { backupCodes: plain };
 }

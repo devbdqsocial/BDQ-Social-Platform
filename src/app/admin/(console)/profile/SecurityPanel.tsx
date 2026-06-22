@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TotpEnroll } from "@/components/auth/TotpEnroll";
+import { BackupCodesReveal } from "@/components/auth/BackupCodesReveal";
 import { startTotpEnrollment, confirmTotpEnrollment, regenerateBackupCodes, disableTotp } from "./security-actions";
 
 /** Profile Security panel: self-service authenticator enrolment / reset, backup codes, and (STAFF) disable. */
@@ -87,10 +88,7 @@ export function SecurityPanel({ totpEnabled, role }: { totpEnabled: boolean; rol
             <DialogTitle>Your new backup codes</DialogTitle>
             <DialogDescription>Each works once. Save them — they won’t be shown again.</DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-2 rounded-md border bg-muted/40 p-3 font-mono text-sm">
-            {codes?.map((c) => <span key={c}>{c}</span>)}
-          </div>
-          <Button onClick={() => setCodes(null)}>Done</Button>
+          {codes && <BackupCodesReveal codes={codes} onDone={() => setCodes(null)} />}
         </DialogContent>
       </Dialog>
     </div>
