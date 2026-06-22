@@ -25,7 +25,7 @@ async function main() {
 
   const admins = await db.user.findMany({
     where: { role: { in: ["SUPER_ADMIN", "ADMIN", "STAFF"] } },
-    select: { email: true, role: true, passwordHash: true, totpEnabled: true, totpSecret: true },
+    select: { email: true, role: true, passwordHash: true, totpEnabled: true, totpSecret: true, recoveryCodes: true },
     orderBy: { role: "asc" },
   });
 
@@ -37,14 +37,15 @@ async function main() {
 
   console.log(`${admins.length} admin/staff account(s) in this database:\n`);
   for (const a of admins) {
-    const canLogin = !!a.passwordHash;
+    const hasPassword = !!a.passwordHash;
     const has2fa = a.totpEnabled && !!a.totpSecret;
-    // SUPER_ADMIN/ADMIN are rejected on prod unless 2FA is enabled (src/app/api/auth/admin/route.ts).
+    const ready = hasPassword && (a.role === "STAFF" || has2fa);
+    // SUPER_ADMIN/ADMIN are rejected unless 2FA is enabled (src/app/api/auth/admin/route.ts).
     const prodBlocked = (a.role === "SUPER_ADMIN" || a.role === "ADMIN") && !has2fa;
     console.log(
-      `  ${a.email ?? "(no email)"}  [${a.role}]  password:${canLogin ? "yes" : "NO"}  2fa:${has2fa ? "on" : "off"}` +
+      `  ${a.email ?? "(no email)"}  [${a.role}]  ready:${ready ? "yes" : "NO"}  password:${hasPassword ? "yes" : "NO"}  2fa:${has2fa ? "on" : "off"}  backupCodes:${a.recoveryCodes.length}` +
         (prodBlocked ? "  ⚠ blocked on prod (needs 2FA)" : "") +
-        (!canLogin ? "  ⚠ cannot sign in (no password)" : ""),
+        (!hasPassword ? "  ⚠ cannot sign in (no password)" : ""),
     );
   }
   console.log("");

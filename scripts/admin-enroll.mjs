@@ -1,13 +1,14 @@
 import { PrismaClient } from "@prisma/client";
-import { scryptSync, randomBytes } from "crypto";
+import { scryptSync, randomBytes, createHash } from "crypto";
 import { generateSecret } from "otplib";
 import QRCode from "qrcode";
 
-// Enroll (or rotate) a SUPER_ADMIN: sets an email/password credential + a TOTP secret, prints a
-// scannable QR for an authenticator app. Re-runnable. Run:
+// Enroll (or rotate) a SUPER_ADMIN: sets an email/password credential, a TOTP secret, and backup
+// codes. Re-runnable; each run invalidates old authenticator setup and old backup codes. Run:
 //   node --env-file=.env scripts/admin-enroll.mjs admin@example.com "your-password"
 
 const db = new PrismaClient();
+const BACKUP_CODE_COUNT = 10;
 
 // Must match src/lib/password.ts (salt:hash hex, scrypt, keylen 64).
 function hashPassword(pw) {
@@ -20,6 +21,22 @@ function otpauthUrl(account, secret, issuer = "BDQSocial") {
   return `otpauth://totp/${label}?secret=${secret}&issuer=${encodeURIComponent(issuer)}`;
 }
 
+function hashBackupCode(code) {
+  return createHash("sha256").update(code.toLowerCase().replace(/[^a-z0-9]/g, "")).digest("hex");
+}
+
+function generateBackupCodes() {
+  const plain = [];
+  const hashes = [];
+  for (let i = 0; i < BACKUP_CODE_COUNT; i++) {
+    const hex = randomBytes(4).toString("hex");
+    const code = `${hex.slice(0, 4)}-${hex.slice(4)}`;
+    plain.push(code);
+    hashes.push(hashBackupCode(code));
+  }
+  return { plain, hashes };
+}
+
 async function main() {
   const email = (process.argv[2] || "").toLowerCase();
   const password = process.argv[3];
@@ -30,7 +47,15 @@ async function main() {
 
   const secret = generateSecret();
   const passwordHash = hashPassword(password);
-  const data = { role: "SUPER_ADMIN", passwordHash, totpSecret: secret, totpEnabled: true };
+  const { plain, hashes } = generateBackupCodes();
+  const data = {
+    role: "SUPER_ADMIN",
+    passwordHash,
+    totpSecret: secret,
+    totpEnabled: true,
+    totpPendingSecret: null,
+    recoveryCodes: hashes,
+  };
 
   const user = await db.user.upsert({
     where: { email },
@@ -43,6 +68,8 @@ async function main() {
   console.log("Scan this in your authenticator app (Google Authenticator / Authy):\n");
   console.log(await QRCode.toString(url, { type: "terminal", small: true }));
   console.log(`Or enter the secret manually: ${secret}`);
+  console.log("\nSave these one-time backup codes now:");
+  for (const code of plain) console.log(`  ${code}`);
   console.log(`otpauth URL: ${url}\n`);
 }
 

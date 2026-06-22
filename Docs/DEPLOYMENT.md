@@ -32,9 +32,11 @@ function; the rest activate a feature and stay dormant until set.
    local `.env` DB but signing into prod — a different Neon instance). Pull the prod URL with
    `vercel env pull`, then:
    - Confirm which DB you're pointed at: `DATABASE_URL="<prod>" node scripts/admin-doctor.mjs`
-     (prints the host + which admins can sign in there).
+     (prints the host, admin login readiness, 2FA status, and backup-code counts).
    - Enrol: `DATABASE_URL="<prod>" node scripts/admin-enroll.mjs you@domain.com "<password>"` and scan
-     **only the freshly printed QR** (re-running rotates the secret and invalidates old QRs).
+     **only the freshly printed QR**. Save the printed one-time backup codes in a password manager.
+     Re-running rotates the password, TOTP secret, and backup codes, invalidating old QRs and old
+     backup codes.
    Do **not** use `scripts/setup-live.mjs` for prod — its password-only admin is rejected on prod (2FA
    is mandatory for SUPER_ADMIN/ADMIN). After this one bootstrap, manage everything in-app:
    - **My Profile › Account** — enable/reset 2FA and regenerate backup codes (no scripts).
