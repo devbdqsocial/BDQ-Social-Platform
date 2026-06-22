@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { joinPlatformWaitlist } from "@/actions/waitlist";
 import { phone10, digitsCapped } from "@/lib/validators";
 import { useFieldValidation } from "@/lib/use-field-validation";
@@ -18,10 +18,10 @@ type ComingSoonEvent = {
 
 const CATEGORIES = [
   { label: "Brands", tone: "pink", note: "curated labels" },
-  { label: "Food", tone: "yellow", note: "gourmet counters" },
-  { label: "Experiences", tone: "green", note: "immersive corners" },
-  { label: "Music", tone: "blue", note: "indie sets" },
-  { label: "Performances", tone: "red", note: "after-dark acts" },
+  { label: "Food", tone: "yellow", note: "gourmet discoveries" },
+  { label: "Experiences", tone: "green", note: "immersive moments" },
+  { label: "Music", tone: "blue", note: "live sessions" },
+  { label: "Community", tone: "red", note: "meaningful connections" },
 ] as const;
 
 const MARQUEE = [...CATEGORIES.map((item) => item.label), "Vadodara"];
@@ -54,17 +54,6 @@ export function ComingSoonClient({ count, event, whatsappEnabled }: { count: num
   const [phone, setPhone] = useState("");
   const phoneField = useFieldValidation(phone10);
   const successRef = useRef<HTMLDivElement>(null);
-
-  const eventDate = useMemo(() => {
-    if (!event) return "Date reveal soon";
-    return new Intl.DateTimeFormat("en-IN", {
-      day: "numeric",
-      month: "short",
-      hour: "numeric",
-      minute: "2-digit",
-      timeZone: "Asia/Kolkata",
-    }).format(new Date(event.startsAtIso));
-  }, [event]);
 
   useEffect(() => {
     if (status === "success") successRef.current?.focus();
@@ -114,20 +103,20 @@ export function ComingSoonClient({ count, event, whatsappEnabled }: { count: num
         <div className="market-soon__copy">
           <div className="market-soon__topline">
             <span className="kicker">BDQ Social</span>
-            <span>{event?.location ?? "Vadodara"}</span>
-            {event ? <span>{eventDate}</span> : null}
+            <span>Vadodara, Gujarat</span>
+            <span>Coming Soon</span>
           </div>
 
           <SplitReveal as="h1" className="f-exat market-soon__title mt-[var(--space-md)]">
-            Step into
+            More Than
             <br />
-            Vadodara&apos;s
+            A Market.
             <br />
-            night market.
+            A Movement.
           </SplitReveal>
 
           <p className="f-paragraph market-soon__deck mt-[var(--space-md)]">
-            A curated after-dark gathering designed to make the city feel new.
+            We&apos;re bringing together the city&apos;s most exciting brands, creators, food concepts, and experiences under one roof.
           </p>
 
           <div className="market-soon__clock mt-[var(--space-lg)]">
@@ -162,7 +151,10 @@ export function ComingSoonClient({ count, event, whatsappEnabled }: { count: num
             ) : (
               <form onSubmit={handleSubmit} aria-busy={status === "loading"}>
                 <div className="market-soon__form-head">
-                  <p className="kicker">Request your invite</p>
+                  <div>
+                    <p className="kicker">Join the guest list</p>
+                    <p className="market-soon__cta-note">Limited early access →</p>
+                  </div>
                   {count > 0 ? <p>{count.toLocaleString("en-IN")} already requested access</p> : null}
                 </div>
 

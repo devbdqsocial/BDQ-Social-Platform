@@ -923,6 +923,12 @@ html[data-menu-open="true"] #mouse .mouse__dot {
     font-weight: 700;
     text-align: right;
   }
+  .market-soon__cta-note {
+    margin-top: 0.25rem;
+    color: var(--market-muted);
+    font-size: var(--paragraph-small);
+    line-height: var(--lh-paragraph-small);
+  }
   .market-soon__phone {
     display: flex;
     align-items: center;
