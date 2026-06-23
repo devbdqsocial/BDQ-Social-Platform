@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getBySlug } from "@/server/events/service";
+import { getBySlug, getEventLayoutForSession } from "@/server/events/service";
+import { getSession } from "@/server/auth/guard";
 import { sponsorsForEventPublic } from "@/server/sponsors/service";
 import { listApprovedVendors } from "@/server/vendors/service";
 import { primaryLogo } from "@/lib/vendor-assets";
@@ -18,6 +19,7 @@ import { SponsorStrip } from "@/components/landing/SponsorStrip";
 import { NotifyMe } from "@/components/events/NotifyMe";
 import { StickyBuyBar } from "@/components/events/StickyBuyBar";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { MapLoginPrompt } from "@/components/map/MapLoginPrompt";
 import { eventLd, breadcrumbLd } from "@/lib/seo/jsonld";
 
 export const dynamic = "force-dynamic";
@@ -57,14 +59,10 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
   const event = await getBySlug(slug);
   if (!event || (event.status !== "PUBLISHED" && event.status !== "LIVE")) notFound();
 
-  const [sponsors, vendors] = await Promise.all([sponsorsForEventPublic(event.id), listApprovedVendors()]);
+  const [sponsors, vendors, session] = await Promise.all([sponsorsForEventPublic(event.id), listApprovedVendors(), getSession()]);
   const brands = vendors.slice(0, 8);
-
-  const mapStalls = event.stalls.map((s) => ({
-    id: s.id, label: s.label, status: s.status, kind: s.kind,
-    xFt: s.xFt, yFt: s.yFt, widthFt: s.widthFt, heightFt: s.heightFt, rotation: s.rotation,
-  }));
-  const mapCanvas = (event.mapLayout?.layoutJson as { canvas?: { widthFt: number; heightFt: number } } | null)?.canvas;
+  const hasStallLayout = !!event.mapLayout && event._count.stalls > 0;
+  const eventLayout = session && hasStallLayout ? await getEventLayoutForSession(session, slug) : null;
 
   const hasTickets = event.ticketTypes.length > 0;
   const soldOut = hasTickets && event.ticketTypes.every((t) => t.soldQty >= t.totalQty);
@@ -214,10 +212,20 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
             <div><p className="kicker opacity-70">Parking</p><p className="f-paragraph mt-[var(--space-xs)]">On-site and nearby — arrive early on peak evenings.</p></div>
             <div><p className="kicker opacity-70">Accessibility</p><p className="f-paragraph mt-[var(--space-xs)]">Step-free entry and accessible restrooms on site.</p></div>
           </div>
-          {mapStalls.length > 0 && (
+          {hasStallLayout && (
             <div className="mt-[var(--space-2xl)]">
-              <p className="f-paragraph-small mb-[var(--space-md)] opacity-70">Browse the layout — live stall availability.</p>
-              <BookingFloorPlan stalls={mapStalls} canvas={mapCanvas} />
+              {session ? (
+                eventLayout ? (
+                  <>
+                    <p className="f-paragraph-small mb-[var(--space-md)] opacity-70">Browse the layout - live stall availability.</p>
+                    <BookingFloorPlan stalls={eventLayout.stalls} canvas={eventLayout.canvas} />
+                  </>
+                ) : (
+                  <p className="f-paragraph-small opacity-70">The event layout for this market is not ready yet.</p>
+                )
+              ) : (
+                <MapLoginPrompt href={`/login?next=/events/${event.slug}`} />
+              )}
             </div>
           )}
         </div>

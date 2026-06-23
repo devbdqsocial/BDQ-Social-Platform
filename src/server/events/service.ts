@@ -219,8 +219,8 @@ const getBySlugCached = unstable_cache(
       include: {
         ticketTypes: { orderBy: { priceInPaise: "asc" } },
         schedule: { orderBy: { startsAt: "asc" } },
-        stalls: { orderBy: { label: "asc" } },
-        mapLayout: { select: { layoutJson: true } },
+        mapLayout: { select: { id: true } },
+        _count: { select: { stalls: true } },
       },
     }),
   ["events:by-slug"],
@@ -238,6 +238,33 @@ export async function getBySlug(slug: string) {
       endsAt: s.endsAt ? new Date(s.endsAt) : null,
     })),
   };
+}
+
+export async function getEventLayoutForSession(_session: Session, slug: string) {
+  const event = await db.event.findUnique({
+    where: { slug },
+    select: {
+      mapLayout: { select: { layoutJson: true } },
+      stalls: {
+        orderBy: { label: "asc" },
+        select: {
+          id: true,
+          label: true,
+          status: true,
+          kind: true,
+          xFt: true,
+          yFt: true,
+          widthFt: true,
+          heightFt: true,
+          rotation: true,
+        },
+      },
+    },
+  });
+  if (!event) return null;
+
+  const canvas = (event.mapLayout?.layoutJson as { canvas?: { widthFt: number; heightFt: number } } | null)?.canvas;
+  return { stalls: event.stalls, canvas };
 }
 
 export function createEvent(session: Session, input: CreateEventInput) {

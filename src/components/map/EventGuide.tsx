@@ -5,6 +5,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import type { StallStatus } from "@/lib/stall-colors";
 import type { EventGuide as Guide, GuideBrand, Bucket } from "@/server/map/guide";
+import { MapLoginPrompt } from "./MapLoginPrompt";
 
 const MapCanvas = dynamic(() => import("./MapCanvas"), {
   ssr: false,
@@ -110,7 +111,15 @@ export function EventGuide({ guide }: { guide: Guide }) {
       </div>
 
       {/* Take a look around — spatial context */}
-      {guide.hasLayout && (
+      {guide.layoutLocked && (
+        <div>
+          <p className="kicker opacity-70">Take a look around</p>
+          <div className="mt-[var(--space-sm)]">
+            <MapLoginPrompt href="/login?next=/map" />
+          </div>
+        </div>
+      )}
+      {guide.hasLayout && guide.layout && (
         <div>
           <p className="kicker opacity-70">Take a look around</p>
           <div className="mt-[var(--space-sm)]">
