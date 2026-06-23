@@ -12,6 +12,14 @@ export interface ScheduleItemDto {
   endsAtIso: string | null;
   stageOrZone: string | null;
   performer: string | null;
+  eventDayId?: string | null;
+}
+
+export interface ScheduleDayDto {
+  id: string;
+  label: string | null;
+  startsAtIso: string;
+  endsAtIso: string;
 }
 
 interface Props {
@@ -21,13 +29,14 @@ interface Props {
   endsAtIso: string;
   status: string;
   items: ScheduleItemDto[];
+  days?: ScheduleDayDto[];
 }
 
 const time = (d: Date) => d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
 const dayLabel = (d: Date) => d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
 const PHASE_LABEL: Partial<Record<Phase, string>> = { live: "Live now", soon: "Starting soon" };
 
-export function ScheduleTimeline({ eventName, location, startsAtIso, endsAtIso, status, items }: Props) {
+export function ScheduleTimeline({ eventName, location, startsAtIso, endsAtIso, status, items, days }: Props) {
   const [now, setNow] = useState(() => new Date());
   const [stage, setStage] = useState<string | null>(null);
   const [dayK, setDayK] = useState<string | null>(null);
@@ -42,15 +51,39 @@ export function ScheduleTimeline({ eventName, location, startsAtIso, endsAtIso, 
     () => items.map((i) => ({ id: i.id, title: i.title, startsAt: new Date(i.startsAtIso), endsAt: i.endsAtIso ? new Date(i.endsAtIso) : null, stageOrZone: i.stageOrZone, performer: i.performer })),
     [items],
   );
+  const eventDayOf = useMemo(() => new Map(items.map((i) => [i.id, i.eventDayId ?? null])), [items]);
+  const dayWindows = useMemo(
+    () => (days ?? []).map((d, idx) => ({ id: d.id, label: d.label?.trim() || `Day ${idx + 1}`, startsAt: new Date(d.startsAtIso), endsAt: new Date(d.endsAtIso) })),
+    [days],
+  );
 
   const mode = getHomeMode({ startsAt: new Date(startsAtIso), endsAt: new Date(endsAtIso), status }, now);
   const nn = useMemo(() => resolveNowNext(slots, now), [slots, now]);
-  const days = useMemo(() => groupByDay(slots), [slots]);
   const stages = useMemo(() => stagesOf(slots), [slots]);
 
-  const activeDayK = dayK ?? days.find((d) => d.key === dayKey(now))?.key ?? days[0]?.key ?? null;
-  const activeDay = days.find((d) => d.key === activeDayK) ?? days[0];
-  const isToday = activeDay?.key === dayKey(now);
+  // Group by explicit event days (festival days, overnight-safe) when defined; else by calendar date.
+  const dayGroups = useMemo(() => {
+    if (dayWindows.length > 0) {
+      const resolve = (s: ScheduleSlot): string | null => {
+        const explicit = eventDayOf.get(s.id);
+        if (explicit) return explicit;
+        const t = s.startsAt.getTime();
+        return dayWindows.find((d) => t >= d.startsAt.getTime() && t <= d.endsAt.getTime())?.id ?? null;
+      };
+      const groups = dayWindows.map((d) => ({ key: d.id, label: d.label, startsAt: d.startsAt as Date | undefined, endsAt: d.endsAt as Date | undefined, items: slots.filter((s) => resolve(s) === d.id) }));
+      const leftover = slots.filter((s) => resolve(s) === null);
+      if (leftover.length) groups.push({ key: "other", label: "More", startsAt: undefined, endsAt: undefined, items: leftover });
+      return groups.filter((g) => g.items.length > 0);
+    }
+    return groupByDay(slots).map((d) => ({ key: d.key, label: dayLabel(d.date), startsAt: undefined as Date | undefined, endsAt: undefined as Date | undefined, items: d.items }));
+  }, [dayWindows, slots, eventDayOf]);
+
+  const liveGroupKey = dayWindows.length
+    ? dayGroups.find((g) => g.startsAt && g.endsAt && now >= g.startsAt && now <= g.endsAt)?.key
+    : dayGroups.find((g) => g.key === dayKey(now))?.key;
+  const activeDayK = dayK ?? liveGroupKey ?? dayGroups[0]?.key ?? null;
+  const activeDay = dayGroups.find((g) => g.key === activeDayK) ?? dayGroups[0];
+  const isToday = !!activeDay && activeDay.key === liveGroupKey;
   const dayItems = (activeDay?.items ?? []).filter((s) => !stage || s.stageOrZone === stage);
   const nowLineBefore = isToday ? dayItems.findIndex((s) => itemPhase(s, now) !== "done") : -1;
 
@@ -97,13 +130,13 @@ export function ScheduleTimeline({ eventName, location, startsAtIso, endsAtIso, 
       )}
 
       {/* Day pills (multi-day) */}
-      {days.length > 1 && (
+      {dayGroups.length > 1 && (
         <div className="flex flex-wrap gap-[var(--space-sm)]">
-          {days.map((d) => (
+          {dayGroups.map((d) => (
             <button key={d.key} type="button" onClick={() => setDayK(d.key)} data-cursor
               className="rounded-full px-[var(--space-lg)] py-[var(--space-sm)] f-paragraph-small f-bold transition-colors"
               style={{ border: "1px solid var(--color)", background: d.key === activeDayK ? "var(--color)" : "transparent", color: d.key === activeDayK ? "var(--bgcolor)" : "var(--color)" }}>
-              {dayLabel(d.date)}
+              {d.label}
             </button>
           ))}
         </div>

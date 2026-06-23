@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { fmtTime } from "@/lib/date-formats";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdminRole } from "@/server/auth/guard";
@@ -14,20 +13,20 @@ import { Input, Textarea, Select } from "@/components/ui/input";
 import { listEventLineup } from "@/server/artists/bookings-service";
 import { listArtists } from "@/server/artists/admin-service";
 import { BookingPanel } from "@/components/admin/BookingPanel";
+import { EventRunOfShow } from "@/components/admin/EventRunOfShow";
 import { createBookingAction } from "../../artists/booking-actions";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { publishEventAction } from "../actions";
 import { ActionForm } from "@/components/admin/action-form";
-import { addTicketTypeAction, deleteTicketTypeAction, addScheduleItemAction, deleteScheduleItemAction, setEventThemeAction, updateEventAction } from "./actions";
+import { addTicketTypeAction, deleteTicketTypeAction, addScheduleItemAction, setEventThemeAction, updateEventAction, addEventDayAction, updateEventDayAction, deleteEventDayAction } from "./actions";
 import { DeleteEventButton } from "./DeleteEventButton";
 
 export const metadata: Metadata = { title: "Edit event" };
 
 const isLive = (s: string) => s === "PUBLISHED" || s === "LIVE";
-const dayKey = (d: Date) => new Intl.DateTimeFormat("en-CA", { dateStyle: "full", timeZone: "Asia/Kolkata" }).format(d);
-const timeOnly = fmtTime;
+const dayLabelDate = (d: Date) => new Intl.DateTimeFormat("en-IN", { weekday: "short", day: "numeric", month: "short", timeZone: "Asia/Kolkata" }).format(d);
 
 export default async function AdminEventEditor({ params }: { params: Promise<{ id: string }> }) {
   await requireAdminRole();
@@ -101,6 +100,9 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
                   <Field label="Starts"><DateTimePicker name="startsAt" required defaultValue={event.startsAt} /></Field>
                   <Field label="Ends"><DateTimePicker name="endsAt" required defaultValue={event.endsAt} /></Field>
                 </div>
+                {event.days.length > 0 && (
+                  <p className="text-xs text-muted-foreground">This is a multi-day event — the overall dates above are kept in sync from your per-day hours in the <span className="font-medium">Schedule</span> tab.</p>
+                )}
                 <Field label="Capacity" hint="Optional — leave blank for no limit."><Input type="number" name="capacity" min={1} defaultValue={event.capacity ?? ""} /></Field>
                 <Button type="submit" className="w-fit">Save details</Button>
               </CardContent>
@@ -151,43 +153,82 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
           </Card>
         </TabsContent>
 
-        {/* SCHEDULE */}
+        {/* SCHEDULE — event days + run of show */}
         <TabsContent value="schedule" className="space-y-4">
-          {event.schedule.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No schedule yet — add what&apos;s happening below.</p>
-          ) : (
-            <div className="space-y-4">
-              {Object.entries(
-                event.schedule.reduce<Record<string, typeof event.schedule>>((acc, s) => {
-                  (acc[dayKey(s.startsAt)] ??= []).push(s);
-                  return acc;
-                }, {}),
-              ).map(([day, items]) => (
-                <div key={day}>
-                  <h3 className="mb-1.5 text-sm font-semibold text-muted-foreground">{day}</h3>
-                  <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-card">
-                    {items.map((s) => (
-                      <li key={s.id} className="flex items-center justify-between gap-3 p-4">
-                        <div>
-                          <p className="font-medium">{s.title}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {timeOnly(s.startsAt)}{s.endsAt ? `–${timeOnly(s.endsAt)}` : ""}
-                            {s.stageOrZone ? ` · ${s.stageOrZone}` : ""}
-                            {s.performer ? ` · ${s.performer}` : ""}
-                          </p>
+          {/* Event days */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Event days</CardTitle>
+              <CardDescription>Set each day&apos;s hours (e.g. 30 Oct 4:00 PM – 11:00 PM). These define the run of show and the event&apos;s overall dates.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {event.days.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No days yet — add your first day below.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {event.days.map((d, idx) => (
+                    <li key={d.id} className="rounded-lg border border-border p-3">
+                      <form action={updateEventDayAction} className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                        <input type="hidden" name="id" value={d.id} />
+                        <input type="hidden" name="eventId" value={event.id} />
+                        <Field label="Label" hint="Optional"><Input name="label" defaultValue={d.label ?? ""} placeholder={`Day ${idx + 1}`} /></Field>
+                        <Field label="Starts"><DateTimePicker name="startsAt" required defaultValue={d.startsAt} /></Field>
+                        <Field label="Ends"><DateTimePicker name="endsAt" required defaultValue={d.endsAt} /></Field>
+                        <div className="flex items-center gap-2">
+                          <Button type="submit" variant="outline" size="sm">Save</Button>
                         </div>
-                        <form action={deleteScheduleItemAction}>
-                          <input type="hidden" name="id" value={s.id} />
-                          <input type="hidden" name="eventId" value={event.id} />
-                          <Button type="submit" variant="ghost" size="sm">Remove</Button>
-                        </form>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          )}
+                      </form>
+                      <form action={deleteEventDayAction} className="mt-2">
+                        <input type="hidden" name="id" value={d.id} />
+                        <input type="hidden" name="eventId" value={event.id} />
+                        <Button type="submit" variant="ghost" size="sm" className="text-destructive">Remove day</Button>
+                      </form>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <form action={addEventDayAction} className="grid items-end gap-3 rounded-lg border border-dashed border-border p-3 sm:grid-cols-2 lg:grid-cols-4">
+                <input type="hidden" name="eventId" value={event.id} />
+                <Field label="Label" hint="Optional"><Input name="label" placeholder="Day 1, Opening night…" /></Field>
+                <Field label="Starts"><DateTimePicker name="startsAt" required /></Field>
+                <Field label="Ends"><DateTimePicker name="endsAt" required /></Field>
+                <div><Button type="submit" size="sm">Add day</Button></div>
+              </form>
+            </CardContent>
+          </Card>
+
+          {/* Run of show */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Run of show</CardTitle>
+              <CardDescription>The full timeline, day by day — artist sets (managed in the Lineup) plus everything else.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <EventRunOfShow
+                eventId={event.id}
+                days={event.days.map((d) => ({ id: d.id, label: d.label, startsAtIso: d.startsAt.toISOString(), endsAtIso: d.endsAt.toISOString() }))}
+                items={event.schedule.map((s) => ({
+                  id: s.id, title: s.title,
+                  startsAtIso: s.startsAt.toISOString(), endsAtIso: s.endsAt ? s.endsAt.toISOString() : null,
+                  stageOrZone: s.stageOrZone, performer: s.performer,
+                  artistId: s.artistBooking?.artistId ?? null, eventDayId: s.eventDayId,
+                }))}
+              />
+              <ActionForm action={createBookingAction} success="Added to lineup — set the set time in the Lineup tab" className="flex flex-wrap items-end gap-2 border-t border-border pt-4">
+                <input type="hidden" name="eventId" value={event.id} />
+                <label className="grid gap-1.5 text-sm">
+                  <span className="font-medium">Add an artist</span>
+                  <Select name="artistId" required className="w-64" defaultValue="">
+                    <option value="" disabled>Choose an artist…</option>
+                    {roster.map((a) => <option key={a.id} value={a.id}>{a.stageName}</option>)}
+                  </Select>
+                </label>
+                <Button type="submit" size="sm" variant="outline">Add artist</Button>
+              </ActionForm>
+            </CardContent>
+          </Card>
+
+          {/* Add a manual item */}
           <Card asChild>
             <form action={addScheduleItemAction}>
               <input type="hidden" name="eventId" value={event.id} />
@@ -197,6 +238,14 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
               </CardHeader>
               <CardContent className="grid gap-4 sm:grid-cols-2">
                 <Field label="What's happening" className="sm:col-span-2"><Input name="title" required placeholder="Headline set, food court opens…" /></Field>
+                {event.days.length > 0 && (
+                  <Field label="Day" className="sm:col-span-2" hint="Which event day this belongs to">
+                    <Select name="eventDayId" defaultValue="">
+                      <option value="">— No specific day —</option>
+                      {event.days.map((d, idx) => <option key={d.id} value={d.id}>{(d.label?.trim() || `Day ${idx + 1}`)} · {dayLabelDate(d.startsAt)}</option>)}
+                    </Select>
+                  </Field>
+                )}
                 <Field label="Starts"><DateTimePicker name="startsAt" required /></Field>
                 <Field label="Ends" hint="Optional"><DateTimePicker name="endsAt" /></Field>
                 <Field label="Stage / zone" hint="Optional"><Input name="stageOrZone" placeholder="Main Stage" /></Field>

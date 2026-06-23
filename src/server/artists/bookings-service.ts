@@ -2,6 +2,7 @@ import "server-only";
 import { db } from "@/server/db";
 import { withAudit } from "@/server/audit";
 import type { Session } from "@/server/auth/guard";
+import { dayForTime } from "@/server/events/event-days";
 import { deriveSettlement } from "./settlement";
 
 /**
@@ -20,8 +21,10 @@ async function syncSchedule(bookingId: string): Promise<void> {
   const shouldShow = b.status === "CONFIRMED" && b.published && b.setStartsAt != null;
 
   if (shouldShow) {
+    const days = await db.eventDay.findMany({ where: { eventId: b.eventId }, select: { id: true, startsAt: true, endsAt: true } });
     const data = {
       eventId: b.eventId,
+      eventDayId: dayForTime(days, b.setStartsAt!)?.id ?? null,
       startsAt: b.setStartsAt!,
       endsAt: b.setEndsAt,
       title: `${b.artist.stageName} — live`,

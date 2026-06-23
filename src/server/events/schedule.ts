@@ -9,9 +9,10 @@ export async function getActiveSchedule() {
     where: { id: pub.id },
     select: {
       name: true, slug: true, location: true, startsAt: true, endsAt: true, status: true,
+      days: { orderBy: { sortOrder: "asc" }, select: { id: true, startsAt: true, endsAt: true, label: true } },
       schedule: {
         orderBy: [{ startsAt: "asc" }, { sortOrder: "asc" }],
-        select: { id: true, title: true, startsAt: true, endsAt: true, stageOrZone: true, performer: true },
+        select: { id: true, title: true, startsAt: true, endsAt: true, stageOrZone: true, performer: true, eventDayId: true },
       },
     },
   });

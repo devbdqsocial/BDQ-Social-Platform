@@ -84,7 +84,11 @@ export function getByIdForAdmin(id: string) {
     where: { id },
     include: {
       ticketTypes: { orderBy: { priceInPaise: "asc" } },
-      schedule: { orderBy: { startsAt: "asc" } },
+      schedule: {
+        orderBy: [{ startsAt: "asc" }, { sortOrder: "asc" }],
+        include: { artistBooking: { select: { id: true, artistId: true } } },
+      },
+      days: { orderBy: { sortOrder: "asc" } },
       mapLayout: true,
     },
   });
@@ -96,6 +100,7 @@ export interface ScheduleItemInput {
   title: string;
   stageOrZone?: string;
   performer?: string;
+  eventDayId?: string;
 }
 
 export function addScheduleItem(session: Session, eventId: string, input: ScheduleItemInput) {
@@ -110,7 +115,9 @@ export function addScheduleItem(session: Session, eventId: string, input: Schedu
 
 export function deleteScheduleItem(session: Session, id: string) {
   return withAudit(session, { action: "DELETE", entity: "ScheduleItem", entityId: id }, async () => {
-    const before = await db.scheduleItem.findUnique({ where: { id } });
+    const before = await db.scheduleItem.findUnique({ where: { id }, include: { artistBooking: { select: { id: true } } } });
+    // Artist sets are owned by their booking — deleting here would silently desync it. Manage in Lineup.
+    if (before?.artistBooking) throw new Error("This is an artist set — manage it from the Lineup tab.");
     return {
       before,
       run: async () => {

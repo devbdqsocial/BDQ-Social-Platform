@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdminRole } from "@/server/auth/guard";
 import { addScheduleItem, addTicketType, deleteEvent, deleteScheduleItem, deleteTicketType, setEventTheme, updateEvent } from "@/server/events/service";
-import { createEventSchema, eventThemeSchema, scheduleItemSchema, ticketTypeSchema } from "@/server/schemas";
+import { addDay, updateDay, deleteDay } from "@/server/events/event-days";
+import { createEventSchema, eventDaySchema, eventThemeSchema, scheduleItemSchema, ticketTypeSchema } from "@/server/schemas";
 import { parseOrThrow } from "@/lib/validation";
 
 export async function addTicketTypeAction(formData: FormData): Promise<void> {
@@ -34,6 +35,7 @@ export async function deleteTicketTypeAction(formData: FormData): Promise<void> 
 function revalidateEvent(eventId: string) {
   revalidatePath(`/admin/events/${eventId}`);
   revalidatePath("/events");
+  revalidatePath("/schedule");
 }
 
 export async function addScheduleItemAction(formData: FormData): Promise<void> {
@@ -45,6 +47,7 @@ export async function addScheduleItemAction(formData: FormData): Promise<void> {
     title: formData.get("title"),
     stageOrZone: formData.get("stageOrZone") || undefined,
     performer: formData.get("performer") || undefined,
+    eventDayId: formData.get("eventDayId") || undefined,
   });
   await addScheduleItem(session, eventId, data);
   revalidateEvent(eventId);
@@ -53,6 +56,35 @@ export async function addScheduleItemAction(formData: FormData): Promise<void> {
 export async function deleteScheduleItemAction(formData: FormData): Promise<void> {
   const session = await requireAdminRole();
   await deleteScheduleItem(session, String(formData.get("id")));
+  revalidateEvent(String(formData.get("eventId")));
+}
+
+export async function addEventDayAction(formData: FormData): Promise<void> {
+  const session = await requireAdminRole();
+  const eventId = String(formData.get("eventId"));
+  const data = parseOrThrow(eventDaySchema, {
+    startsAt: formData.get("startsAt"),
+    endsAt: formData.get("endsAt"),
+    label: formData.get("label") || undefined,
+  });
+  await addDay(session, eventId, data);
+  revalidateEvent(eventId);
+}
+
+export async function updateEventDayAction(formData: FormData): Promise<void> {
+  const session = await requireAdminRole();
+  const data = parseOrThrow(eventDaySchema, {
+    startsAt: formData.get("startsAt"),
+    endsAt: formData.get("endsAt"),
+    label: formData.get("label") || undefined,
+  });
+  await updateDay(session, String(formData.get("id")), data);
+  revalidateEvent(String(formData.get("eventId")));
+}
+
+export async function deleteEventDayAction(formData: FormData): Promise<void> {
+  const session = await requireAdminRole();
+  await deleteDay(session, String(formData.get("id")));
   revalidateEvent(String(formData.get("eventId")));
 }
 

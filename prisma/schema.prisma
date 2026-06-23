@@ -264,9 +264,26 @@ model Event {
   addOns           StallAddOn[]
   happenings       HappeningItem[]
   artistBookings   ArtistBooking[]
+  days             EventDay[]
   mapId            String?
 
   @@index([status])
+}
+
+/** A single operating day/session of a (possibly multi-day) event, e.g. 30 Oct 16:00–23:00. Explicit
+ *  start/end DateTimes express per-day hours and overnight windows; the schedule run-of-show groups by
+ *  these. Event.startsAt/endsAt is kept as the overall envelope (min/max of days) for home-mode etc. */
+model EventDay {
+  id        String         @id @default(cuid())
+  eventId   String
+  event     Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  startsAt  DateTime
+  endsAt    DateTime
+  label     String?
+  sortOrder Int            @default(0)
+  items     ScheduleItem[]
+
+  @@index([eventId])
 }
 
 enum OfferKind {
@@ -346,9 +363,12 @@ model ScheduleItem {
   stageOrZone String?
   performer   String?
   sortOrder   Int       @default(0)
+  eventDayId  String?
+  eventDay    EventDay? @relation(fields: [eventDayId], references: [id], onDelete: SetNull)
   artistBooking ArtistBooking?
 
   @@index([eventId, startsAt])
+  @@index([eventDayId])
 }
 
 // ──────────────────────────── MAP / STALLS ─────────────────────

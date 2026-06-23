@@ -89,7 +89,16 @@ export const scheduleItemSchema = z.object({
   title: z.string().min(1),
   stageOrZone: z.string().optional(),
   performer: z.string().optional(),
+  eventDayId: z.string().optional(),
 });
+
+export const eventDaySchema = z
+  .object({
+    startsAt: z.coerce.date(),
+    endsAt: z.coerce.date(),
+    label: z.string().trim().max(60).optional(),
+  })
+  .refine((d) => d.endsAt > d.startsAt, { message: "End must be after start", path: ["endsAt"] });
 
 export const mapElementSchema = z.object({
   name: z.string().min(1),

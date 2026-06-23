@@ -38,10 +38,11 @@ export default async function SchedulePage() {
               startsAtIso={event.startsAt.toISOString()}
               endsAtIso={event.endsAt.toISOString()}
               status={event.status}
+              days={event.days.map((d) => ({ id: d.id, label: d.label, startsAtIso: d.startsAt.toISOString(), endsAtIso: d.endsAt.toISOString() }))}
               items={event.schedule.map((s) => ({
                 id: s.id, title: s.title,
                 startsAtIso: s.startsAt.toISOString(), endsAtIso: s.endsAt ? s.endsAt.toISOString() : null,
-                stageOrZone: s.stageOrZone, performer: s.performer,
+                stageOrZone: s.stageOrZone, performer: s.performer, eventDayId: s.eventDayId,
               }))}
             />
           )}
