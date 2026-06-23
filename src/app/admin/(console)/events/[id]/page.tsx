@@ -35,6 +35,15 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
   const [event, maps, lineup, roster] = await Promise.all([getByIdForAdmin(id), listMaps(), listEventLineup(id), listArtists()]);
   if (!event) notFound();
   const theme = (event.theme as { primary?: string; accent?: string } | null) ?? null;
+  const sections = [
+    ["details", "Details"],
+    ["tickets", `Tickets (${event.ticketTypes.length})`],
+    ["schedule", `Schedule (${event.schedule.length})`],
+    ["lineup", `Lineup (${lineup.length})`],
+    ["map", "Map"],
+    ["theme", "Theme"],
+    ["danger", "Danger"],
+  ] as const;
 
   return (
     <div className="space-y-6">
@@ -62,15 +71,17 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
         </div>
       </div>
 
-      <Tabs defaultValue="details">
-        <TabsList>
-          <TabsTrigger value="details">Details</TabsTrigger>
-          <TabsTrigger value="tickets">Tickets ({event.ticketTypes.length})</TabsTrigger>
-          <TabsTrigger value="schedule">Schedule ({event.schedule.length})</TabsTrigger>
-          <TabsTrigger value="lineup">Lineup ({lineup.length})</TabsTrigger>
-          <TabsTrigger value="map">Map</TabsTrigger>
-          <TabsTrigger value="theme">Theme</TabsTrigger>
-          <TabsTrigger value="danger">Danger</TabsTrigger>
+      <Tabs defaultValue="details" className="min-w-0 gap-4">
+        <TabsList className="!grid !h-auto w-full grid-cols-2 gap-2 rounded-xl border border-border bg-muted/40 p-2 sm:grid-cols-4 xl:grid-cols-7">
+          {sections.map(([value, label]) => (
+            <TabsTrigger
+              key={value}
+              value={value}
+              className="h-10 min-w-0 rounded-lg px-3 text-center text-xs data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:text-sm"
+            >
+              <span className="truncate">{label}</span>
+            </TabsTrigger>
+          ))}
         </TabsList>
 
         {/* DETAILS */}
