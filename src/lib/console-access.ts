@@ -5,10 +5,11 @@ import type { Permission, Role } from "@/server/auth/guard";
 export type ConsoleSection =
   | "overview" | "events" | "map" | "vendors" | "checkin" | "staff" | "audit"
   | "analytics" | "coupons" | "comps" | "sponsors" | "waitlist" | "platform-waitlist" | "ops"
-  | "tickets" | "finance" | "growth" | "content" | "settings";
+  | "tickets" | "finance" | "growth" | "content" | "settings" | "artists";
 
 const REQUIRES: Record<ConsoleSection, { superAdminOnly?: boolean; perm?: Permission }> = {
   overview: {},
+  artists: { perm: "ARTIST_VIEW" }, // SUPER_ADMIN/ADMIN always; STAFF needs ARTIST_VIEW
   settings: {}, // hub is open to any console session; individual cards/pages gate themselves (My Profile vs org/super-admin)
   events: { superAdminOnly: true },
   map: { superAdminOnly: true },

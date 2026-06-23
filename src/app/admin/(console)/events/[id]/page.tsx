@@ -10,7 +10,11 @@ import { MapAttach } from "./MapAttach";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
-import { Input, Textarea } from "@/components/ui/input";
+import { Input, Textarea, Select } from "@/components/ui/input";
+import { listEventLineup } from "@/server/artists/bookings-service";
+import { listArtists } from "@/server/artists/admin-service";
+import { BookingPanel } from "@/components/admin/BookingPanel";
+import { createBookingAction } from "../../artists/booking-actions";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
@@ -28,7 +32,7 @@ const timeOnly = fmtTime;
 export default async function AdminEventEditor({ params }: { params: Promise<{ id: string }> }) {
   await requireAdminRole();
   const { id } = await params;
-  const [event, maps] = await Promise.all([getByIdForAdmin(id), listMaps()]);
+  const [event, maps, lineup, roster] = await Promise.all([getByIdForAdmin(id), listMaps(), listEventLineup(id), listArtists()]);
   if (!event) notFound();
   const theme = (event.theme as { primary?: string; accent?: string } | null) ?? null;
 
@@ -63,6 +67,7 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
           <TabsTrigger value="details">Details</TabsTrigger>
           <TabsTrigger value="tickets">Tickets ({event.ticketTypes.length})</TabsTrigger>
           <TabsTrigger value="schedule">Schedule ({event.schedule.length})</TabsTrigger>
+          <TabsTrigger value="lineup">Lineup ({lineup.length})</TabsTrigger>
           <TabsTrigger value="map">Map</TabsTrigger>
           <TabsTrigger value="theme">Theme</TabsTrigger>
           <TabsTrigger value="danger">Danger</TabsTrigger>
@@ -188,6 +193,56 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
                 <Button type="submit" className="w-fit sm:col-span-2">Add to schedule</Button>
               </CardContent>
             </form>
+          </Card>
+        </TabsContent>
+
+        {/* LINEUP (artists) */}
+        <TabsContent value="lineup" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Artist lineup</CardTitle>
+              <CardDescription>Book artists for this event, negotiate, set times. Confirmed sets publish to the schedule.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <ActionForm action={createBookingAction} success="Added to lineup" className="flex flex-wrap items-end gap-2">
+                <input type="hidden" name="eventId" value={event.id} />
+                <label className="grid gap-1.5 text-sm">
+                  <span className="font-medium">Add an artist</span>
+                  <Select name="artistId" required className="w-64" defaultValue="">
+                    <option value="" disabled>Choose an artist…</option>
+                    {roster.map((a) => <option key={a.id} value={a.id}>{a.stageName}</option>)}
+                  </Select>
+                </label>
+                <Button type="submit" size="sm">Add to lineup</Button>
+              </ActionForm>
+
+              {lineup.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No artists booked yet.</p>
+              ) : (
+                <div className="grid gap-3">
+                  {lineup.map((b) => (
+                    <BookingPanel
+                      key={b.id}
+                      title={b.artist.stageName}
+                      booking={{
+                        id: b.id,
+                        artistId: b.artistId,
+                        eventId: event.id,
+                        status: b.status,
+                        settlement: b.settlement,
+                        agreedFeePaise: b.agreedFeePaise,
+                        setStartsAt: b.setStartsAt ? b.setStartsAt.toISOString() : null,
+                        setEndsAt: b.setEndsAt ? b.setEndsAt.toISOString() : null,
+                        stageOrZone: b.stageOrZone,
+                        published: b.published,
+                        negotiationNote: b.negotiationNote,
+                        payouts: b.payouts.map((p) => ({ amountPaise: p.amountPaise, status: p.status, incurredAt: p.incurredAt.toISOString() })),
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </CardContent>
           </Card>
         </TabsContent>
 

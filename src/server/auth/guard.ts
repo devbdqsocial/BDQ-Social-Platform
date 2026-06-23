@@ -10,6 +10,8 @@ export type Permission =
   | "CHECKIN"
   | "VENDOR_MANAGE"
   | "VENDOR_VIEW"
+  | "ARTIST_MANAGE"
+  | "ARTIST_VIEW"
   | "EVENT_VIEW"
   | "CUSTOMER_VIEW"
   | "PAYMENT_VIEW"

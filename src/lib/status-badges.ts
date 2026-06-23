@@ -30,6 +30,19 @@ export const VENDOR_STATUS: Record<string, StatusBadge> = {
   REJECTED: { label: "Declined", variant: "danger" },
 };
 
+export const ARTIST_BOOKING_STATUS: Record<string, StatusBadge> = {
+  INQUIRY: { label: "Inquiry", variant: "neutral" },
+  NEGOTIATING: { label: "Negotiating", variant: "warning" },
+  CONFIRMED: { label: "Confirmed", variant: "success" },
+  CANCELLED: { label: "Cancelled", variant: "danger" },
+};
+
+export const ARTIST_SETTLEMENT: Record<string, StatusBadge> = {
+  UNPAID: { label: "Unpaid", variant: "danger" },
+  PARTIAL: { label: "Part-paid", variant: "warning" },
+  PAID: { label: "Paid", variant: "success" },
+};
+
 // HELD is the DB label for "reserved by a vendor application" until the M2 rename; PENDING
 // kept only for tolerance of any legacy rows until that migration lands (architecture §4.1).
 export const STALL_STATUS: Record<string, StatusBadge> = {

@@ -24,6 +24,8 @@ enum Permission {
   CHECKIN
   VENDOR_MANAGE
   VENDOR_VIEW
+  ARTIST_MANAGE
+  ARTIST_VIEW
   EVENT_VIEW
   CUSTOMER_VIEW
   PAYMENT_VIEW
@@ -125,6 +127,31 @@ enum AssetKind {
 enum ContractStatus {
   SENT
   SIGNED
+}
+
+enum ArtistType {
+  MUSICIAN
+  BAND
+  DJ
+  PERFORMER
+  DANCE
+  COMEDIAN
+  SPEAKER
+  HOST_MC
+  OTHER
+}
+
+enum ArtistBookingStatus {
+  INQUIRY
+  NEGOTIATING
+  CONFIRMED
+  CANCELLED
+}
+
+enum ArtistSettlement {
+  UNPAID
+  PARTIAL
+  PAID
 }
 
 enum SponsorTier {
@@ -236,6 +263,7 @@ model Event {
   offers           Offer[]
   addOns           StallAddOn[]
   happenings       HappeningItem[]
+  artistBookings   ArtistBooking[]
   mapId            String?
 
   @@index([status])
@@ -318,6 +346,7 @@ model ScheduleItem {
   stageOrZone String?
   performer   String?
   sortOrder   Int       @default(0)
+  artistBooking ArtistBooking?
 
   @@index([eventId, startsAt])
 }
@@ -588,6 +617,90 @@ model VendorContract {
   signedAt        DateTime?
 }
 
+// ──────────────────────────── ARTISTS / TALENT ─────────────────
+// Admin-managed roster (no artist login). Per-event engagement, negotiated pricing, set timing that
+// auto-publishes to the schedule, and settlement via TALENT expenses → P&L.
+model ArtistProfile {
+  id              String          @id @default(cuid())
+  stageName       String
+  realName        String?
+  type            ArtistType      @default(MUSICIAN)
+  genre           String?
+  bio             String?
+  city            String?
+  phone           String?
+  whatsapp        String?
+  email           String?
+  instagram       String?
+  socials         Json?
+  askingFeePaise  Int? // rate card / quoted fee (negotiable per booking)
+  notes           String? // internal roster notes
+  slug            String?         @unique // public lineup page
+  publicVisible   Boolean         @default(false)
+  attributionCode String?         @unique // maps order.utm.source → this artist for sales attribution
+  archived        Boolean         @default(false)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  assets   ArtistAsset[]
+  bookings ArtistBooking[]
+
+  @@index([type])
+}
+
+model ArtistAsset {
+  id        String        @id @default(cuid())
+  artistId  String
+  artist    ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  kind      String // PHOTO | REEL | RIDER
+  url       String
+  publicId  String?
+  createdAt DateTime      @default(now())
+
+  @@index([artistId])
+}
+
+model ArtistBooking {
+  id                  String              @id @default(cuid())
+  eventId             String
+  event               Event               @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  artistId            String
+  artist              ArtistProfile       @relation(fields: [artistId], references: [id])
+  status              ArtistBookingStatus @default(INQUIRY)
+  agreedFeePaise      Int                 @default(0) // negotiated fee (money out)
+  settlement          ArtistSettlement    @default(UNPAID) // derived from payouts vs agreed fee
+  setStartsAt         DateTime?
+  setEndsAt           DateTime?
+  stageOrZone         String?
+  published           Boolean             @default(true) // show this set on the public lineup
+  negotiationNote     String?
+  negotiationAt       DateTime?
+  scheduleItemId      String?             @unique // materialized public schedule slot
+  scheduleItem        ScheduleItem?       @relation(fields: [scheduleItemId], references: [id])
+  presentedBySponsorId String?
+  presentedBySponsor  Sponsor?            @relation(fields: [presentedBySponsorId], references: [id])
+  contract            ArtistContract?
+  payouts             Expense[]
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  @@index([eventId, status])
+  @@index([artistId])
+}
+
+model ArtistContract {
+  id         String         @id @default(cuid())
+  bookingId  String         @unique
+  booking    ArtistBooking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  status     ContractStatus @default(SENT)
+  url        String? // Cloudinary URL of the e-signed PDF
+  version    String?
+  signerName String?
+  signerIp   String?
+  signedAt   DateTime?
+  signToken  String         @unique // public tokenized e-sign link (artists have no login)
+}
+
 model Booking {
   id              String         @id @default(cuid())
   eventId         String
@@ -645,6 +758,7 @@ model Sponsor {
   note        String?
   createdAt   DateTime          @default(now())
   offers      Offer[]
+  artistBookings ArtistBooking[]
 
   @@index([eventId])
 }
@@ -775,6 +889,8 @@ model Expense {
   category        ExpenseCategory
   vendorProfileId String? // optional counterparty (e.g. VENDOR_PAYOUT)
   vendorProfile   VendorProfile?   @relation(fields: [vendorProfileId], references: [id])
+  artistBookingId String? // optional counterparty (TALENT payout to an artist booking)
+  artistBooking   ArtistBooking?   @relation(fields: [artistBookingId], references: [id])
   title           String
   amountPaise     Int
   incurredAt      DateTime

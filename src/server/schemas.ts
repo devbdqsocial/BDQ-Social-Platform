@@ -317,3 +317,26 @@ export const createHappeningSchema = z.object(happeningFields);
 export const updateHappeningSchema = z.object({ ...happeningFields, id });
 export type CreateHappeningInput = z.infer<typeof createHappeningSchema>;
 export type UpdateHappeningInput = z.infer<typeof updateHappeningSchema>;
+
+// ──────────────────────────── ARTISTS / TALENT ─────────────────
+export const ARTIST_TYPES = ["MUSICIAN", "BAND", "DJ", "PERFORMER", "DANCE", "COMEDIAN", "SPEAKER", "HOST_MC", "OTHER"] as const;
+
+export const artistCreateSchema = z.object({
+  stageName: z.string().trim().min(1, "Stage name is required").max(120),
+  realName: z.string().trim().max(160).optional(),
+  type: z.enum(ARTIST_TYPES).default("MUSICIAN"),
+  genre: z.string().trim().max(80).optional(),
+  bio: z.string().trim().max(2000).optional(),
+  city: z.string().trim().max(80).optional(),
+  phone: z.string().trim().max(20).optional(),
+  whatsapp: z.string().trim().max(20).optional(),
+  email: emailOptional,
+  instagram: z.string().trim().max(80).optional(),
+  // Rate card in PAISE (the action converts the ₹ form field). 0..MAX_PAISE.
+  askingFeePaise: z.coerce.number().int().min(0).max(MAX_PAISE).optional(),
+  notes: z.string().trim().max(2000).optional(),
+});
+export type ArtistCreateInput = z.infer<typeof artistCreateSchema>;
+
+export const artistUpdateSchema = artistCreateSchema.partial().extend({ id: z.string().min(1) });
+export type ArtistUpdateInput = z.infer<typeof artistUpdateSchema>;

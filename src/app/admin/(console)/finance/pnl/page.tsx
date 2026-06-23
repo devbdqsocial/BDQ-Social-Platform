@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { requireAdminRole } from "@/server/auth/guard";
 import { getEventPnl, getExpensesByVendor } from "@/server/finance/pnl";
 import { getReceivables, getCashByRecorder } from "@/server/finance/receivables";
+import { getTalentByArtist } from "@/server/artists/finance";
 import { getActiveEvent } from "@/server/admin/event-context";
 import { formatPaise } from "@/lib/utils";
 import { KpiCard } from "@/components/charts/kpi-card";
@@ -28,11 +29,12 @@ export default async function PnlPage() {
     );
   }
 
-  const [pnl, byVendor, receivables, cash] = await Promise.all([
+  const [pnl, byVendor, receivables, cash, byArtist] = await Promise.all([
     getEventPnl(active.id),
     getExpensesByVendor(active.id),
     getReceivables(active.id),
     getCashByRecorder(active.id),
+    getTalentByArtist(active.id),
   ]);
 
   const maxStream = Math.max(1, ...pnl.streams.map((s) => s.net));
@@ -99,6 +101,21 @@ export default async function PnlPage() {
                 <li key={v.vendor} className="flex items-center justify-between py-2">
                   <span>{v.vendor}</span>
                   <span className="font-medium">{formatPaise(v.amountPaise)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </ChartCard>
+
+        <ChartCard title="Talent by artist" description="Agreed fee · paid so far.">
+          {byArtist.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No artists booked.</p>
+          ) : (
+            <ul className="divide-y divide-border text-sm">
+              {byArtist.map((a) => (
+                <li key={a.stageName} className="flex items-center justify-between py-2">
+                  <span>{a.stageName}</span>
+                  <span className="font-medium">{formatPaise(a.paidPaise)} / {formatPaise(a.agreedPaise)}</span>
                 </li>
               ))}
             </ul>

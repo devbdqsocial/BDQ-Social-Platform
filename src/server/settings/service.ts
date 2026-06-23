@@ -93,6 +93,7 @@ export const FEATURE_FLAGS = [
   { key: "offers", label: "Offers", description: "Vendor & sponsor deals on the customer app." },
   { key: "gallery", label: "Gallery", description: "Published event photos for customers." },
   { key: "guide", label: "Festival guide", description: "The customer-facing event guide." },
+  { key: "lineup", label: "Artist lineup", description: "Public artist lineup page (/lineup)." },
 ] as const;
 export type FeatureFlag = (typeof FEATURE_FLAGS)[number]["key"];
 const FLAG_KEYS = FEATURE_FLAGS.map((f) => f.key) as readonly FeatureFlag[];

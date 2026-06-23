@@ -4,6 +4,7 @@ import { Clock, Ticket as TicketIcon, XCircle, CheckCircle2, FileText, ShoppingB
 import { requireAdmin } from "@/server/auth/guard";
 import { getActiveEvent } from "@/server/admin/event-context";
 import { getCommandCenter } from "@/server/analytics/dashboard";
+import { getArtistFinanceStats } from "@/server/artists/finance";
 import { formatPaise } from "@/lib/utils";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +21,7 @@ export default async function AdminDashboard() {
   const { active } = await getActiveEvent();
   const cc = await getCommandCenter(active?.id);
   const t = cc.tiles;
+  const artistStats = active ? await getArtistFinanceStats(active.id) : null;
 
   const now = Date.now();
   const eventDay = !!active && active.startsAt.getTime() <= now && now <= active.endsAt.getTime();
@@ -52,6 +54,13 @@ export default async function AdminDashboard() {
         <KpiCard label="Vendors" value={`${t.vendors.booked}/${t.vendors.total}`} sub={`${t.vendors.pendingReview} pending review`} />
         <KpiCard label="Sponsors" value={formatPaise(t.sponsors.signedPaise)} sub={tierSub} />
         <KpiCard label="Waitlist" value={t.waitlist.total} sub={`+${t.waitlist.added7d} this week`} />
+        {artistStats && (
+          <KpiCard
+            label="Artists"
+            value={`${artistStats.confirmedActs} confirmed`}
+            sub={`${formatPaise(artistStats.talentSpendPaise)} spent · ${formatPaise(artistStats.unpaidPaise)} due`}
+          />
+        )}
       </div>
 
       {/* Alert row — danger-tinted, only when something is wrong */}
