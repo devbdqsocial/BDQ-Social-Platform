@@ -1,0 +1,9 @@
+ALTER TABLE "VendorProfile" ADD COLUMN IF NOT EXISTS "registeredName" TEXT;
+ALTER TABLE "VendorProfile" ADD COLUMN IF NOT EXISTS "productCategory" TEXT;
+ALTER TABLE "VendorProfile" ADD COLUMN IF NOT EXISTS "products" TEXT;
+ALTER TABLE "VendorProfile" ADD COLUMN IF NOT EXISTS "instagram" TEXT;
+ALTER TABLE "VendorProfile" ADD COLUMN IF NOT EXISTS "contactPerson" TEXT;
+ALTER TABLE "VendorProfile" ADD COLUMN IF NOT EXISTS "whatsapp" TEXT;
+ALTER TABLE "VendorProfile" ADD COLUMN IF NOT EXISTS "city" TEXT;
+ALTER TABLE "VendorProfile" ADD COLUMN IF NOT EXISTS "callbackNote" TEXT;
+ALTER TABLE "VendorProfile" ADD COLUMN IF NOT EXISTS "callbackAt" TIMESTAMP(3);

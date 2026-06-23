@@ -11,7 +11,12 @@ export function listVendors() {
   return db.vendorProfile.findMany({
     orderBy: { createdAt: "desc" },
     take: 1000,
-    include: {
+    select: {
+      id: true,
+      brandName: true,
+      category: true,
+      approvalStatus: true,
+      createdAt: true,
       user: { select: { phone: true, email: true } },
       _count: { select: { bookings: true } },
     },
