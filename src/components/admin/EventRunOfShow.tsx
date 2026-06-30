@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/input";
 import { detectStageConflicts, type ConflictSlot } from "@/lib/schedule-conflicts";
-import { deleteScheduleItemAction } from "@/app/admin/(console)/events/[id]/actions";
+import { deleteScheduleItemAction, autoStaggerDayAction, cloneScheduleDayAction } from "@/app/admin/(console)/events/[id]/actions";
 
 export interface RunOfShowItem {
   id: string;
@@ -31,12 +32,13 @@ function toSlot(i: RunOfShowItem): ConflictSlot {
 }
 
 /** One day's run of show: a stage-lane time-grid (visual) + a detailed list with actions. */
-function DaySection({ eventId, label, startsAtIso, endsAtIso, items }: { eventId: string; label: string; startsAtIso: string; endsAtIso: string; items: RunOfShowItem[] }) {
+function DaySection({ eventId, dayId, allDays = [], label, startsAtIso, endsAtIso, items }: { eventId: string; dayId?: string; allDays?: { id: string; label: string }[]; label: string; startsAtIso: string; endsAtIso: string; items: RunOfShowItem[] }) {
   const dayStart = new Date(startsAtIso).getTime();
   const dayEnd = new Date(endsAtIso).getTime();
   const dur = Math.max(1, dayEnd - dayStart);
   const conflicts = detectStageConflicts(items.map(toSlot));
   const clashIds = new Set(conflicts.flatMap((c) => [c.a.id, c.b.id]));
+  const otherDays = allDays.filter((d) => d.id !== dayId);
 
   // stage lanes (null stage → "Unassigned"), each sorted by time
   const laneNames = [...new Set(items.map((i) => i.stageOrZone?.trim() || "Unassigned"))];
@@ -55,6 +57,30 @@ function DaySection({ eventId, label, startsAtIso, endsAtIso, items }: { eventId
         <div className="border-b border-warning/40 bg-warning/10 px-4 py-2 text-sm">
           <span className="font-medium">Stage clash ({conflicts.length}):</span>{" "}
           <span className="text-muted-foreground">{conflicts.map((c) => `${c.stage} — ${c.a.label} / ${c.b.label}`).join("; ")}</span>
+        </div>
+      )}
+
+      {dayId && (conflicts.length > 0 || otherDays.length > 0) && (
+        <div className="flex flex-wrap items-center gap-3 border-b border-border px-4 py-2">
+          {conflicts.length > 0 && (
+            <form action={autoStaggerDayAction}>
+              <input type="hidden" name="eventId" value={eventId} />
+              <input type="hidden" name="dayId" value={dayId} />
+              <Button type="submit" variant="outline" size="sm">Auto-stagger clashes</Button>
+            </form>
+          )}
+          {otherDays.length > 0 && (
+            <form action={cloneScheduleDayAction} className="flex items-center gap-2">
+              <input type="hidden" name="eventId" value={eventId} />
+              <input type="hidden" name="fromDayId" value={dayId} />
+              <span className="text-xs text-muted-foreground">Copy this day to</span>
+              <Select name="toDayId" required defaultValue="" className="h-8 w-44 text-xs">
+                <option value="" disabled>Choose a day…</option>
+                {otherDays.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
+              </Select>
+              <Button type="submit" variant="ghost" size="sm">Copy</Button>
+            </form>
+          )}
         </div>
       )}
 
@@ -141,12 +167,16 @@ export function EventRunOfShow({ eventId, days, items }: { eventId: string; days
     );
   }
 
+  const allDays = days.map((d, idx) => ({ id: d.id, label: d.label?.trim() || `Day ${idx + 1}` }));
+
   return (
     <div className="space-y-4">
       {days.map((d, idx) => (
         <DaySection
           key={d.id}
           eventId={eventId}
+          dayId={d.id}
+          allDays={allDays}
           label={d.label?.trim() || `Day ${idx + 1}`}
           startsAtIso={d.startsAtIso}
           endsAtIso={d.endsAtIso}

@@ -245,7 +245,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
                 <div key={o.id} className="flex items-center justify-between gap-2 border-b border-border/40 pb-2 last:border-0 last:pb-0">
                   <span className="truncate text-muted-foreground">{o.event.name}</span>
                   <span className="font-medium shrink-0">{formatPaise(o.total)}</span>
-                  <span className="text-xs text-muted-foreground shrink-0">{fmtTime(o.createdAt).split(",")[0]}</span>
+                  <span className="text-xs text-muted-foreground shrink-0">{fmtTime(new Date(o.createdAt)).split(",")[0]}</span>
                 </div>
               ))
             )}

@@ -425,10 +425,12 @@ model Outbox {
   attempts    Int         @default(0)
   lastError   String?
   dedupeKey   String      @unique                    // e.g. ticketId:channel
+  campaignId  String?
   createdAt   DateTime    @default(now())
   sentAt      DateTime?
 
   @@index([status])
+  @@index([campaignId])
 }
 
 model AuditLog {

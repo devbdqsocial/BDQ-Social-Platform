@@ -56,7 +56,8 @@ function; the rest activate a feature and stay dormant until set.
 
 - **Razorpay** → Dashboard → Webhooks → `https://bdqsocial.com/api/payments/razorpay/webhook`, secret
   = `RAZORPAY_WEBHOOK_SECRET`, events `payment.captured`. Fulfilment is idempotent + reconciled.
-- **WhatsApp Cloud** → approve a `ticket_confirmation` body template (3 vars: event, count, link).
+- **WhatsApp Cloud** → approve a `ticket_confirmation` body template (3 vars: event, count, link)
+  plus any campaign templates used from the admin Campaigns builder.
 - **SendGrid** → verify the `EMAIL_FROM` sender/domain (unverified senders are rejected at send time).
 
 ## 5. Go / no-go

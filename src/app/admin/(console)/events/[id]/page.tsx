@@ -20,8 +20,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { publishEventAction } from "../actions";
 import { ActionForm } from "@/components/admin/action-form";
-import { addTicketTypeAction, deleteTicketTypeAction, addScheduleItemAction, setEventThemeAction, updateEventAction, addEventDayAction, updateEventDayAction, deleteEventDayAction } from "./actions";
+import { addTicketTypeAction, deleteTicketTypeAction, addScheduleItemAction, setEventThemeAction, setPricingRulesAction, setEventLogisticsAction, updateEventAction, addEventDayAction, updateEventDayAction } from "./actions";
 import { DeleteEventButton } from "./DeleteEventButton";
+import { DeleteDayButton } from "./DeleteDayButton";
 
 export const metadata: Metadata = { title: "Edit event" };
 
@@ -34,13 +35,19 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
   const [event, maps, lineup, roster, readiness] = await Promise.all([getByIdForAdmin(id), listMaps(), listEventLineup(id), listArtists(), getEventReadiness(id)]);
   if (!event) notFound();
   const theme = (event.theme as { primary?: string; accent?: string } | null) ?? null;
+  const earlyBird = (event.earlyBird as { active?: boolean; percent?: number } | null) ?? null;
+  const bulkTiers = ((event.bulkTiers as { minQty: number; percent: number }[] | null) ?? [])
+    .slice()
+    .sort((a, b) => a.minQty - b.minQty);
   const sections = [
     ["details", "Details"],
     ["tickets", `Tickets (${event.ticketTypes.length})`],
+    ["pricing", "Pricing"],
     ["schedule", `Schedule (${event.schedule.length})`],
     ["lineup", `Lineup (${lineup.length})`],
     ["map", "Map"],
     ["theme", "Theme"],
+    ["logistics", "Logistics"],
     ["danger", "Danger"],
   ] as const;
 
@@ -92,12 +99,22 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
                 ))}
               </ul>
             )}
+            {readiness.warnings.length > 0 && (
+              <ul className="mt-3 space-y-2 text-sm">
+                {readiness.warnings.map((w) => (
+                  <li key={w.key} className="rounded-lg border border-warning/40 bg-warning/10 p-3">
+                    <p className="font-medium">⚠ {w.label}</p>
+                    <p className="mt-1 text-muted-foreground">{w.detail} <span className="italic">Advisory — won&apos;t block publishing.</span></p>
+                  </li>
+                ))}
+              </ul>
+            )}
           </CardContent>
         </Card>
       )}
 
       <Tabs defaultValue="details" className="min-w-0 gap-4">
-        <TabsList className="!grid !h-auto w-full grid-cols-2 gap-2 rounded-xl border border-border bg-muted/40 p-2 sm:grid-cols-4 xl:grid-cols-7">
+        <TabsList className="!grid !h-auto w-full grid-cols-2 gap-2 rounded-xl border border-border bg-muted/40 p-2 sm:grid-cols-4 xl:grid-cols-9">
           {sections.map(([value, label]) => (
             <TabsTrigger
               key={value}
@@ -179,6 +196,46 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
           </Card>
         </TabsContent>
 
+        {/* PRICING — early-bird + bulk tiers (engine-driven; best single discount wins) */}
+        <TabsContent value="pricing">
+          <Card asChild>
+            <form action={setPricingRulesAction}>
+              <input type="hidden" name="eventId" value={event.id} />
+              <CardHeader>
+                <CardTitle className="text-base">Pricing rules</CardTitle>
+                <CardDescription>
+                  Early-bird and bulk discounts apply automatically at checkout. They never stack —
+                  shoppers get the single best of early-bird, bulk, or coupon.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-5">
+                <div className="grid gap-3 rounded-lg border border-border p-4">
+                  <label className="flex items-center gap-2 text-sm font-medium">
+                    <input type="checkbox" name="earlyActive" defaultChecked={!!earlyBird?.active} className="size-4 rounded border-input" />
+                    Early-bird active
+                  </label>
+                  <Field label="Early-bird discount (%)" hint="Applied to every ticket type that has no explicit early-bird price set in the Tickets tab.">
+                    <Input type="number" name="earlyPercent" min={0} max={100} defaultValue={earlyBird?.percent ?? ""} placeholder="15" className="sm:max-w-40" />
+                  </Field>
+                </div>
+
+                <div className="grid gap-3 rounded-lg border border-border p-4">
+                  <p className="text-sm font-medium">Bulk tiers</p>
+                  <p className="text-xs text-muted-foreground">Discount on the whole order once total tickets cross a threshold. Bulk only kicks in above 5 tickets. Leave a row blank to skip it.</p>
+                  {[0, 1, 2].map((i) => (
+                    <div key={i} className="grid items-end gap-3 sm:grid-cols-2">
+                      <Field label={`Tier ${i + 1} — min tickets`}><Input type="number" name={`minQty${i}`} min={6} defaultValue={bulkTiers[i]?.minQty ?? ""} placeholder={i === 0 ? "6" : i === 1 ? "10" : "20"} /></Field>
+                      <Field label="Discount (%)"><Input type="number" name={`percent${i}`} min={0} max={100} defaultValue={bulkTiers[i]?.percent ?? ""} placeholder={i === 0 ? "5" : i === 1 ? "10" : "15"} /></Field>
+                    </div>
+                  ))}
+                </div>
+
+                <Button type="submit" className="w-fit">Save pricing rules</Button>
+              </CardContent>
+            </form>
+          </Card>
+        </TabsContent>
+
         {/* SCHEDULE — event days + run of show */}
         <TabsContent value="schedule" className="space-y-4">
           {/* Event days */}
@@ -204,11 +261,9 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
                           <Button type="submit" variant="outline" size="sm">Save</Button>
                         </div>
                       </form>
-                      <form action={deleteEventDayAction} className="mt-2">
-                        <input type="hidden" name="id" value={d.id} />
-                        <input type="hidden" name="eventId" value={event.id} />
-                        <Button type="submit" variant="ghost" size="sm" className="text-destructive">Remove day</Button>
-                      </form>
+                      <div className="mt-2">
+                        <DeleteDayButton eventId={event.id} dayId={d.id} itemCount={event.schedule.filter((s) => s.eventDayId === d.id).length} />
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -358,6 +413,29 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
                 <Field label="Primary colour" hint="Buttons + accents. Hex like #01065B."><Input name="primary" defaultValue={theme?.primary ?? ""} placeholder="#01065B" /></Field>
                 <Field label="Accent colour" hint="Highlights. Hex like #D69A22."><Input name="accent" defaultValue={theme?.accent ?? ""} placeholder="#D69A22" /></Field>
                 <Button type="submit" className="w-fit sm:col-span-2">Save theme</Button>
+              </CardContent>
+            </form>
+          </Card>
+        </TabsContent>
+
+        {/* LOGISTICS — add-on window + vendor load-in */}
+        <TabsContent value="logistics">
+          <Card asChild>
+            <form action={setEventLogisticsAction}>
+              <input type="hidden" name="eventId" value={event.id} />
+              <CardHeader>
+                <CardTitle className="text-base">Logistics</CardTitle>
+                <CardDescription>Vendor setup access and the add-on ordering deadline. Shown to booked vendors.</CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-4">
+                <Field label="Add-on ordering closes (hours before start)" hint="Leave blank for the default of 48 hours.">
+                  <Input type="number" name="addOnCloseHours" min={0} max={720} defaultValue={event.addOnCloseHours ?? ""} placeholder="48" className="sm:max-w-40" />
+                </Field>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field label="Vendor load-in starts" hint="When vendors can enter to set up — often 1–2 days before."><DateTimePicker name="loadInStartsAt" defaultValue={event.loadInStartsAt ?? undefined} /></Field>
+                  <Field label="Vendor load-in ends"><DateTimePicker name="loadInEndsAt" defaultValue={event.loadInEndsAt ?? undefined} /></Field>
+                </div>
+                <Button type="submit" className="w-fit">Save logistics</Button>
               </CardContent>
             </form>
           </Card>

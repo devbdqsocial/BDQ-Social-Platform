@@ -1,6 +1,10 @@
 import "server-only";
 import { db } from "@/server/db";
 import { emailConfigured } from "@/lib/sendgrid";
+import { assertWhatsAppSent, sendWhatsAppImage, sendWhatsAppText, whatsAppConfigured, whatsAppProvider } from "@/lib/whatsapp";
+import { toQrBuffer } from "@/lib/qr-token";
+import { withAudit } from "@/server/audit";
+import type { Session } from "@/server/auth/guard";
 
 /** Read-only Communication overview: provider config + outbox queue health. Reuses the Outbox table. */
 
@@ -14,13 +18,7 @@ function mask(contact: string): string {
 }
 
 export async function communicationOverview() {
-  const provider = process.env.WHATSAPP_PROVIDER;
-  const whatsappConfigured =
-    provider === "cloud"
-      ? !!process.env.WHATSAPP_CLOUD_TOKEN && !!process.env.WHATSAPP_CLOUD_PHONE_ID
-      : provider === "interakt"
-        ? !!process.env.INTERAKT_API_KEY
-        : false;
+  const provider = whatsAppProvider();
 
   const [grouped, lastSent, failures] = await Promise.all([
     db.outbox.groupBy({ by: ["status"], _count: { _all: true } }),
@@ -36,7 +34,7 @@ export async function communicationOverview() {
 
   return {
     email: { configured: await emailConfigured() },
-    whatsapp: { provider: provider ?? null, configured: whatsappConfigured },
+    whatsapp: { provider, configured: whatsAppConfigured() },
     queue: { queued: count("QUEUED"), sent: count("SENT"), failed: count("FAILED") },
     lastSentAt: lastSent?.sentAt ? lastSent.sentAt.toISOString() : null,
     recentFailures: failures.map((f) => ({
@@ -48,4 +46,30 @@ export async function communicationOverview() {
       at: f.createdAt.toISOString(),
     })),
   };
+}
+
+export function sendWhatsAppTest(session: Session, input: { phone: string; message: string; sendSampleQr: boolean }) {
+  return withAudit(session, { action: "SEND_TEST", entity: "WhatsApp" }, async () => ({
+    before: null,
+    run: async () => {
+      if (!whatsAppConfigured()) throw new Error("WhatsApp is not configured.");
+      const text = await sendWhatsAppText(input.phone, input.message);
+      assertWhatsAppSent(text);
+
+      let qrId: string | null = null;
+      if (input.sendSampleQr) {
+        const media = await sendWhatsAppImage({
+          phone: input.phone,
+          buffer: await toQrBuffer(`BDQ-TEST:${new Date().toISOString()}`),
+          filename: "bdq-test-qr.png",
+          caption: "BDQ WhatsApp QR test",
+        });
+        assertWhatsAppSent(media);
+        qrId = media.id;
+      }
+
+      const result = { textId: text.id, qrId };
+      return { result, after: { to: mask(input.phone), ...result } };
+    },
+  }));
 }

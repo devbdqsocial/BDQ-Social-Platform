@@ -3,9 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdminRole } from "@/server/auth/guard";
-import { addScheduleItem, addTicketType, deleteEvent, deleteScheduleItem, deleteTicketType, setEventTheme, updateEvent } from "@/server/events/service";
+import { addScheduleItem, addTicketType, autoStaggerDay, cloneScheduleDay, deleteEvent, deleteScheduleItem, deleteTicketType, setEventLogistics, setEventPricing, setEventTheme, updateEvent } from "@/server/events/service";
 import { addDay, updateDay, deleteDay } from "@/server/events/event-days";
-import { createEventSchema, eventDaySchema, eventThemeSchema, scheduleItemSchema, ticketTypeSchema } from "@/server/schemas";
+import { createEventSchema, eventDaySchema, eventLogisticsSchema, eventPricingSchema, eventThemeSchema, scheduleItemSchema, ticketTypeSchema } from "@/server/schemas";
 import { parseOrThrow } from "@/lib/validation";
 
 export async function addTicketTypeAction(formData: FormData): Promise<void> {
@@ -57,6 +57,20 @@ export async function deleteScheduleItemAction(formData: FormData): Promise<void
   const session = await requireAdminRole();
   await deleteScheduleItem(session, String(formData.get("id")));
   revalidateEvent(String(formData.get("eventId")));
+}
+
+export async function autoStaggerDayAction(formData: FormData): Promise<void> {
+  const session = await requireAdminRole();
+  const eventId = String(formData.get("eventId"));
+  await autoStaggerDay(session, eventId, String(formData.get("dayId")));
+  revalidateEvent(eventId);
+}
+
+export async function cloneScheduleDayAction(formData: FormData): Promise<void> {
+  const session = await requireAdminRole();
+  const eventId = String(formData.get("eventId"));
+  await cloneScheduleDay(session, eventId, String(formData.get("fromDayId")), String(formData.get("toDayId")));
+  revalidateEvent(eventId);
 }
 
 export async function addEventDayAction(formData: FormData): Promise<void> {
@@ -111,6 +125,37 @@ export async function deleteEventAction(formData: FormData): Promise<void> {
   revalidatePath("/admin/events/past");
   revalidatePath("/events");
   redirect("/admin/events");
+}
+
+export async function setPricingRulesAction(formData: FormData): Promise<void> {
+  const session = await requireAdminRole();
+  const eventId = String(formData.get("eventId"));
+  const bulkTiers = [0, 1, 2]
+    .map((i) => ({ minQty: Number(formData.get(`minQty${i}`)), percent: Number(formData.get(`percent${i}`)) }))
+    .filter((t) => t.minQty > 0 && t.percent > 0);
+  const earlyPercent = formData.get("earlyPercent");
+  const data = parseOrThrow(eventPricingSchema, {
+    bulkTiers,
+    earlyBird: {
+      active: formData.get("earlyActive") === "on",
+      percent: earlyPercent ? Number(earlyPercent) : undefined,
+    },
+  });
+  await setEventPricing(session, eventId, data);
+  revalidateEvent(eventId);
+}
+
+export async function setEventLogisticsAction(formData: FormData): Promise<void> {
+  const session = await requireAdminRole();
+  const eventId = String(formData.get("eventId"));
+  const closeHours = formData.get("addOnCloseHours");
+  const data = parseOrThrow(eventLogisticsSchema, {
+    addOnCloseHours: closeHours ? Number(closeHours) : undefined,
+    loadInStartsAt: formData.get("loadInStartsAt") || undefined,
+    loadInEndsAt: formData.get("loadInEndsAt") || undefined,
+  });
+  await setEventLogistics(session, eventId, data);
+  revalidateEvent(eventId);
 }
 
 export async function setEventThemeAction(formData: FormData): Promise<void> {

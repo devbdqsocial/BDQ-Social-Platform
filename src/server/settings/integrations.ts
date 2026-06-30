@@ -1,4 +1,5 @@
 import "server-only";
+import { whatsAppConfigured, whatsAppProvider } from "@/lib/whatsapp";
 
 /**
  * Read-only integration status from env presence (never the secret values). "Configured" means the keys
@@ -10,13 +11,7 @@ export type IntegrationStatus = { name: string; configured: boolean; detail: str
 const has = (k: string) => !!process.env[k];
 
 export function integrationStatuses(): IntegrationStatus[] {
-  const provider = process.env.WHATSAPP_PROVIDER;
-  const whatsappOk =
-    provider === "cloud"
-      ? has("WHATSAPP_CLOUD_TOKEN") && has("WHATSAPP_CLOUD_PHONE_ID")
-      : provider === "interakt"
-        ? has("INTERAKT_API_KEY")
-        : false;
+  const provider = whatsAppProvider();
 
   return [
     { name: "Database (Neon)", configured: has("DATABASE_URL"), detail: "Postgres connection" },
@@ -24,7 +19,7 @@ export function integrationStatuses(): IntegrationStatus[] {
     { name: "Firebase Auth", configured: has("NEXT_PUBLIC_FIREBASE_PROJECT_ID"), detail: "Customer / vendor phone login" },
     { name: "Cloudinary", configured: has("CLOUDINARY_CLOUD_NAME") && has("CLOUDINARY_API_KEY") && has("CLOUDINARY_API_SECRET"), detail: "Image / asset uploads" },
     { name: "SendGrid (email)", configured: has("SENDGRID_API_KEY"), detail: "Transactional email" },
-    { name: "WhatsApp", configured: whatsappOk, detail: provider ? `Provider: ${provider}` : "No provider set" },
+    { name: "WhatsApp", configured: whatsAppConfigured(), detail: provider ? `Provider: ${provider}` : "No provider set" },
     { name: "Sentry", configured: has("SENTRY_DSN"), detail: "Error monitoring" },
   ];
 }

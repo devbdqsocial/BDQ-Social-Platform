@@ -4,11 +4,13 @@ import { revalidatePath } from "next/cache";
 import { requireAdminRole } from "@/server/auth/guard";
 import { updateCampaign, sendCampaign } from "@/server/campaigns/service";
 import { db } from "@/server/db";
+import { normalizeTemplateParams } from "@/lib/campaign-whatsapp";
 
 export async function updateCampaignAction(id: string, formData: FormData): Promise<{ success: boolean; error?: string }> {
   const session = await requireAdminRole();
   try {
     const rawContacts = formData.get("customContacts");
+    const rawWhatsAppParams = formData.get("whatsappTemplateParams");
     let parsedContacts = null;
     if (rawContacts) {
       const lines = String(rawContacts).split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
@@ -25,6 +27,9 @@ export async function updateCampaignAction(id: string, formData: FormData): Prom
       audience: String(formData.get("audience")),
       subject: formData.get("subject") ? String(formData.get("subject")) : undefined,
       body: formData.get("body") ? String(formData.get("body")) : undefined,
+      whatsappTemplateName: formData.get("whatsappTemplateName") ? String(formData.get("whatsappTemplateName")) : undefined,
+      whatsappTemplateLang: formData.get("whatsappTemplateLang") ? String(formData.get("whatsappTemplateLang")) : undefined,
+      whatsappTemplateParams: rawWhatsAppParams !== null ? normalizeTemplateParams(rawWhatsAppParams) : undefined,
       customContacts: parsedContacts || undefined
     };
     

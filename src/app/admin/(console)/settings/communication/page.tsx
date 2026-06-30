@@ -4,8 +4,16 @@ import { requireAdminRole } from "@/server/auth/guard";
 import { communicationOverview } from "@/server/settings/communication";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
+import { Input, Textarea } from "@/components/ui/input";
+import { sendWhatsAppTestAction } from "./actions";
 
 export const metadata: Metadata = { title: "Communication" };
+
+interface PageProps {
+  searchParams: Promise<{ test?: string }>;
+}
 
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
@@ -35,9 +43,10 @@ function ProviderRow({ name, ok, detail }: { name: string; ok: boolean; detail: 
 }
 
 /** Read-only delivery health: providers + outbox queue + recent failures. */
-export default async function CommunicationPage() {
+export default async function CommunicationPage({ searchParams }: PageProps) {
   await requireAdminRole();
   const o = await communicationOverview();
+  const params = await searchParams;
 
   return (
     <div className="space-y-6">
@@ -48,6 +57,33 @@ export default async function CommunicationPage() {
         <CardContent className="grid gap-4">
           <ProviderRow name="Email (SendGrid)" ok={o.email.configured} detail="Transactional email" />
           <ProviderRow name="WhatsApp" ok={o.whatsapp.configured} detail={o.whatsapp.provider ? `Provider: ${o.whatsapp.provider}` : "No provider set"} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>WhatsApp test</CardTitle>
+          <CardDescription>Send one provider-backed test message before publishing a campaign.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {params.test === "sent" && (
+            <p className="mb-4 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-700">
+              Test message sent.
+            </p>
+          )}
+          <form action={sendWhatsAppTestAction} className="grid gap-4 sm:grid-cols-2">
+            <Field label="Recipient phone" hint="10-digit India mobile or +91 format">
+              <Input name="phone" defaultValue={process.env.OPENWA_TEST_TO || ""} placeholder="+919876543210" required />
+            </Field>
+            <label className="flex items-end gap-2 pb-2 text-sm">
+              <input name="sendSampleQr" type="checkbox" className="size-4 rounded border-input" />
+              Send sample QR image
+            </label>
+            <Field label="Message" className="sm:col-span-2">
+              <Textarea name="message" defaultValue="BDQ WhatsApp test message" className="min-h-24" maxLength={4096} required />
+            </Field>
+            <Button type="submit" className="w-fit sm:col-span-2">Send Test</Button>
+          </form>
         </CardContent>
       </Card>
 

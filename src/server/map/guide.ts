@@ -43,9 +43,18 @@ export function bucketOf(productCategory?: string | null, category?: string | nu
   return "Shopping";
 }
 
-export async function getEventGuide({ includeLayout }: { includeLayout: boolean }): Promise<EventGuide | null> {
-  const [pub] = await listPublished();
-  if (!pub) return null;
+export async function getEventGuide({ includeLayout, slug }: { includeLayout: boolean; slug?: string }): Promise<EventGuide | null> {
+  // Scope to a specific event when a slug is given (event detail page); else the active published one.
+  let eventId: string;
+  if (slug) {
+    const e = await db.event.findUnique({ where: { slug }, select: { id: true } });
+    if (!e) return null;
+    eventId = e.id;
+  } else {
+    const [pub] = await listPublished();
+    if (!pub) return null;
+    eventId = pub.id;
+  }
 
   const vendorBooking = {
     where: { status: "BOOKED" as const, vendorProfileId: { not: null } },
@@ -54,14 +63,14 @@ export async function getEventGuide({ includeLayout }: { includeLayout: boolean 
   };
   const event = includeLayout
     ? await db.event.findUnique({
-        where: { id: pub.id },
+        where: { id: eventId },
         include: {
           mapLayout: { select: { layoutJson: true } },
           stalls: { include: { bookings: vendorBooking } },
         },
       })
     : await db.event.findUnique({
-        where: { id: pub.id },
+        where: { id: eventId },
         include: {
           mapLayout: { select: { id: true } },
           stalls: {

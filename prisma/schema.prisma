@@ -240,6 +240,9 @@ model Event {
   bulkTiers   Json?
   earlyBird   Json?
   capacity    Int?
+  addOnCloseHours Int? // hours before startsAt that stall add-on ordering closes (default 48 in code)
+  loadInStartsAt  DateTime? // vendor setup-access window (often 1-2 days before the event)
+  loadInEndsAt    DateTime?
   createdById String?
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
@@ -748,6 +751,8 @@ model Booking {
   payBy           DateTime? // deadline to pay after admin approval (RESERVED→PENDING_PAYMENT window)
   payment         Payment?
   addOnOrders     BookingAddOnOrder[]
+  agreement       BookingAgreement?
+  leads           Lead[]
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   // "one active booking per stall" is enforced by a partial unique index (raw SQL migration,
@@ -755,6 +760,21 @@ model Booking {
 
   @@index([stallId, status])
   @@index([eventId, status])
+}
+
+/** Per-event agreement a vendor signs for a specific booking/edition — separate from the global
+ * onboarding VendorContract. Gates the payment window. */
+model BookingAgreement {
+  id            String         @id @default(cuid())
+  bookingId     String         @unique
+  booking       Booking        @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  status        ContractStatus @default(SENT)
+  version       String?
+  termsSnapshot String?
+  signerName    String?
+  signerIp      String?
+  signedAt      DateTime?
+  createdAt     DateTime       @default(now())
 }
 
 // ──────────────────────────── OPS / GROWTH ─────────────────────
@@ -821,6 +841,8 @@ model Lead {
   event           Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
   vendorProfileId String
   vendorProfile   VendorProfile @relation(fields: [vendorProfileId], references: [id], onDelete: Cascade)
+  bookingId       String?
+  booking         Booking?      @relation(fields: [bookingId], references: [id], onDelete: SetNull)
   name            String?
   phone           String?
   email           String?
@@ -829,6 +851,7 @@ model Lead {
 
   @@index([vendorProfileId])
   @@index([eventId])
+  @@index([bookingId])
 }
 
 // ──────────────────────────── DELIVERY / AUDIT ─────────────────
@@ -848,6 +871,7 @@ model Outbox {
   sentAt     DateTime?
 
   @@index([status])
+  @@index([campaignId])
 }
 
 model AuditLog {
@@ -1016,6 +1040,9 @@ model Campaign {
   targeting      Json? // Stores segment rules (e.g. { role: "VENDOR" })
   subject        String?
   body           String?
+  whatsappTemplateName   String?
+  whatsappTemplateLang   String?
+  whatsappTemplateParams Json?
   status         CampaignStatus @default(DRAFT)
   sentCount      Int            @default(0)
   stats          Json? // Stores analytics: { delivered: 0, opened: 0, clicked: 0, failed: 0 }

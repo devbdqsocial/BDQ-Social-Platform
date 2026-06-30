@@ -37,7 +37,7 @@ export async function sendCloudWhatsApp(msg: WhatsAppMessage): Promise<{ skipped
       "Content-Type": "application/json",
       Authorization: `Bearer ${process.env.WHATSAPP_CLOUD_TOKEN}`,
     },
-    body: JSON.stringify(buildCloudPayload(msg, { lang: process.env.WHATSAPP_TEMPLATE_LANG })),
+    body: JSON.stringify(buildCloudPayload(msg, { lang: msg.lang || process.env.WHATSAPP_TEMPLATE_LANG })),
   });
   if (!res.ok) throw new Error(`WhatsApp Cloud send failed: ${res.status}`);
   const json = (await res.json().catch(() => ({}))) as { messages?: { id?: string }[] };

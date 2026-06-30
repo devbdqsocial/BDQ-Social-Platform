@@ -13,6 +13,9 @@ import { BrandForm } from "@/components/vendor/BrandForm";
 import { KycForm } from "@/components/vendor/KycForm";
 import { ContractSign } from "@/components/vendor/ContractSign";
 import { PayStep } from "@/components/vendor/PayStep";
+import { VendorDayCard } from "@/components/vendor/VendorDayCard";
+import { BookingAgreementSign } from "@/components/vendor/BookingAgreementSign";
+import { getBookingAgreement } from "@/server/bookings/agreement";
 
 export const dynamic = "force-dynamic";
 
@@ -47,7 +50,7 @@ export default async function VendorHome({ searchParams }: { searchParams: Promi
     orderBy: { createdAt: "desc" },
     include: {
       stall: { select: { label: true, priceInPaise: true, stallType: { select: { priceInPaise: true } } } },
-      event: { select: { name: true } },
+      event: { select: { name: true, startsAt: true, endsAt: true, loadInStartsAt: true, loadInEndsAt: true } },
     },
   });
 
@@ -58,6 +61,9 @@ export default async function VendorHome({ searchParams }: { searchParams: Promi
   const signed = contract?.status === "SIGNED";
   const approvedForPay = booking?.status === "PENDING_PAYMENT";
   const paid = booking?.status === "BOOKED";
+  // Per-event agreement gates payment (signed separately from the global onboarding contract).
+  const bookingAgreement = booking && approvedForPay ? await getBookingAgreement(booking.id) : null;
+  const agreementSigned = bookingAgreement?.status === "SIGNED";
   const rejected = profile.approvalStatus === "REJECTED";
   const reviewOverdue = isReviewOverdue(contract?.signedAt);
 
@@ -272,7 +278,14 @@ export default async function VendorHome({ searchParams }: { searchParams: Promi
                     <Countdown target={booking.payBy.toISOString()} />
                   </div>
                 )}
-                <PayStep bookingId={booking.id} amountPaise={fee} />
+                {agreementSigned ? (
+                  <PayStep bookingId={booking.id} amountPaise={fee} />
+                ) : (
+                  <div className="space-y-[var(--space-md)]">
+                    <p className="f-paragraph-small opacity-75">One last step before payment — confirm this event&apos;s terms.</p>
+                    <BookingAgreementSign bookingId={booking.id} />
+                  </div>
+                )}
                 <a href={vendorShareHref} target="_blank" rel="noopener noreferrer" className="link--split f-paragraph-small font-bold">
                   Announce your approval <span className="arrow">-&gt;</span>
                 </a>
@@ -290,6 +303,17 @@ export default async function VendorHome({ searchParams }: { searchParams: Promi
             ))}
         </section>
       </div>
+
+      {paid && booking && (
+        <VendorDayCard
+          stallLabel={booking.stall.label}
+          eventName={booking.event.name}
+          loadInStartsAt={booking.event.loadInStartsAt}
+          loadInEndsAt={booking.event.loadInEndsAt}
+          startsAt={booking.event.startsAt}
+          endsAt={booking.event.endsAt}
+        />
+      )}
     </div>
   );
 }

@@ -9,14 +9,13 @@ import type { CreateAddOnInput, UpdateAddOnInput, AddOnOrderInput } from "@/serv
  * Stall add-ons (R4.2 / vendor-portal §5, admin-portal §6.5). Admin CRUDs extras per event;
  * a BOOKED vendor orders them via a SEPARATE Razorpay order, fulfilled idempotently by the shared
  * webhook. Prices are admin-entered paise (snapshotted at order time); stock guarded by a
- * conditional UPDATE on `sold` (the ticket oversell pattern). Orders close at startsAt − 48h.
+ * conditional UPDATE on `sold` (the ticket oversell pattern). Orders close `addOnCloseHours`
+ * (default 48) before the event starts.
  */
 
-/** Add-on orders may be placed until this long before the event starts (vendor-portal §5). */
-const ADDON_CLOSE_MS = 48 * 60 * 60 * 1000;
-
-export function addOnOrdersOpen(startsAt: Date, now = new Date()): boolean {
-  return startsAt.getTime() - ADDON_CLOSE_MS > now.getTime();
+/** Add-on orders may be placed until `closeHours` (per-event, default 48) before startsAt. */
+export function addOnOrdersOpen(startsAt: Date, closeHours = 48, now = new Date()): boolean {
+  return startsAt.getTime() - closeHours * 3_600_000 > now.getTime();
 }
 
 // ── reads ─────────────────────────────────────────────────────────────────────
@@ -123,11 +122,11 @@ export interface AddOnOrderResult {
 export async function createAddOnOrder(vendorProfileId: string, input: AddOnOrderInput): Promise<AddOnOrderResult> {
   const booking = await db.booking.findUnique({
     where: { id: input.bookingId },
-    include: { event: { select: { startsAt: true } } },
+    include: { event: { select: { startsAt: true, addOnCloseHours: true } } },
   });
   if (!booking || booking.vendorProfileId !== vendorProfileId) throw new Error("Booking not found");
   if (booking.status !== "BOOKED") throw new Error("Confirm your stall before ordering add-ons");
-  if (!addOnOrdersOpen(booking.event.startsAt)) throw new Error("Add-on orders are closed for this event");
+  if (!addOnOrdersOpen(booking.event.startsAt, booking.event.addOnCloseHours ?? 48)) throw new Error("Add-on orders are closed for this event");
 
   const ids = [...new Set(input.items.map((i) => i.addOnId))];
   const addOns = await db.stallAddOn.findMany({ where: { id: { in: ids }, eventId: booking.eventId, active: true } });

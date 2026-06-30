@@ -154,6 +154,45 @@ const hexColor = z
 
 export const eventThemeSchema = z.object({ primary: hexColor, accent: hexColor });
 
+/** Event logistics: add-on ordering close window (hours before start) + vendor load-in/setup window. */
+export const eventLogisticsSchema = z
+  .object({
+    addOnCloseHours: z.number().int().min(0).max(720).optional(),
+    loadInStartsAt: z.coerce.date().optional(),
+    loadInEndsAt: z.coerce.date().optional(),
+  })
+  .refine((d) => !(d.loadInStartsAt && d.loadInEndsAt) || d.loadInEndsAt >= d.loadInStartsAt, {
+    message: "Load-in end must be after start",
+    path: ["loadInEndsAt"],
+  });
+
+/** Per-event dynamic pricing rules consumed by the pricing engine. Bulk only triggers above 5
+ * tickets (Docs/BUSINESS-RULES §9); discounts never stack — the single best of {early-bird, bulk,
+ * coupon} wins. */
+export const bulkTierSchema = z.object({
+  minQty: z.number().int().min(6, "Bulk pricing applies above 5 tickets"),
+  percent: z.number().min(0).max(100),
+});
+export const eventPricingSchema = z.object({
+  earlyBird: z.object({
+    active: z.boolean().default(false),
+    percent: z.number().min(0).max(100).optional(),
+  }),
+  bulkTiers: z.array(bulkTierSchema).max(5),
+});
+
+/** Vendor self-serve offer (vendor creates a promo for an event their stall is booked in). */
+export const vendorOfferSchema = z
+  .object({
+    eventId: id,
+    title: z.string().trim().min(2).max(80),
+    terms: z.string().trim().min(2).max(300),
+    kind: z.enum(["DISCOUNT", "FREEBIE", "BUNDLE"]),
+    startsAt: z.coerce.date(),
+    endsAt: z.coerce.date(),
+  })
+  .refine((d) => d.endsAt > d.startsAt, { message: "End must be after start", path: ["endsAt"] });
+
 export const leadSchema = z
   .object({
     vendorProfileId: id,

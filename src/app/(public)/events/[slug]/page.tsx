@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getBySlug, getPublicEventLayout } from "@/server/events/service";
+import { getBySlug } from "@/server/events/service";
+import { getEventGuide } from "@/server/map/guide";
 import { sponsorsForEventPublic } from "@/server/sponsors/service";
 import { listApprovedVendors } from "@/server/vendors/service";
 import { primaryLogo } from "@/lib/vendor-assets";
@@ -12,7 +13,7 @@ import { Reveal } from "@/components/motion/Reveal";
 import { SplitReveal } from "@/components/motion/SplitReveal";
 import { Magnetic } from "@/components/motion/Magnetic";
 import { BdqWorld } from "@/components/motion/BdqWorld";
-import { BookingFloorPlan } from "@/components/map/BookingFloorPlan";
+import { EventGuide } from "@/components/map/EventGuide";
 import { TicketCheckout } from "@/components/tickets/TicketCheckout";
 import { SponsorStrip } from "@/components/landing/SponsorStrip";
 import { NotifyMe } from "@/components/events/NotifyMe";
@@ -60,7 +61,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
   const [sponsors, vendors] = await Promise.all([sponsorsForEventPublic(event.id), listApprovedVendors()]);
   const brands = vendors.slice(0, 8);
   const hasStallLayout = !!event.mapLayout && event._count.stalls > 0;
-  const eventLayout = hasStallLayout ? await getPublicEventLayout(slug) : null;
+  const guide = hasStallLayout ? await getEventGuide({ includeLayout: true, slug }) : null;
 
   const hasTickets = event.ticketTypes.length > 0;
   const soldOut = hasTickets && event.ticketTypes.every((t) => t.soldQty >= t.totalQty);
@@ -210,16 +211,10 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
             <div><p className="kicker opacity-70">Parking</p><p className="f-paragraph mt-[var(--space-xs)]">On-site and nearby — arrive early on peak evenings.</p></div>
             <div><p className="kicker opacity-70">Accessibility</p><p className="f-paragraph mt-[var(--space-xs)]">Step-free entry and accessible restrooms on site.</p></div>
           </div>
-          {hasStallLayout && (
+          {guide && (guide.hasLayout || guide.brands.length > 0) && (
             <div className="mt-[var(--space-2xl)]">
-              {eventLayout ? (
-                <>
-                  <p className="f-paragraph-small mb-[var(--space-md)] opacity-70">Browse the layout - live stall availability.</p>
-                  <BookingFloorPlan stalls={eventLayout.stalls} canvas={eventLayout.canvas} />
-                </>
-              ) : (
-                <p className="f-paragraph-small opacity-70">The event layout for this market is not ready yet.</p>
-              )}
+              <p className="f-paragraph-small mb-[var(--space-md)] opacity-70">Find the brands, food and experiences across the venue.</p>
+              <EventGuide guide={guide} />
             </div>
           )}
         </div>

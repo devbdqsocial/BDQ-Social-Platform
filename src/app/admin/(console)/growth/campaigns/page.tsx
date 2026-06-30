@@ -70,7 +70,7 @@ export default async function CampaignsPage({ searchParams }: PageProps) {
                 <Field label="Notification Channel" className="sm:col-span-2">
                   <Select name="channel" defaultValue="EMAIL">
                     <option value="EMAIL">Email</option>
-                    <option value="WHATSAPP">WhatsApp Cloud API</option>
+                    <option value="WHATSAPP">WhatsApp</option>
                   </Select>
                 </Field>
                 <Button type="submit" className="w-fit bg-emerald-600 hover:bg-emerald-700 text-white font-medium sm:col-span-2">
@@ -89,8 +89,8 @@ export default async function CampaignsPage({ searchParams }: PageProps) {
       ) : (
         <div className="space-y-6">
           <div className="space-y-1">
-            <h2 className="text-lg font-semibold tracking-tight">System Settings & API Keys</h2>
-            <p className="text-sm text-muted-foreground">Configured parameters are stored securely in the database to override env setups dynamically.</p>
+            <h2 className="text-lg font-semibold tracking-tight">Provider Settings</h2>
+            <p className="text-sm text-muted-foreground">Provider secrets are read from environment variables.</p>
           </div>
 
           <div className="grid gap-6 md:grid-cols-2">
@@ -108,20 +108,9 @@ export default async function CampaignsPage({ searchParams }: PageProps) {
                 </div>
               </div>
 
-              <form action={updateSettingAction} className="space-y-4 pt-2 border-t border-muted">
-                <input type="hidden" name="key" value="SENDGRID_API_KEY" />
-                <Field label="SendGrid API Key" hint="Starts with SG.">
-                  <Input
-                    type="password"
-                    name="value"
-                    placeholder={settings.SENDGRID_API_KEY ? "••••••••••••••••••••••••" : "Paste new SendGrid key"}
-                    required
-                  />
-                </Field>
-                <Button type="submit" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                  Save Key
-                </Button>
-              </form>
+              <div className="space-y-2 pt-2 border-t border-muted text-xs text-muted-foreground">
+                <p>API key: {settings.SENDGRID_API_KEY ? "configured" : "missing"}</p>
+              </div>
 
               <form action={updateSettingAction} className="space-y-4 pt-4 border-t border-muted">
                 <input type="hidden" name="key" value="EMAIL_FROM" />
@@ -142,45 +131,24 @@ export default async function CampaignsPage({ searchParams }: PageProps) {
             <div className="rounded-xl border bg-card/60 backdrop-blur-md p-6 space-y-4 shadow-sm">
               <div className="flex justify-between items-start">
                 <div>
-                  <h3 className="font-semibold text-base">WhatsApp Cloud API</h3>
-                  <p className="text-xs text-muted-foreground">Used for bulk broadcasts using official Graph API.</p>
+                  <h3 className="font-semibold text-base">WhatsApp</h3>
+                  <p className="text-xs text-muted-foreground">Used for configured WhatsApp broadcast delivery.</p>
                 </div>
                 <div className={`px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide border ${
-                  settings.WHATSAPP_CLOUD_TOKEN && settings.WHATSAPP_CLOUD_PHONE_ID ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
+                  settings.WHATSAPP_CONFIGURED ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
                 }`}>
-                  {settings.WHATSAPP_CLOUD_TOKEN && settings.WHATSAPP_CLOUD_PHONE_ID ? "Active" : "Not Configured"}
+                  {settings.WHATSAPP_CONFIGURED ? "Active" : "Not Configured"}
                 </div>
               </div>
 
-              <form action={updateSettingAction} className="space-y-4 pt-2 border-t border-muted">
-                <input type="hidden" name="key" value="WHATSAPP_CLOUD_TOKEN" />
-                <Field label="System Access Token" hint="Meta Developer Temporary or Permanent Token">
-                  <Input 
-                    type="password"
-                    name="value" 
-                    placeholder={settings.WHATSAPP_CLOUD_TOKEN ? "••••••••••••••••••••••••" : "Paste access token"} 
-                    required 
-                  />
-                </Field>
-                <Button type="submit" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                  Save Access Token
-                </Button>
-              </form>
-
-              <form action={updateSettingAction} className="space-y-4 pt-4 border-t border-muted">
-                <input type="hidden" name="key" value="WHATSAPP_CLOUD_PHONE_ID" />
-                <Field label="Phone Number ID" hint="From WhatsApp cloud configuration tab">
-                  <Input 
-                    name="value" 
-                    defaultValue={settings.WHATSAPP_CLOUD_PHONE_ID}
-                    placeholder="e.g., 102948576..."
-                    required 
-                  />
-                </Field>
-                <Button type="submit" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                  Save Phone ID
-                </Button>
-              </form>
+              <div className="space-y-2 pt-2 border-t border-muted text-xs text-muted-foreground">
+                <p>Provider: {settings.WHATSAPP_PROVIDER || "auto-detect"}</p>
+                <p>Access token: {settings.WHATSAPP_CLOUD_TOKEN ? "configured" : "missing"}</p>
+                <p>Phone Number ID: {settings.WHATSAPP_CLOUD_PHONE_ID ? "configured" : "missing"}</p>
+                <p>OpenWA URL: {settings.OPENWA_BASE_URL ? "configured" : "missing"}</p>
+                <p>OpenWA key: {settings.OPENWA_API_KEY ? "configured" : "missing"}</p>
+                <p>OpenWA session: {settings.OPENWA_SESSION_ID ? "configured" : "missing"}</p>
+              </div>
             </div>
           </div>
         </div>

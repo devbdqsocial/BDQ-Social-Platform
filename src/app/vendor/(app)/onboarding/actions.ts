@@ -6,6 +6,7 @@ import { requireVendor } from "@/server/auth/guard";
 import { getProfile } from "@/server/vendors/service";
 import { reserveStall, cancelReservation, StallUnavailableError } from "@/server/bookings/service";
 import { createStallPaymentOrder } from "@/server/bookings/payment";
+import { signBookingAgreement } from "@/server/bookings/agreement";
 import { generateAndSignContract } from "@/server/contracts/sign";
 import { contractSignSchema } from "@/server/schemas";
 import { parseOrThrow } from "@/lib/validation";
@@ -60,6 +61,26 @@ export async function signContractAction(
     return { ok: true, url };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Could not sign the contract" };
+  }
+}
+
+export async function signBookingAgreementAction(
+  formData: FormData,
+): Promise<{ ok: boolean; error?: string }> {
+  const { session, profile } = await vendorCtx();
+  let parsed;
+  try {
+    parsed = parseOrThrow(contractSignSchema, { signerName: formData.get("signerName"), agree: formData.get("agree") });
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Please type your name and agree." };
+  }
+  const ip = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
+  try {
+    await signBookingAgreement(session, profile.id, String(formData.get("bookingId")), { signerName: parsed.signerName, signerIp: ip });
+    revalidatePath("/vendor/home");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Could not sign the agreement" };
   }
 }
 

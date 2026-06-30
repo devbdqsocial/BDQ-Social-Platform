@@ -4,6 +4,8 @@ import { withAudit } from "@/server/audit";
 import type { Session } from "@/server/auth/guard";
 import { resolveAudience } from "./audience";
 import { NotifChannel, Prisma } from "@prisma/client";
+import { buildCampaignWhatsAppPayload, renderCampaignTextBody, whatsAppCampaignReadinessError } from "@/lib/campaign-whatsapp";
+import { whatsAppConfigured, whatsAppProvider } from "@/lib/whatsapp";
 
 export interface CampaignInput {
   name: string;
@@ -13,6 +15,9 @@ export interface CampaignInput {
   subject?: string;
   body?: string;
   customContacts?: unknown;
+  whatsappTemplateName?: string;
+  whatsappTemplateLang?: string;
+  whatsappTemplateParams?: unknown;
 }
 
 export function listCampaigns() {
@@ -41,6 +46,9 @@ export function createCampaign(session: Session, input: CampaignInput) {
           targeting: (input.targeting as Prisma.InputJsonValue) ?? Prisma.DbNull,
           subject: input.subject || null,
           body: input.body || null,
+          whatsappTemplateName: input.whatsappTemplateName || null,
+          whatsappTemplateLang: input.whatsappTemplateLang || null,
+          whatsappTemplateParams: (input.whatsappTemplateParams as Prisma.InputJsonValue) ?? Prisma.DbNull,
           customContacts: (input.customContacts as Prisma.InputJsonValue) ?? Prisma.DbNull,
           createdById: session.userId,
           stats: { delivered: 0, opened: 0, clicked: 0, failed: 0 }
@@ -64,6 +72,7 @@ export function updateCampaign(session: Session, id: string, input: Partial<Camp
             // ensure JSON fields don't accidentally become undefined (use DbNull for Prisma)
             targeting: input.targeting !== undefined ? (input.targeting as Prisma.InputJsonValue) ?? Prisma.DbNull : undefined,
             customContacts: input.customContacts !== undefined ? (input.customContacts as Prisma.InputJsonValue) ?? Prisma.DbNull : undefined,
+            whatsappTemplateParams: input.whatsappTemplateParams !== undefined ? (input.whatsappTemplateParams as Prisma.InputJsonValue) ?? Prisma.DbNull : undefined,
           },
         });
         return { result: c, after: c };
@@ -88,6 +97,16 @@ export function sendCampaign(session: Session, id: string) {
       run: async () => {
         if (!before) throw new CampaignSendError("Campaign not found");
         if (before.status !== "DRAFT") throw new CampaignSendError("Campaign is already published or in progress.");
+        if (before.channel === "WHATSAPP") {
+          const provider = whatsAppProvider();
+          const error = whatsAppCampaignReadinessError({
+            configured: whatsAppConfigured(),
+            provider,
+            templateName: before.whatsappTemplateName,
+            body: before.body,
+          });
+          if (error) throw new CampaignSendError(error);
+        }
 
         // Mark processing to avoid double run
         await db.campaign.update({ where: { id }, data: { status: "PROCESSING" } });
@@ -118,17 +137,26 @@ export function sendCampaign(session: Session, id: string) {
           // Build Outbox payload
           const outboxItems = validContacts.map(contact => {
             const toAddress = before.channel === "EMAIL" ? contact.email! : contact.phone!;
+            const whatsapp = before.channel === "WHATSAPP"
+              ? buildCampaignWhatsAppPayload({
+                  templateName: before.whatsappTemplateName,
+                  templateLang: before.whatsappTemplateLang,
+                  templateParams: before.whatsappTemplateParams,
+                  contact,
+                })
+              : null;
             return {
               channel: before.channel,
               toAddress,
               template: "CAMPAIGN_MESSAGE",
               payload: {
                 subject: before.subject || "",
-                body: before.body || "",
-                contactName: contact.name || ""
+                body: before.channel === "WHATSAPP" ? renderCampaignTextBody(before.body || "", contact) : before.body || "",
+                contactName: contact.name || "",
+                ...(whatsapp ?? {}),
               },
               campaignId: before.id,
-              dedupeKey: `campaign_${before.id}_${toAddress}_${Date.now()}` // add timestamp/salt if user was removed and re-added? Using unique key.
+              dedupeKey: `campaign:${before.id}:${toAddress}`
             };
           });
 
@@ -149,6 +177,9 @@ export function sendCampaign(session: Session, id: string) {
               sentAt: new Date()
             }
           });
+
+          const { processOutbox } = await import("@/server/notifications/outbox");
+          await processOutbox(20);
 
           return { result: after, after };
         } catch (error) {
@@ -284,19 +315,25 @@ export function updateSystemSetting(session: Session, key: string, value: string
  * Business Intent: Expose configured keys to settings layout without displaying secret values entirely.
  */
 /** Secret values are never returned to the client — only a "configured" marker. */
-const SECRET_SETTING_KEYS = new Set(["SENDGRID_API_KEY", "WHATSAPP_CLOUD_TOKEN"]);
+const SECRET_SETTING_KEYS = new Set(["SENDGRID_API_KEY", "WHATSAPP_CLOUD_TOKEN", "OPENWA_API_KEY"]);
 
 export async function getCampaignSettings(): Promise<Record<string, string>> {
   const settings = await db.systemSetting.findMany();
   const result: Record<string, string> = {
     SENDGRID_API_KEY: process.env.SENDGRID_API_KEY ? "CONFIGURED_IN_ENV" : "",
+    WHATSAPP_PROVIDER: process.env.WHATSAPP_PROVIDER || "",
+    WHATSAPP_CONFIGURED: whatsAppConfigured() ? "1" : "",
     WHATSAPP_CLOUD_TOKEN: process.env.WHATSAPP_CLOUD_TOKEN ? "CONFIGURED_IN_ENV" : "",
     WHATSAPP_CLOUD_PHONE_ID: process.env.WHATSAPP_CLOUD_PHONE_ID || "",
+    OPENWA_BASE_URL: process.env.OPENWA_BASE_URL || "",
+    OPENWA_API_KEY: process.env.OPENWA_API_KEY ? "CONFIGURED_IN_ENV" : "",
+    OPENWA_SESSION_ID: process.env.OPENWA_SESSION_ID || "",
     EMAIL_FROM: process.env.EMAIL_FROM || "BDQ Social <hi@bdqsocial.com>"
   };
 
   settings.forEach(s => {
     if (!s.value) return;
+    if (s.key.startsWith("WHATSAPP_") || s.key.startsWith("OPENWA_")) return;
     result[s.key] = SECRET_SETTING_KEYS.has(s.key) ? "CONFIGURED_IN_DB" : s.value;
   });
 

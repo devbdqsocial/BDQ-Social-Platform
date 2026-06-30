@@ -30,7 +30,7 @@ export async function sendInteraktWhatsApp(
       countryCode: `+${countryCode}`,
       phoneNumber,
       type: "Template",
-      template: { name: msg.template, languageCode: "en", bodyValues: msg.params },
+      template: { name: msg.template, languageCode: msg.lang || process.env.WHATSAPP_TEMPLATE_LANG || "en", bodyValues: msg.params },
     }),
   });
   if (!res.ok) throw new Error(`Interakt send failed: ${res.status}`);

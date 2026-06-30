@@ -20,7 +20,7 @@ export default async function VendorAddOnsPage() {
   const booking = await db.booking.findFirst({
     where: { vendorProfileId: profile.id, status: "BOOKED" },
     orderBy: { createdAt: "desc" },
-    include: { event: { select: { name: true, startsAt: true } }, stall: { select: { label: true } } },
+    include: { event: { select: { name: true, startsAt: true, addOnCloseHours: true } }, stall: { select: { label: true } } },
   });
 
   const header = (
@@ -42,7 +42,7 @@ export default async function VendorAddOnsPage() {
     );
   }
 
-  const open = addOnOrdersOpen(booking.event.startsAt);
+  const open = addOnOrdersOpen(booking.event.startsAt, booking.event.addOnCloseHours ?? 48);
   const [addOns, ordered] = await Promise.all([listActiveAddOns(booking.eventId), listBookingAddOns(booking.id)]);
 
   const items = addOns.map((a) => ({

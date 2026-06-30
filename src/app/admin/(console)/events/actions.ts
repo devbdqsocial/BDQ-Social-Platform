@@ -1,8 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { requireAdminRole } from "@/server/auth/guard";
 import { action, ActionError } from "@/server/action";
-import { createEvent, publishEvent, PublishBlockedError } from "@/server/events/service";
+import { cloneEvent, createEvent, publishEvent, PublishBlockedError } from "@/server/events/service";
 import { archiveEvent, unarchiveEvent } from "@/server/events/archive-service";
 import { createEventSchema, idActionSchema } from "@/server/schemas";
 import type { Result } from "@/lib/result";
@@ -61,4 +63,11 @@ export async function unarchiveEventAction(formData: FormData): Promise<Result<u
   const res = await unarchive({ id: String(formData.get("id")) });
   if (res.ok) revalidateEvents();
   return res;
+}
+
+export async function cloneEventAction(formData: FormData): Promise<void> {
+  const session = await requireAdminRole();
+  const created = await cloneEvent(session, String(formData.get("id")));
+  revalidateEvents();
+  redirect(`/admin/events/${created.id}`);
 }

@@ -63,6 +63,9 @@ export type CampaignType = {
   audience: string;
   subject: string | null;
   body: string | null;
+  whatsappTemplateName: string | null;
+  whatsappTemplateLang: string | null;
+  whatsappTemplateParams: string[] | null;
   status: string;
   sentCount: number;
   customContacts: ContactItem[] | null;
@@ -77,6 +80,11 @@ export function CampaignBuilder({ campaign: initialCampaign }: { campaign: Campa
   const [campaign, setCampaign] = useState<CampaignType>(initialCampaign);
   const [subject, setSubject] = useState(initialCampaign.subject || "");
   const [body, setBody] = useState(initialCampaign.body || "");
+  const [whatsappTemplateName, setWhatsappTemplateName] = useState(initialCampaign.whatsappTemplateName || "");
+  const [whatsappTemplateLang, setWhatsappTemplateLang] = useState(initialCampaign.whatsappTemplateLang || "en");
+  const [whatsappTemplateParams, setWhatsappTemplateParams] = useState(
+    Array.isArray(initialCampaign.whatsappTemplateParams) ? initialCampaign.whatsappTemplateParams.join("\n") : ""
+  );
   const [audience, setAudience] = useState(initialCampaign.audience || "ALL");
   const [customContacts, setCustomContacts] = useState(
     initialCampaign.customContacts 
@@ -128,6 +136,9 @@ export function CampaignBuilder({ campaign: initialCampaign }: { campaign: Campa
     const hasChanged = 
       subject !== (campaign.subject || "") ||
       body !== (campaign.body || "") ||
+      whatsappTemplateName !== (campaign.whatsappTemplateName || "") ||
+      whatsappTemplateLang !== (campaign.whatsappTemplateLang || "en") ||
+      whatsappTemplateParams !== (Array.isArray(campaign.whatsappTemplateParams) ? campaign.whatsappTemplateParams.join("\n") : "") ||
       audience !== campaign.audience ||
       customContacts !== (campaign.customContacts ? (campaign.customContacts as ContactItem[]).map(c => c.email || c.phone).join("\n") : "");
 
@@ -140,6 +151,9 @@ export function CampaignBuilder({ campaign: initialCampaign }: { campaign: Campa
       formData.append("audience", audience);
       formData.append("subject", subject);
       formData.append("body", body);
+      formData.append("whatsappTemplateName", whatsappTemplateName);
+      formData.append("whatsappTemplateLang", whatsappTemplateLang);
+      formData.append("whatsappTemplateParams", whatsappTemplateParams);
       formData.append("customContacts", customContacts);
 
       const res = await updateCampaignAction(campaign.id, formData);
@@ -150,6 +164,9 @@ export function CampaignBuilder({ campaign: initialCampaign }: { campaign: Campa
           audience,
           subject,
           body,
+          whatsappTemplateName,
+          whatsappTemplateLang,
+          whatsappTemplateParams: whatsappTemplateParams.split(/\r?\n/).map((s) => s.trim()).filter(Boolean),
           customContacts: customContacts ? customContacts.split("\n").map(c => ({ name: null, email: c.includes("@") ? c : null, phone: !c.includes("@") ? c : null })) : null
         }));
       } else {
@@ -159,7 +176,7 @@ export function CampaignBuilder({ campaign: initialCampaign }: { campaign: Campa
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [subject, body, audience, customContacts, campaign]);
+  }, [subject, body, whatsappTemplateName, whatsappTemplateLang, whatsappTemplateParams, audience, customContacts, campaign]);
 
   // Editor formatting functions
   const insertText = (beforeText: string, afterText: string = "") => {
@@ -233,9 +250,15 @@ export function CampaignBuilder({ campaign: initialCampaign }: { campaign: Campa
     return text
       .replace(/{name}/g, "John Doe")
       .replace(/{email}/g, "john.doe@example.com")
+      .replace(/{phone}/g, "+919876543210")
       .replace(/{eventName}/g, "Tech Summit 2026")
       .replace(/{ticketLink}/g, "https://bdqsocial.com/tickets/t_102948");
   };
+  const whatsappPreviewParams = whatsappTemplateParams
+    .split(/\r?\n/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map(resolvePreviewVariables);
 
   // Recharts delivery breakdown configurations
   const stats = campaign.stats || { delivered: 0, failed: 0 };
@@ -320,125 +343,88 @@ export function CampaignBuilder({ campaign: initialCampaign }: { campaign: Campa
                 )}
               </div>
 
-              {campaign.channel === "EMAIL" && (
-                <Field label="Subject Line">
-                  <Input 
-                    value={subject} 
-                    onChange={(e) => setSubject(e.target.value)}
-                    placeholder="e.g., Exciting updates about our event!" 
-                    required 
-                  />
-                </Field>
+              {campaign.channel === "EMAIL" ? (
+                <>
+                  <Field label="Subject Line">
+                    <Input
+                      value={subject}
+                      onChange={(e) => setSubject(e.target.value)}
+                      placeholder="e.g., Exciting updates about our event!"
+                      required
+                    />
+                  </Field>
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-semibold text-foreground">Message Body</span>
+                      <span className="text-2xs text-muted-foreground uppercase tracking-wider">Supports HTML layouts</span>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1 p-2 rounded-t-lg border-t border-x bg-muted/40 items-center justify-between">
+                      <div className="flex flex-wrap gap-1 items-center">
+                        <button type="button" title="Bold" onClick={() => insertText("<strong>", "</strong>")} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-100"><Bold className="h-4 w-4" /></button>
+                        <button type="button" title="Italic" onClick={() => insertText("<em>", "</em>")} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-100"><Italic className="h-4 w-4" /></button>
+                        <button type="button" title="Underline" onClick={() => insertText("<u>", "</u>")} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-100"><Underline className="h-4 w-4" /></button>
+                        <button type="button" title="Link" onClick={() => insertText('<a href="https://example.com" class="text-emerald-600 underline">', "</a>")} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-100"><Link className="h-4 w-4" /></button>
+                        <button type="button" title="List Item" onClick={() => insertText("<li>", "</li>")} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-100"><List className="h-4 w-4" /></button>
+                        <button type="button" title="H1" onClick={() => insertText("<h1 class='text-2xl font-bold mb-3'>", "</h1>")} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-100"><Heading1 className="h-4 w-4" /></button>
+                        <button type="button" title="H2" onClick={() => insertText("<h2 class='text-xl font-bold mb-2'>", "</h2>")} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-100"><Heading2 className="h-4 w-4" /></button>
+                      </div>
+
+                      <div className="flex gap-1 items-center">
+                        <span className="text-2xs text-muted-foreground mr-1 flex items-center gap-0.5"><Sparkles className="h-3 w-3 text-emerald-500" /> Dynamic variables:</span>
+                        <button type="button" onClick={() => insertText("{name}")} className="px-1.5 py-0.5 rounded border border-muted bg-card hover:bg-muted text-2xs font-semibold text-emerald-600 transition-all duration-100">Name</button>
+                        <button type="button" onClick={() => insertText("{eventName}")} className="px-1.5 py-0.5 rounded border border-muted bg-card hover:bg-muted text-2xs font-semibold text-emerald-600 transition-all duration-100">Event Name</button>
+                        <button type="button" onClick={() => insertText("{ticketLink}")} className="px-1.5 py-0.5 rounded border border-muted bg-card hover:bg-muted text-2xs font-semibold text-emerald-600 transition-all duration-100">Ticket Link</button>
+                      </div>
+                    </div>
+
+                    <Textarea
+                      ref={textareaRef}
+                      value={body}
+                      onChange={(e) => setBody(e.target.value)}
+                      placeholder="Draft your email body..."
+                      className="min-h-[300px] font-mono text-sm rounded-t-none border-t-0"
+                      required
+                    />
+                  </div>
+                </>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field label="Message Body" hint="Used by OpenWA plain-text delivery." className="sm:col-span-2">
+                    <Textarea
+                      value={body}
+                      onChange={(e) => setBody(e.target.value)}
+                      placeholder="Write the WhatsApp campaign text..."
+                      className="min-h-[160px] text-sm"
+                    />
+                  </Field>
+                  <Field label="Approved Template Name">
+                    <Input
+                      value={whatsappTemplateName}
+                      onChange={(e) => setWhatsappTemplateName(e.target.value)}
+                      placeholder="ticket_confirmation"
+                      required
+                    />
+                  </Field>
+                  <Field label="Language Code">
+                    <Input
+                      value={whatsappTemplateLang}
+                      onChange={(e) => setWhatsappTemplateLang(e.target.value)}
+                      placeholder="en"
+                      required
+                    />
+                  </Field>
+                  <Field label="Body Variables" hint="One value per line, in Meta template order." className="sm:col-span-2">
+                    <Textarea
+                      value={whatsappTemplateParams}
+                      onChange={(e) => setWhatsappTemplateParams(e.target.value)}
+                      placeholder="{name}\nhttps://bdqsocial.com/tickets"
+                      className="min-h-[180px] font-mono text-sm"
+                    />
+                  </Field>
+                </div>
               )}
-
-              {/* Message Body with interactive custom visual formatting tools toolbar */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-semibold text-foreground">Message Body</span>
-                  <span className="text-2xs text-muted-foreground uppercase tracking-wider">
-                    {campaign.channel === "EMAIL" ? "Supports HTML layouts" : "WhatsApp formatting"}
-                  </span>
-                </div>
-
-                {/* VISUAL WYSIWYG Toolbar */}
-                <div className="flex flex-wrap gap-1 p-2 rounded-t-lg border-t border-x bg-muted/40 items-center justify-between">
-                  <div className="flex flex-wrap gap-1 items-center">
-                    <button
-                      type="button"
-                      title="Bold"
-                      onClick={() => insertText("<strong>", "</strong>")}
-                      className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-100"
-                    >
-                      <Bold className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      title="Italic"
-                      onClick={() => insertText("<em>", "</em>")}
-                      className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-100"
-                    >
-                      <Italic className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      title="Underline"
-                      onClick={() => insertText("<u>", "</u>")}
-                      className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-100"
-                    >
-                      <Underline className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      title="Link"
-                      onClick={() => insertText('<a href="https://example.com" class="text-emerald-600 underline">', "</a>")}
-                      className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-100"
-                    >
-                      <Link className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      title="List Item"
-                      onClick={() => insertText("<li>", "</li>")}
-                      className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-100"
-                    >
-                      <List className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      title="H1"
-                      onClick={() => insertText("<h1 class='text-2xl font-bold mb-3'>", "</h1>")}
-                      className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-100"
-                    >
-                      <Heading1 className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      title="H2"
-                      onClick={() => insertText("<h2 class='text-xl font-bold mb-2'>", "</h2>")}
-                      className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-100"
-                    >
-                      <Heading2 className="h-4 w-4" />
-                    </button>
-                  </div>
-
-                  {/* Variables dropdown autocomplete floating pill triggers */}
-                  <div className="flex gap-1 items-center">
-                    <span className="text-2xs text-muted-foreground mr-1 flex items-center gap-0.5">
-                      <Sparkles className="h-3 w-3 text-emerald-500" /> Dynamic variables:
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => insertText("{name}")}
-                      className="px-1.5 py-0.5 rounded border border-muted bg-card hover:bg-muted text-2xs font-semibold text-emerald-600 transition-all duration-100"
-                    >
-                      Name
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => insertText("{eventName}")}
-                      className="px-1.5 py-0.5 rounded border border-muted bg-card hover:bg-muted text-2xs font-semibold text-emerald-600 transition-all duration-100"
-                    >
-                      Event Name
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => insertText("{ticketLink}")}
-                      className="px-1.5 py-0.5 rounded border border-muted bg-card hover:bg-muted text-2xs font-semibold text-emerald-600 transition-all duration-100"
-                    >
-                      Ticket Link
-                    </button>
-                  </div>
-                </div>
-
-                <Textarea
-                  ref={textareaRef}
-                  value={body}
-                  onChange={(e) => setBody(e.target.value)}
-                  placeholder="Draft your email body (HTML supported) or WhatsApp template placeholders here..."
-                  className="min-h-[300px] font-mono text-sm rounded-t-none border-t-0"
-                  required
-                />
-              </div>
 
             </fieldset>
           </div>
@@ -685,11 +671,16 @@ export function CampaignBuilder({ campaign: initialCampaign }: { campaign: Campa
                 <div className="bg-[#e5ddd5] dark:bg-zinc-900 p-4 h-[300px] overflow-y-auto space-y-4">
                   <div className="max-w-[85%] rounded-xl p-3 bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 text-xs shadow relative leading-relaxed">
                     {body ? (
+                      <div className="whitespace-pre-wrap">{resolvePreviewVariables(body)}</div>
+                    ) : whatsappTemplateName ? (
                       <div className="whitespace-pre-wrap">
-                        {resolvePreviewVariables(body)}
+                        <p className="font-semibold">{whatsappTemplateName}</p>
+                        {whatsappPreviewParams.map((param, i) => (
+                          <p key={i}>{`{{${i + 1}}}: ${param}`}</p>
+                        ))}
                       </div>
                     ) : (
-                      <span className="text-muted-foreground italic">Type message text to see visual bubble.</span>
+                      <span className="text-muted-foreground italic">Choose a template to preview variables.</span>
                     )}
                     <span className="text-4xs text-muted-foreground block text-right mt-1.5">16:15 PM</span>
                   </div>

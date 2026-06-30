@@ -1,6 +1,7 @@
 import "server-only";
 import { db } from "@/server/db";
 import { createRazorpayOrder, type GatewayFees } from "@/lib/razorpay";
+import { getBookingAgreement } from "@/server/bookings/agreement";
 
 /**
  * Vendor stall payment — approve-before-pay ONLY (booking collapse, build-plan R1.3 /
@@ -25,6 +26,8 @@ export async function createStallPaymentOrder(vendorProfileId: string, bookingId
   if (!booking || booking.vendorProfileId !== vendorProfileId) throw new Error("Booking not found");
   if (booking.status !== "PENDING_PAYMENT") throw new Error("This booking isn't ready for payment yet");
   if (booking.payBy && booking.payBy < new Date()) throw new Error("Payment window expired — please contact us");
+  const agreement = await getBookingAgreement(bookingId);
+  if (agreement?.status !== "SIGNED") throw new Error("Sign the event agreement before paying");
   const price = await stallPrice(booking.stall);
   if (price <= 0) throw new Error("This stall has no price set yet");
 

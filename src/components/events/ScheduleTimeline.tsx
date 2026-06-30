@@ -89,6 +89,20 @@ export function ScheduleTimeline({ eventName, location, startsAtIso, endsAtIso, 
 
   const ics = (s: ScheduleSlot) => icsHref({ uid: `sch_${s.id}`, title: `${s.title}${eventName ? ` · ${eventName}` : ""}`, start: s.startsAt, end: s.endsAt ?? undefined, location: location ?? undefined, description: [s.performer, s.stageOrZone].filter(Boolean).join(" · ") || undefined });
 
+  // Whole-event calendar entry (the full envelope), separate from the per-set "Add" links.
+  const eventIcs = icsHref({ uid: `evt_${eventName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`, title: eventName, start: new Date(startsAtIso), end: new Date(endsAtIso), location: location ?? undefined });
+
+  // LIVE-mode nudge for the next day that hasn't started yet (multi-day festivals).
+  const untilLabel = (d: Date) => {
+    const mins = Math.max(0, Math.round((d.getTime() - now.getTime()) / 60_000));
+    if (mins < 60) return `in ${mins}m`;
+    const h = Math.floor(mins / 60);
+    return `in ${h}h${mins % 60 ? ` ${mins % 60}m` : ""}`;
+  };
+  const nextDay = mode === "LIVE" && dayWindows.length > 1
+    ? dayWindows.filter((d) => d.startsAt.getTime() > now.getTime()).sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime())[0]
+    : undefined;
+
   if (slots.length === 0) {
     return <p className="f-paragraph p-[var(--space-2xl)] text-center opacity-70" style={{ border: "1px dashed var(--color)" }}>The line-up drops closer to the event. Check back soon.</p>;
   }
@@ -96,6 +110,15 @@ export function ScheduleTimeline({ eventName, location, startsAtIso, endsAtIso, 
   return (
     <div className="space-y-[var(--space-2xl)]">
       <p className="sr-only" aria-live="polite">{nn.now.length ? `Now: ${nn.now.map((s) => s.title).join(", ")}` : "Nothing on right now"}</p>
+
+      <div className="flex flex-wrap items-center justify-between gap-[var(--space-md)]">
+        {nextDay ? (
+          <p className="f-paragraph-small f-bold" style={{ color: "var(--color)" }}>
+            <span className="badge-bdq mr-[var(--space-sm)]">Up next</span>{nextDay.label} starts {untilLabel(nextDay.startsAt)}
+          </p>
+        ) : <span />}
+        <a href={eventIcs} download={`${eventName.replace(/\s+/g, "-").toLowerCase()}.ics`} className="f-paragraph-small f-bold t-upper link-underline shrink-0" style={{ letterSpacing: "0.06em" }} aria-label={`Add ${eventName} to calendar`}>Add the whole event</a>
+      </div>
 
       {/* NOW / NEXT — the live pulse of the festival */}
       {(nn.now.length > 0 || (mode === "LIVE" && nn.next.length > 0)) && (

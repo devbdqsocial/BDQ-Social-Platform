@@ -1,7 +1,7 @@
 import "server-only";
 import { db } from "@/server/db";
 import { emailConfigured, sendEmail } from "@/lib/sendgrid";
-import { whatsAppConfigured, sendWhatsAppText } from "@/lib/whatsapp";
+import { assertWhatsAppSent, sendWhatsApp, sendWhatsAppText, whatsAppCampaignThrottleMs, whatsAppConfigured, whatsAppProvider } from "@/lib/whatsapp";
 import { channelsFor } from "@/lib/notify-channels";
 import { buildReminderEmail, buildTicketEmail, buildFinanceDigestEmail } from "@/server/notifications/email";
 import { sendTicketWhatsApp, sendWaitlistWhatsApp } from "@/server/notifications/whatsapp";
@@ -9,8 +9,6 @@ import { bumpCampaignStat } from "@/server/campaigns/stats";
 import { campaignEmailHtml } from "@/lib/email-template";
 import { unsubscribeUrl } from "@/lib/unsubscribe-token";
 
-/** Inter-send pause for bulk campaign messages, to stay under provider rate limits. */
-const CAMPAIGN_THROTTLE_MS = 60;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
@@ -68,7 +66,15 @@ export async function processOutbox(limit = 20): Promise<{ sent: number; failed:
 
   for (const row of rows) {
     const payload =
-      (row.payload as { orderId?: string; eventId?: string; subject?: string; body?: string } | null) ?? {};
+      (row.payload as {
+        orderId?: string;
+        eventId?: string;
+        subject?: string;
+        body?: string;
+        whatsappTemplateName?: string;
+        whatsappTemplateLang?: string;
+        whatsappTemplateParams?: string[];
+      } | null) ?? {};
     if (row.campaignId) touchedCampaigns.add(row.campaignId);
     try {
       if (row.template === "reminder") {
@@ -90,19 +96,30 @@ export async function processOutbox(limit = 20): Promise<{ sent: number; failed:
             tags: row.campaignId ? [{ name: "campaign_id", value: row.campaignId }] : undefined,
           });
         } else if (row.channel === "WHATSAPP") {
-          await sendWhatsAppText(row.toAddress, payload.body || "");
+          if (whatsAppProvider() === "openwa") {
+            if (!payload.body?.trim()) throw new Error("missing WhatsApp campaign body");
+            assertWhatsAppSent(await sendWhatsAppText(row.toAddress, payload.body));
+          } else {
+            if (!payload.whatsappTemplateName) throw new Error("missing WhatsApp campaign template");
+            assertWhatsAppSent(await sendWhatsApp({
+              phone: row.toAddress,
+              template: payload.whatsappTemplateName,
+              lang: payload.whatsappTemplateLang,
+              params: Array.isArray(payload.whatsappTemplateParams) ? payload.whatsappTemplateParams : [],
+            }));
+          }
         }
         if (row.campaignId) await bumpCampaignStat(row.campaignId, "delivered");
-        await sleep(CAMPAIGN_THROTTLE_MS);
+        await sleep(whatsAppCampaignThrottleMs());
       } else if (row.template === "waitlist") {
-        if (row.channel === "WHATSAPP") await sendWaitlistWhatsApp(row.toAddress);
+        if (row.channel === "WHATSAPP") assertWhatsAppSent(await sendWaitlistWhatsApp(row.toAddress));
       } else {
         if (!payload.orderId) throw new Error("missing orderId");
         if (row.channel === "EMAIL") {
           const email = await buildTicketEmail(payload.orderId);
           if (email) await sendEmail({ to: row.toAddress, subject: email.subject, html: email.html, attachments: email.attachments });
         } else if (row.channel === "WHATSAPP") {
-          await sendTicketWhatsApp(payload.orderId, row.toAddress);
+          assertWhatsAppSent(await sendTicketWhatsApp(payload.orderId, row.toAddress));
         }
       }
       await db.outbox.update({ where: { id: row.id }, data: { status: "SENT", sentAt: new Date() } });

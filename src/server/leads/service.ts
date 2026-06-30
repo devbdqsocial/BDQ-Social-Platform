@@ -20,10 +20,16 @@ export async function captureLead(input: {
   email?: string;
   consent?: boolean;
 }) {
+  // Attribute the lead to the vendor's booking for this event (per-stall reporting); null if none.
+  const booking = await db.booking.findFirst({
+    where: { vendorProfileId: input.vendorProfileId, eventId: input.eventId, status: "BOOKED" },
+    select: { id: true },
+  });
   return db.lead.create({
     data: {
       vendorProfileId: input.vendorProfileId,
       eventId: input.eventId,
+      bookingId: booking?.id ?? null,
       name: input.name ?? null,
       phone: input.phone ?? null,
       email: input.email ?? null,
