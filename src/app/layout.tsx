@@ -6,6 +6,8 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import { SiteAnalytics } from "@/components/analytics/SiteAnalytics";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { getSeoSettings } from "@/server/settings/service";
 
 // Body/UI = Inter (BDQ `--f-inter`). Admin keeps Geist. Display = self-hosted Exat-Bold (BDQ `--f-exat`).
@@ -56,6 +58,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </ThemeProvider>
         <ServiceWorkerRegister />
         <SiteAnalytics nonce={nonce} />
+        {/* First-party /_vercel/* scripts; injected by the trusted bundle so the strict-dynamic CSP allows them. */}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
