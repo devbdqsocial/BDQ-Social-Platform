@@ -4,10 +4,10 @@ import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/server/auth/guard";
 import { toResult } from "@/server/action";
 import type { Result } from "@/lib/result";
+import { OfflinePaymentError, recordOfflineStallPayment } from "@/server/payments/offline";
 import {
   ContractNotSignedError,
   StallAlreadyBookedError,
-  approveVendor,
   approveForPayment,
   logCallback,
   assignStallByAdmin,
@@ -25,23 +25,6 @@ export async function underReviewAction(formData: FormData): Promise<Result<null
     const session = await requirePermission("VENDOR_MANAGE");
     const id = String(formData.get("id"));
     await setUnderReview(session, id);
-    revalidate(id);
-  });
-}
-
-export async function approveAction(formData: FormData): Promise<Result<null>> {
-  return toResult(async () => {
-    const session = await requirePermission("VENDOR_MANAGE");
-    const id = String(formData.get("id"));
-    const stallId = String(formData.get("stallId"));
-    if (!stallId) throw new Error("Select a stall to assign");
-    try {
-      await approveVendor(session, id, stallId);
-    } catch (e) {
-      if (e instanceof StallAlreadyBookedError) throw new Error("That stall is already booked.");
-      if (e instanceof ContractNotSignedError) throw new Error("This vendor hasn't signed the contract yet.");
-      throw e;
-    }
     revalidate(id);
   });
 }
@@ -83,6 +66,30 @@ export async function logCallbackAction(formData: FormData): Promise<Result<null
     const id = String(formData.get("id"));
     const note = String(formData.get("note") ?? "");
     await logCallback(session, id, note);
+    revalidate(id);
+  });
+}
+
+export async function recordOfflinePaymentAction(formData: FormData): Promise<Result<null>> {
+  return toResult(async () => {
+    const session = await requirePermission("VENDOR_MANAGE");
+    const id = String(formData.get("id"));
+    const bookingId = String(formData.get("bookingId"));
+    const amountPaise = Number(formData.get("amountPaise"));
+    const gatewayRef = String(formData.get("gatewayRef") ?? "");
+    const note = String(formData.get("note") ?? "");
+    try {
+      await recordOfflineStallPayment(session, { bookingId, amountPaise, gatewayRef, note });
+    } catch (e) {
+      if (e instanceof OfflinePaymentError) {
+        if (e.code === "REFERENCE_REQUIRED") throw new Error("Payment reference is required.");
+        if (e.code === "NOTE_REQUIRED") throw new Error("Payment note is required.");
+        if (e.code === "AMOUNT_MISMATCH") throw new Error("Payment amount must match the stall price.");
+        if (e.code === "DUPLICATE_REFERENCE") throw new Error("This payment reference is already recorded.");
+        if (e.code === "BOOKING_NOT_PENDING") throw new Error("Only pending-payment bookings can be marked paid offline.");
+      }
+      throw e;
+    }
     revalidate(id);
   });
 }

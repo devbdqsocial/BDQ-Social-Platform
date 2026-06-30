@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 export default function ComingSoonLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rpa min-h-dvh">
+    <div className="bdq min-h-dvh">
       <MotionProviders />
       {children}
     </div>

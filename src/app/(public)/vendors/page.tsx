@@ -26,7 +26,7 @@ export default async function VendorsPage() {
 
   return (
     <>
-      <section className="gama-2 surface-2 paint flex min-h-[60svh] items-end py-[var(--space-5xl)]">
+      <section className="bdq-rose paint flex min-h-[60svh] items-end py-[var(--space-5xl)]">
         <div className="wrapper">
           <span className="f-paragraph-small f-bold t-upper" style={{ letterSpacing: "0.18em" }}>The lineup</span>
           <SplitReveal as="h1" className="f-exat mt-[var(--space-md)] f-h133">

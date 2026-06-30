@@ -17,7 +17,7 @@ implementation progress after approval.
 1. Work package by package. Each package should be a small commit or a tight commit series.
 2. Do P0 chrome fixes before visual enrichment. Cursor, header, menu, and footer confidence come first.
 3. Do not change backend, payment, webhook, database, auth, or pricing behavior unless a package says so.
-4. Preserve the existing RPA-inspired public/customer/vendor direction and the Geist/admin operational direction.
+4. Preserve the existing BDQ-inspired public/customer/vendor direction and the Geist/admin operational direction.
 5. Every visual package must pass reduced-motion, keyboard, mobile, and contrast checks.
 6. Use transform and opacity for motion. Avoid `transition: all`.
 7. Keep rollback simple: each package should be revertible without removing unrelated work.
@@ -56,7 +56,7 @@ Risk levels: Low, Medium, High.
 - Priority: P0
 - Execution status: In progress; core infrastructure implemented, section-by-section visual assignment and screenshots pending.
 - Goal: Replace computed-only header color with explicit section-aware modes and fallbacks.
-- Files affected: `src/components/motion/SectionColorSync.tsx`, `src/components/nav/PublicHeader.tsx`, `src/app/globals.css`, public/customer pages using `.rpa section`.
+- Files affected: `src/components/motion/SectionColorSync.tsx`, `src/components/nav/PublicHeader.tsx`, `src/app/globals.css`, public/customer pages using `.bdq section`.
 - Components affected: `SectionColorSync`, `PublicHeader`, page sections under `src/app/(public)` and `src/app/(customer)`.
 - Implementation details: Support `data-header-mode="light|dark|accent|auto"` and optional `data-header-color`. Update `SectionColorSync` to prefer explicit data attributes before falling back to computed section color. Add CSS variables `--header-color`, `--header-bg`, `--header-shadow`, and `--header-backplate-opacity`. In `PublicHeader`, add a small optional backplate/scrim only when the active mode requires it. Add data attributes to image, gradient, and mixed-color sections first: landing hero, event detail hero, vendor detail hero, gallery, map/guide, footer.
 - Acceptance criteria: Header logo, Tickets link, and menu lines are visible on light, dark, image, gradient, and footer sections. No visible flicker during fast scroll.
@@ -149,7 +149,7 @@ Risk levels: Low, Medium, High.
 - Goal: Add named implementation tokens for public, invitation, and admin typography without changing visual output unexpectedly.
 - Files affected: `src/app/globals.css`, `src/app/tokens/page.tsx`, `Docs/frontend-polish/typography-system.md` only if implementation notes need a link.
 - Components affected: Global CSS, design tokens page.
-- Implementation details: Add aliases such as `--type-xs`, `--type-sm`, `--type-base`, `--type-lg`, `--type-xl`, `--type-2xl`, `--type-3xl`, `--type-4xl`, `--type-5xl`, `--type-6xl`. Map public aliases to current RPA tokens, admin aliases to restrained rem values, and invitation aliases to current coming-soon sizes. Add utility classes only if they reduce duplication; do not replace every existing class in this package.
+- Implementation details: Add aliases such as `--type-xs`, `--type-sm`, `--type-base`, `--type-lg`, `--type-xl`, `--type-2xl`, `--type-3xl`, `--type-4xl`, `--type-5xl`, `--type-6xl`. Map public aliases to current BDQ tokens, admin aliases to restrained rem values, and invitation aliases to current coming-soon sizes. Add utility classes only if they reduce duplication; do not replace every existing class in this package.
 - Acceptance criteria: Tokens exist, existing screens visually match before/after, token page documents them.
 - Verification steps: Lint/typecheck; visual compare `/tokens`, `/`, `/coming-soon`, `/admin/dashboard`.
 - Rollback strategy: Revert token additions.
@@ -160,10 +160,10 @@ Risk levels: Low, Medium, High.
 ### P1.2 Public And Customer Heading Cleanup
 
 - Priority: P1
-- Goal: Ensure public and customer headings consistently use RPA heading classes and balanced wrapping.
+- Goal: Ensure public and customer headings consistently use BDQ heading classes and balanced wrapping.
 - Files affected: `src/app/(public)/**/*.tsx`, `src/app/(customer)/**/*.tsx`, `src/components/events/*.tsx`, `src/components/landing/*.tsx`, `src/components/tickets/*.tsx`.
 - Components affected: Landing, event detail, wallet, map, guide, schedule, offers, gallery, vendor discovery/detail.
-- Implementation details: Replace mixed Tailwind display sizes in RPA surfaces with `.f-h*` classes or new aliases. Add `text-balance` or `text-pretty` to hero and section headings. Keep Exat display only for headings, logos, and spectacle text. Do not force admin heading style into public pages.
+- Implementation details: Replace mixed Tailwind display sizes in BDQ surfaces with `.f-h*` classes or new aliases. Add `text-balance` or `text-pretty` to hero and section headings. Keep Exat display only for headings, logos, and spectacle text. Do not force admin heading style into public pages.
 - Acceptance criteria: Public/customer headings follow the documented scale; no headline overflows at 320px; large headings remain readable at 1920px.
 - Verification steps: Search for `text-2xl|text-3xl|text-4xl` under public/customer routes and justify or replace. Manual breakpoint screenshots.
 - Rollback strategy: Revert heading cleanup commit.
@@ -205,7 +205,7 @@ Risk levels: Low, Medium, High.
 - Goal: Make long copy comfortable and prevent overly wide paragraphs.
 - Files affected: `src/components/legal/LegalPage.tsx`, `src/app/(public)/privacy/page.tsx`, `src/app/(public)/terms/page.tsx`, `src/app/(public)/refunds/page.tsx`, SEO pages, public guide/about pages, `src/app/globals.css`.
 - Components affected: Legal pages, SEO pages, guide/about content, long descriptions.
-- Implementation details: Use `--w-prose`, `max-width: 65ch`, and 1.5-1.65 line-height for long-form copy. Keep short marketing copy at existing RPA line-height. Add `scroll-margin-top` to heading anchors where pages have in-page nav.
+- Implementation details: Use `--w-prose`, `max-width: 65ch`, and 1.5-1.65 line-height for long-form copy. Keep short marketing copy at existing BDQ line-height. Add `scroll-margin-top` to heading anchors where pages have in-page nav.
 - Acceptance criteria: Long copy stays 45-75 characters per line on desktop and 35-50 on mobile. Headings do not hide under fixed header when anchored.
 - Verification steps: Manual check legal/SEO/guide pages at 390, 1440, 1920. Run lint/typecheck.
 - Rollback strategy: Revert prose/line-height commit.
@@ -278,8 +278,8 @@ Risk levels: Low, Medium, High.
 - Priority: P1
 - Goal: Reduce random bracket spacing and define route-appropriate spacing tokens.
 - Files affected: `src/app/globals.css`, public/customer/vendor pages, coming-soon files.
-- Components affected: RPA surfaces, invitation page, forms, cards.
-- Implementation details: Add missing tokens only when repeated at least three times. Replace near-duplicates such as `mt-[0.55rem]`, `mt-[0.6rem]`, `mt-[0.8rem]`, `mt-[0.9rem]` with named invitation or RPA tokens. Keep Tailwind numeric spacing in admin where it is shadcn-compatible.
+- Components affected: BDQ surfaces, invitation page, forms, cards.
+- Implementation details: Add missing tokens only when repeated at least three times. Replace near-duplicates such as `mt-[0.55rem]`, `mt-[0.6rem]`, `mt-[0.8rem]`, `mt-[0.9rem]` with named invitation or BDQ tokens. Keep Tailwind numeric spacing in admin where it is shadcn-compatible.
 - Acceptance criteria: Repeated arbitrary spacing values are reduced and documented by role.
 - Verification steps: Run `rg -n "mt-\\[0\\.|mb-\\[0\\.|gap-\\[5px\\]|px-\\[1\\.6rem\\]" src`. Manual visual compare.
 - Rollback strategy: Revert spacing token commit.
@@ -376,7 +376,7 @@ Risk levels: Low, Medium, High.
 ### P4.3 Menu And Footer Shapes
 
 - Priority: P2
-- Goal: Add RPA-inspired menu/footer shape moments after core chrome stability is complete.
+- Goal: Add BDQ-inspired menu/footer shape moments after core chrome stability is complete.
 - Files affected: `src/components/nav/MenuOverlay.tsx`, `src/app/(public)/layout.tsx`, `src/app/globals.css`, `src/components/motion/MaskDefs.tsx`.
 - Components affected: Menu overlay, footer, wordmark wall, optional shape component.
 - Implementation details: Add non-blocking decorative shape layers that do not affect focus order. Menu shape should sit behind links and never reduce contrast. Footer shape should support the CTA/nav close. Use transform/opacity animation only. Respect reduced motion.
@@ -407,9 +407,9 @@ Risk levels: Low, Medium, High.
 
 - Priority: P1
 - Goal: Make primary, secondary, tertiary, and destructive actions visually distinct.
-- Files affected: `src/app/globals.css`, `src/components/ui/button.tsx`, RPA CTA usages in public/customer/vendor components.
+- Files affected: `src/app/globals.css`, `src/components/ui/button.tsx`, BDQ CTA usages in public/customer/vendor components.
 - Components affected: `.btn`, shadcn `Button`, link underlines, quantity buttons.
-- Implementation details: Keep RPA `.btn` for brand primary CTAs. Use shadcn `Button` for admin/ops. Define visual roles: primary, accent, secondary link, ghost link, destructive. Ensure disabled states explain or are near missing requirement. Do not use identical style for primary and secondary actions in the same section.
+- Implementation details: Keep BDQ `.btn` for brand primary CTAs. Use shadcn `Button` for admin/ops. Define visual roles: primary, accent, secondary link, ghost link, destructive. Ensure disabled states explain or are near missing requirement. Do not use identical style for primary and secondary actions in the same section.
 - Acceptance criteria: Every major page has one obvious primary action per section.
 - Verification steps: Page-by-page CTA review and keyboard focus check.
 - Rollback strategy: Revert CTA style/usage commits.
@@ -491,7 +491,7 @@ Risk levels: Low, Medium, High.
 
 - Priority: P1
 - Goal: Standardize user guidance in empty/error/success states.
-- Files affected: `src/components/landing/RpaLoading.tsx`, `src/components/ui/*`, event/customer/vendor/admin components with empty states.
+- Files affected: `src/components/landing/BdqLoading.tsx`, `src/components/ui/*`, event/customer/vendor/admin components with empty states.
 - Components affected: Loading, empty, success, error, toast/status, ticket reveal.
 - Implementation details: Empty state includes title, short reason, primary action. Error state includes fix/next step. Success state confirms result and offers one next action. Add `aria-live="polite"` for async status. Keep celebratory motion only for meaningful success.
 - Acceptance criteria: No broken blank states; status messages are readable and announced where async.
@@ -652,8 +652,8 @@ Risk levels: Low, Medium, High.
 - Priority: P1
 - Goal: Remove `transition: all` and standardize hover feedback.
 - Files affected: `src/app/globals.css`, UI components using broad `transition-all`, public/vendor/admin components.
-- Components affected: RPA `.btn`, links, cards, tabs, toggles, admin campaign builder buttons.
-- Implementation details: Replace `transition: all` with explicit properties. For RPA `.btn__text`, transition `bottom`, `left`, `width`, `height`, `color`, `transform` only if used. Keep hover states more prominent than rest states. Avoid expensive properties for continuous motion.
+- Components affected: BDQ `.btn`, links, cards, tabs, toggles, admin campaign builder buttons.
+- Implementation details: Replace `transition: all` with explicit properties. For BDQ `.btn__text`, transition `bottom`, `left`, `width`, `height`, `color`, `transform` only if used. Keep hover states more prominent than rest states. Avoid expensive properties for continuous motion.
 - Acceptance criteria: No critical brand styles use `transition: all`; hover remains smooth.
 - Verification steps: `rg -n "transition:\\s*all|transition-all" src`; justify remaining Tailwind `transition-all` or replace.
 - Rollback strategy: Revert transition cleanup commit.
@@ -678,7 +678,7 @@ Risk levels: Low, Medium, High.
 ### P8.4 Cursor, Menu, And Footer Motion Enrichment
 
 - Priority: P2
-- Goal: Add richer interaction states inspired by the RPA reference after stability fixes.
+- Goal: Add richer interaction states inspired by the BDQ reference after stability fixes.
 - Files affected: `Cursor.tsx`, `MenuOverlay.tsx`, public footer, `globals.css`, `MaskDefs.tsx`.
 - Components affected: Cursor, menu, footer.
 - Implementation details: Cursor: add CTA/media/menu state transitions. Menu: optional decorative shape or label stagger refinement. Footer: subtle shape/wordmark/CTA hover motion. Use transform/opacity; no motion dependency should block navigation or focus.
@@ -693,7 +693,7 @@ Risk levels: Low, Medium, High.
 
 - Priority: P2
 - Goal: Standardize motion feedback for async states and outcomes.
-- Files affected: `RpaLoading.tsx`, `TicketReveal.tsx`, checkout/vendor/admin async components, UI skeleton/toast components.
+- Files affected: `BdqLoading.tsx`, `TicketReveal.tsx`, checkout/vendor/admin async components, UI skeleton/toast components.
 - Components affected: Loading skeletons, ticket reveal, checkout busy states, admin save states, vendor upload states.
 - Implementation details: Loading uses skeleton/shimmer with reduced-motion fallback. Success uses confirmation and one next action. Error uses color/focus, not long shake animation. Async statuses use `aria-live`.
 - Acceptance criteria: Async feedback appears within 400ms and is accessible.
@@ -706,7 +706,7 @@ Risk levels: Low, Medium, High.
 ### P8.6 Reference Motion Director
 
 - Priority: P1
-- Goal: Convert the RPA reference animation audit into a single BDQ motion state system instead of scattered animation tweaks.
+- Goal: Convert the BDQ reference animation audit into a single BDQ motion state system instead of scattered animation tweaks.
 - Files affected: `src/lib/motion.ts`, `src/components/motion/SectionColorSync.tsx`, `src/app/globals.css`, public layouts, optional `MotionDirector` component.
 - Components affected: Header, cursor, menu, footer, hero sections, pinned sections, page transitions.
 - Implementation details: Create a state layer for active section, menu open, overlay open, route type, pointer type, and reduced motion. Outputs should include page color, header color, menu color, cursor state, section label, and active shape family. Use explicit `data-motion-*` or `data-header-*` attributes where computed color is unreliable.
@@ -720,7 +720,7 @@ Risk levels: Low, Medium, High.
 ### P8.7 Cursor State Matrix
 
 - Priority: P0
-- Goal: Fix the cursor-behind-menu bug and add RPA-inspired cursor states.
+- Goal: Fix the cursor-behind-menu bug and add BDQ-inspired cursor states.
 - Files affected: `src/components/motion/Cursor.tsx`, `src/app/globals.css`, `MenuOverlay.tsx`, public cards/media components.
 - Components affected: Cursor, menu, CTAs, media cards, slider/video affordances.
 - Implementation details: Raise `#mouse` to a named top interaction layer. Toggle `html[data-menu-open="true"]` when menu opens. Add states for default, link, CTA, media view, slider, video, menu, and disabled. Keep `pointer-events: none`, hide on touch and reduced motion, and preserve the GSAP follow loop.
@@ -762,7 +762,7 @@ Risk levels: Low, Medium, High.
 ### P8.10 Hero Motion Sequence
 
 - Priority: P2
-- Goal: Build one flagship BDQ hero sequence inspired by the RPA reference hero: shape, words, media, and colors move as one composition.
+- Goal: Build one flagship BDQ hero sequence inspired by the BDQ reference hero: shape, words, media, and colors move as one composition.
 - Files affected: landing hero components, `MaskDefs.tsx`, `src/lib/motion.ts`, `globals.css`, public content/media.
 - Components affected: Public home hero and optional campaign/event hero.
 - Implementation details: Define 3 to 5 motion states with shape family, text anchor, media layer, color pair, and CTA visibility. Use true morph only when safe; otherwise crossfade masks. Keep primary CTA visible and avoid arbitrary center/left text switches.
@@ -806,10 +806,10 @@ Risk levels: Low, Medium, High.
 ### P9.1 Button System
 
 - Priority: P1
-- Goal: Define and apply button roles across RPA and admin systems.
-- Files affected: `src/app/globals.css`, `src/components/ui/button.tsx`, RPA CTA usages, qty buttons.
+- Goal: Define and apply button roles across BDQ and admin systems.
+- Files affected: `src/app/globals.css`, `src/components/ui/button.tsx`, BDQ CTA usages, qty buttons.
 - Components affected: Brand CTAs, admin buttons, quantity steppers, icon buttons.
-- Implementation details: Map roles: RPA brand primary, RPA accent, text link, shadcn primary, shadcn outline, destructive, icon, quantity. Ensure icon buttons have aria-label and touch target. Do not replace shadcn admin buttons with RPA buttons.
+- Implementation details: Map roles: BDQ brand primary, BDQ accent, text link, shadcn primary, shadcn outline, destructive, icon, quantity. Ensure icon buttons have aria-label and touch target. Do not replace shadcn admin buttons with BDQ buttons.
 - Acceptance criteria: Same action importance has same visual treatment within each surface.
 - Verification steps: Button inventory search; visual QA.
 - Rollback strategy: Revert button system commit.
@@ -821,9 +821,9 @@ Risk levels: Low, Medium, High.
 
 - Priority: P1
 - Goal: Normalize input styles and behavior by context.
-- Files affected: `src/components/ui/input.tsx`, `textarea.tsx`, `select.tsx`, RPA field components, vendor/admin forms.
-- Components affected: RPA underline inputs, shadcn inputs, invitation inputs, map controls.
-- Implementation details: Keep visual differences by context, but standardize label/error/focus/disabled behavior. Ensure 16px mobile input floor in RPA and invitation. Preserve admin density.
+- Files affected: `src/components/ui/input.tsx`, `textarea.tsx`, `select.tsx`, BDQ field components, vendor/admin forms.
+- Components affected: BDQ underline inputs, shadcn inputs, invitation inputs, map controls.
+- Implementation details: Keep visual differences by context, but standardize label/error/focus/disabled behavior. Ensure 16px mobile input floor in BDQ and invitation. Preserve admin density.
 - Acceptance criteria: Forms feel consistent and accessible while remaining surface-appropriate.
 - Verification steps: Form walkthrough and input attribute search.
 - Rollback strategy: Revert input system commit.
@@ -878,7 +878,7 @@ Risk levels: Low, Medium, High.
 | Page / area | Keep | Improve | Rebuild | Remove | Exact implementation work |
 |---|---|---|---|---|---|
 | Coming Soon | Invitation mood, frame, countdown, waitlist form. | Tokenized type, form spacing, contrast, mobile rhythm. | Replace ad-hoc text sizes with invitation tokens. | Tiny near-duplicate font sizes. | P1.3, P3.1, P7.3; verify 320-1440 and reduced motion. |
-| Landing | RPA palette, FestivalScene, primary CTA, brand sections. | Header modes, CTA hierarchy, section rhythm, shape variety. | Any section that still depends on dead decorative space. | Final-sale phrase in FAQ. | P0.2, P0.7, P2.3, P3.2, P4.2, P5.1. |
+| Landing | BDQ palette, FestivalScene, primary CTA, brand sections. | Header modes, CTA hierarchy, section rhythm, shape variety. | Any section that still depends on dead decorative space. | Final-sale phrase in FAQ. | P0.2, P0.7, P2.3, P3.2, P4.2, P5.1. |
 | Event Detail | Event hero, ticket CTA, sticky buy, vendor/schedule links. | Desire-first hierarchy, ticket section spacing, policy copy placement. | Hero/logistics order if CTA is not dominant. | Final-sale phrase in FAQ. | P5.2, P5.4, P0.7, P6.2. |
 | Checkout | Existing ticket/payment logic. | Active step hierarchy, trust grouping, form spacing, errors. | Visual grouping around ticket -> summary -> phone/OTP -> pay. | Competing secondary actions near pay. | P5.2, P2.2, P3.3, P7.3. |
 | Success | TicketReveal peak moment. | Next action clarity, reduced-motion fallback. | None unless share flow blocks completion. | Decorative motion that runs under reduced motion. | P5.3, P8.5, P7.5. |
@@ -890,7 +890,7 @@ Risk levels: Low, Medium, High.
 | Gallery | Grid/lightbox. | Crop safety, lightbox keyboard, captions, shape variety. | Lightbox focus behavior if needed. | Images without stable sizing where fixable. | P4.4, P7.4, P3.5. |
 | Vendor Discovery | Search/filter and vendor grid. | Shape variety, long name handling, empty state. | Card shape cycle. | Repeated single shape everywhere. | P4.2, P3.5, P5.7. |
 | Vendor Detail | Brand story and contact links. | Hero balance, media crop, CTA hierarchy. | Hero visual if dead/repetitive. | Competing equal links. | P2.3, P4.2, P5.1. |
-| Vendor Portal | RPA vendor shell and onboarding steps. | One next action, form alignment, mobile rail/menu. | Onboarding state grouping. | Equal-weight step actions. | P5.5, P2.2, P6.3. |
+| Vendor Portal | BDQ vendor shell and onboarding steps. | One next action, form alignment, mobile rail/menu. | Onboarding state grouping. | Equal-weight step actions. | P5.5, P2.2, P6.3. |
 | Admin Portal | Geist/shadcn operational density. | Action hierarchy, table overflow, micro type, focus. | Only pages with broken responsive behavior. | Decorative marketing patterns. | P1.4, P2.4, P5.6, P6.3. |
 
 ## File-By-File Execution Index

@@ -28,7 +28,7 @@ export default async function VendorContractPage() {
     <div className="max-w-2xl space-y-[var(--space-2xl)]">
       <div className="flex items-center gap-[var(--space-md)]">
         <h1 className="f-exat f-h60">Participation contract</h1>
-        <span className={signed ? "badge-rpa" : "badge-rpa badge-rpa--muted"}>{signed ? "Signed" : "Not signed"}</span>
+        <span className={signed ? "badge-bdq" : "badge-bdq badge-bdq--muted"}>{signed ? "Signed" : "Not signed"}</span>
       </div>
 
       <div className="rounded-[var(--radius-lg)] p-[var(--space-xl)]" style={{ border: "1px solid color-mix(in srgb, currentColor 16%, transparent)" }}>

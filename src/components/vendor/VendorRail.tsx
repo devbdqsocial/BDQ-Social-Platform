@@ -8,7 +8,7 @@ import { Menu, X } from "lucide-react";
 export type RailItem = { href: string; label: string };
 
 /**
- * Vendor-zone navy rail (vendor-portal.md §2/§3) — the RPA chrome for the vendor portal.
+ * Vendor-zone navy rail (vendor-portal.md §2/§3) — the BDQ chrome for the vendor portal.
  * Separate from the shared admin `ZoneSidebar` so the admin console stays neutral OKLCH
  * (locked rule). Navy `.bg-ink` field, lavender ink, fixed sidebar >=sm + drawer on mobile.
  */
@@ -53,7 +53,7 @@ export function VendorRail({ items, footer }: { items: RailItem[]; footer?: Reac
     <>
       {/* Desktop rail */}
       <aside
-        className="rpa bg-ink hidden w-60 shrink-0 flex-col p-[var(--space-lg)] sm:flex"
+        className="bdq bg-ink hidden w-60 shrink-0 flex-col p-[var(--space-lg)] sm:flex"
         style={{ color: "var(--light-blue)" }}
       >
         <div className="mb-[var(--space-2xl)]">{brandMark}</div>
@@ -63,7 +63,7 @@ export function VendorRail({ items, footer }: { items: RailItem[]; footer?: Reac
 
       {/* Mobile top bar */}
       <div
-        className="rpa bg-ink flex h-14 items-center justify-between px-[var(--space-lg)] sm:hidden"
+        className="bdq bg-ink flex h-14 items-center justify-between px-[var(--space-lg)] sm:hidden"
         style={{ color: "var(--light-blue)" }}
       >
         <button
@@ -83,7 +83,7 @@ export function VendorRail({ items, footer }: { items: RailItem[]; footer?: Reac
         <div className="fixed inset-0 z-50 sm:hidden" role="dialog" aria-modal="true" aria-label="Navigation menu">
           <div className="absolute inset-0 bg-black/50" onClick={() => setOpen(false)} />
           <div
-            className="rpa bg-ink absolute inset-y-0 left-0 flex w-[min(16rem,85vw)] flex-col p-[var(--space-lg)] shadow-lg"
+            className="bdq bg-ink absolute inset-y-0 left-0 flex w-[min(16rem,85vw)] flex-col p-[var(--space-lg)] shadow-lg"
             style={{ color: "var(--light-blue)" }}
           >
             <div className="mb-[var(--space-2xl)] flex items-center justify-between">

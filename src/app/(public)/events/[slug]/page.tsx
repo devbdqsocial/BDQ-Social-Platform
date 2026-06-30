@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getBySlug, getEventLayoutForSession } from "@/server/events/service";
-import { getSession } from "@/server/auth/guard";
+import { getBySlug, getPublicEventLayout } from "@/server/events/service";
 import { sponsorsForEventPublic } from "@/server/sponsors/service";
 import { listApprovedVendors } from "@/server/vendors/service";
 import { primaryLogo } from "@/lib/vendor-assets";
@@ -19,7 +18,6 @@ import { SponsorStrip } from "@/components/landing/SponsorStrip";
 import { NotifyMe } from "@/components/events/NotifyMe";
 import { StickyBuyBar } from "@/components/events/StickyBuyBar";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { MapLoginPrompt } from "@/components/map/MapLoginPrompt";
 import { eventLd, breadcrumbLd } from "@/lib/seo/jsonld";
 
 export const dynamic = "force-dynamic";
@@ -59,10 +57,10 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
   const event = await getBySlug(slug);
   if (!event || (event.status !== "PUBLISHED" && event.status !== "LIVE")) notFound();
 
-  const [sponsors, vendors, session] = await Promise.all([sponsorsForEventPublic(event.id), listApprovedVendors(), getSession()]);
+  const [sponsors, vendors] = await Promise.all([sponsorsForEventPublic(event.id), listApprovedVendors()]);
   const brands = vendors.slice(0, 8);
   const hasStallLayout = !!event.mapLayout && event._count.stalls > 0;
-  const eventLayout = session && hasStallLayout ? await getEventLayoutForSession(session, slug) : null;
+  const eventLayout = hasStallLayout ? await getPublicEventLayout(slug) : null;
 
   const hasTickets = event.ticketTypes.length > 0;
   const soldOut = hasTickets && event.ticketTypes.every((t) => t.soldQty >= t.totalQty);
@@ -97,7 +95,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
         ]}
       />
       {/* ===== HERO — sell the night, CTA above the fold ===== */}
-      <section data-header-mode="light" className="gama-1 bg-1 paint relative flex min-h-[78svh] items-end overflow-hidden py-[var(--space-5xl)]">
+      <section data-header-mode="light" className="bdq-night paint relative flex min-h-[78svh] items-end overflow-hidden py-[var(--space-5xl)]">
         <BdqWorld tint="var(--light-blue)" className="opacity-25" />
         <div className="wrapper relative z-10">
           <Reveal><span className="kicker">{availLabel}{event.location ? ` · ${event.location}` : ""}</span></Reveal>
@@ -144,7 +142,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
 
       {/* ===== FEATURED BRANDS — real approved vendors ===== */}
       {brands.length > 0 && (
-        <section className="gama-2 surface-2 paint py-[var(--space-5xl)]">
+        <section className="bdq-rose paint py-[var(--space-5xl)]">
           <div className="wrapper">
             <div className="flex items-end justify-between gap-4">
               <h2 className="f-exat f-h60">The brands you&apos;ll meet</h2>
@@ -154,7 +152,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
               {brands.map((v) => {
                 const logo = primaryLogo(v.assets);
                 return (
-                  <li key={v.id} className="surface-1 flex aspect-[4/3] items-center justify-center overflow-hidden p-[var(--space-lg)]" style={{ border: "1px solid color-mix(in srgb, currentColor 20%, transparent)" }}>
+                  <li key={v.id} className="bdq-surface flex aspect-[4/3] items-center justify-center overflow-hidden p-[var(--space-lg)]" style={{ border: "1px solid color-mix(in srgb, currentColor 20%, transparent)" }}>
                     {logo ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={logo} alt={v.brandName} className="max-h-full max-w-full object-contain" loading="lazy" />
@@ -203,7 +201,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
       )}
 
       {/* ===== VENUE & ARRIVAL ===== */}
-      <section className="gama-1 bg-2 paint py-[var(--space-5xl)]">
+      <section className="bdq-grove paint py-[var(--space-5xl)]">
         <div className="wrapper max-w-[var(--w-content)]">
           <h2 className="f-exat f-h60">Getting there</h2>
           <div className="mt-[var(--space-lg)] grid gap-[var(--space-xl)] sm:grid-cols-2">
@@ -214,17 +212,13 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
           </div>
           {hasStallLayout && (
             <div className="mt-[var(--space-2xl)]">
-              {session ? (
-                eventLayout ? (
-                  <>
-                    <p className="f-paragraph-small mb-[var(--space-md)] opacity-70">Browse the layout - live stall availability.</p>
-                    <BookingFloorPlan stalls={eventLayout.stalls} canvas={eventLayout.canvas} />
-                  </>
-                ) : (
-                  <p className="f-paragraph-small opacity-70">The event layout for this market is not ready yet.</p>
-                )
+              {eventLayout ? (
+                <>
+                  <p className="f-paragraph-small mb-[var(--space-md)] opacity-70">Browse the layout - live stall availability.</p>
+                  <BookingFloorPlan stalls={eventLayout.stalls} canvas={eventLayout.canvas} />
+                </>
               ) : (
-                <MapLoginPrompt href={`/login?next=/events/${event.slug}`} />
+                <p className="f-paragraph-small opacity-70">The event layout for this market is not ready yet.</p>
               )}
             </div>
           )}
@@ -257,7 +251,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
 
       {/* ===== FINAL CTA ===== */}
       {hasTickets && !soldOut && (
-        <section className="gama-3 bg-3 paint relative flex min-h-[60svh] items-center overflow-hidden py-[var(--space-5xl)]">
+        <section className="bdq-spark paint relative flex min-h-[60svh] items-center overflow-hidden py-[var(--space-5xl)]">
           <div className="wrapper text-center">
             <span className="kicker block">{availLabel}</span>
             <h2 className="f-exat mx-auto mt-[var(--space-md)] max-w-[16ch] f-h133">Don&apos;t miss {event.name}</h2>

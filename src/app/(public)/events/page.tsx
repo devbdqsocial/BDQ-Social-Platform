@@ -21,7 +21,7 @@ export default async function EventsPage() {
 
   return (
     <>
-      <section className="gama-3 bg-1 paint flex min-h-[60svh] items-end py-[var(--space-5xl)]">
+      <section className="bdq-fire paint flex min-h-[60svh] items-end py-[var(--space-5xl)]">
         <div className="wrapper">
           <span className="kicker">What&apos;s on</span>
           <SplitReveal as="h1" className="f-exat mt-[var(--space-md)] f-h133">

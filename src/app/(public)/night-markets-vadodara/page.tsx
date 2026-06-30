@@ -40,7 +40,7 @@ export default function NightMarketsVadodaraPage() {
       </section>
 
       {/* DRAFT — owner review: expand with what to expect, timings, and how to choose a market. */}
-      <section className="gama-2 surface-2 paint py-[var(--space-5xl)]">
+      <section className="bdq-rose paint py-[var(--space-5xl)]">
         <div className="wrapper max-w-[60rem]">
           <h2 className="f-exat f-h60">Curated, not crowded</h2>
           <p className="f-paragraph mt-[var(--space-lg)] max-w-[52ch]">

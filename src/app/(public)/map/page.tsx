@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { getEventGuide } from "@/server/map/guide";
-import { getSession } from "@/server/auth/guard";
 import { Reveal } from "@/components/motion/Reveal";
 import { SplitReveal } from "@/components/motion/SplitReveal";
 import { EventGuide } from "@/components/map/EventGuide";
@@ -13,8 +12,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function MapPage() {
-  const session = await getSession();
-  const guide = await getEventGuide({ includeLayout: !!session });
+  const guide = await getEventGuide({ includeLayout: true });
 
   return (
     <section data-header-mode="dark" className="paint py-[var(--space-4xl)]">

@@ -73,6 +73,8 @@ export interface ActivityItem {
   at: Date;
 }
 
+const asDate = (value: Date | string) => value instanceof Date ? value : new Date(value);
+
 /**
  * Command center (admin-portal §2): the six founder tiles + a danger alert row (non-zero only) +
  * a recent-activity feed, scoped to the event-switcher selection. Composes getDashboard (analytics +
@@ -120,7 +122,7 @@ export async function getCommandCenter(eventId?: string) {
   ].filter((a) => a.n > 0);
 
   const activity: ActivityItem[] = [
-    ...d.recentOrders.map((o) => ({ kind: "order" as const, label: `Order · ${o.event.name}`, sub: formatPaise(o.total), at: o.createdAt })),
+    ...d.recentOrders.map((o) => ({ kind: "order" as const, label: `Order · ${o.event.name}`, sub: formatPaise(o.total), at: asDate(o.createdAt) })),
     ...recentBookings.map((b) => ({ kind: "booking" as const, label: `Stall ${b.stall.label} booked`, sub: b.vendorProfile?.brandName ?? b.event.name, at: b.createdAt })),
     ...recentCheckins.map((c) => ({ kind: "checkin" as const, label: "Guest checked in", sub: `${c.admitted} admitted`, at: c.scannedAt })),
   ]

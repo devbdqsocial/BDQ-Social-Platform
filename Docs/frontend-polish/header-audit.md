@@ -6,8 +6,8 @@ Status: audit and target rules. No header code is changed here.
 
 | Component | Current behavior | Finding |
 |---|---|---|
-| `PublicHeader` | Fixed transparent header, `z-[110]`, logo, Tickets link, menu button, persistent contact CTA. | Strong RPA direction. |
-| `SectionColorSync` | Samples `.rpa section` at y=28 and writes `--header-color` from computed section text color. | Good foundation, but not enough for complex images/gradients. |
+| `PublicHeader` | Fixed transparent header, `z-[110]`, logo, Tickets link, menu button, persistent contact CTA. | Strong BDQ direction. |
+| `SectionColorSync` | Samples `.bdq section` at y=28 and writes `--header-color` from computed section text color. | Good foundation, but not enough for complex images/gradients. |
 | `MenuOverlay` | Full-screen fixed menu, `z-[120]`, scroll lock, focus trap, Esc close, GSAP label rise. | Strong accessibility base. |
 | `CustomerTabBar` | Mobile bottom primary nav. | Needs responsive overlap/safe-area audit. |
 | `VendorRail` / `ZoneSidebar` | App navigation for vendor/admin-like surfaces. | Good utility direction; separate from public header. |
@@ -37,7 +37,7 @@ Status: audit and target rules. No header code is changed here.
 |---|---|---|---|
 | P0 | Header can become low-contrast on some sections. | Header color is computed from section text, not actual background complexity. | Add color visibility test and explicit section overrides. |
 | P0 | Cursor can go behind menu/header. | `#mouse` z 100, header 110, menu 120. | Cursor z-index above menu or menu-specific cursor layer. |
-| P1 | Menu is functional but less rich than RPA reference. | Menu lacks morphing panel/shape preview system. | Add RPA-inspired shape/motion after core bug fix. |
+| P1 | Menu is functional but less rich than BDQ reference. | Menu lacks morphing panel/shape preview system. | Add BDQ-inspired shape/motion after core bug fix. |
 | P1 | Persistent "Let's talk" CTA can conflict with bottom content. | Fixed bottom right at z 90. | Audit overlap with footer, modals, mobile safe areas. |
 
 ## Color Visibility Test Plan

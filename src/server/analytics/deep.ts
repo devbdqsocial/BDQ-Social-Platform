@@ -136,7 +136,7 @@ export async function getProductMargin(eventId?: string) {
       orderBy: { priceInPaise: "desc" },
     }),
     db.booking.findMany({
-      where: { status: { in: ["BOOKED", "PENDING"] }, ...(eventId ? { eventId } : {}) },
+      where: { status: { in: ["BOOKED", "PENDING_PAYMENT"] }, ...(eventId ? { eventId } : {}) },
       select: { payment: { select: { amount: true } }, stall: { select: { stallType: { select: { name: true } } } } },
     }),
   ]);

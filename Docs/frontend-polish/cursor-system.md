@@ -27,7 +27,7 @@ Status: audit, target rules, and P0 implementation notes.
 |---|---|
 | Cursor goes behind open menu and becomes hard/impossible to view. | Fixed in implementation batch 1 by introducing named layer tokens and a menu-open cursor state. |
 
-## RPA Reference Cursor Lessons
+## BDQ Reference Cursor Lessons
 
 The reference cursor has:
 
@@ -68,6 +68,6 @@ BDQ should adapt the concept, not copy every state.
 |---|---|
 | P0 | Raise cursor stacking or portal it above menu. |
 | P0 | Add menu-open cursor state and test close/menu links. |
-| P1 | Add section-aware color state based on RPA color pairs. |
+| P1 | Add section-aware color state based on BDQ color pairs. |
 | P1 | Add CTA/media/drag variants. |
 | P2 | Add optional label/icon states only if they improve clarity. |

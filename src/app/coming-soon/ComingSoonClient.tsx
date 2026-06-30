@@ -96,7 +96,7 @@ export function ComingSoonClient({ count, event, whatsappEnabled }: { count: num
   const describedBy = [phoneErrorId, serverErrorId].filter(Boolean).join(" ") || undefined;
 
   return (
-    <main id="main" data-header-mode="light" className="market-soon gama-1 bg-1 paint relative min-h-dvh overflow-hidden">
+    <main id="main" data-header-mode="light" className="market-soon bdq-night paint relative min-h-dvh overflow-hidden">
       <MarketBackdrop />
 
       <section className="wrapper market-soon__hero relative z-10">

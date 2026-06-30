@@ -14,7 +14,7 @@ const LINKS: MenuLink[] = [
   { href: "/contact", label: "Contact" },
 ];
 
-// RPA-style fixed overlay header: transparent, pointer-events only on the logo + menu.
+// BDQ-style fixed overlay header: transparent, pointer-events only on the logo + menu.
 // Text colour follows the section under it via `--header-color` (SectionColorSync).
 export function PublicHeader({ signedIn = false }: { signedIn?: boolean }) {
   const router = useRouter();
@@ -29,7 +29,7 @@ export function PublicHeader({ signedIn = false }: { signedIn?: boolean }) {
   return (
     <>
       <header
-        className="rpa-header pointer-events-none fixed inset-x-0 top-0 z-[var(--z-header)]"
+        className="bdq-header pointer-events-none fixed inset-x-0 top-0 z-[var(--z-header)]"
         style={{ color: "var(--header-color, var(--foreground))" }}
       >
         <div className="flex items-center justify-between px-[var(--wrapper-padd)] py-[var(--space-lg)]">

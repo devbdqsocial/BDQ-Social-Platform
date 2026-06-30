@@ -12,7 +12,7 @@ export function SmoothScroll() {
   const pathname = usePathname();
 
   useEffect(() => {
-    // RPA: native scroll on mobile (<=950) and under reduced-motion; Lenis on desktop only.
+    // BDQ: native scroll on mobile (<=950) and under reduced-motion; Lenis on desktop only.
     if (window.matchMedia("(max-width: 950px), (prefers-reduced-motion: reduce)").matches) return;
     if (/map/i.test(pathname)) return; // Konva stall map: leave native scroll alone.
 

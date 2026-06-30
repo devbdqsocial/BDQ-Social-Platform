@@ -113,7 +113,7 @@ string set on the staff account; UI gates off it; server enforces it.
 | 2D map | **react-konva** (Konva.js) | OSS | Canvas renders hundreds of clickable, ft-scaled stalls with zoom/pan + live status. |
 | QR | **qrcode** + scanner lib (`html5-qrcode`) | OSS | Generate signed ticket QR; scan at gate. |
 | WhatsApp | **Interakt** (BSP) | trial | Managed WA templates; send ticket + QR media. |
-| Email | **Resend** | 3k/mo | Transactional ticket + receipts. |
+| Email | **SendGrid** | paid | Transactional ticket + receipts. |
 | Storage | **Cloudinary** | 25 GB | Vendor assets, event images, optimized delivery. |
 | Hosting | **Vercel** (hobby) | free | Native Next.js + cron + edge + wildcard subdomains. |
 | Validation | **Zod** | OSS | Validate all inputs + webhooks. |
@@ -139,7 +139,7 @@ string set on the staff account; UI gates off it; server enforces it.
    └───┬───────┬────────┬────────┬────────┬────────┬─────────────────────────────┘
        │       │        │        │        │        │
    ┌───▼──┐ ┌──▼────┐ ┌─▼─────┐ ┌▼──────┐ ┌▼───────┐ ┌▼─────────┐
-   │ Neon │ │Firebase│ │Razorpay│ │Interakt│ │Cloudinary│ │ Resend  │
+   │ Neon │ │Firebase│ │Razorpay│ │Interakt│ │Cloudinary│ │SendGrid │
    │  PG  │ │ Auth   │ │+webhook│ │WhatsApp│ │  assets  │ │  email  │
    └──────┘ └────────┘ └────────┘ └────────┘ └─────────┘ └─────────┘
 ```
@@ -179,12 +179,12 @@ domain on Vercel.
 - **Registration + profile:** brand name, category, description, website + socials; **asset
   upload** (logo, banner, product images) via Cloudinary.
 - **KYC (verification only, no GST billing):** PAN (all), FSSAI (food vendors), GSTIN optional.
-- **Stall selection:** open the event map → see available stalls by type/size/price → select
-  preferred stall(s) (places a **hold** with TTL).
-- **Payment:** Razorpay online **or** offline (admin records). **Simple payment receipt** (no GST
-  tax invoice).
+- **Stall selection:** open the event map → see available stalls by type/size/price → reserve a
+  preferred stall while the application is open.
+- **Payment:** Razorpay online by default. Offline payment requires admin-recorded reference,
+  exact paise amount, note, and atomic audit. **Simple payment receipt** (no GST tax invoice).
 - **Verification flow:** `Submitted → Under Review (team calls vendor to verify) → Approved
-  (stall assigned, BOOKED) / Rejected (hold released)`.
+  for payment → BOOKED only after payment capture / Rejected (hold released)`.
 - **Vendor dashboard:** stall(s) + status, payment receipt, profile editor, **full event
   timetable**, optional **e-sign contract**, **lead capture** QR for their stall, waitlist offers.
 
@@ -196,8 +196,8 @@ domain on Vercel.
   publishes to customers + vendors.
 - **2D Map Designer** (§7): feet-accurate canvas; place/move/resize/rotate elements; assign types;
   per-stall price; non-sellable infra; ops annotation layer; save/load; clone seed template.
-- **Bookings:** view holds/bookings; **admin can book a stall and assign a vendor by entering
-  details** + recording payment (online/offline).
+- **Bookings:** view holds/bookings; admin can assign a stall for payment, but `BOOKED` requires
+  captured online payment or an audited offline payment record with reference, amount, and note.
 - **Vendor management:** review profile + assets + KYC + selected stall → verify (call-back) →
   approve/reject; vendor **waitlist + auto-offer** on release.
 - **Live map status:** available / held / pending / booked, color-coded, updating as bookings and
@@ -254,8 +254,8 @@ Washrooms · Grand Entry / **entry plaza 30 ft** · **LED wall 20 ft** · Fire E
 | Status | Color | Meaning |
 | --- | --- | --- |
 | `AVAILABLE` | green | free to select |
-| `HELD` | amber | temporarily held during selection/payment (TTL) |
-| `PENDING` | orange | booked, awaiting team-call verification / offline payment |
+| `HELD` | amber | reserved while application/payment is open |
+| `PENDING_PAYMENT` | orange | approved/assigned, awaiting vendor payment |
 | `BOOKED` | red/grey | approved + paid, locked |
 | `BLOCKED` | dark | organizer-reserved, not for sale |
 
@@ -275,7 +275,7 @@ not bookable.
 
 ### 7.7 Double-book prevention
 Unique active booking per stall (DB constraint), transactional status transitions with row locks,
-hold TTL, and a Vercel cron sweep that releases expired `HELD` stalls. Clients only request;
+and a Vercel cron sweep that releases expired `PENDING_PAYMENT` bookings. Clients only request;
 the server decides.
 
 > Reference implementations: Konva "Seats Reservation" demo + community react-konva booking maps.
@@ -284,8 +284,8 @@ the server decides.
 
 ## 8. Booking & Ticket State Machines
 
-**Stall:** `AVAILABLE → HELD → PENDING → BOOKED` with `reject/cancel/TTL-expire → AVAILABLE`.
-PENDING→BOOKED requires team-call verification + confirmed payment.
+**Stall:** `AVAILABLE → HELD/RESERVED → PENDING_PAYMENT → BOOKED` with
+`reject/cancel/payBy-expire → AVAILABLE`. `PENDING_PAYMENT→BOOKED` requires confirmed payment.
 
 **Ticket:** `ORDER created → (Razorpay webhook PAID) → TICKET issued → delivered (WhatsApp+email)
 → VALID → (gate scan) CHECKED_IN`. Unpaid orders auto-expire. **No refund path** (all sales final).
@@ -299,10 +299,11 @@ PENDING→BOOKED requires team-call verification + confirmed payment.
 
 **Online (Razorpay):** server creates an Order (total − coupon − bulk/early-bird discount, in
 paise) → client checkout → webhook `payment.captured` → **verify signature** → mark paid →
-fulfil (issue tickets / move stall to PENDING for verification). **Idempotent** by gateway ref.
+fulfil (issue tickets / move approved stall booking to BOOKED). **Idempotent** by webhook event id
+and gateway ref.
 
-**Offline (cash / bank transfer):** vendor or admin selects offline → booking `PENDING` with
-`mode=OFFLINE`; admin records amount + reference; on confirmation → approve → `BOOKED`.
+**Offline (cash / bank transfer):** disabled unless admin records payment reference, exact amount
+in paise, note, and audit atomically; only then may booking advance to `BOOKED`.
 
 **Pricing rules:** **bulk discount when ticket qty > 5** (admin-set %); **early-bird** time-boxed
 tiers; **coupons** (flat/percent, active window, total + per-user caps, min order, scope);
@@ -316,7 +317,7 @@ default stacking = best single discount wins (configurable).
 
 - **WhatsApp (Interakt):** pre-approved templates (ticket confirmation w/ QR media, vendor
   booking/approval, reminders, waitlist offer). Sent to the OTP phone number.
-- **Email (Resend):** ticket + QR + calendar add + receipt; vendor verification/approval emails.
+- **Email (SendGrid):** ticket + QR + calendar add + receipt; vendor verification/approval emails.
 - **QR:** unique **signed token** per ticket (`qrcode`); gate scan decodes → server validates
   (exists, unused, this event) → `CHECKED_IN`; re-scan → "already used".
 - **SMS fallback** (suggested) if WhatsApp delivery fails.
@@ -367,7 +368,7 @@ Key constraints: unique active `Booking` per `Stall`; unique `Ticket.qrToken`; u
 Every **admin/staff** mutation writes an `AuditLog` row: actor + role, action (create/update/
 delete/approve/reject/book/scan/login/export), target entity + id, **before/after snapshots**,
 IP, user-agent, timestamp. Implemented as a thin wrapper around all admin server actions (single
-choke-point) so nothing is missed. Super-Admin-only **audit viewer** with filters (actor, entity,
+transactional choke-point) so mutation + audit commit or roll back together. Super-Admin-only **audit viewer** with filters (actor, entity,
 date, action) and export. Append-only; never editable from the UI.
 
 ---
@@ -434,7 +435,7 @@ bdqsocial/
 │   ├── server/                       # auth, events, schedule, map, vendors, kyc, bookings,
 │   │   │                             #   tickets, payments, notifications, checkin, sponsors,
 │   │   │                             #   analytics, audit (withAudit() wrapper), db.ts
-│   ├── lib/                          # razorpay, firebase-admin, interakt, resend, cloudinary,
+│   ├── lib/                          # razorpay, firebase-admin, interakt, sendgrid, cloudinary,
 │   │                                 #   qr, totp, ratelimit, zod
 │   └── pwa/                          # manifest, service worker
 ├── public/
@@ -464,7 +465,7 @@ INTERAKT_API_KEY=                          # WhatsApp BSP
 INTERAKT_BASE_URL=
 INTERAKT_TEMPLATE_TICKET=
 
-RESEND_API_KEY=
+SENDGRID_API_KEY=
 EMAIL_FROM=
 
 CLOUDINARY_CLOUD_NAME=
@@ -489,8 +490,8 @@ deploy to Vercel (wildcard domain).
 Tickets; admin event + **timetable CRUD**; basic analytics.
 
 **P2 — Vendor + Map:** **feet-based map designer** + seed template + public/vendor booking view;
-stall types per event; vendor registration + assets + **KYC**; stall hold/book; vendor payment
-(online/offline, simple receipt); **team-call verification** + approval + assignment; admin-side
+stall types per event; vendor registration + assets + **KYC**; stall reserve/book; vendor payment
+(online first, audited offline fallback, simple receipt); **team-call verification** + approval + assignment; admin-side
 booking; live map status.
 
 **P3 — Staff + Ops + Growth:** staff **PWA scanner** + offline queue + capacity count; waitlist +
@@ -512,7 +513,7 @@ ratings, white-label, plus selected items from [suggested-features.md](suggested
 | Razorpay | no fixed fee | per transaction (%) |
 | react-konva / qrcode / Zod | OSS | — |
 | Interakt (WhatsApp) | trial | per conversation/message |
-| Resend | 3k/mo | beyond quota |
+| SendGrid | paid | beyond quota |
 | Cloudinary | 25 GB | beyond quota |
 
 Net: **₹0 fixed**, usage fees only (Razorpay %, Interakt per message, SMS OTP at scale).

@@ -1,4 +1,4 @@
-/** Shared shell for policy/legal pages, RPA `mod-text--content` style: big Exat title + centred
+/** Shared shell for policy/legal pages, BDQ `mod-text--content` style: big Exat title + centred
  *  Inter body. Descendant utilities style the semantic HTML each page provides (no typography plugin). */
 export function LegalPage({
   title,

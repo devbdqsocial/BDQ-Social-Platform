@@ -5,7 +5,7 @@ import { gsap } from "@/lib/gsap";
 import { cn } from "@/lib/utils";
 
 // Magnetic hover: the wrapped element drifts toward the pointer and springs back on leave.
-// No-op under reduced-motion. Wrap a button/link for the RPA "Let's talk" feel.
+// No-op under reduced-motion. Wrap a button/link for the BDQ "Let's talk" feel.
 export function Magnetic({
   children,
   className,

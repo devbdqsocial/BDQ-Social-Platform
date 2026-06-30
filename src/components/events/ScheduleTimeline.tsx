@@ -99,13 +99,13 @@ export function ScheduleTimeline({ eventName, location, startsAtIso, endsAtIso, 
 
       {/* NOW / NEXT — the live pulse of the festival */}
       {(nn.now.length > 0 || (mode === "LIVE" && nn.next.length > 0)) && (
-        <div className="gama-1 bg-1 paint -mx-[var(--space-lg)] px-[var(--space-lg)] py-[var(--space-xl)]">
+        <div className="bdq-night paint -mx-[var(--space-lg)] px-[var(--space-lg)] py-[var(--space-xl)]">
           {nn.now.length > 0 && (
             <>
               <p className="kicker flex items-center gap-[var(--space-sm)]"><span className="inline-block size-2 animate-pulse rounded-full bg-lavender-400" /> On now</p>
               <ul className="mt-[var(--space-md)] flex gap-[var(--space-md)] overflow-x-auto pb-[var(--space-xs)]">
                 {nn.now.map((s) => (
-                  <li key={s.id} className="surface-2 shrink-0 rounded-[var(--radius-lg)] p-[var(--space-lg)]" style={{ minWidth: "16rem" }}>
+                  <li key={s.id} className="bdq-surface-alt shrink-0 rounded-[var(--radius-lg)] p-[var(--space-lg)]" style={{ minWidth: "16rem" }}>
                     <p className="f-exat f-h32">{s.title}</p>
                     <p className="f-paragraph-small mt-[var(--space-xs)] opacity-75">{[s.performer, s.stageOrZone].filter(Boolean).join(" · ") || "Happening now"}</p>
                   </li>
@@ -173,7 +173,7 @@ export function ScheduleTimeline({ eventName, location, startsAtIso, endsAtIso, 
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-[var(--space-md)]">
                     <p className="f-exat f-h32">{s.title}</p>
-                    {PHASE_LABEL[phase] && <span className="badge-rpa">{PHASE_LABEL[phase]}</span>}
+                    {PHASE_LABEL[phase] && <span className="badge-bdq">{PHASE_LABEL[phase]}</span>}
                   </div>
                   {(s.performer || s.stageOrZone) && <p className="f-paragraph-small mt-[var(--space-xs)] opacity-70">{[s.performer, s.stageOrZone].filter(Boolean).join(" · ")}</p>}
                 </div>

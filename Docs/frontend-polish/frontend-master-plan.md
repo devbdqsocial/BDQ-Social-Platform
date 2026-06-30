@@ -6,7 +6,7 @@ Status: implementation plan after audit. Do not implement until this plan is app
 
 | Area | Keep because |
 |---|---|
-| RPA-inspired palette and type direction | Distinctive, premium, already integrated into public surfaces. |
+| BDQ-inspired palette and type direction | Distinctive, premium, already integrated into public surfaces. |
 | Inter + Exat public typography | Strong brand contrast. |
 | Geist/admin operational typography | Correct for dense tools. |
 | Motion primitives | Reveal, SplitReveal, Magnetic, Cursor, Parallax, Marquee provide a reusable system. |
@@ -28,7 +28,7 @@ Status: implementation plan after audit. Do not implement until this plan is app
 | P1 | Spacing | Convert random repeated bracket spacing to tokens. |
 | P1 | Checkout/vendor flows | Make one next action dominant per step. |
 | P1 | Shape language | Vary shapes by role; expose missing approved utilities. |
-| P2 | Menu/footer motion | Add richer RPA-inspired morph/hover only after core issues pass. |
+| P2 | Menu/footer motion | Add richer BDQ-inspired morph/hover only after core issues pass. |
 
 ## Rebuild
 
@@ -38,7 +38,7 @@ Status: implementation plan after audit. Do not implement until this plan is app
 | Cursor state system | From one dot/hover state to state matrix: default, hover, view, CTA, menu, drag, input. |
 | Footer bottom and IA | Replace placeholder/legal anxiety bottom with intentional brand/legal close. |
 | Shape usage map | Move from repeated decorative forms to role-based shape selection. |
-| Typography token map | Create implementation tokens across RPA, admin, and invitation contexts. |
+| Typography token map | Create implementation tokens across BDQ, admin, and invitation contexts. |
 
 ## Remove
 

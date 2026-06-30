@@ -1,7 +1,7 @@
 "use client";
 import { useEffect } from "react";
 
-// RPA per-section retint: the fixed header adopts the accent of whichever
+// BDQ per-section retint: the fixed header adopts the accent of whichever
 // section sits under the top of the viewport. Writes header CSS vars on <html>;
 // the header reads them. rAF-throttled, passive.
 export function SectionColorSync() {
@@ -12,7 +12,7 @@ export function SectionColorSync() {
 
     const update = () => {
       raf = 0;
-      const sections = document.querySelectorAll<HTMLElement>(".rpa section, .rpa footer");
+      const sections = document.querySelectorAll<HTMLElement>(".bdq section, .bdq footer");
       let found: HTMLElement | null = null;
       for (const s of sections) {
         const r = s.getBoundingClientRect();

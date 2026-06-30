@@ -50,7 +50,7 @@ export default async function VendorDocuments() {
         <div className={TILE} style={tileStyle}>
           <div className="flex items-center justify-between gap-[var(--space-md)]">
             <h2 className="f-h32 f-exat">Vendor agreement</h2>
-            <span className={signed ? "badge-rpa" : "badge-rpa badge-rpa--muted"}>{signed ? "Signed" : "Not signed"}</span>
+            <span className={signed ? "badge-bdq" : "badge-bdq badge-bdq--muted"}>{signed ? "Signed" : "Not signed"}</span>
           </div>
           {signed ? (
             contract?.url ? (

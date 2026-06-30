@@ -28,8 +28,8 @@ Token-efficient: no fluff, no preamble, no restating the prompt. Answer or act.
   cloudinary, qr, totp, ratelimit). Swappable behind one interface.
 - Mutations go through the wrappers: `withAuth(role|perm)` → `withValidation(zod)` → `withAudit()`.
 - UI uses shadcn/ui + **semantic design tokens** (admin/app console). Customer-facing surfaces
-  (landing, public, customer + vendor portals) add the **RPA `.rpa` token layer** in `globals.css`
-  — palette, fluid Exat type scale, `gama/bg/surface` colour-blocked sections, clip-path masks.
+  (landing, public, customer + vendor portals) add the **BDQ `.bdq` token layer** in `globals.css`
+  — palette, fluid Exat type scale, `BDQ section/surface` colour-blocked sections, clip-path masks.
 - Validate every input + webhook with Zod. Server-side authz on every mutation (middleware isn't enough).
 
 ## Locked rules (never violate)
@@ -40,11 +40,11 @@ Token-efficient: no fluff, no preamble, no restating the prompt. Answer or act.
 - **Fulfilment is webhook-driven + idempotent** (by `gatewayRef`); never trust client payment callback.
 - **One active booking per stall** (DB partial-unique index + transactional holds). No double-book.
 - **Audit every admin/staff mutation** (append-only `AuditLog`, before/after) via `withAudit()`.
-- **Customer-facing brand = RPA Comunicación direction** (owner-approved override of the old
+- **Customer-facing brand = BDQ identity** (owner-approved override of the old
   clay/pine/gold + no-purple rule; `design.md` §3 superseded for these surfaces): navy `#01065B` +
-  lavender `#868EFF` / green / yellow / pink / red colour-blocked `gama/bg/surface` sections,
-  Exat-Bold display + Inter body, in the `.rpa` layer of `globals.css`. **The admin console stays
-  neutral OKLCH and keeps the no-purple rule** — never apply RPA colours or the `.rpa` zone there.
+  lavender `#868EFF` / green / yellow / pink / red colour-blocked `BDQ section/surface` sections,
+  Exat-Bold display + Inter body, in the `.bdq` layer of `globals.css`. **The admin console stays
+  neutral OKLCH and keeps the no-purple rule** — never apply BDQ colours or the `.bdq` zone there.
 - Vendor approval requires a **team call-back**; admin (SUPER_ADMIN) requires **TOTP 2FA**.
 
 ## Stack

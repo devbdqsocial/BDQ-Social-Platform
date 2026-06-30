@@ -12,7 +12,7 @@ type Props = {
   children: React.ReactNode;
 };
 
-// RPA masked text reveal: lines (or chars) rise from behind a clip. SplitText is imported lazily
+// BDQ masked text reveal: lines (or chars) rise from behind a clip. SplitText is imported lazily
 // INSIDE the effect so it only ever loads on the client (it touches `document` at module-load,
 // which crashes SSR). SSR renders the text fully visible; reduced-motion skips the animation.
 // A sr-only copy carries the accessible text; the split target is aria-hidden (SplitText's own

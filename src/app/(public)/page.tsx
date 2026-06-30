@@ -37,7 +37,7 @@ const HOME_FAQS: readonly (readonly [string, string])[] = [
   ["Is there food?", "Plenty. A full food court with the city's best cafés, bakers, and street food."],
 ];
 
-// Angled RPA tab button.
+// Angled BDQ tab button.
 function Btn({ href, children }: { href: string; children: React.ReactNode }) {
   return (
     <Link href={href} className="btn" data-cursor>
@@ -73,7 +73,7 @@ export default async function LandingPage() {
     <div>
       <JsonLd data={faqLd(HOME_FAQS)} />
       {/* ============ HERO (cabecera--home) — navy / light-blue ============ */}
-      <section data-header-mode="light" className="gama-1 bg-1 paint relative flex min-h-[100svh] items-center overflow-hidden">
+      <section data-header-mode="light" className="bdq-night paint relative flex min-h-[100svh] items-center overflow-hidden">
         <div className="wrapper grid w-full items-center gap-[var(--space-3xl)] py-[var(--space-5xl)] lg:grid-cols-2">
           <div>
             <Reveal>
@@ -149,7 +149,7 @@ export default async function LandingPage() {
 
       {/* ============ PROOF BAND (R3.2) — real counts, no static claims ============ */}
       {(brands.length > 0 || sponsors.length > 0) && (
-        <section className="gama-2 surface-2 paint py-[var(--space-4xl)]">
+        <section className="bdq-rose paint py-[var(--space-4xl)]">
           <div className="wrapper grid grid-cols-2 gap-[var(--space-xl)] text-center sm:grid-cols-3">
             <Stat n={brands.length} label="Curated brands" />
             {sponsors.length > 0 && <Stat n={sponsors.length} label={sponsors.length === 1 ? "Partner" : "Partners"} />}
@@ -175,7 +175,7 @@ export default async function LandingPage() {
 
       {/* ============ BRANDS (proyectos) — navy / pink, masked cards ============ */}
       {featured.length > 0 && (
-        <section className="gama-2 surface-2 paint py-[var(--space-5xl)]">
+        <section className="bdq-rose paint py-[var(--space-5xl)]">
           <div className="wrapper">
             <div className="flex items-end justify-between gap-4">
               <SplitReveal as="h2" mode="chars" className="f-exat f-h133">
@@ -194,7 +194,7 @@ export default async function LandingPage() {
 
       {/* ============ SPONSORS marquee (clientes) — dark-green / green, opposite rows ============ */}
       {(sponsors.length > 0 || brands.length > 4) && (
-        <section className="gama-1 bg-2 paint overflow-hidden py-[var(--space-4xl)]">
+        <section className="bdq-grove paint overflow-hidden py-[var(--space-4xl)]">
           {[false, true].map((reverse) => (
             <Marquee key={String(reverse)} speed={reverse ? 36 : 28} reverse={reverse} className={reverse ? "mt-[var(--space-lg)] opacity-60" : ""}>
               {(sponsors.length ? sponsors.map((s) => s.name) : brands.map((b) => b.brandName)).map((name, i) => (
@@ -209,7 +209,7 @@ export default async function LandingPage() {
 
       {/* ============ CIERRE CTA — dark-red / green, wall texture ============ */}
       {event && (
-        <section className="gama-3 bg-3 paint relative flex min-h-[80svh] items-center overflow-hidden py-[var(--space-5xl)]">
+        <section className="bdq-spark paint relative flex min-h-[80svh] items-center overflow-hidden py-[var(--space-5xl)]">
           <WordmarkWall
             rows={5}
             mobileRows={3}

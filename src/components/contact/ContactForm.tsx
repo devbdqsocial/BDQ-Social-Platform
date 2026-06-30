@@ -3,7 +3,7 @@ import { useState } from "react";
 import { email as emailSchema } from "@/lib/validators";
 import { useFieldValidation } from "@/lib/use-field-validation";
 
-// RPA floating-label field: label sits big (Exat) over the input, lifts small on focus/fill.
+// BDQ floating-label field: label sits big (Exat) over the input, lifts small on focus/fill.
 function Field({
   id,
   label,

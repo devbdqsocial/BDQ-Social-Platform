@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { saveProfileAction } from "@/app/vendor/(app)/profile/actions";
 import { AssetUploader } from "@/components/vendor/AssetUploader";
-import { RpaField, RpaInput, RpaTextarea, RpaSelect, RpaSubmit } from "@/components/vendor/rpa-fields";
+import { BdqField, BdqInput, BdqTextarea, BdqSelect, BdqSubmit } from "@/components/vendor/bdq-fields";
 import { PRODUCT_CATEGORIES } from "@/server/schemas";
 import { phoneE164Optional, urlOptional, instagramHandle } from "@/lib/validators";
 import { useFieldValidation } from "@/lib/use-field-validation";
@@ -52,43 +52,43 @@ export function BrandForm({ profile }: { profile: BrandProfile }) {
   return (
     <form onSubmit={submit} className="space-y-[var(--space-xl)]">
       <div className="grid gap-[var(--space-lg)] sm:grid-cols-2">
-        <RpaField label="Brand name *"><RpaInput name="brandName" required defaultValue={brandDefault} placeholder="Your public brand" /></RpaField>
-        <RpaField label="Registered / legal name"><RpaInput name="registeredName" defaultValue={profile.registeredName ?? ""} placeholder="As on PAN / GST" /></RpaField>
-        <RpaField label="Product category *">
-          <RpaSelect name="productCategory" required defaultValue={profile.productCategory ?? ""}>
+        <BdqField label="Brand name *"><BdqInput name="brandName" required defaultValue={brandDefault} placeholder="Your public brand" /></BdqField>
+        <BdqField label="Registered / legal name"><BdqInput name="registeredName" defaultValue={profile.registeredName ?? ""} placeholder="As on PAN / GST" /></BdqField>
+        <BdqField label="Product category *">
+          <BdqSelect name="productCategory" required defaultValue={profile.productCategory ?? ""}>
             <option value="">Select…</option>
             {PRODUCT_CATEGORIES.map((c) => (
               <option key={c} value={c}>{c}</option>
             ))}
-          </RpaSelect>
-        </RpaField>
-        <RpaField label="Contact person"><RpaInput name="contactPerson" defaultValue={profile.contactPerson ?? ""} /></RpaField>
-        <RpaField label="WhatsApp" error={whatsappField.error}>
-          <RpaInput name="whatsapp" type="tel" inputMode="tel" maxLength={16} defaultValue={profile.whatsapp ?? ""} placeholder="9876543210"
+          </BdqSelect>
+        </BdqField>
+        <BdqField label="Contact person"><BdqInput name="contactPerson" defaultValue={profile.contactPerson ?? ""} /></BdqField>
+        <BdqField label="WhatsApp" error={whatsappField.error}>
+          <BdqInput name="whatsapp" type="tel" inputMode="tel" maxLength={16} defaultValue={profile.whatsapp ?? ""} placeholder="9876543210"
             aria-invalid={!!whatsappField.error}
             onInput={() => whatsappField.clear()}
             onBlur={(e) => whatsappField.validate(e.currentTarget.value)} />
-        </RpaField>
-        <RpaField label="City / area"><RpaInput name="city" maxLength={80} defaultValue={profile.city ?? ""} placeholder="Vadodara" /></RpaField>
-        <RpaField label="Website" error={websiteField.error}>
-          <RpaInput name="website" type="url" maxLength={200} defaultValue={profile.website ?? ""} placeholder="https://"
+        </BdqField>
+        <BdqField label="City / area"><BdqInput name="city" maxLength={80} defaultValue={profile.city ?? ""} placeholder="Vadodara" /></BdqField>
+        <BdqField label="Website" error={websiteField.error}>
+          <BdqInput name="website" type="url" maxLength={200} defaultValue={profile.website ?? ""} placeholder="https://"
             aria-invalid={!!websiteField.error}
             onInput={() => websiteField.clear()}
             onBlur={(e) => websiteField.validate(e.currentTarget.value)} />
-        </RpaField>
-        <RpaField label="Instagram" error={instagramField.error}>
-          <RpaInput name="instagram" maxLength={30} defaultValue={profile.instagram ?? ""} placeholder="@yourhandle"
+        </BdqField>
+        <BdqField label="Instagram" error={instagramField.error}>
+          <BdqInput name="instagram" maxLength={30} defaultValue={profile.instagram ?? ""} placeholder="@yourhandle"
             aria-invalid={!!instagramField.error}
             onInput={() => instagramField.clear()}
             onBlur={(e) => instagramField.validate(e.currentTarget.value)} />
-        </RpaField>
+        </BdqField>
       </div>
-      <RpaField label="What do you sell? *">
-        <RpaTextarea name="products" required rows={2} defaultValue={profile.products ?? ""} placeholder="e.g. handmade silver jewellery, kurtis, candles" />
-      </RpaField>
-      <RpaField label="Brand description">
-        <RpaTextarea name="description" rows={3} defaultValue={profile.description ?? ""} placeholder="A line or two about your brand" />
-      </RpaField>
+      <BdqField label="What do you sell? *">
+        <BdqTextarea name="products" required rows={2} defaultValue={profile.products ?? ""} placeholder="e.g. handmade silver jewellery, kurtis, candles" />
+      </BdqField>
+      <BdqField label="Brand description">
+        <BdqTextarea name="description" rows={3} defaultValue={profile.description ?? ""} placeholder="A line or two about your brand" />
+      </BdqField>
 
       <div className="grid gap-[var(--space-xl)] pt-[var(--space-lg)] sm:grid-cols-3" style={{ borderTop: "1px solid color-mix(in srgb, currentColor 16%, transparent)" }}>
         <AssetUploader kind="LOGO" label="Logo" assets={profile.assets} />
@@ -96,7 +96,7 @@ export function BrandForm({ profile }: { profile: BrandProfile }) {
         <AssetUploader kind="PRODUCT" label="Product photos" assets={profile.assets} />
       </div>
 
-      <RpaSubmit lg disabled={busy}>{busy ? "Saving…" : "Save & continue"}</RpaSubmit>
+      <BdqSubmit lg disabled={busy}>{busy ? "Saving…" : "Save & continue"}</BdqSubmit>
     </form>
   );
 }

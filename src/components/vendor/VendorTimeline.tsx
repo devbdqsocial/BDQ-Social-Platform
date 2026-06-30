@@ -19,7 +19,7 @@ export interface VendorNode {
 /**
  * The vendor application status spine (vendor-portal.md §3). Vertical six-node timeline:
  * done (filled dot + check), current (pulsing lavender dot), locked (faded dot + lock).
- * Lives inside the `.rpa` cream content; colours follow the section's --color/--light-blue.
+ * Lives inside the `.bdq` cream content; colours follow the section's --color/--light-blue.
  */
 export function VendorTimeline({ nodes }: { nodes: VendorNode[] }) {
   return (

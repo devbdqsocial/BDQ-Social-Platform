@@ -1,5 +1,5 @@
 /**
- * RpaLoading (R6.6) — a premium, on-brand loading skeleton for the customer routes, so navigation
+ * BdqLoading (R6.6) — a premium, on-brand loading skeleton for the customer routes, so navigation
  * never flashes blank. Tints to the surface (`.paint` cream); shimmer is reduced-motion safe. Used by
  * each route's loading.tsx. Mirrors the common page shape (header + content).
  */
@@ -7,7 +7,7 @@ function blocks(n: number, cls: string) {
   return Array.from({ length: n }).map((_, i) => <div key={i} className={`skeleton ${cls}`} />);
 }
 
-export function RpaLoading({ variant = "grid", count = 6 }: { variant?: "grid" | "wide" | "list" | "detail" | "map"; count?: number }) {
+export function BdqLoading({ variant = "grid", count = 6 }: { variant?: "grid" | "wide" | "list" | "detail" | "map"; count?: number }) {
   return (
     <section className="paint py-[var(--space-4xl)]" aria-busy="true" aria-label="Loading">
       <div className="wrapper max-w-[62rem]">

@@ -9,7 +9,7 @@ component fits.
 - [MenuOverlay](../../src/components/nav/MenuOverlay.tsx) — full-screen menu.
 - [CustomerTabBar](../../src/components/nav/CustomerTabBar.tsx) — mobile bottom tabs.
 - Footer — in [(public)/layout.tsx](../../src/app/(public)/layout.tsx): brand + nav columns +
-  `WordmarkWall` + "Let's talk" CTA, `gama-1.bg-1.paint`.
+  `WordmarkWall` + "Let's talk" CTA, `bdq-night.paint`.
 
 ## Buttons
 - `.btn` (angled tab, clip-path morph), `.btn--lg` (wide), `.btn--accent` (lavender/navy outside
@@ -18,7 +18,7 @@ component fits.
 - shadcn `Button` only for functional/admin-adjacent controls, never as the hero CTA.
 
 ## Content blocks
-- `RpaPageHeader` (kicker + h1 + desc), `RpaEmpty` (empty state).
+- `BdqPageHeader` (kicker + h1 + desc), `BdqEmpty` (empty state).
 - `Reveal`/`SplitReveal` wrap headings/blocks. `Marquee` for tickers.
 - Cards: branded mask (`.svg--form*`) + `.media-tint`/`.media-zoom`; `.card-hover` for lift.
 
@@ -31,8 +31,8 @@ component fits.
   `PinnedConcepts`, `Countdown`.
 
 ## States
-- Loading: `RpaLoading` variants (`grid|wide|list|detail|map`) via each route's `loading.tsx`.
-- Empty: `RpaEmpty` (dashed border, centred message).
+- Loading: `BdqLoading` variants (`grid|wide|list|detail|map`) via each route's `loading.tsx`.
+- Empty: `BdqEmpty` (dashed border, centred message).
 - Error: route `error.tsx` where present; keep tone on-brand, never raw stack.
 - Success: component-scoped (`TicketReveal`).
 
@@ -42,5 +42,5 @@ component fits.
 
 ## Rules
 - TypeScript strict, small named functions, DRY.
-- No RPA tokens or `.cs-*` classes in admin.
+- No BDQ tokens or `.cs-*` classes in admin.
 - Every new component respects the reduced-motion + AA contrast contract.

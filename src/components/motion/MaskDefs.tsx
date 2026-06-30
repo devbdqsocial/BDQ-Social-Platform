@@ -1,4 +1,4 @@
-// RPA clip-path "form" masks — geometry copied verbatim from the reference mirror
+// BDQ clip-path "form" masks — BDQ-owned public mask geometry
 // (en/index.html lines 151–233). Rendered once, hidden; referenced via clip-path:url(#svg-…).
 // Menu/header/preloader/services/cats/footer/proyecto/noticia/lang MORPH path-sets are added
 // alongside their motion components (they need the full -anim path lists).

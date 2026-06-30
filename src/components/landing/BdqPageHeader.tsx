@@ -1,8 +1,8 @@
 /**
- * RpaPageHeader — the one header stack every customer/vendor (RPA-layer) page opens with
+ * BdqPageHeader — the one header stack every customer/vendor (BDQ-layer) page opens with
  * (design-system §3.5, design-debt D16). Replaces copy-pasted kicker→title→lede stacks.
  */
-export function RpaPageHeader({
+export function BdqPageHeader({
   kicker,
   title,
   lede,
@@ -26,10 +26,10 @@ export function RpaPageHeader({
 }
 
 /**
- * RpaEmpty — the dashed-border empty state (design-system §3.9): headline → reassurance → one
+ * BdqEmpty — the dashed-border empty state (design-system §3.9): headline → reassurance → one
  * action. Copy pattern: state + reassurance + action.
  */
-export function RpaEmpty({
+export function BdqEmpty({
   title,
   body,
   action,

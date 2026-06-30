@@ -11,7 +11,7 @@ import { organizationLd, webSiteLd } from "@/lib/seo/jsonld";
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
   return (
-    <div className="rpa flex min-h-dvh flex-col">
+    <div className="bdq flex min-h-dvh flex-col">
       <JsonLd data={[organizationLd(), webSiteLd()]} />
       <MotionProviders />
       <PublicHeader signedIn={!!session} />
@@ -19,7 +19,7 @@ export default async function PublicLayout({ children }: { children: React.React
       {/* pb gives room for the mobile tab bar */}
       <main id="main" className="flex-1 pb-16 sm:pb-0">{children}</main>
 
-      <footer data-header-mode="light" className="gama-1 bg-1 paint relative flex min-h-[78svh] flex-col justify-between overflow-hidden lg:min-h-[100svh]">
+      <footer data-header-mode="light" className="bdq-night paint relative flex min-h-[78svh] flex-col justify-between overflow-hidden lg:min-h-[100svh]">
         {/* top: brand blurb, then role-based nav groups (P0.4 IA: Explore / guests / partners / company / legal) */}
         <div className="wrapper pt-[var(--space-4xl)]">
           <div className="max-w-[40ch]">

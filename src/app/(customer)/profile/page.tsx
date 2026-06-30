@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { db } from "@/server/db";
 import { getSession } from "@/server/auth/guard";
-import { RpaPageHeader } from "@/components/landing/RpaPageHeader";
+import { BdqPageHeader } from "@/components/landing/BdqPageHeader";
 import { SignOutButton } from "@/components/auth/SignOutButton";
 import { saveProfileAction } from "./actions";
 
@@ -19,7 +19,7 @@ export default async function ProfilePage() {
   return (
     <section className="paint py-[var(--space-5xl)]">
       <div className="wrapper max-w-[42rem]">
-        <RpaPageHeader kicker="Account" title="Profile" lede="Your phone is your sign-in. Add a name and email for receipts and reminders." />
+        <BdqPageHeader kicker="Account" title="Profile" lede="Your phone is your sign-in. Add a name and email for receipts and reminders." />
 
         <dl className="mt-[var(--space-2xl)]">
           <div className="py-[var(--space-lg)]" style={{ borderTop: "1px solid var(--color)" }}>

@@ -2,6 +2,7 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { db } from "@/server/db";
 import { withAudit } from "@/server/audit";
+import { ACTIVE_BOOKING_STATUSES } from "@/server/bookings/status";
 import { decryptKyc } from "@/server/vendors/service";
 import type { Session } from "@/server/auth/guard";
 
@@ -31,7 +32,12 @@ export async function getVendor(id: string) {
       kyc: true,
       contract: true,
       assets: { orderBy: { createdAt: "desc" } },
-      bookings: { include: { stall: { select: { label: true } }, event: { select: { name: true } } } },
+      bookings: {
+        include: {
+          stall: { select: { label: true, priceInPaise: true, stallType: { select: { priceInPaise: true } } } },
+          event: { select: { name: true } },
+        },
+      },
     },
   });
   if (vendor?.kyc) vendor.kyc = decryptKyc(vendor.kyc)!;
@@ -99,8 +105,8 @@ export function createVendorByAdmin(session: Session, input: AdminCreateVendorIn
   }));
 }
 
-/** Admin assigns a stall to a vendor — creates the Booking (source ADMIN), no contract gate. */
-export function assignStallByAdmin(session: Session, vendorProfileId: string, stallId: string) {
+/** Admin assigns a stall to an approved vendor; webhook capture is still required to mark BOOKED. */
+export function assignStallByAdmin(session: Session, vendorProfileId: string, stallId: string, payByHours = 48) {
   return withAudit(session, { action: "UPDATE", entity: "VendorProfile", entityId: vendorProfileId }, async () => {
     const before = await db.booking.count({ where: { vendorProfileId } });
     return {
@@ -108,15 +114,27 @@ export function assignStallByAdmin(session: Session, vendorProfileId: string, st
       run: async () => {
         try {
           const booking = await db.$transaction(async (tx) => {
+            const vendor = await tx.vendorProfile.findUnique({ where: { id: vendorProfileId }, select: { approvalStatus: true } });
+            if (vendor?.approvalStatus !== "APPROVED") throw new Error("Vendor must be approved before admin stall assignment");
             const stall = await tx.stall.findUnique({ where: { id: stallId } });
             if (!stall) throw new Error("Stall not found");
-            const b = await tx.booking.create({
-              data: { eventId: stall.eventId, stallId, vendorProfileId, source: "ADMIN", status: "BOOKED" },
+            const locked = await tx.booking.findFirst({
+              where: { stallId, status: { in: ACTIVE_BOOKING_STATUSES } },
+              select: { id: true },
             });
-            await tx.stall.update({ where: { id: stallId }, data: { status: "BOOKED", holdUntil: null } });
+            if (locked) throw new StallAlreadyBookedError();
+            const payBy = new Date(Date.now() + payByHours * 3600 * 1000);
+            const updated = await tx.stall.updateMany({
+              where: { id: stallId, kind: "STALL", status: "AVAILABLE" },
+              data: { status: "HELD", holdUntil: null, holdUserId: null },
+            });
+            if (updated.count === 0) throw new StallAlreadyBookedError();
+            const b = await tx.booking.create({
+              data: { eventId: stall.eventId, stallId, vendorProfileId, source: "ADMIN", status: "PENDING_PAYMENT", payBy },
+            });
             return b;
           });
-          return { result: booking, after: { stallId } };
+          return { result: booking, after: { stallId, status: booking.status, payBy: booking.payBy } };
         } catch (e) {
           if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
             throw new StallAlreadyBookedError();
@@ -131,7 +149,7 @@ export function assignStallByAdmin(session: Session, vendorProfileId: string, st
 /** Stalls that can still be assigned (not already booked/blocked). */
 export function listAssignableStalls() {
   return db.stall.findMany({
-    where: { kind: "STALL", status: { in: ["AVAILABLE", "HELD"] } },
+    where: { kind: "STALL", status: "AVAILABLE" },
     include: { event: { select: { name: true } } },
     orderBy: [{ eventId: "asc" }, { label: "asc" }],
   });
@@ -155,55 +173,6 @@ export class StallAlreadyBookedError extends Error {
     super("STALL_ALREADY_BOOKED");
     this.name = "StallAlreadyBookedError";
   }
-}
-
-/** Approve a vendor and assign a stall — creates the Booking (BOOKED) atomically. */
-export function approveVendor(session: Session, vendorProfileId: string, stallId: string) {
-  return withAudit(
-    session,
-    { action: "APPROVE", entity: "VendorProfile", entityId: vendorProfileId },
-    async () => {
-      const before = await db.vendorProfile.findUnique({
-        where: { id: vendorProfileId },
-        select: { approvalStatus: true },
-      });
-      return {
-        before,
-        run: async () => {
-          const contract = await db.vendorContract.findUnique({ where: { vendorProfileId }, select: { status: true } });
-          if (contract?.status !== "SIGNED") throw new ContractNotSignedError();
-          try {
-            const booking = await db.$transaction(async (tx) => {
-              const stall = await tx.stall.findUnique({ where: { id: stallId } });
-              if (!stall) throw new Error("Stall not found");
-              // reuse the vendor's existing (paid/held) booking if present; else create one.
-              // partial-unique index enforces one active booking per stall.
-              const existing = await tx.booking.findFirst({
-                where: { stallId, vendorProfileId, status: { in: ["HELD", "PENDING"] } },
-              });
-              const b = existing
-                ? await tx.booking.update({ where: { id: existing.id }, data: { status: "BOOKED" } })
-                : await tx.booking.create({
-                    data: { eventId: stall.eventId, stallId, vendorProfileId, source: "VENDOR", status: "BOOKED" },
-                  });
-              await tx.stall.update({ where: { id: stallId }, data: { status: "BOOKED", holdUntil: null } });
-              await tx.vendorProfile.update({
-                where: { id: vendorProfileId },
-                data: { approvalStatus: "APPROVED", verifiedCallById: session.userId, verifiedAt: new Date() },
-              });
-              return b;
-            });
-            return { result: booking, after: { approvalStatus: "APPROVED", stallId } };
-          } catch (e) {
-            if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-              throw new StallAlreadyBookedError();
-            }
-            throw e;
-          }
-        },
-      };
-    },
-  );
 }
 
 /**

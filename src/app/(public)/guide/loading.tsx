@@ -1,5 +1,5 @@
-import { RpaLoading } from "@/components/landing/RpaLoading";
+import { BdqLoading } from "@/components/landing/BdqLoading";
 
 export default function Loading() {
-  return <RpaLoading variant="list" count={5} />;
+  return <BdqLoading variant="list" count={5} />;
 }

@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { db } from "@/server/db";
+import { runInDbTransaction } from "@/server/db";
 import { logError } from "@/lib/logger";
 import type { Session } from "@/server/auth/guard";
 
@@ -18,16 +18,11 @@ interface AuditMeta {
   userAgent?: string;
 }
 
-export async function withAudit<TOut>(
-  session: Session,
-  meta: AuditMeta,
-  capture: () => Promise<{ before: unknown; run: () => Promise<{ result: TOut; after: unknown }> }>,
-): Promise<TOut> {
-  const { before, run } = await capture();
-  const { result, after } = await run();
+type AuditTx = Prisma.TransactionClient;
 
+async function persistAudit(session: Session, meta: AuditMeta, before: unknown, after: unknown, tx: AuditTx) {
   try {
-    await db.auditLog.create({
+    await tx.auditLog.create({
       data: {
         actorId: session.userId,
         role: session.role,
@@ -43,6 +38,32 @@ export async function withAudit<TOut>(
   } catch (e) {
     // Never let an admin/staff mutation be recorded-as-success while its audit row is silently lost.
     logError("audit.persist", e, { action: meta.action, entity: meta.entity, actorId: session.userId });
+    throw e;
   }
-  return result;
+}
+
+export async function withAudit<TOut>(
+  session: Session,
+  meta: AuditMeta,
+  capture: () => Promise<{ before: unknown; run: () => Promise<{ result: TOut; after: unknown }> }>,
+): Promise<TOut> {
+  return runInDbTransaction(async (tx) => {
+    const { before, run } = await capture();
+    const { result, after } = await run();
+    await persistAudit(session, meta, before, after, tx);
+    return result;
+  });
+}
+
+export async function withAuditTx<TOut>(
+  session: Session,
+  meta: AuditMeta,
+  capture: (tx: AuditTx) => Promise<{ before: unknown; run: (tx: AuditTx) => Promise<{ result: TOut; after: unknown }> }>,
+): Promise<TOut> {
+  return runInDbTransaction(async (tx) => {
+    const { before, run } = await capture(tx);
+    const { result, after } = await run(tx);
+    await persistAudit(session, meta, before, after, tx);
+    return result;
+  });
 }

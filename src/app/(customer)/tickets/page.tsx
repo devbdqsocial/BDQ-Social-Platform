@@ -6,7 +6,7 @@ import { getSession } from "@/server/auth/guard";
 import { listPendingOrders, listUserTickets } from "@/server/tickets/service";
 import { toQrDataUrl } from "@/lib/qr-token";
 import { AutoRefresh } from "@/components/admin/auto-refresh";
-import { RpaPageHeader, RpaEmpty } from "@/components/landing/RpaPageHeader";
+import { BdqPageHeader, BdqEmpty } from "@/components/landing/BdqPageHeader";
 import { TicketCard } from "@/components/tickets/TicketCard";
 import { TicketReveal } from "@/components/tickets/TicketReveal";
 import { TicketShare } from "@/components/tickets/TicketShare";
@@ -48,7 +48,7 @@ export default async function WalletPage({ searchParams }: { searchParams: Promi
           <TicketReveal orderId={revealOrder.t.order.id} eventName={revealOrder.t.order.event.name} admitCount={revealOrder.t.admitCount} startsAtIso={revealOrder.t.order.event.startsAt.toISOString()} />
         )}
 
-        <RpaPageHeader kicker="Your wallet" title="Tickets" lede="Show the QR code at the gate — that's your way in." />
+        <BdqPageHeader kicker="Your wallet" title="Tickets" lede="Show the QR code at the gate — that's your way in." />
 
         {soonest && (
           <div className="mt-[var(--space-2xl)]">
@@ -57,7 +57,7 @@ export default async function WalletPage({ searchParams }: { searchParams: Promi
         )}
 
         {revealOrder && (
-          <div className="gama-2 surface-2 paint mt-[var(--space-2xl)] flex flex-wrap items-center justify-between gap-[var(--space-lg)] rounded-[var(--radius-lg)] p-[var(--space-xl)]">
+          <div className="bdq-rose paint mt-[var(--space-2xl)] flex flex-wrap items-center justify-between gap-[var(--space-lg)] rounded-[var(--radius-lg)] p-[var(--space-xl)]">
             <div className="min-w-0">
               <p className="kicker opacity-75">You&apos;re going</p>
               <p className="f-h32 f-exat mt-1">Make it official — share your pass</p>
@@ -67,7 +67,7 @@ export default async function WalletPage({ searchParams }: { searchParams: Promi
         )}
 
         {confirming && (
-          <div className="gama-1 bg-1 paint mt-[var(--space-2xl)] flex items-center gap-[var(--space-xl)] overflow-hidden rounded-[var(--radius-lg)] p-[var(--space-xl)]">
+          <div className="bdq-night paint mt-[var(--space-2xl)] flex items-center gap-[var(--space-xl)] overflow-hidden rounded-[var(--radius-lg)] p-[var(--space-xl)]">
             <div className="min-w-0 flex-1">
               <p className="f-exat f-h42">{confirming.event.name}</p>
               <p className="f-paragraph-small mt-[var(--space-xs)] opacity-80" aria-live="polite">Confirming payment — this takes under a minute.</p>
@@ -78,7 +78,7 @@ export default async function WalletPage({ searchParams }: { searchParams: Promi
 
         {withQr.length === 0 && !confirming ? (
           <div className="mt-[var(--space-3xl)]">
-            <RpaEmpty
+            <BdqEmpty
               title="No tickets yet"
               body="Just paid? Your tickets land here the moment payment is confirmed."
               action={<Link href="/events" className="btn" data-cursor><span className="btn__text">Find an event</span></Link>}

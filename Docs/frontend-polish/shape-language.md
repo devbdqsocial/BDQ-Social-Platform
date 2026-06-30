@@ -4,7 +4,7 @@ Status: audit and target rules. No shape code is changed here.
 
 ## Current Shape System
 
-BDQ already has the core RPA mask system:
+BDQ already has the core BDQ mask system:
 
 | Shape | Current CSS utility |
 |---|---|
@@ -28,7 +28,7 @@ Additional geometry exists in `MaskDefs`:
 
 ## Reference Gap
 
-The RPA reference includes richer shape roles:
+The BDQ reference includes richer shape roles:
 
 | Reference shape family | Use |
 |---|---|

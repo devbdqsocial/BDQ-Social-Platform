@@ -3,11 +3,11 @@ import { useEffect, useRef } from "react";
 import { gsap } from "@/lib/gsap";
 import { WordmarkWall } from "./WordmarkWall";
 
-const SERVICES: { n: string; title: string; body: string; gama: string }[] = [
-  { n: "01", title: "Shopping", body: "Handpicked indie brands — fusion wear, jewellery, home, and thoughtful Diwali gifting you won't find at the mall.", gama: "gama-1 bg-1" },
-  { n: "02", title: "Food", body: "A proper food court: the city's best cafés, bakers, and inventive street food. Clean, fresh, genuinely good.", gama: "gama-3 bg-1" },
-  { n: "03", title: "Music", body: "Easy acoustic sets at sundown that build into a warm, high-energy night.", gama: "gama-2 surface-2" },
-  { n: "04", title: "Photos", body: "Lounges, neon, and little surprises — bring friends and stay a while.", gama: "gama-1 bg-2" },
+const SERVICES: { n: string; title: string; body: string; band: string }[] = [
+  { n: "01", title: "Shopping", body: "Handpicked indie brands — fusion wear, jewellery, home, and thoughtful Diwali gifting you won't find at the mall.", band: "bdq-night" },
+  { n: "02", title: "Food", body: "A proper food court: the city's best cafés, bakers, and inventive street food. Clean, fresh, genuinely good.", band: "bdq-fire" },
+  { n: "03", title: "Music", body: "Easy acoustic sets at sundown that build into a warm, high-energy night.", band: "bdq-rose" },
+  { n: "04", title: "Photos", body: "Lounges, neon, and little surprises — bring friends and stay a while.", band: "bdq-grove" },
 ];
 
 // servicios--anima: pinned horizontal scroll on desktop; degrades to a stacked vertical
@@ -44,7 +44,7 @@ export function PinnedServices() {
     <section ref={root} className="pinned-services relative overflow-hidden">
       <div ref={track} className="pinned-track">
         {SERVICES.map((s) => (
-          <div key={s.title} className={`pinned-slide ${s.gama} paint relative overflow-hidden`}>
+          <div key={s.title} className={`pinned-slide ${s.band} paint relative overflow-hidden`}>
             <WordmarkWall
               rows={1}
               animated={false}

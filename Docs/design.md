@@ -7,9 +7,9 @@
 
 > **⚠️ SUPERSEDED for customer-facing surfaces (owner-approved override).** The brand/colour/type
 > below (§3 clay-pine-gold, no-purple) now applies **only to the admin/staff console**. The
-> **landing, public pages, customer + vendor portals** follow the **RPA Comunicación direction**,
-> implemented as the `.rpa` token layer in `src/app/globals.css`: navy `#01065B` + lavender
-> `#868EFF` / green / yellow / pink / red colour-blocked `gama/bg/surface` sections, **Exat-Bold**
+> **landing, public pages, customer + vendor portals** follow the **BDQ identity**,
+> implemented as the `.bdq` token layer in `src/app/globals.css`: navy `#01065B` + lavender
+> `#868EFF` / green / yellow / pink / red colour-blocked `BDQ section/surface` sections, **Exat-Bold**
 > display + **Inter** body, fluid type scale, clip-path SVG masks, custom cursor, Lenis smooth
 > scroll, GSAP scroll-pinned sections + reveals. The admin console keeps the neutral OKLCH theme
 > and the no-purple rule. See `CLAUDE.md` locked rules.
@@ -159,7 +159,7 @@ Semantic tokens map to the raw palette so theming (light/dark) swaps in one plac
   /* semantic — LIGHT (default) */
   --color-bg:            #FBF7F0;   /* paper */
   --color-surface:       #F6F1E7;   /* sand-50 */
-  --color-surface-2:     #ECE4D6;
+  --color-bdq-surface-alt:     #ECE4D6;
   --color-border:        #ECE4D6;
   --color-text:          #352F26;   /* sand-700 */
   --color-text-muted:    #6F6552;   /* sand-500 */
@@ -180,7 +180,7 @@ Semantic tokens map to the raw palette so theming (light/dark) swaps in one plac
 .dark {
   --color-bg:        #120E09;   /* espresso */
   --color-surface:   #1C1710;
-  --color-surface-2: #271F16;
+  --color-bdq-surface-alt: #271F16;
   --color-border:    #322920;
   --color-text:      #EDE6DA;
   --color-text-muted:#B7AB97;
@@ -324,7 +324,7 @@ map's stall details and admin record panels. Dim scrim `rgba(18,14,9,.5)`. Alway
 **Toasts / alerts:** top-right (desktop) / top (mobile), `shadow-md`, semantic left-accent bar.
 Use for payment results, hold-expiry warnings, save confirmations.
 
-**Tables (admin):** dense rows (44–52px), sticky header, zebra via `surface-2`, sortable columns,
+**Tables (admin):** dense rows (44–52px), sticky header, zebra via `bdq-surface-alt`, sortable columns,
 row hover, bulk-select, pagination. Right-align numeric/currency. Status as badges.
 
 **Navigation**
@@ -402,7 +402,7 @@ audible + haptic cue). Staff sees a reduced, permission-scoped nav.
   "All sales final". Optional sponsor logo strip per [sponsorship-deck](sponsorship-deck.md).
 - One QR per ticket (group tickets = multiple cards).
 
-**Email (Resend):** max 600px, brand header bar (logo on espresso), `paper` body, clay primary
+**Email (SendGrid):** max 600px, brand header bar (logo on espresso), `paper` body, clay primary
 button, gold dividers, the ticket card image, calendar "add to calendar" link, plain-text
 fallback. Footer with event + contact.
 

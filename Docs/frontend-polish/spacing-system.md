@@ -6,7 +6,7 @@ Status: audit and target rules. No spacing code is changed here.
 
 | System | Source | Finding |
 |---|---|---|
-| RPA spacing tokens | `--space-xs` through `--space-5xl`, `--grid-gap`, `--wrapper-padd`. | Strong foundation for public/customer/vendor. |
+| BDQ spacing tokens | `--space-xs` through `--space-5xl`, `--grid-gap`, `--wrapper-padd`. | Strong foundation for public/customer/vendor. |
 | Tailwind numeric spacing | `gap-1` through `gap-8`, `p-3`, `mt-6`, etc. | Good for admin and shadcn, but leaks into brand areas. |
 | Ad-hoc bracket spacing | `mt-[0.55rem]`, `gap-[5px]`, `px-[1.6rem]`, clamps, etc. | Main source of random rhythm. |
 | Safe area spacing | `env(safe-area-inset-bottom)` in mobile tab contexts. | Keep and expand for full-screen/mobile overlays. |
@@ -36,7 +36,7 @@ Ad-hoc spacing requiring review:
 | `gap-[5px]` | Header menu line gap can stay local, but should be intentional. |
 | `px-[1.6rem]` | Invitation/form custom padding should map to token. |
 | `p-[28%]` | Aspect/shape spacing should be checked for responsiveness. |
-| Mixed `p-3`, `p-4`, `p-5`, `p-6` | Fine in admin; brand areas should use RPA tokens. |
+| Mixed `p-3`, `p-4`, `p-5`, `p-6` | Fine in admin; brand areas should use BDQ tokens. |
 
 ## Spacing Rules
 
@@ -69,7 +69,7 @@ Ad-hoc spacing requiring review:
 
 ## Target Spacing Checklist
 
-1. Use RPA tokens in public/customer/vendor brand surfaces.
+1. Use BDQ tokens in public/customer/vendor brand surfaces.
 2. Use Tailwind numeric spacing intentionally in admin/ops only.
 3. Convert repeated bracket values to named tokens.
 4. Remove dead vertical areas unless they carry visual storytelling.

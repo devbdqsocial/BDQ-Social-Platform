@@ -3,6 +3,8 @@ import { unstable_cache } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { db } from "@/server/db";
 import { withAudit } from "@/server/audit";
+import { env } from "@/lib/env";
+import { LEGAL } from "@/lib/legal";
 import type { Session } from "@/server/auth/guard";
 import { elementsToStallRows } from "@/lib/map/normalize";
 import type { LayoutV2 } from "@/lib/map/layout-v2";
@@ -24,6 +26,57 @@ export interface CreateEventInput {
   startsAt: Date;
   endsAt: Date;
   capacity?: number;
+}
+
+export type EventReadinessIssue = { key: string; label: string; detail: string };
+
+export class PublishBlockedError extends Error {
+  constructor(public issues: EventReadinessIssue[]) {
+    super(`Fix before publishing: ${issues.map((i) => i.label).join(", ")}`);
+    this.name = "PublishBlockedError";
+  }
+}
+
+const hasValue = (value?: string | null) => !!value?.trim();
+const hasPlaceholder = (value: string) => value.includes("[") || value.includes("]");
+
+export async function getEventReadiness(id: string): Promise<{ ready: boolean; issues: EventReadinessIssue[] }> {
+  const event = await db.event.findUnique({
+    where: { id },
+    select: {
+      name: true,
+      description: true,
+      location: true,
+      startsAt: true,
+      endsAt: true,
+      ticketTypes: { select: { priceInPaise: true, totalQty: true, attendeesPer: true } },
+      mapLayout: { select: { id: true } },
+      stalls: { where: { kind: "STALL" }, select: { priceInPaise: true } },
+    },
+  });
+  if (!event) return { ready: false, issues: [{ key: "event", label: "Event exists", detail: "The event could not be found." }] };
+
+  const issues: EventReadinessIssue[] = [];
+  if (!hasValue(event.name) || !hasValue(event.description) || !hasValue(event.location)) {
+    issues.push({ key: "details", label: "Public details", detail: "Add event name, short description, and venue/location." });
+  }
+  if (!(event.endsAt > event.startsAt)) {
+    issues.push({ key: "dates", label: "Event dates", detail: "End time must be after start time." });
+  }
+  if (!event.ticketTypes.some((t) => t.priceInPaise > 0 && t.totalQty > 0 && t.attendeesPer > 0)) {
+    issues.push({ key: "tickets", label: "Paid ticket type", detail: "Add at least one ticket type with price, capacity, and attendees per ticket." });
+  }
+  if (!event.mapLayout || event.stalls.length === 0 || !event.stalls.some((s) => (s.priceInPaise ?? 0) > 0)) {
+    issues.push({ key: "venue", label: "Venue map and stall pricing", detail: "Attach a map layout and add at least one priced sellable stall." });
+  }
+  if ([LEGAL.entity, LEGAL.email, LEGAL.phone, LEGAL.address, LEGAL.grievanceOfficer, LEGAL.grievanceEmail].some(hasPlaceholder)) {
+    issues.push({ key: "legal", label: "Legal/support details", detail: "Replace bracketed legal and support placeholders before launch." });
+  }
+  if (!env.RAZORPAY_KEY_ID || !env.RAZORPAY_KEY_SECRET || !env.RAZORPAY_WEBHOOK_SECRET) {
+    issues.push({ key: "payments", label: "Razorpay live keys", detail: "Configure Razorpay key ID, key secret, and webhook secret." });
+  }
+
+  return { ready: issues.length === 0, issues };
 }
 
 function slugify(s: string): string {
@@ -247,7 +300,7 @@ export async function getBySlug(slug: string) {
   };
 }
 
-export async function getEventLayoutForSession(_session: Session, slug: string) {
+export async function getPublicEventLayout(slug: string) {
   const event = await db.event.findUnique({
     where: { slug },
     select: {
@@ -272,6 +325,10 @@ export async function getEventLayoutForSession(_session: Session, slug: string) 
 
   const canvas = (event.mapLayout?.layoutJson as { canvas?: { widthFt: number; heightFt: number } } | null)?.canvas;
   return { stalls: event.stalls, canvas };
+}
+
+export async function getEventLayoutForSession(_session: Session, slug: string) {
+  return getPublicEventLayout(slug);
 }
 
 export function createEvent(session: Session, input: CreateEventInput) {
@@ -380,6 +437,8 @@ export function publishEvent(session: Session, id: string) {
     return {
       before,
       run: async () => {
+        const readiness = await getEventReadiness(id);
+        if (!readiness.ready) throw new PublishBlockedError(readiness.issues);
         const event = await db.event.update({ where: { id }, data: { status: "PUBLISHED" } });
         return { result: event, after: { status: event.status } };
       },

@@ -39,7 +39,7 @@ Two related devices ship; both are `aria-hidden` and fully static under reduced 
 - Buttons: clip-path morph (`.btn`) + magnetic pull + focus-visible ring + active press.
 - Links: `.link-underline` wipe-in.
 - Cards: `.card-hover` lift (reduced-motion disables transform).
-- Loading: `.skeleton` shimmer via `RpaLoading`.
+- Loading: `.skeleton` shimmer via `BdqLoading`.
 - Success/error: scoped to component (`TicketReveal` for the celebrate peak).
 
 ## Reduced-motion contract

@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { action } from "@/server/action";
-import { createEvent, publishEvent } from "@/server/events/service";
+import { action, ActionError } from "@/server/action";
+import { createEvent, publishEvent, PublishBlockedError } from "@/server/events/service";
 import { archiveEvent, unarchiveEvent } from "@/server/events/archive-service";
 import { createEventSchema, idActionSchema } from "@/server/schemas";
 import type { Result } from "@/lib/result";
@@ -11,7 +11,18 @@ import type { Result } from "@/lib/result";
 // so no audit meta here. "ADMIN" = SUPER_ADMIN + ADMIN (old requireSuperAdmin semantics).
 
 const create = action({ auth: "ADMIN", input: createEventSchema, handler: (s, d) => createEvent(s, d) });
-const publish = action({ auth: "ADMIN", input: idActionSchema, handler: (s, d) => publishEvent(s, d.id) });
+const publish = action({
+  auth: "ADMIN",
+  input: idActionSchema,
+  handler: async (s, d) => {
+    try {
+      return await publishEvent(s, d.id);
+    } catch (e) {
+      if (e instanceof PublishBlockedError) throw new ActionError("PUBLISH_BLOCKED", e.message);
+      throw e;
+    }
+  },
+});
 const archive = action({ auth: "ADMIN", input: idActionSchema, handler: (s, d) => archiveEvent(s, d.id) });
 const unarchive = action({ auth: "ADMIN", input: idActionSchema, handler: (s, d) => unarchiveEvent(s, d.id) });
 

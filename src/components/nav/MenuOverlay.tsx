@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 export type MenuLink = { href: string; label: string };
 
-// RPA full-screen menu: deep-navy panel drops in (CSS transition), then link labels rise out
+// BDQ full-screen menu: deep-navy panel drops in (CSS transition), then link labels rise out
 // of overflow masks via GSAP (skipped under reduced-motion — links are visible by default).
 // Esc to close, body scroll lock.
 export function MenuOverlay({

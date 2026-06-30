@@ -6,7 +6,7 @@ Status: audit and target system. No code changes are applied here.
 
 | Surface | Current family | Role | Finding |
 |---|---|---|---|
-| Public/customer/vendor RPA layer | Inter body, Exat display | Brand/editorial. | Strong and distinctive. Keep. |
+| Public/customer/vendor BDQ layer | Inter body, Exat display | Brand/editorial. | Strong and distinctive. Keep. |
 | Coming-soon invitation | Inter plus `cs-serif` fallback. | Invitation/editorial special case. | Accept as a campaign treatment, but needs token mapping. |
 | Admin console | Geist/system sans. | Operational dashboard. | Correct direction for dense admin UI. Keep separate from festival display type. |
 | UI/shadcn components | Geist/system or inherited sans. | Buttons, forms, tables. | Works for admin but should not leak randomly into public pages. |
@@ -17,20 +17,20 @@ Status: audit and target system. No code changes are applied here.
 |---|---|
 | Do we use too many fonts? | No, but the roles are not documented enough. Exat, Inter, Geist, and invitation serif each need clear boundaries. |
 | Do font weights feel random? | Sometimes. Public display is consistently bold, but admin and small labels use `font-medium`, `font-semibold`, `font-bold`, and ad-hoc uppercase weights. |
-| Do headings feel consistent? | Public RPA headings do. Admin headings are consistent enough. Coming-soon has special inline sizing that should be tokenized. |
+| Do headings feel consistent? | Public BDQ headings do. Admin headings are consistent enough. Coming-soon has special inline sizing that should be tokenized. |
 | Do utility screens use same typography as marketing screens? | No, and that is correct. But utility screens need a common operational scale. |
 | Do customer pages feel editorial? | Often yes, especially landing/event/wallet. Forms and checkout still lean utility-first. |
-| Do vendor pages feel professional? | Mostly yes. Vendor app uses the RPA layer but should reduce decorative display type in task-heavy areas. |
+| Do vendor pages feel professional? | Mostly yes. Vendor app uses the BDQ layer but should reduce decorative display type in task-heavy areas. |
 | Do admin pages feel operational? | Yes. Keep admin sans, dense tables, and clear labels. |
 
 ## Size Inventory From Code Scan
 
-Tokenized RPA sizes:
+Tokenized BDQ sizes:
 
 | Token/class | Source |
 |---|---|
-| `--paragraph-small`, `.f-paragraph-small` | RPA small body, labels, metadata. |
-| `--paragraph`, `.f-paragraph` | RPA body. |
+| `--paragraph-small`, `.f-paragraph-small` | BDQ small body, labels, metadata. |
+| `--paragraph`, `.f-paragraph` | BDQ body. |
 | `--h32`, `.f-h32` | Small heading / logo scale. |
 | `--h42`, `.f-h42` | Section subheading / dialog close scale. |
 | `--h60`, `.f-h60` | Medium display. |
@@ -71,7 +71,7 @@ This scale is a documentation target. Exact CSS values should be finalized durin
 | `xs` | Micro metadata, badges, helper text. | `--paragraph-small` floor; never below accessible contrast. | 12px target; 10/11px only for dense badges after audit. |
 | `sm` | Secondary body, labels, nav helpers. | `--paragraph-small` or 14px equivalent. | 14px. |
 | `base` | Body, inputs, paragraphs. | `--paragraph`; 16px+ input floor. | 14-16px depending density. |
-| `lg` | Emphasis body / card title. | `--h32` or RPA paragraph variant. | 16-18px. |
+| `lg` | Emphasis body / card title. | `--h32` or BDQ paragraph variant. | 16-18px. |
 | `xl` | Small section heading. | `--h42`. | 20px. |
 | `2xl` | Page title / modal title. | `--h60`. | 24px. |
 | `3xl` | Large section heading. | `--h76`. | 30px dashboard hero only. |
@@ -83,8 +83,8 @@ This scale is a documentation target. Exact CSS values should be finalized durin
 
 | Text type | Current | Target |
 |---|---|---|
-| RPA body | `1.3` | OK for short marketing copy; long legal/prose should be 1.5-1.65. |
-| RPA display | `1.05-1.15` | Keep, but apply `text-wrap: balance` on large headings. |
+| BDQ body | `1.3` | OK for short marketing copy; long legal/prose should be 1.5-1.65. |
+| BDQ display | `1.05-1.15` | Keep, but apply `text-wrap: balance` on large headings. |
 | Admin table/body | Tailwind defaults. | Keep dense, but enforce readable empty states and wrapped descriptions. |
 | Coming-soon micro text | Many tiny sizes with wide tracking. | Reduce to 2 micro sizes and verify contrast/readability. |
 | Legal/prose pages | Component-level prose rules. | Keep width capped, increase paragraph rhythm where long copy appears. |
@@ -102,7 +102,7 @@ This scale is a documentation target. Exact CSS values should be finalized durin
 
 1. Replace ad-hoc coming-soon sizes with named invitation tokens.
 2. Map `text-[10px]` and `text-[11px]` to admin micro tokens or remove where unnecessary.
-3. Ensure public page headings use RPA scale classes rather than mixed Tailwind display sizes.
+3. Ensure public page headings use BDQ scale classes rather than mixed Tailwind display sizes.
 4. Keep admin typography separate but document its dense scale.
 5. Add line-length rules for public prose, legal pages, and descriptions.
 6. Verify all body text stays 16px+ on mobile where user input or long reading occurs.

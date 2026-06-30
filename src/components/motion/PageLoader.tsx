@@ -5,7 +5,7 @@ import { gsap } from "@/lib/gsap";
 import { EASE } from "@/lib/motion";
 import { WordmarkWall } from "./WordmarkWall";
 
-// Signature load moment (RPA preloader, adapted): animated wordmark wall + organic green
+// Signature load moment (BDQ preloader, adapted): animated wordmark wall + organic green
 // blob with a counter, then the whole panel sweeps up. Hard-capped (~1.8s), runs once per
 // session, never gates on network, skipped under reduced-motion.
 export function PageLoader() {

@@ -1,5 +1,5 @@
-import { RpaLoading } from "@/components/landing/RpaLoading";
+import { BdqLoading } from "@/components/landing/BdqLoading";
 
 export default function Loading() {
-  return <RpaLoading variant="grid" count={6} />;
+  return <BdqLoading variant="grid" count={6} />;
 }

@@ -90,28 +90,29 @@
 > The seed template provides **layout + sizes only**, never prices.
 
 ### 2.2 Hold (selection lock)
-- Selecting a stall creates a **HELD** lock with TTL **10 minutes** (`holdUntil`). **[CONFIRM]**
-- `release-holds` cron frees expired holds back to `AVAILABLE`.
+- Selecting a stall creates a long-lived `Booking(RESERVED)` while the vendor application is open.
+- Admin approval moves it to `Booking(PENDING_PAYMENT)` with a `payBy` deadline; `release-holds`
+  cron frees unpaid expired bookings back to `AVAILABLE`.
 
 ### 2.3 Booking & payment
-- Vendor pays **online (Razorpay) or offline** (cash/bank, admin-recorded). Both → `Booking`
-  becomes `PENDING`.
+- Vendor pays online (Razorpay) by default. Offline payment is allowed only if admin records
+  payment reference, amount in paise, note, and audit atomically.
 - **Simple payment receipt** is issued. **No GST tax invoice. No GST charged.** (Locked.)
 
 ### 2.4 Verification workflow
 - States: `SUBMITTED → UNDER_REVIEW → APPROVED | REJECTED`.
 - **Team calls the vendor to verify** before approval. Target call-back SLA: **within 48 hours**
   of submission. **[CONFIRM]**
-- Approve → `Booking=BOOKED`, `Stall=BOOKED`, vendor notified. Reject → hold released, vendor
-  notified.
+- Approve → `Booking=PENDING_PAYMENT`, `payBy` set, vendor notified. Payment webhook →
+  `Booking=BOOKED`, `Stall=BOOKED`. Reject → hold released, vendor notified.
 
 ### 2.5 KYC (verification only, no billing)
 - Collected at registration: **PAN (all vendors)**, **FSSAI (food vendors)**, **GSTIN (optional)**,
   plus uploaded doc images. Used only to verify identity; never used to compute tax.
 
 ### 2.6 Admin-side booking
-- Admin can create a booking, enter vendor details, assign a stall, and record payment
-  (online/offline). Fully audited (`Booking.source = ADMIN`).
+- Admin can create a booking and assign a stall for payment. Offline close requires payment
+  reference, exact paise amount, note, and atomic audit before `BOOKED` (`Booking.source = ADMIN`).
 
 ### 2.7 Waitlist & auto-offer
 - If a sellable stall is released, the system offers it to the next vendor on that event's stall

@@ -3,7 +3,7 @@ import { getTicketShareData } from "@/server/tickets/share";
 
 export const runtime = "nodejs";
 
-// RPA palette (globals.css). Hex literals are required here — ImageResponse can't read CSS vars.
+// BDQ palette (globals.css). Hex literals are required here — ImageResponse can't read CSS vars.
 const NAVY = "#01065B";
 const LAV = "#868EFF";
 const CREAM = "#F4F2EC";
@@ -35,7 +35,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   if (!data) return new Response("Not found", { status: 404 });
 
   // Use ImageResponse's bundled default font (reliable in every runtime; a local-font fetch fails in
-  // turbopack dev). Display weight via fontWeight 700 — the look comes from the RPA palette + layout.
+  // turbopack dev). Display weight via fontWeight 700 — the look comes from the BDQ palette + layout.
   const pad = format === "story" ? 110 : 96;
 
   return new ImageResponse(

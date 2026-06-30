@@ -33,6 +33,25 @@ describe("createOrderSchema", () => {
       createOrderSchema.safeParse({ eventId: "e", items: [{ ticketTypeId: "t", qty: 0 }] }).success,
     ).toBe(false);
   });
+
+  it("accepts bounded attribution and retry keys", () => {
+    const r = createOrderSchema.safeParse({
+      eventId: "evt_1",
+      items: [{ ticketTypeId: "tt_1", qty: 1 }],
+      utm: { source: "instagram", campaign: "launch" },
+      clientOrderKey: "00000000-0000-4000-8000-000000000000",
+    });
+    expect(r.success).toBe(true);
+  });
+
+  it("rejects unknown attribution keys", () => {
+    const r = createOrderSchema.safeParse({
+      eventId: "evt_1",
+      items: [{ ticketTypeId: "tt_1", qty: 1 }],
+      utm: { utm_source: "instagram" },
+    });
+    expect(r.success).toBe(false);
+  });
 });
 
 describe("ticketTypeSchema", () => {

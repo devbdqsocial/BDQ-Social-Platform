@@ -91,7 +91,7 @@ export default async function VendorLeadsPage() {
           {chips.map((c) => (
             <span
               key={c.label}
-              className={c.isToday ? "badge-rpa" : "f-paragraph-small rounded-full px-[var(--space-md)] py-[2px] font-bold"}
+              className={c.isToday ? "badge-bdq" : "f-paragraph-small rounded-full px-[var(--space-md)] py-[2px] font-bold"}
               style={c.isToday ? undefined : { border: "1px solid color-mix(in srgb, currentColor 28%, transparent)" }}
             >
               {c.label}: {c.n}

@@ -6,7 +6,7 @@ export const alt = "BDQ Social — get your invite";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-// RPA palette (hex literals — ImageResponse can't read CSS vars). Bundled default font; look from palette.
+// BDQ palette (hex literals — ImageResponse can't read CSS vars). Bundled default font; look from palette.
 const NAVY = "#01065B";
 const LAV = "#868EFF";
 const CREAM = "#F4F2EC";

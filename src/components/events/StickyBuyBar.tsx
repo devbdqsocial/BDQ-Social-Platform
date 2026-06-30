@@ -23,7 +23,7 @@ export function StickyBuyBar({ priceLabel }: { priceLabel: string | null }) {
       className={`fixed inset-x-0 bottom-0 z-40 lg:hidden ${show ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-full opacity-0"}`}
       style={{ transition: "transform .25s ease, opacity .25s ease", paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      <div className="gama-1 bg-1 flex items-center justify-between gap-[var(--space-lg)] px-[var(--space-lg)] py-[var(--space-md)]" style={{ borderTop: "1px solid color-mix(in srgb, currentColor 25%, transparent)" }}>
+      <div className="bdq-night flex items-center justify-between gap-[var(--space-lg)] px-[var(--space-lg)] py-[var(--space-md)]" style={{ borderTop: "1px solid color-mix(in srgb, currentColor 25%, transparent)" }}>
         <div className="min-w-0">
           <p className="kicker opacity-70">Tickets</p>
           {priceLabel && <p className="f-exat f-h32">{priceLabel}</p>}

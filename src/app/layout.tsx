@@ -8,7 +8,7 @@ import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import { SiteAnalytics } from "@/components/analytics/SiteAnalytics";
 import { getSeoSettings } from "@/server/settings/service";
 
-// Body/UI = Inter (RPA `--f-inter`). Admin keeps Geist. Display = self-hosted Exat-Bold (RPA `--f-exat`).
+// Body/UI = Inter (BDQ `--f-inter`). Admin keeps Geist. Display = self-hosted Exat-Bold (BDQ `--f-exat`).
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist", display: "swap" });
 const exat = localFont({

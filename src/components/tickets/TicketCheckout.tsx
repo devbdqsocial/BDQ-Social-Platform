@@ -7,6 +7,7 @@ import { openCheckout } from "@/lib/razorpay-checkout";
 import { usePhoneOtp } from "@/components/auth/usePhoneOtp";
 import { phone10, otp6, digitsCapped } from "@/lib/validators";
 import { useFieldValidation } from "@/lib/use-field-validation";
+import { readStoredUtm, utmFromSearch, writeStoredUtm, type UtmData } from "@/lib/utm";
 import { Magnetic } from "@/components/motion/Magnetic";
 import { quoteOrderAction } from "@/app/(public)/events/[slug]/actions";
 
@@ -25,6 +26,7 @@ const COUPON_COPY: Record<string, string> = {
 };
 
 const LOW_STOCK = 10; // show "only N left" at/under this
+const newClientOrderKey = () => crypto.randomUUID();
 
 export function TicketCheckout({ eventId, ticketTypes }: { eventId: string; ticketTypes: TicketType[] }) {
   const router = useRouter();
@@ -40,6 +42,8 @@ export function TicketCheckout({ eventId, ticketTypes }: { eventId: string; tick
   const [coupon, setCoupon] = useState<{ code: string; discount: number; total: number } | null>(null);
   const [couponErr, setCouponErr] = useState<string | null>(null);
   const [applying, setApplying] = useState(false);
+  const [utm, setUtm] = useState<UtmData | undefined>();
+  const clientOrderKey = useRef<string>(newClientOrderKey());
 
   const localTotal = ticketTypes.reduce((s, t) => s + (qty[t.id] ?? 0) * t.priceInPaise, 0);
   const count = Object.values(qty).reduce((a, b) => a + b, 0);
@@ -68,6 +72,20 @@ export function TicketCheckout({ eventId, ticketTypes }: { eventId: string; tick
   const appliedCode = coupon?.code ?? null;
   const requoteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
+    const captured = utmFromSearch(window.location.search);
+    if (captured) {
+      writeStoredUtm(captured);
+      setUtm(captured);
+    } else {
+      setUtm(readStoredUtm());
+    }
+  }, []);
+
+  useEffect(() => {
+    clientOrderKey.current = newClientOrderKey();
+  }, [qtyKey, appliedCode]);
+
+  useEffect(() => {
     if (!appliedCode) return;
     if (requoteTimer.current) clearTimeout(requoteTimer.current);
     requoteTimer.current = setTimeout(() => void quote(appliedCode), 350);
@@ -86,7 +104,7 @@ export function TicketCheckout({ eventId, ticketTypes }: { eventId: string; tick
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ eventId, items, couponCode: coupon?.code }),
+        body: JSON.stringify({ eventId, items, couponCode: coupon?.code, utm, clientOrderKey: clientOrderKey.current }),
       });
       if (res.status === 401) { setBusy(false); setAuthStep(true); return; }
       const json = await res.json();
@@ -107,6 +125,7 @@ export function TicketCheckout({ eventId, ticketTypes }: { eventId: string; tick
         onDismiss: () => setBusy(false),
       });
     } catch (e) {
+      clientOrderKey.current = newClientOrderKey();
       setErr(e instanceof Error ? e.message : "Checkout failed");
       setBusy(false);
     }

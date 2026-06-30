@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function ContactPage() {
   return (
-    <section className="gama-1 bg-1 paint min-h-[100svh] py-[var(--space-5xl)]">
+    <section className="bdq-night paint min-h-[100svh] py-[var(--space-5xl)]">
       <div className="wrapper">
         <Reveal>
           <span className="f-paragraph-small f-bold t-upper" style={{ letterSpacing: "0.18em" }}>Say hi</span>

@@ -27,7 +27,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const data = await createTicketOrder(session.userId, body.eventId, body.items, body.couponCode);
+    const data = await createTicketOrder(session.userId, body.eventId, body.items, body.couponCode, body.utm, body.clientOrderKey);
     return NextResponse.json({ ok: true, data });
   } catch (e) {
     if (e instanceof CheckoutError) {

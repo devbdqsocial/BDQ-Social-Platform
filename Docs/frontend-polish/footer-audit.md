@@ -11,7 +11,7 @@ Current strengths:
 | Strength | Why it works |
 |---|---|
 | Full-screen brand close | `min-h-[100svh]` gives the site a memorable ending. |
-| RPA color section | Deep navy/lavender pair matches the public system. |
+| BDQ color section | Deep navy/lavender pair matches the public system. |
 | Nav columns | Explore, Vadodara, Partners, Legal are useful groups. |
 | Giant "Let's talk" CTA | Strong brand action and editorial feel. |
 | Wordmark wall | Adds motion/brand atmosphere. |
@@ -67,4 +67,4 @@ It should not feel like:
 3. Replace bottom row with copyright, location, and contact/social.
 4. Rebalance nav groups.
 5. Add footer color/contrast and cursor tests.
-6. Only then consider RPA-inspired footer shape/morph animation.
+6. Only then consider BDQ-inspired footer shape/morph animation.

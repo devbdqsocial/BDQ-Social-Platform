@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdminRole } from "@/server/auth/guard";
-import { getByIdForAdmin } from "@/server/events/service";
+import { getByIdForAdmin, getEventReadiness } from "@/server/events/service";
 import { listMaps } from "@/server/map/maps";
 import { formatPaise } from "@/lib/utils";
 import { MapAttach } from "./MapAttach";
@@ -31,7 +31,7 @@ const dayLabelDate = (d: Date) => new Intl.DateTimeFormat("en-IN", { weekday: "s
 export default async function AdminEventEditor({ params }: { params: Promise<{ id: string }> }) {
   await requireAdminRole();
   const { id } = await params;
-  const [event, maps, lineup, roster] = await Promise.all([getByIdForAdmin(id), listMaps(), listEventLineup(id), listArtists()]);
+  const [event, maps, lineup, roster, readiness] = await Promise.all([getByIdForAdmin(id), listMaps(), listEventLineup(id), listArtists(), getEventReadiness(id)]);
   if (!event) notFound();
   const theme = (event.theme as { primary?: string; accent?: string } | null) ?? null;
   const sections = [
@@ -64,11 +64,37 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
           {!isLive(event.status) && (
             <ActionForm action={publishEventAction} success="Event published">
               <input type="hidden" name="id" value={event.id} />
-              <Button type="submit" size="sm">Publish</Button>
+              <Button type="submit" size="sm" disabled={!readiness.ready}>Publish</Button>
             </ActionForm>
           )}
         </div>
       </div>
+
+      {!isLive(event.status) && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between gap-3">
+              <CardTitle className="text-base">Publish readiness</CardTitle>
+              <Badge variant={readiness.ready ? "success" : "warning"}>{readiness.ready ? "Ready" : `${readiness.issues.length} to fix`}</Badge>
+            </div>
+            <CardDescription>These checks must pass before the event can go live.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {readiness.ready ? (
+              <p className="text-sm text-muted-foreground">All launch checks are clear.</p>
+            ) : (
+              <ul className="space-y-2 text-sm">
+                {readiness.issues.map((issue) => (
+                  <li key={issue.key} className="rounded-lg border border-border p-3">
+                    <p className="font-medium">{issue.label}</p>
+                    <p className="mt-1 text-muted-foreground">{issue.detail}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <Tabs defaultValue="details" className="min-w-0 gap-4">
         <TabsList className="!grid !h-auto w-full grid-cols-2 gap-2 rounded-xl border border-border bg-muted/40 p-2 sm:grid-cols-4 xl:grid-cols-7">

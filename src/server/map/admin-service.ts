@@ -1,5 +1,6 @@
 import "server-only";
 import { db } from "@/server/db";
+import { ACTIVE_BOOKING_STATUSES } from "@/server/bookings/status";
 
 /** Admin stall inventory for an event: each sellable stall + its type, status, and assigned vendor. */
 export function listStallsForEvent(eventId: string) {
@@ -15,7 +16,7 @@ export function listStallsForEvent(eventId: string) {
       priceInPaise: true,
       stallType: { select: { name: true } },
       bookings: {
-        where: { status: { in: ["HELD", "PENDING", "BOOKED"] } },
+        where: { status: { in: ACTIVE_BOOKING_STATUSES } },
         select: { status: true, vendorProfile: { select: { brandName: true } } },
         take: 1,
       },

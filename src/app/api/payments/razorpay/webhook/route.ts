@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { verifyWebhookSignature } from "@/lib/razorpay-signature";
 import { db } from "@/server/db";
 import { fulfillOrder } from "@/server/tickets/service";
@@ -9,6 +10,10 @@ import { logError } from "@/lib/logger";
 import { env } from "@/lib/env";
 
 export const runtime = "nodejs";
+
+const isUniqueViolation = (e: unknown) =>
+  (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") ||
+  (typeof e === "object" && e !== null && "code" in e && (e as { code?: unknown }).code === "P2002");
 
 /**
  * Razorpay webhook — the ONLY trusted source of payment confirmation (never the client callback).
@@ -39,6 +44,21 @@ export async function POST(req: Request) {
     evt = JSON.parse(raw);
   } catch {
     return NextResponse.json({ ok: false }, { status: 400 });
+  }
+
+  const eventId = req.headers.get("x-razorpay-event-id");
+  if (eventId) {
+    try {
+      await db.webhookEvent.create({
+        data: { provider: "RAZORPAY", eventId, eventType: evt.event ?? null },
+      });
+    } catch (e) {
+      if (isUniqueViolation(e)) {
+        return NextResponse.json({ ok: true, duplicate: true });
+      }
+      logError("webhook.razorpay.dedupe", e, { eventId, eventType: evt.event });
+      return NextResponse.json({ ok: false, error: { code: "DEDUPE_FAILED" } }, { status: 500 });
+    }
   }
 
   if (evt.event === "payment.captured" || evt.event === "order.paid") {

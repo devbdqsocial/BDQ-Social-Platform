@@ -6,7 +6,7 @@ import { CARD_SHAPES } from "@/lib/shapes";
 type Brand = { id: string; brandName: string; logo: string | null };
 
 /**
- * RPA mod-slider as pure CSS scroll-snap (build-plan R2.3 — replaces swiper, the dep's only
+ * BDQ mod-slider as pure CSS scroll-snap (build-plan R2.3 — replaces swiper, the dep's only
  * consumer). Peek widths mirror the old slidesPerView 1.35 / 2.5 / 3.5; native touch scrolling,
  * zero JS shipped (no longer a client component).
  */

@@ -28,7 +28,7 @@ function Btn({ href, children }: { href: string; children: React.ReactNode }) {
 export default function AboutPage() {
   return (
     <>
-      <section className="gama-1 bg-2 paint flex min-h-[70svh] items-end py-[var(--space-5xl)]">
+      <section className="bdq-grove paint flex min-h-[70svh] items-end py-[var(--space-5xl)]">
         <div className="wrapper">
           <span className="f-paragraph-small f-bold t-upper" style={{ letterSpacing: "0.18em" }}>About</span>
           <SplitReveal as="h1" className="f-exat mt-[var(--space-md)] max-w-[16ch] f-h133">
@@ -51,7 +51,7 @@ export default function AboutPage() {
       {/* conceptos — pinned crossfade steps */}
       <PinnedConcepts />
 
-      <section className="gama-2 surface-1 paint py-[var(--space-5xl)]">
+      <section className="bdq-sun paint py-[var(--space-5xl)]">
         <div className="wrapper">
           <h2 className="f-exat f-h60">What we&apos;re about</h2>
           <Reveal stagger className="mt-[var(--space-3xl)] grid gap-[var(--space-2xl)] sm:grid-cols-3">
@@ -66,7 +66,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="gama-3 bg-3 paint flex min-h-[70svh] items-center py-[var(--space-5xl)]">
+      <section className="bdq-spark paint flex min-h-[70svh] items-center py-[var(--space-5xl)]">
         <div className="wrapper text-center">
           <Reveal>
             <h2 className="f-exat mx-auto max-w-[18ch] f-h100">

@@ -9,7 +9,7 @@ Anticipate → Desire → Commit → Celebrate → Attend → Experience → Rem
 | Page | Emotional state | Notes |
 |---|---|---|
 | Coming-soon | Anticipate | Live gate. Calm, premium; under-utilises atmosphere. |
-| Landing `/` | Desire | Strong RPA system; dead hero right side (see hero-audit). |
+| Landing `/` | Desire | Strong BDQ system; dead hero right side (see hero-audit). |
 | Event detail | Desire → Commit | Information-led; needs desire-first framing. |
 | Checkout | Commit | Functional; needs Stripe-grade trust polish. |
 | Success / reveal | Celebrate | `TicketReveal` already a strong peak — keep, refine timing. |
@@ -20,7 +20,7 @@ Anticipate → Desire → Commit → Celebrate → Attend → Experience → Rem
 
 ## Per-page scorecard (abbreviated dimensions)
 Dimensions: Vis=Visual, Hi=Hierarchy, Mo=Motion, Lx=Luxury, St=Storytelling, Em=Emotional,
-Mob=Mobile, Cv=Conversion. (Typography/colour are uniformly strong ≈9 via RPA system.)
+Mob=Mobile, Cv=Conversion. (Typography/colour are uniformly strong ≈9 via BDQ system.)
 
 | Page | Vis | Hi | Mo | Lx | St | Em | Mob | Cv |
 |---|---|---|---|---|---|---|---|---|
@@ -40,13 +40,13 @@ Mob=Mobile, Cv=Conversion. (Typography/colour are uniformly strong ≈9 via RPA 
 | Nav / footer | 7 | 7 | 6 | 7 | 5 | 5 | 7 | n/a |
 
 ## Cross-cutting flags
-- **Admin-UI leak:** checkout / wallet lean on functional shadcn patterns where RPA `.btn`, kicker,
+- **Admin-UI leak:** checkout / wallet lean on functional shadcn patterns where BDQ `.btn`, kicker,
   and type scale would feel more on-brand. Flag, not a defect.
 - **Generic:** map/schedule/offers read as data tools rather than festival exploration.
 - **Unfinished feel:** motion is uneven — some surfaces have rich `Reveal`/`Marquee` choreography,
   others none. Motion system (below) standardises this.
 - **Confusing:** none blocking; hierarchy compression on a few mobile heroes.
-- **Consistent strengths:** typography, colour, loading skeletons (`RpaLoading`), nav/footer frame.
+- **Consistent strengths:** typography, colour, loading skeletons (`BdqLoading`), nav/footer frame.
 
 ## Final scorecard (post Phase 1-4)
 Note: the "After" column is a self-assessed estimate from a code read, not a measured result — a

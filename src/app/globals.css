@@ -33,7 +33,7 @@
 }
 
 /*
-  BDQ Social design tokens â€” RPA ComunicaciÃ³n direction (see Docs/design.md).
+  BDQ Social design tokens - BDQ identity (see Docs/design.md).
   Customer-facing brand: navy (primary) / lavender (secondary+accent) on cream. Near-black ink text.
   Components consume the SEMANTIC vars below (shadcn-compatible names), so light/dark + white-label
   is a single swap. Money/UI never hardcodes raw hex.
@@ -79,7 +79,7 @@
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
 
-  /* RPA brand ramps (direct use, e.g. bg-navy-500 / text-lavender-400) */
+  /* BDQ brand ramps (direct use, e.g. bg-navy-500 / text-lavender-400) */
   --color-navy-50: #EAEAF4;  --color-navy-100: #C9CAE3; --color-navy-300: #6A6DA8;
   --color-navy-500: #01065B; --color-navy-600: #01044A; --color-navy-700: #010338;
   --color-navy-900: #050814;
@@ -96,11 +96,11 @@
   --color-stall-booked: #8C8576;
   --color-stall-blocked: #4E4639;
 
-  /* fonts (RPA: Inter body, Exat-Bold display) */
+  /* fonts (BDQ: Inter body, Exat-Bold display) */
   --font-sans: var(--font-inter);
   --font-display: var(--font-exat);
 
-  /* RPA named palette â†’ Tailwind utilities (bg-dark-blue, text-green, â€¦) */
+  /* BDQ named palette â†’ Tailwind utilities (bg-dark-blue, text-green, â€¦) */
   --color-dark-blue: #01065B;  --color-light-blue: #868EFF;
   --color-dark-green: #1A3526; --color-green: #92FF73;
   --color-yellow: #D0F95F;     --color-pink: #FF58AC;
@@ -119,7 +119,7 @@
   --shadow-glow: 0 0 32px rgba(134, 142, 255, 0.35);
 }
 
-/* LIGHT (default) â€” RPA cream + navy ink */
+/* LIGHT (default) â€” BDQ cream + navy ink */
 :root {
   --background: #F4F2EC;
   --foreground: #14141A;
@@ -191,11 +191,11 @@
 }
 
 /* =================================================================================
-   RPA SYSTEM (customer-facing). Scoped to `.rpa` so admin/shadcn stay on rem/16px.
+   BDQ SYSTEM (customer-facing). Scoped to `.bdq` so admin/shadcn stay on rem/16px.
    Palette + fonts in @theme inline above. See plan Part II Â§0â€“Â§4.
    ================================================================================= */
 :root {
-  /* palette (raw, for direct var use inside the RPA layer) */
+  /* palette (raw, for direct var use inside the BDQ layer) */
   --dark-blue: #01065B;  --light-blue: #868EFF;
   --dark-green: #1A3526; --green: #92FF73;
   --yellow: #D0F95F;     --pink: #FF58AC;
@@ -205,10 +205,10 @@
   --f-bold: 700;
   --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  /* fluid root size for the RPA zone (design-system Â§1.2: one clamp(), no vw breakpoints;
+  /* fluid root size for the BDQ zone (design-system Â§1.2: one clamp(), no vw breakpoints;
      em tokens below scale off this) */
   --fsize: clamp(0.875rem, 0.55rem + 0.9vw, 1.25rem);
-  /* type scale â€” em (relative to --fsize when inside .rpa) */
+  /* type scale â€” em (relative to --fsize when inside .bdq) */
   --paragraph-small: 0.75em; --paragraph: 1em;
   --h32: 1.3333em; --h42: 1.75em; --h60: 2.5em; --h76: 3.1667em;
   --h100: 4.1667em; --h133: 5.5417em; --h235: 9.7917em;
@@ -233,8 +233,8 @@
 @media (max-width: 950px)  { :root { --h235: 6.25em; --h133: 4.1667em; --h100: 2.9166em; } }
 @media (max-width: 576px)  { :root { --h235: 3.3333em; --h133: 2.5em; --h76: 2.3333em; --h60: 1.9166em; } }
 
-/* The RPA zone: fluid base size + Inter + default section colors. Sections override via gama/bg. */
-.rpa {
+/* The BDQ zone: fluid base size + Inter + default section colors. Sections override via BDQ section. */
+.bdq {
   font-size: var(--fsize);
   font-family: var(--f-inter);
   --bgcolor: #F4F2EC; --color: #14141A;
@@ -242,26 +242,26 @@
   color: var(--color);
   -webkit-font-smoothing: antialiased;
 }
-.rpa :is(h1, h2, h3, h4, h5, h6) { font-family: var(--f-exat); font-weight: var(--f-bold); line-height: 1.05; }
+.bdq :is(h1, h2, h3, h4, h5, h6) { font-family: var(--f-exat); font-weight: var(--f-bold); line-height: 1.05; }
 /* iOS zoom guard: form fields never render below 16px (design-system Â§1.2 input floor). */
-.rpa :is(input, select, textarea) { font-size: max(1rem, 1em); }
+.bdq :is(input, select, textarea) { font-size: max(1rem, 1em); }
 
-/* Color-section classes: set --bgcolor/--color; `.filter` tints imagery to the accent (verbatim). */
-.gama-1.bg-1 { --bgcolor: var(--dark-blue);  --color: var(--light-blue); }
-.gama-1.bg-2 { --bgcolor: var(--dark-green); --color: var(--green); }
-.gama-1.bg-3 { --bgcolor: var(--dark-blue);  --color: var(--green); }
-.gama-2.surface-1 { --bgcolor: var(--dark-blue); --color: var(--yellow); }
-.gama-2.surface-2 { --bgcolor: var(--dark-blue); --color: var(--pink); }
-.gama-3.bg-1 { --bgcolor: var(--dark-red);   --color: var(--red); }
-.gama-3.bg-2 { --bgcolor: var(--dark-green); --color: var(--green); }
-.gama-3.bg-3 { --bgcolor: var(--dark-red);   --color: var(--green); }
-.gama-1.bg-1 .filter, .filter-blue {
+/* Color-section classes: set --bgcolor/--color; `.filter` tints imagery to the accent. */
+.bdq-night { --bgcolor: var(--dark-blue);  --color: var(--light-blue); }
+.bdq-grove { --bgcolor: var(--dark-green); --color: var(--green); }
+.bdq-lawn { --bgcolor: var(--dark-blue);  --color: var(--green); }
+.bdq-sun { --bgcolor: var(--dark-blue); --color: var(--yellow); }
+.bdq-rose { --bgcolor: var(--dark-blue); --color: var(--pink); }
+.bdq-fire { --bgcolor: var(--dark-red);   --color: var(--red); }
+.bdq-forest { --bgcolor: var(--dark-green); --color: var(--green); }
+.bdq-spark { --bgcolor: var(--dark-red);   --color: var(--green); }
+.bdq-night .filter, .filter-blue {
   filter: invert(58%) sepia(17%) saturate(3803%) hue-rotate(207deg) brightness(99%) contrast(103%);
 }
-.gama-1.bg-2 .filter, .gama-1.bg-3 .filter, .gama-3.bg-2 .filter, .gama-3.bg-3 .filter, .filter-green {
+.bdq-grove .filter, .bdq-lawn .filter, .bdq-forest .filter, .bdq-spark .filter, .filter-green {
   filter: invert(75%) sepia(88%) saturate(288%) hue-rotate(51deg) brightness(101%) contrast(106%);
 }
-.gama-2.surface-2 .filter, .filter-pink {
+.bdq-rose .filter, .filter-pink {
   filter: invert(51%) sepia(17%) saturate(3196%) hue-rotate(292deg) brightness(101%) contrast(101%);
 }
 .c-dark-blue { color: var(--dark-blue); } .c-light-blue { color: var(--light-blue); }
@@ -270,9 +270,9 @@
 .c-dark-red { color: var(--dark-red); } .c-red { color: var(--red); }
 
 /* Type + spacing utilities (em-based; scale with the fluid zone). */
-.rpa .f-exat { font-family: var(--f-exat); } .rpa .f-inter { font-family: var(--f-inter); }
-.rpa .f-bold { font-weight: 700; } .rpa .f-light { font-weight: 300; } .rpa .f-normal { font-weight: 400; }
-.rpa .t-center { text-align: center; } .rpa .t-right { text-align: right; } .rpa .t-upper { text-transform: uppercase; }
+.bdq .f-exat { font-family: var(--f-exat); } .bdq .f-inter { font-family: var(--f-inter); }
+.bdq .f-bold { font-weight: 700; } .bdq .f-light { font-weight: 300; } .bdq .f-normal { font-weight: 400; }
+.bdq .t-center { text-align: center; } .bdq .t-right { text-align: right; } .bdq .t-upper { text-transform: uppercase; }
 .f-paragraph-small { font-size: var(--paragraph-small); line-height: var(--lh-paragraph-small); }
 .f-paragraph { font-size: var(--paragraph); line-height: var(--lh-paragraph); }
 .f-h32 { font-size: var(--h32); line-height: var(--lh-h32); }
@@ -283,24 +283,24 @@
 .f-h133 { font-size: var(--h133); line-height: var(--lh-h133); }
 .f-h235 { font-size: var(--h235); line-height: var(--lh-h235); }
 
-/* 12-col grid + wrapper (RPA calc, verbatim). */
-.rpa .wrapper { padding-left: var(--wrapper-padd); padding-right: var(--wrapper-padd); }
-.rpa .col-1  { width: calc((99.9vw - var(--wrapper-padd)*2 - var(--grid-gap)*11)/12 *  1 + var(--grid-gap)*0); }
-.rpa .col-2  { width: calc((99.9vw - var(--wrapper-padd)*2 - var(--grid-gap)*11)/12 *  2 + var(--grid-gap)*1); }
-.rpa .col-3  { width: calc((99.9vw - var(--wrapper-padd)*2 - var(--grid-gap)*11)/12 *  3 + var(--grid-gap)*2); }
-.rpa .col-4  { width: calc((99.9vw - var(--wrapper-padd)*2 - var(--grid-gap)*11)/12 *  4 + var(--grid-gap)*3); }
-.rpa .col-5  { width: calc((99.9vw - var(--wrapper-padd)*2 - var(--grid-gap)*11)/12 *  5 + var(--grid-gap)*4); }
-.rpa .col-6  { width: calc((99.9vw - var(--wrapper-padd)*2 - var(--grid-gap)*11)/12 *  6 + var(--grid-gap)*5); }
-.rpa .col-7  { width: calc((99.9vw - var(--wrapper-padd)*2 - var(--grid-gap)*11)/12 *  7 + var(--grid-gap)*6); }
-.rpa .col-8  { width: calc((99.9vw - var(--wrapper-padd)*2 - var(--grid-gap)*11)/12 *  8 + var(--grid-gap)*7); }
-.rpa .col-9  { width: calc((99.9vw - var(--wrapper-padd)*2 - var(--grid-gap)*11)/12 *  9 + var(--grid-gap)*8); }
-.rpa .col-10 { width: calc((99.9vw - var(--wrapper-padd)*2 - var(--grid-gap)*11)/12 * 10 + var(--grid-gap)*9); }
-.rpa .col-12 { width: 100%; }
+/* 12-col grid + wrapper for the BDQ public layout. */
+.bdq .wrapper { padding-left: var(--wrapper-padd); padding-right: var(--wrapper-padd); }
+.bdq .col-1  { width: calc((99.9vw - var(--wrapper-padd)*2 - var(--grid-gap)*11)/12 *  1 + var(--grid-gap)*0); }
+.bdq .col-2  { width: calc((99.9vw - var(--wrapper-padd)*2 - var(--grid-gap)*11)/12 *  2 + var(--grid-gap)*1); }
+.bdq .col-3  { width: calc((99.9vw - var(--wrapper-padd)*2 - var(--grid-gap)*11)/12 *  3 + var(--grid-gap)*2); }
+.bdq .col-4  { width: calc((99.9vw - var(--wrapper-padd)*2 - var(--grid-gap)*11)/12 *  4 + var(--grid-gap)*3); }
+.bdq .col-5  { width: calc((99.9vw - var(--wrapper-padd)*2 - var(--grid-gap)*11)/12 *  5 + var(--grid-gap)*4); }
+.bdq .col-6  { width: calc((99.9vw - var(--wrapper-padd)*2 - var(--grid-gap)*11)/12 *  6 + var(--grid-gap)*5); }
+.bdq .col-7  { width: calc((99.9vw - var(--wrapper-padd)*2 - var(--grid-gap)*11)/12 *  7 + var(--grid-gap)*6); }
+.bdq .col-8  { width: calc((99.9vw - var(--wrapper-padd)*2 - var(--grid-gap)*11)/12 *  8 + var(--grid-gap)*7); }
+.bdq .col-9  { width: calc((99.9vw - var(--wrapper-padd)*2 - var(--grid-gap)*11)/12 *  9 + var(--grid-gap)*8); }
+.bdq .col-10 { width: calc((99.9vw - var(--wrapper-padd)*2 - var(--grid-gap)*11)/12 * 10 + var(--grid-gap)*9); }
+.bdq .col-12 { width: 100%; }
 
-.rpa-header {
+.bdq-header {
   transition: color .24s ease;
 }
-.rpa-header::before {
+.bdq-header::before {
   content: "";
   position: absolute;
   inset: .75rem var(--wrapper-padd) auto var(--wrapper-padd);
@@ -312,7 +312,7 @@
   transition: opacity .24s ease, background .24s ease;
   backdrop-filter: blur(16px);
 }
-.rpa-header > * {
+.bdq-header > * {
   position: relative;
   z-index: 1;
 }
@@ -343,82 +343,90 @@ html[data-menu-open="true"] #mouse .mouse__dot {
 @media (hover: none), (pointer: coarse) { #mouse { display: none; } }
 
 /* SVG clip-path "form" mask system. */
-.rpa .svg { position: relative; width: 100%; overflow: hidden; }
-.rpa .svg__img, .rpa .svg__bg {
+.bdq .svg { position: relative; width: 100%; overflow: hidden; }
+.bdq .svg__img, .bdq .svg__bg {
   position: absolute; inset: 1%; width: 98%; height: 98%;
   object-fit: cover; object-position: center;
 }
-.rpa .svg__bg { background: var(--color); }
-.rpa .svg__text { position: absolute; inset: 0; color: var(--color); }
+.bdq .svg__bg { background: var(--color); }
+.bdq .svg__text { position: absolute; inset: 0; color: var(--color); }
 /* named mask shapes (aspect-ratio + clip-path) */
-.rpa .svg--logo  { aspect-ratio: 159/43;  clip-path: url(#svg-logo); min-width: 6.625rem; }
-.rpa .svg--form1 { aspect-ratio: 534/487; clip-path: url(#svg-form1); }
-.rpa .svg--form2 { aspect-ratio: 368/335; clip-path: url(#svg-form2); }
-.rpa .svg--form6 { aspect-ratio: 355/291; clip-path: url(#svg-form6); }
-.rpa .svg--form10 { aspect-ratio: 341/288; clip-path: url(#svg-form10); }
-.rpa .svg--form11 { aspect-ratio: 722/620; clip-path: url(#svg-form11); }
-.rpa .svg--form12 { aspect-ratio: 638/588; clip-path: url(#svg-form12); }
-.rpa .svg--form13 { aspect-ratio: 654/452; clip-path: url(#svg-form13); }
-.rpa .svg--form14 { aspect-ratio: 400/212; clip-path: url(#svg-form14); }
-.rpa .svg--form15 { aspect-ratio: 1051/344; clip-path: url(#svg-form15); }
-.rpa .svg--form15-mob { aspect-ratio: 351/282; clip-path: url(#svg-form15-mob); }
+.bdq .svg--logo  { aspect-ratio: 159/43;  clip-path: url(#svg-logo); min-width: 6.625rem; }
+.bdq .svg--form1 { aspect-ratio: 534/487; clip-path: url(#svg-form1); }
+.bdq .svg--form2 { aspect-ratio: 368/335; clip-path: url(#svg-form2); }
+.bdq .svg--form6 { aspect-ratio: 355/291; clip-path: url(#svg-form6); }
+.bdq .svg--form10 { aspect-ratio: 341/288; clip-path: url(#svg-form10); }
+.bdq .svg--form11 { aspect-ratio: 722/620; clip-path: url(#svg-form11); }
+.bdq .svg--form12 { aspect-ratio: 638/588; clip-path: url(#svg-form12); }
+.bdq .svg--form13 { aspect-ratio: 654/452; clip-path: url(#svg-form13); }
+.bdq .svg--form14 { aspect-ratio: 400/212; clip-path: url(#svg-form14); }
+.bdq .svg--form15 { aspect-ratio: 1051/344; clip-path: url(#svg-form15); }
+.bdq .svg--form15-mob { aspect-ratio: 351/282; clip-path: url(#svg-form15-mob); }
 
 /* Image treatments (used with the mask system above).
    media-zoom: inner image swells on link/card hover. media-tint: subtle wash of the
    section's bg colour so mixed photography reads as one art-directed set. */
-.rpa .media-zoom .svg__img { transition: transform .75s cubic-bezier(.22, 1, .36, 1); }
-.rpa a:hover .media-zoom .svg__img,
-.rpa .media-zoom:hover .svg__img { transform: scale(1.45); }
-.rpa .media-tint::after {
+.bdq .media-zoom .svg__img { transition: transform .75s cubic-bezier(.22, 1, .36, 1); }
+.bdq a:hover .media-zoom .svg__img,
+.bdq .media-zoom:hover .svg__img { transform: scale(1.45); }
+.bdq .media-tint::after {
   content: ""; position: absolute; inset: 0; pointer-events: none;
   background: var(--bgcolor); opacity: .16; mix-blend-mode: multiply;
 }
-.rpa .media-tint .svg__img { filter: saturate(.92) contrast(1.02); }
+.bdq .media-tint .svg__img { filter: saturate(.92) contrast(1.02); }
 
 /* Uppercase tracked micro-label (kicker) â€” replaces ad-hoc inline letter-spacing. */
-.rpa .kicker {
+.bdq .kicker {
   font-size: var(--paragraph-small); line-height: var(--lh-paragraph-small);
   font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em;
 }
 
-/* Paint a section with its gama/bg color pair (opt-in; doesn't touch non-RPA sections). */
-.rpa .paint { background: var(--bgcolor); color: var(--color); }
+/* Paint a section with its BDQ section color pair (opt-in; doesn't touch non-BDQ sections). */
+.bdq .paint { background: var(--bgcolor); color: var(--color); }
+.bdq .bdq-surface {
+  background: color-mix(in srgb, var(--color) 10%, transparent);
+  color: inherit;
+}
+.bdq .bdq-surface-alt {
+  background: color-mix(in srgb, var(--color) 16%, transparent);
+  color: inherit;
+}
 
 /* Horizontal pinned services: stacked full-height slides on mobile (native scroll),
    GSAP pins the section + translates the row on desktop (servicios--anima). */
-.rpa .pinned-track { display: flex; flex-direction: column; }
-.rpa .pinned-slide { min-height: 100svh; display: flex; flex-direction: column; justify-content: center; }
+.bdq .pinned-track { display: flex; flex-direction: column; }
+.bdq .pinned-slide { min-height: 100svh; display: flex; flex-direction: column; justify-content: center; }
 @media (min-width: 951px) {
-  .rpa .pinned-track { flex-direction: row; width: max-content; height: 100svh; }
-  .rpa .pinned-slide { width: 100vw; height: 100svh; }
+  .bdq .pinned-track { flex-direction: row; width: max-content; height: 100svh; }
+  .bdq .pinned-slide { width: 100vw; height: 100svh; }
 }
 
 /* Conceptos: vertical pinned crossfade steps. Mobile = stacked full-height colour panels. */
-.rpa .concept-stage { position: relative; }
-.rpa .concept-panel { position: relative; min-height: 100svh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.bdq .concept-stage { position: relative; }
+.bdq .concept-panel { position: relative; min-height: 100svh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
 @media (min-width: 951px) {
-  .rpa .concept-stage { height: 100svh; overflow: hidden; }
-  .rpa .concept-panel { position: absolute; inset: 0; min-height: 0; }
+  .bdq .concept-stage { height: 100svh; overflow: hidden; }
+  .bdq .concept-panel { position: absolute; inset: 0; min-height: 0; }
 }
 
-/* Angled `.btn` tab (RPA clip-path polygons + hover morph).
-   Colors via --btn-bg/--btn-fg so the button stays legible outside gama sections
+/* Angled `.btn` tab (BDQ clip-path polygons + hover morph).
+   Colors via --btn-bg/--btn-fg so the button stays legible outside BDQ sections
    (default follows the section pair; `.btn--accent` forces lavender/navy). */
-.rpa .btn {
+.bdq .btn {
   --btn-bg: var(--color); --btn-fg: var(--bgcolor);
   position: relative; display: block; width: 8.5em; cursor: pointer;
 }
-.rpa .btn--lg { width: 12em; }
-.rpa .btn--accent { --btn-bg: var(--light-blue); --btn-fg: var(--dark-blue); }
-.rpa .btn::before {
+.bdq .btn--lg { width: 12em; }
+.bdq .btn--accent { --btn-bg: var(--light-blue); --btn-fg: var(--dark-blue); }
+.bdq .btn::before {
   content: ""; display: block; width: 100%; aspect-ratio: 171/75; background: var(--btn-bg);
   clip-path: polygon(100% 0%, 100% 37.13%, 72.6% 100%, 0% 100%, 0% 60.82%, 64.3% 0%, 100% 0%);
   transition: clip-path .33s var(--ease-bounce);
 }
-.rpa .btn:hover::before, .rpa .btn.hover::before {
+.bdq .btn:hover::before, .bdq .btn.hover::before {
   clip-path: polygon(100% 0%, 100% 29%, 78% 80%, 20% 80%, 20% 48%, 71% 0%, 100% 0%);
 }
-.rpa .btn__text {
+.bdq .btn__text {
   position: absolute; bottom: 0; left: 0; width: 70%; height: 40%;
   font-size: var(--paragraph-small); font-weight: 700; color: var(--btn-fg);
   display: grid; place-items: center; letter-spacing: -0.025em; white-space: nowrap;
@@ -429,37 +437,37 @@ html[data-menu-open="true"] #mouse .mouse__dot {
     height .33s var(--ease-bounce),
     color .2s ease;
 }
-.rpa .btn:hover .btn__text, .rpa .btn.hover .btn__text { bottom: 21%; left: 20%; width: 58%; height: 31%; }
-.rpa .btn:disabled { opacity: .45; cursor: default; }
+.bdq .btn:hover .btn__text, .bdq .btn.hover .btn__text { bottom: 21%; left: 20%; width: 58%; height: 31%; }
+.bdq .btn:disabled { opacity: .45; cursor: default; }
 
 /* Round quantity stepper (checkout). */
-.rpa .qty-btn {
+.bdq .qty-btn {
   display: grid; place-items: center; width: 2em; height: 2em;
   border: 1px solid currentColor; border-radius: 999px;
   transition: background .2s ease, color .2s ease;
 }
-.rpa .qty-btn:hover { background: var(--color); color: var(--bgcolor); }
+.bdq .qty-btn:hover { background: var(--color); color: var(--bgcolor); }
 
 /* Status pill in the section's accent pair. */
-.rpa .badge-rpa {
+.bdq .badge-bdq {
   display: inline-flex; align-items: center; padding: 2px var(--space-md);
   border-radius: 999px; font-size: var(--paragraph-small); font-weight: 700;
   text-transform: uppercase; letter-spacing: 0.1em;
   background: var(--color); color: var(--bgcolor);
 }
-.rpa .badge-rpa--muted {
+.bdq .badge-bdq--muted {
   background: color-mix(in srgb, currentColor 14%, transparent); color: inherit; opacity: .75;
 }
 
 /* Arrow link. */
-.rpa .link--split { display: inline-flex; align-items: center; gap: 0.25em; overflow: hidden; }
-.rpa .link--split .arrow { width: 1em; transition: transform .5s cubic-bezier(.25,1,.5,1); }
-.rpa .link--split:hover .arrow { transform: translateX(0.25em); }
+.bdq .link--split { display: inline-flex; align-items: center; gap: 0.25em; overflow: hidden; }
+.bdq .link--split .arrow { width: 1em; transition: transform .5s cubic-bezier(.25,1,.5,1); }
+.bdq .link--split:hover .arrow { transform: translateX(0.25em); }
 
 /* `.wall` is a semantic hook only (WordmarkWall rows are selected via `.wall .marquee`).
    No positioning here â€” it would out-rank Tailwind's layered `absolute` utility. */
 
-/* =============================== end RPA system =============================== */
+/* =============================== end BDQ system =============================== */
 
 /*
   ADMIN console scope â€” neutral OKLCH theme (shadcn default, the reference dashboard's palette).
@@ -537,7 +545,7 @@ html[data-menu-open="true"] #mouse .mouse__dot {
   .text-balance { text-wrap: balance; }
   .text-pretty { text-wrap: pretty; }
 
-  /* RPA full-bleed dark section: deep navy base + soft lavender glow pooling top-centre.
+  /* BDQ full-bleed dark section: deep navy base + soft lavender glow pooling top-centre.
      `.bg-hero` kept as an alias so not-yet-rebuilt screens still render (migrated to .bg-ink). */
   .bg-ink,
   .bg-hero {

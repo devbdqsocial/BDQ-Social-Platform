@@ -14,7 +14,7 @@ export default async function CustomerLoginPage({ searchParams }: { searchParams
   return (
     <section className="grid min-h-[100svh] lg:grid-cols-2">
       {/* left — big Exat headline on navy */}
-      <div className="gama-1 bg-1 paint hidden items-end p-[var(--space-4xl)] lg:flex">
+      <div className="bdq-night paint hidden items-end p-[var(--space-4xl)] lg:flex">
         <h1 className="f-exat f-h235">Welcome in</h1>
       </div>
 

@@ -2,10 +2,10 @@
 import { useEffect, useRef } from "react";
 import { gsap } from "@/lib/gsap";
 
-const STEPS: { word: string; body: string; gama: string }[] = [
-  { word: "Arrive", body: "Gates open in the late afternoon. Golden hour, easy energy, the night ahead of you.", gama: "gama-1 bg-1" },
-  { word: "Wander", body: "Handpicked brands, a proper food court, and corners made for photos.", gama: "gama-3 bg-1" },
-  { word: "Linger", body: "Acoustic sets at sundown build into a warm, high-energy night. Stay a while.", gama: "gama-1 bg-2" },
+const STEPS: { word: string; body: string; band: string }[] = [
+  { word: "Arrive", body: "Gates open in the late afternoon. Golden hour, easy energy, the night ahead of you.", band: "bdq-night" },
+  { word: "Wander", body: "Handpicked brands, a proper food court, and corners made for photos.", band: "bdq-fire" },
+  { word: "Linger", body: "Acoustic sets at sundown build into a warm, high-energy night. Stay a while.", band: "bdq-grove" },
 ];
 
 // conceptos: a pinned section that crossfades through steps (and recolours) as you scroll.
@@ -48,7 +48,7 @@ export function PinnedConcepts() {
     <section ref={root} className="concept-stage-root">
       <div ref={stage} className="concept-stage">
         {STEPS.map((s) => (
-          <div key={s.word} className={`concept-panel ${s.gama} paint`}>
+          <div key={s.word} className={`concept-panel ${s.band} paint`}>
             <div className="wrapper">
               <h2 className="f-exat f-h235">{s.word}</h2>
               <p className="f-paragraph mx-auto mt-[var(--space-2xl)] max-w-[34ch] opacity-80">{s.body}</p>

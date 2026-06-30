@@ -9,10 +9,10 @@ const STEPS = ["Brand details", "Verification documents", "Pick your stall", "Si
 
 export default function VendorSignupPage() {
   return (
-    <div className="rpa">
+    <div className="bdq">
       <section className="grid min-h-[100svh] lg:grid-cols-2">
-        {/* left — RPA pitch */}
-        <div className="gama-2 surface-2 paint hidden flex-col justify-between p-[var(--space-4xl)] lg:flex">
+        {/* left — BDQ pitch */}
+        <div className="bdq-rose paint hidden flex-col justify-between p-[var(--space-4xl)] lg:flex">
           <span className="f-paragraph-small f-bold t-upper" style={{ letterSpacing: "0.2em" }}>Sell with us</span>
           <h1 className="f-exat f-h133">
             Bring your brand to the night market

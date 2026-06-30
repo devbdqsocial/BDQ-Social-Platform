@@ -1,8 +1,8 @@
 import * as React from "react";
 
 /**
- * RPA form primitives for the vendor portal (design-system §3.2): underline inputs on the
- * `.rpa` cream surface, em-scaled type, lavender focus. Shared by the onboarding step forms.
+ * BDQ form primitives for the vendor portal (design-system §3.2): underline inputs on the
+ * `.bdq` cream surface, em-scaled type, lavender focus. Shared by the onboarding step forms.
  */
 
 const UNDERLINE = "f-paragraph w-full bg-transparent pb-[var(--space-sm)] outline-none placeholder:opacity-45 disabled:opacity-50";
@@ -11,7 +11,7 @@ const UNDERLINE_STYLE: React.CSSProperties = {
   color: "var(--color)",
 };
 
-export function RpaField({
+export function BdqField({
   label,
   error,
   children,
@@ -33,20 +33,20 @@ export function RpaField({
   );
 }
 
-export function RpaInput({ className, style, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
+export function BdqInput({ className, style, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
   return <input {...props} className={`${UNDERLINE} ${className ?? ""}`} style={{ ...UNDERLINE_STYLE, ...style }} />;
 }
 
-export function RpaTextarea({ className, style, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+export function BdqTextarea({ className, style, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return <textarea {...props} className={`${UNDERLINE} resize-none ${className ?? ""}`} style={{ ...UNDERLINE_STYLE, ...style }} />;
 }
 
-export function RpaSelect({ className, style, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
+export function BdqSelect({ className, style, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return <select {...props} className={`${UNDERLINE} ${className ?? ""}`} style={{ ...UNDERLINE_STYLE, ...style }} />;
 }
 
-/** Angled RPA submit button (`.btn`). Renders the required `.btn__text` span; `lg` for long labels. */
-export function RpaSubmit({
+/** Angled BDQ submit button (`.btn`). Renders the required `.btn__text` span; `lg` for long labels. */
+export function BdqSubmit({
   children,
   accent = true,
   lg = false,

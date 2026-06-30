@@ -100,7 +100,7 @@ export function VendorStallReserve({ eventId, stalls, details = {} }: { eventId:
           <div className="space-y-[var(--space-lg)]">
             <div>
               <div className="flex flex-wrap items-center gap-[var(--space-sm)]">
-                <span className="badge-rpa">{sel}</span>
+                <span className="badge-bdq">{sel}</span>
                 {detail?.typeName && <span className={chip} style={chipStyle}>{detail.typeName}</span>}
                 {detail?.zone && <span className={chip} style={chipStyle}>{detail.zone}</span>}
               </div>

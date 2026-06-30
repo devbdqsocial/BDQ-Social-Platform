@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { signContractAction } from "@/app/vendor/(app)/onboarding/actions";
-import { RpaInput, RpaSubmit } from "@/components/vendor/rpa-fields";
+import { BdqInput, BdqSubmit } from "@/components/vendor/bdq-fields";
 
 export function ContractSign() {
   const router = useRouter();
@@ -41,13 +41,13 @@ export function ContractSign() {
       </p>
       <label className="block space-y-[var(--space-sm)]">
         <span className="f-paragraph-small block font-bold">Type your full legal name</span>
-        <RpaInput name="signerName" required minLength={2} placeholder="As you would sign" />
+        <BdqInput name="signerName" required minLength={2} placeholder="As you would sign" />
       </label>
       <label className="f-paragraph-small flex items-start gap-[var(--space-sm)]">
         <input type="checkbox" name="agree" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-1 accent-[var(--light-blue)]" />
         I have read and agree to the Vendor Participation Agreement and the linked policies, and I understand all stall fees are final and non-refundable.
       </label>
-      <RpaSubmit lg disabled={!agree || busy}>{busy ? "Signing…" : "Sign agreement"}</RpaSubmit>
+      <BdqSubmit lg disabled={!agree || busy}>{busy ? "Signing…" : "Sign agreement"}</BdqSubmit>
     </form>
   );
 }

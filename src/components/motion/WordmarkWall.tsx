@@ -1,5 +1,5 @@
 /**
- * Signature wordmark wall (RPA "wall"): rows of repeated brand marks in Exat,
+ * Signature wordmark wall (BDQ "wall"): rows of repeated brand marks in Exat,
  * odd rows drifting the opposite way. Pure CSS marquee — server-safe, no JS.
  * Colour comes from `currentColor`; size/opacity from `rowClassName`/`className`.
  */

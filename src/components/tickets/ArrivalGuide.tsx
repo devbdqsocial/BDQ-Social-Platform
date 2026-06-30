@@ -29,7 +29,7 @@ export function ArrivalGuide({ eventName, startsAtIso, location }: { eventName: 
         : `${t.mins} min to go`;
 
   return (
-    <div className="gama-1 bg-1 paint relative overflow-hidden rounded-[var(--radius-lg)] p-[var(--space-xl)]">
+    <div className="bdq-night paint relative overflow-hidden rounded-[var(--radius-lg)] p-[var(--space-xl)]">
       <BdqWorld tint="var(--light-blue)" className="opacity-20" />
       <div className="relative z-10">
         <p className="kicker opacity-75">{t.done ? "You're in — see you inside" : "Counting down"}</p>

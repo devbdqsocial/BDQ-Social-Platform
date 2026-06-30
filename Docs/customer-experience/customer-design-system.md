@@ -1,20 +1,20 @@
 # Customer Design System
 
-Codifies the **existing** RPA token layer in [globals.css](../../src/app/globals.css). Do not invent
+Codifies the **existing** BDQ token layer in [globals.css](../../src/app/globals.css). Do not invent
 new tokens — these are the rules for using what exists. Customer-facing surfaces only.
 
 ## Colour
 - Brand: navy `--dark-blue #01065B`, lavender `--light-blue #868EFF`, green `#92FF73`,
   yellow `#D0F95F`, pink `#FF58AC`, red `#FF514D` (+ dark variants).
-- Sections are colour-blocked via `gama-{1,2,3}` + `bg-{1,2,3}`/`surface-{1,2}` + `.paint`. One
-  block = one `--bgcolor`/`--color` pair. Never hand-pick hexes in JSX; use a gama class + `.paint`.
-- Neutral base: cream `#F4F2EC` on ink `#14141A` (the `.rpa` default).
+- Sections are colour-blocked via semantic `bdq-*` section classes + `.paint`. One
+  block = one `--bgcolor`/`--color` pair. Never hand-pick hexes in JSX; use a BDQ section class + `.paint`.
+- Neutral base: cream `#F4F2EC` on ink `#14141A` (the `.bdq` default).
 - **Coming-soon exception:** bone/gold serif invitation tokens (`.cs-invite`), owner-approved.
-- **Never** apply RPA colours to the admin console (stays neutral OKLCH, no-purple).
+- **Never** apply BDQ colours to the admin console (stays neutral OKLCH, no-purple).
 
 ## Typography
 - Display: Exat-Bold (`.f-exat`, weight 700). Body: Inter (`.f-inter`).
-- One fluid root `--fsize: clamp(0.875rem, 0.55rem + 0.9vw, 1.25rem)` on `.rpa`; everything scales
+- One fluid root `--fsize: clamp(0.875rem, 0.55rem + 0.9vw, 1.25rem)` on `.bdq`; everything scales
   in `em`. Use scale classes, not ad-hoc sizes: `.f-h235 .f-h133 .f-h100 .f-h76 .f-h60 .f-h42 .f-h32
   .f-paragraph .f-paragraph-small`.
 - `.kicker` for uppercase tracked micro-labels above headings.
@@ -28,7 +28,7 @@ new tokens — these are the rules for using what exists. Customer-facing surfac
 
 ## Page gutter & content widths (alignment system)
 - **Gutter:** `--wrapper-padd: clamp(1.25rem, 5vw, 6rem)` — the responsive left/right page margin used
-  by `.rpa .wrapper`, the header (`px-[var(--wrapper-padd)]`), and the 12-col math. One token →
+  by `.bdq .wrapper`, the header (`px-[var(--wrapper-padd)]`), and the 12-col math. One token →
   every page's edges align and breathe. Coming-soon mirrors it with `px-[clamp(1.25rem,5vw,6rem)]`.
 - **Content widths (only two — never ad-hoc rem):** `--w-content: 72rem` for utility / lists /
   cards / stacked sections; `--w-prose: 64rem` for long-form reading (legal, guide). Use as

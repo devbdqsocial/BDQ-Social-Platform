@@ -20,6 +20,8 @@ interface OrderItemInput {
   qty: number;
 }
 
+type UtmInput = Partial<Record<"source" | "medium" | "campaign" | "term" | "content" | "ref", string>>;
+
 export class CheckoutError extends Error {
   constructor(public code: "EVENT_NOT_AVAILABLE" | "SOLD_OUT" | "COUPON_INVALID" | "INVALID_TOTAL" | "EMPTY") {
     super(code);
@@ -94,27 +96,72 @@ export async function createTicketOrder(
   eventId: string,
   items: OrderItemInput[],
   couponCode?: string,
+  utm?: UtmInput,
+  clientOrderKey?: string,
 ) {
+  const keyId = () => process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? process.env.RAZORPAY_KEY_ID ?? "";
+  const existing = clientOrderKey
+    ? await db.order.findUnique({
+        where: { clientOrderKey },
+        select: { id: true, userId: true, eventId: true, status: true, total: true, gatewayOrderId: true, expiresAt: true },
+      })
+    : null;
+  if (
+    existing?.userId === userId &&
+    existing.eventId === eventId &&
+    existing.status === "PENDING" &&
+    existing.gatewayOrderId &&
+    (!existing.expiresAt || existing.expiresAt > new Date())
+  ) {
+    return {
+      orderId: existing.id,
+      razorpayOrderId: existing.gatewayOrderId,
+      amountPaise: existing.total,
+      keyId: keyId(),
+    };
+  }
+
   const { coupon, pricing } = await quoteTicketOrder(eventId, items, couponCode, userId);
 
   // Paid checkout must never produce a zero/negative charge (e.g. a 100%-off coupon). Free
   // tickets are issued only via the admin comp flow, never here.
   if (pricing.total <= 0) throw new CheckoutError("INVALID_TOTAL");
 
-  const order = await db.order.create({
-    data: {
-      userId,
-      eventId,
-      status: "PENDING",
-      subtotal: pricing.subtotal,
-      discount: pricing.discount,
-      total: pricing.total,
-      discountSource: pricing.discountSource,
-      couponId: coupon?.id,
-      items: items as unknown as Prisma.InputJsonValue,
-      expiresAt: new Date(Date.now() + ORDER_TTL_MS),
-    },
-  });
+  let order: { id: string };
+  try {
+    order = await db.order.create({
+      data: {
+        userId,
+        eventId,
+        status: "PENDING",
+        subtotal: pricing.subtotal,
+        discount: pricing.discount,
+        total: pricing.total,
+        discountSource: pricing.discountSource,
+        couponId: coupon?.id,
+        clientOrderKey,
+        items: items as unknown as Prisma.InputJsonValue,
+        utm: utm ? (utm as Prisma.InputJsonValue) : undefined,
+        expiresAt: new Date(Date.now() + ORDER_TTL_MS),
+      },
+    });
+  } catch (e) {
+    if (!(clientOrderKey && e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002")) throw e;
+    const retry = await db.order.findUnique({
+      where: { clientOrderKey },
+      select: { id: true, userId: true, eventId: true, status: true, total: true, gatewayOrderId: true, expiresAt: true },
+    });
+    if (
+      retry?.userId === userId &&
+      retry.eventId === eventId &&
+      retry.status === "PENDING" &&
+      retry.gatewayOrderId &&
+      (!retry.expiresAt || retry.expiresAt > new Date())
+    ) {
+      return { orderId: retry.id, razorpayOrderId: retry.gatewayOrderId, amountPaise: retry.total, keyId: keyId() };
+    }
+    throw e;
+  }
 
   const rzp = await createRazorpayOrder(pricing.total, order.id, { orderId: order.id });
   await db.order.update({ where: { id: order.id }, data: { gatewayOrderId: rzp.id } });
@@ -123,7 +170,7 @@ export async function createTicketOrder(
     orderId: order.id,
     razorpayOrderId: rzp.id,
     amountPaise: pricing.total,
-    keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? process.env.RAZORPAY_KEY_ID ?? "",
+    keyId: keyId(),
   };
 }
 

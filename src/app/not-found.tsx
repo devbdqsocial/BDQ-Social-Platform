@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function NotFound() {
   return (
-    <div className="rpa gama-1 bg-1 paint flex min-h-[100svh] items-center justify-center">
+    <div className="bdq bdq-night paint flex min-h-[100svh] items-center justify-center">
       {/* plain div: segment 404s render inside (public)/layout which already owns <main id="main"> */}
       <div className="wrapper py-[var(--space-5xl)] text-center">
         <p className="kicker">Lost in the market</p>

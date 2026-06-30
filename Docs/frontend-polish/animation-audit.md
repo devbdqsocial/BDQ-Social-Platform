@@ -2,25 +2,25 @@
 
 Status: reference-motion audit and implementation planning. No frontend code is changed by this document.
 
-Reference studied: `reference/rpa/rpacomunicacion.com`
+Reference studied: `reference/bdq/rpacomunicacion.com`
 
 Visual captures created:
 
 | Capture | What it shows |
 |---|---|
-| `artifacts/rpa-animation-audit/reference-home-initial.png` | RPA wall/preloader state: repeated wordmark rows, deep blue background, blurred depth rows. |
-| `artifacts/rpa-animation-audit/reference-menu-open.png` | Post-loader hero state: fixed header, menu trigger, masked media object, section label. |
-| `artifacts/rpa-animation-audit/reference-menu-hover.png` | Later hero animation state: polygon mask changes, image scale/crop changes, words shift around the media. |
-| `artifacts/rpa-animation-audit/reference-scroll-state.png` | Large editorial text scroll state, header/section label persistence, overlay interruption risk. |
-| `artifacts/rpa-animation-audit/reference-render-state.json` | Computed body/header/cursor state from the local Playwright render. |
+| `artifacts/bdq-animation-audit/reference-home-initial.png` | BDQ wall/preloader state: repeated wordmark rows, deep blue background, blurred depth rows. |
+| `artifacts/bdq-animation-audit/reference-menu-open.png` | Post-loader hero state: fixed header, menu trigger, masked media object, section label. |
+| `artifacts/bdq-animation-audit/reference-menu-hover.png` | Later hero animation state: polygon mask changes, image scale/crop changes, words shift around the media. |
+| `artifacts/bdq-animation-audit/reference-scroll-state.png` | Large editorial text scroll state, header/section label persistence, overlay interruption risk. |
+| `artifacts/bdq-animation-audit/reference-render-state.json` | Computed body/header/cursor state from the local Playwright render. |
 
 Video captures created:
 
 | Capture | What it shows |
 |---|---|
-| `artifacts/rpa-animation-audit/video/rpa-reference-motion-desktop-full.webm` | Desktop video pass served over local HTTP with mirrored CDN dependencies resolving. Covers preloader, hero cycle, cursor movement, menu open, menu hover, menu close, editorial scroll, and video section scroll. |
-| `artifacts/rpa-animation-audit/video-frames-full/` | Key frames sampled from the video pass for review and documentation. |
-| `artifacts/rpa-animation-audit/reference-motion-video-observations-full.json` | Browser-observed motion state during the video capture: GSAP availability, color classes, cursor style, menu visibility, and failed-response list. |
+| `artifacts/bdq-animation-audit/video/bdq-reference-motion-desktop-full.webm` | Desktop video pass served over local HTTP with mirrored CDN dependencies resolving. Covers preloader, hero cycle, cursor movement, menu open, menu hover, menu close, editorial scroll, and video section scroll. |
+| `artifacts/bdq-animation-audit/video-frames-full/` | Key frames sampled from the video pass for review and documentation. |
+| `artifacts/bdq-animation-audit/reference-motion-video-observations-full.json` | Browser-observed motion state during the video capture: GSAP availability, color classes, cursor style, menu visibility, and failed-response list. |
 
 Render caveat: the first `file://` render blocked fonts and missed some animation dependencies. The final video pass serves the parent mirror folder at local HTTP so `cdn.jsdelivr.net`, `cdnjs.cloudflare.com`, `unpkg.com`, fonts, GSAP, ScrollTrigger, SplitText, MorphSVG, Swup, Lenis, and Swiper resolve from the local mirror. The video pass still reports one mirrored-script parse warning, but dependency responses are not failing and the major animation systems are visible in motion.
 
@@ -28,18 +28,18 @@ Source files inspected:
 
 | File | Purpose |
 |---|---|
-| `reference/rpa/rpacomunicacion.com/wp-content/themes/rpa2025/js/main53cf.js` | Cursor follow, section color sync, wall generation, page color changes, Swup page transitions. |
-| `reference/rpa/rpacomunicacion.com/wp-content/themes/rpa2025/js/animations53cf.js` | Preloader, header hero morphs, pinned sections, service animations, footer entrance. |
-| `reference/rpa/rpacomunicacion.com/wp-content/themes/rpa2025/js/clicks53cf.js` | Menu open/close, submenu interactions, modal motion. |
-| `reference/rpa/rpacomunicacion.com/wp-content/themes/rpa2025/js/rollovers53cf.js` | Link, footer, menu, card, language, close-button hover timelines. |
-| `reference/rpa/rpacomunicacion.com/wp-content/cache/wpfc-minified/ottebi7/9um5u.css` | Cursor, menu, header, shape, footer, and wall styling. |
+| `reference/bdq/rpacomunicacion.com/wp-content/themes/rpa2025/js/main53cf.js` | Cursor follow, section color sync, wall generation, page color changes, Swup page transitions. |
+| `reference/bdq/rpacomunicacion.com/wp-content/themes/rpa2025/js/animations53cf.js` | Preloader, header hero morphs, pinned sections, service animations, footer entrance. |
+| `reference/bdq/rpacomunicacion.com/wp-content/themes/rpa2025/js/clicks53cf.js` | Menu open/close, submenu interactions, modal motion. |
+| `reference/bdq/rpacomunicacion.com/wp-content/themes/rpa2025/js/rollovers53cf.js` | Link, footer, menu, card, language, close-button hover timelines. |
+| `reference/bdq/rpacomunicacion.com/wp-content/cache/wpfc-minified/ottebi7/9um5u.css` | Cursor, menu, header, shape, footer, and wall styling. |
 | `src/components/motion/*` | Current BDQ motion implementation. |
 | `src/components/nav/PublicHeader.tsx` and `src/components/nav/MenuOverlay.tsx` | Current BDQ public chrome and menu implementation. |
 | `src/app/globals.css` | Current BDQ cursor, color, shape, wall, and motion CSS. |
 
 ## Executive Summary
 
-The RPA reference succeeds because animation is treated as a system, not decoration. The major motion layers are coordinated:
+The BDQ reference succeeds because animation is treated as a system, not decoration. The major motion layers are coordinated:
 
 1. The page has a living color state.
 2. The header, logo, menu, footer label, and cursor react to that state.
@@ -162,7 +162,7 @@ BDQ implication:
 
 | Area | Current | Target | Gap |
 |---|---:|---:|---|
-| Motion identity | 7 | 10 | Strong RPA-inspired pieces exist, but not yet one authored choreography. |
+| Motion identity | 7 | 10 | Strong BDQ-inspired pieces exist, but not yet one authored choreography. |
 | Loader / intro | 8 | 10 | BDQ has a wordmark loader; needs stronger wall collapse and shape morph continuity. |
 | Page transitions | 5 | 9 | Current transition is simpler; reference has wall-based out/in transition. |
 | Cursor system | 6 | 10 | Follow and hover exist; needs z-index fix, menu/media states, color switching, state icons. |
@@ -184,7 +184,7 @@ BDQ implication:
 Observed visually:
 
 - Full viewport deep-blue field.
-- Oversized repeated RPA word rows.
+- Oversized repeated BDQ word rows.
 - Rows move horizontally in opposing directions.
 - Lower rows blur, creating depth and speed.
 - The wall does not feel like a background texture only. It is the entrance ritual.
@@ -585,7 +585,7 @@ Recommendation:
 
 ### A6. Hero Motion Sequence
 
-- Goal: Create one flagship hero sequence inspired by RPA, adapted to BDQ.
+- Goal: Create one flagship hero sequence inspired by BDQ, adapted to BDQ.
 - Motion: shape morph/crossfade, media swap, word anchor shift, color state change.
 - Acceptance: First viewport remains readable, CTA stays obvious, image subject remains visible.
 
@@ -636,7 +636,7 @@ Recommendation:
 10. A9 Hover Motion Standard.
 11. A10 Motion QA Harness.
 
-Reason: fix visibility and interaction bugs first, then add visual richness. The RPA reference is beautiful because basic chrome never feels accidental.
+Reason: fix visibility and interaction bugs first, then add visual richness. The BDQ reference is beautiful because basic chrome never feels accidental.
 
 ## Animation Rules For BDQ
 
@@ -747,7 +747,7 @@ Add these to the execution plan:
 
 ## Final Recommendation
 
-BDQ should not copy RPA's shapes one-for-one. The right move is to copy the discipline:
+BDQ should not copy BDQ's shapes one-for-one. The right move is to copy the discipline:
 
 - one color state system
 - one cursor state system

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { saveKycAction } from "@/app/vendor/(app)/profile/actions";
 import { KycDocUploader } from "@/components/vendor/KycDocUploader";
-import { RpaField, RpaInput, RpaSubmit } from "@/components/vendor/rpa-fields";
+import { BdqField, BdqInput, BdqSubmit } from "@/components/vendor/bdq-fields";
 import { panOptional, fssaiOptional, gstinOptional, toUpper, digitsCapped } from "@/lib/validators";
 import { useFieldValidation } from "@/lib/use-field-validation";
 
@@ -49,8 +49,8 @@ export function KycForm({ kyc, isFood }: { kyc: KycState; isFood: boolean }) {
     <div className="space-y-[var(--space-2xl)]">
       <p className="f-paragraph-small opacity-70">Used only to verify you — never for tax or shared with anyone.</p>
       <form onSubmit={saveNumbers} className="grid gap-[var(--space-lg)] sm:grid-cols-3">
-        <RpaField label="PAN number" error={panField.error}>
-          <RpaInput
+        <BdqField label="PAN number" error={panField.error}>
+          <BdqInput
             name="pan"
             maxLength={10}
             defaultValue={kyc.pan ?? ""}
@@ -59,9 +59,9 @@ export function KycForm({ kyc, isFood }: { kyc: KycState; isFood: boolean }) {
             onInput={(e) => { e.currentTarget.value = toUpper(e.currentTarget.value); panField.clear(); }}
             onBlur={(e) => panField.validate(e.currentTarget.value)}
           />
-        </RpaField>
-        <RpaField label="FSSAI number" error={fssaiField.error}>
-          <RpaInput
+        </BdqField>
+        <BdqField label="FSSAI number" error={fssaiField.error}>
+          <BdqInput
             name="fssai"
             maxLength={14}
             inputMode="numeric"
@@ -71,9 +71,9 @@ export function KycForm({ kyc, isFood }: { kyc: KycState; isFood: boolean }) {
             onInput={(e) => { e.currentTarget.value = digitsCapped(14)(e.currentTarget.value); fssaiField.clear(); }}
             onBlur={(e) => fssaiField.validate(e.currentTarget.value)}
           />
-        </RpaField>
-        <RpaField label="GSTIN" error={gstinField.error}>
-          <RpaInput
+        </BdqField>
+        <BdqField label="GSTIN" error={gstinField.error}>
+          <BdqInput
             name="gstin"
             maxLength={15}
             defaultValue={kyc.gstin ?? ""}
@@ -82,9 +82,9 @@ export function KycForm({ kyc, isFood }: { kyc: KycState; isFood: boolean }) {
             onInput={(e) => { e.currentTarget.value = toUpper(e.currentTarget.value); gstinField.clear(); }}
             onBlur={(e) => gstinField.validate(e.currentTarget.value)}
           />
-        </RpaField>
+        </BdqField>
         <div className="sm:col-span-3">
-          <RpaSubmit accent={false} disabled={busy}>{busy ? "Saving…" : "Save numbers"}</RpaSubmit>
+          <BdqSubmit accent={false} disabled={busy}>{busy ? "Saving…" : "Save numbers"}</BdqSubmit>
         </div>
       </form>
 

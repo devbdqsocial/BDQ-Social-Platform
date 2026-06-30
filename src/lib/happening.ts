@@ -27,7 +27,7 @@ export const KIND_LABEL: Record<string, string> = {
   SPONSOR: "Sponsor", ACTIVITY: "Activity", WORKSHOP: "Workshop", PERFORMANCE: "Performance", FACILITY: "Facility",
 };
 
-/** Accent colour per kind (RPA palette vars — resolved in the client). */
+/** Accent colour per kind (BDQ palette vars — resolved in the client). */
 export const KIND_ACCENT: Record<string, string> = {
   LIVE_NOW: "var(--red)", STARTING_SOON: "var(--yellow)", OFFER: "var(--pink)", ANNOUNCEMENT: "var(--light-blue)",
   SPONSOR: "var(--light-blue)", ACTIVITY: "var(--green)", WORKSHOP: "var(--green)", PERFORMANCE: "var(--pink)", FACILITY: "var(--yellow)",

@@ -70,15 +70,15 @@ export function TicketCard({ d }: { d: TicketCardData }) {
           {/* FRONT - QR + essentials */}
           <div
             aria-hidden={flipped}
-            className={`gama-1 bg-1 paint relative items-center overflow-hidden rounded-[var(--radius-lg)] ${faceBase}`}
+            className={`bdq-night paint relative items-center overflow-hidden rounded-[var(--radius-lg)] ${faceBase}`}
             style={{ backfaceVisibility: "hidden", position: "relative", opacity: reduced && flipped ? 0 : 1 }}
           >
             <div className="min-w-0 flex-1">
               <p className="f-exat f-h42">{d.eventName}</p>
               <p className="f-paragraph-small mt-[var(--space-xs)] opacity-70">{d.typeName} - {dateLine}</p>
               <div className="mt-[var(--space-md)] flex flex-wrap items-center gap-[var(--space-md)]">
-                <span className={used ? "badge-rpa badge-rpa--muted" : "badge-rpa"}>{used ? "Checked in" : "Valid"}</span>
-                {d.admitCount > 1 && <span className="badge-rpa">Admits {d.admitCount}</span>}
+                <span className={used ? "badge-bdq badge-bdq--muted" : "badge-bdq"}>{used ? "Checked in" : "Valid"}</span>
+                {d.admitCount > 1 && <span className="badge-bdq">Admits {d.admitCount}</span>}
               </div>
             </div>
             <div className="shrink-0 rounded-2xl border-2 border-[#868EFF] bg-white p-2 shadow-[0_12px_28px_rgba(1,6,91,0.18)]">
@@ -96,7 +96,7 @@ export function TicketCard({ d }: { d: TicketCardData }) {
           {/* BACK - details + actions */}
           <div
             aria-hidden={!flipped}
-            className={`surface-2 paint flex-col justify-between rounded-[var(--radius-lg)] ${faceBase}`}
+            className={`bdq-surface-alt paint flex-col justify-between rounded-[var(--radius-lg)] ${faceBase}`}
             style={{ backfaceVisibility: "hidden", transform: reduced ? undefined : "rotateY(180deg)", position: "absolute", opacity: reduced ? (flipped ? 1 : 0) : 1, pointerEvents: reduced && !flipped ? "none" : undefined }}
           >
             <div className="space-y-[2px]">

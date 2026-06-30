@@ -81,19 +81,19 @@
   ```json
   { "eventId": "...", "items": [{ "ticketTypeId": "...", "qty": 2 }],
     "couponCode": "DIWALI10", "utm": {"source":"ig"},
-    "holders": [{ "ticketTypeId":"...", "name":"", "phone":"", "email":"" }] }
+    "clientOrderKey": "00000000-0000-4000-8000-000000000000" }
   ```
 - Server: validates inventory, runs **pricing engine** (BUSINESS-RULES §9: best single discount),
   creates `Order(PENDING, expiresAt=now+15m)`, creates Razorpay order.
-- 200: `{ ok, data:{ orderId, amount, currency:"INR", razorpayOrderId, key } }`
+- 200: `{ ok, data:{ orderId, amountPaise, razorpayOrderId, keyId } }`
 - Errors: `VALIDATION`, `COUPON_INVALID`, `CONFLICT`(sold out), `PAYMENT_ERROR`
-- Idempotency: optional client `Idempotency-Key` header → returns same order.
+- Idempotency: optional `clientOrderKey` body field reuses the same live pending Razorpay order.
 
 **POST `/api/payments/razorpay/webhook`** — fulfilment (PUBLIC, signature-verified).
-- Headers: `X-Razorpay-Signature`. Body: Razorpay event payload.
+- Headers: `X-Razorpay-Signature`, `x-razorpay-event-id`. Body: Razorpay event payload.
 - Server: verify signature → if `payment.captured`: txn { `Order→PAID`, issue `Ticket`s (+ signed
   `qrToken`), incr `soldQty`, enqueue `Outbox` (WhatsApp+email) }. **Idempotent** by
-  `Payment.gatewayRef`.
+  `WebhookEvent(provider,eventId)` and `Payment.gatewayRef`.
 - 200 always on accepted/duplicate (`IDEMPOTENT_REPLAY` for dup). 400 on bad signature.
 
 **GET `/api/orders/:id`** → `{ order, tickets }` (owner only; else `FORBIDDEN`).
@@ -138,7 +138,7 @@ onboarding flow (`reserveStallAction` server action → `Booking(RESERVED)`).
 
 ## 6. Admin (`admin.` zone, role SUPER_ADMIN unless noted)
 
-All admin mutations pass through `withAudit` (writes before/after to `AuditLog`).
+All admin mutations pass through `withAudit`/`withAuditTx`; the mutation and `AuditLog` write are one transaction.
 
 ### 6.1 Events / catalog (SUPER_ADMIN)
 | Method | Path | Body / Notes |
@@ -164,19 +164,20 @@ All admin mutations pass through `withAudit` (writes before/after to `AuditLog`)
 | GET | `/api/admin/registrations` | customers + vendors, filterable (STAFF: view) |
 | GET | `/api/admin/customers` | `User[role=CUSTOMER]` (STAFF: `CUSTOMER_VIEW`) |
 | GET | `/api/admin/vendors` / `/:id` | vendor list/detail incl. KYC + assets + selected stall (STAFF: `VENDOR_VIEW`) |
-| POST | `/api/admin/vendors/:id/approve` | `{ stallId }` → txn `Booking=BOOKED, Stall=BOOKED`, notify (STAFF: `VENDOR_MANAGE`) |
+| POST | `/api/admin/vendors/:id/approve-for-payment` | moves reserved stall to `Booking(PENDING_PAYMENT)` after callback + signed contract (STAFF: `VENDOR_MANAGE`) |
+| POST | `/api/admin/vendors/:id/assign-stall` | assigns an available stall to an approved vendor as `Booking(PENDING_PAYMENT)`; never marks `BOOKED` without payment capture |
 | POST | `/api/admin/vendors/:id/reject` | `{ reason? }` → release hold, notify |
 
 **Approve contract detail**
-- Pre: vendor `UNDER_REVIEW` with a `PENDING` booking on `stallId`.
-- 200: `{ ok, data:{ vendorId, stallId, status:"BOOKED" } }`
+- Pre: vendor has a signed contract and either a reserved stall or an admin-selected available stall.
+- 200: `{ ok, data:{ vendorId, stallId, status:"PENDING_PAYMENT", payBy } }`
 - Errors: `CONFLICT`(already booked/approved), `STALL_UNAVAILABLE`
 
 ### 6.4 Bookings & payments (SUPER_ADMIN)
 | Method | Path | Body |
 | --- | --- | --- |
-| POST | `/api/admin/bookings` | admin-side: `{ eventId, stallId, vendorDetails, paymentMode }` → `Booking(source=ADMIN)` |
-| POST | `/api/admin/payments/offline` | `{ orderId? \| bookingId, amount, gatewayRef?, note }` → records `Payment(OFFLINE,CAPTURED)`, advances state |
+| POST | `/api/admin/bookings` | disabled for launch unless it records payment reference, amount in paise, note, and audit atomically |
+| Server action | vendor offline payment / POS issue | `{ bookingId or POS order, amountPaise, gatewayRef, note }` → records `Payment(OFFLINE,CAPTURED)`, advances state atomically |
 | GET | `/api/admin/payments` | transactions (online+offline), filterable (STAFF: `PAYMENT_VIEW`) |
 
 ### 6.5 Coupons / comp tickets / sponsors (SUPER_ADMIN)
@@ -221,11 +222,12 @@ All cron endpoints: 200 `{ ok, data:{ processed:n } }`; `FORBIDDEN` without the 
 
 - **Authz:** every `/api/admin/*` re-checks role+permission server-side (middleware is not enough).
 - **Ownership:** customer/vendor endpoints only touch the caller's own rows.
-- **Idempotency keys:** webhook = `Payment.gatewayRef`; notifications = `Outbox.dedupeKey`
-  (`ticketId:channel`); client may send `Idempotency-Key` on `POST /api/orders` and `/api/bookings`.
+- **Idempotency keys:** webhook delivery = `WebhookEvent(provider,eventId)`; fulfilment =
+  `Payment.gatewayRef`; notifications = `Outbox.dedupeKey` (`ticketId:channel`); checkout retry =
+  `Order.clientOrderKey`.
 - **Rate limits:** applied per [BUSINESS-RULES.md](BUSINESS-RULES.md) §8 (OTP, login, coupon,
   checkout).
-- **Audit:** all admin/staff mutations wrapped by `withAudit` (actor, before/after).
+- **Audit:** all admin/staff mutations wrapped by `withAudit`/`withAuditTx`; mutation + audit write commit or roll back together.
 - **Validation:** Zod schemas live next to each handler; reject early with `VALIDATION` + field
   details.
 - **No refund endpoints exist** (policy: all sales final).

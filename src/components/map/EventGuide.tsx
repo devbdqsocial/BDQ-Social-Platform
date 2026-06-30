@@ -90,7 +90,7 @@ export function EventGuide({ guide }: { guide: Guide }) {
               <ul className="mt-[var(--space-lg)] grid gap-[var(--space-lg)] sm:grid-cols-2">
                 {items.map((b) => (
                   <li key={b.stallLabel}>
-                    <button type="button" onClick={() => setSheet(b)} data-cursor className="surface-1 block w-full p-[var(--space-lg)] text-left" style={{ border: "1px solid color-mix(in srgb, currentColor 22%, transparent)" }}>
+                    <button type="button" onClick={() => setSheet(b)} data-cursor className="bdq-surface block w-full p-[var(--space-lg)] text-left" style={{ border: "1px solid color-mix(in srgb, currentColor 22%, transparent)" }}>
                       <p className="kicker opacity-70">{BUCKET_NOUN[b.bucket]}</p>
                       <p className="f-exat mt-[var(--space-xs)] f-h32">{b.brandName}</p>
                       {b.description && <p className="f-paragraph-small mt-[var(--space-xs)] line-clamp-2 opacity-75">{b.description}</p>}
@@ -132,7 +132,7 @@ export function EventGuide({ guide }: { guide: Guide }) {
       {sheet && (
         <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" onClick={() => setSheet(null)}>
           <div className="absolute inset-0 bg-navy-500/55" />
-          <div role="dialog" aria-label={sheet.brandName} onClick={(e) => e.stopPropagation()} className="surface-1 paint relative w-full max-w-[40rem] rounded-t-[var(--radius-lg)] p-[var(--space-2xl)] sm:rounded-[var(--radius-lg)]" style={{ border: "1px solid var(--color)" }}>
+          <div role="dialog" aria-label={sheet.brandName} onClick={(e) => e.stopPropagation()} className="bdq-surface paint relative w-full max-w-[40rem] rounded-t-[var(--radius-lg)] p-[var(--space-2xl)] sm:rounded-[var(--radius-lg)]" style={{ border: "1px solid var(--color)" }}>
             <button type="button" onClick={() => setSheet(null)} aria-label="Close" className="absolute right-[var(--space-lg)] top-[var(--space-lg)] f-h32 opacity-60">×</button>
             <p className="kicker opacity-70">{BUCKET_NOUN[sheet.bucket]}{sheet.zone ? ` · ${sheet.zone}` : ""}</p>
             <h2 className="f-exat mt-[var(--space-xs)] f-h60">{sheet.brandName}</h2>

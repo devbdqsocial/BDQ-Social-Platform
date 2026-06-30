@@ -33,10 +33,10 @@ export function OffersClient({ offers }: { offers: OfferDto[] }) {
           const phase: OfferPhase = offerPhase(timesOf(o), now);
           const ended = phase === "ended";
           return (
-            <li key={o.id} className="surface-1 p-[var(--space-xl)]" style={{ border: "1px solid color-mix(in srgb, currentColor 22%, transparent)", opacity: ended ? 0.5 : 1 }}>
+            <li key={o.id} className="bdq-surface p-[var(--space-xl)]" style={{ border: "1px solid color-mix(in srgb, currentColor 22%, transparent)", opacity: ended ? 0.5 : 1 }}>
               <div className="flex items-center justify-between gap-[var(--space-md)]">
                 <p className="kicker opacity-70">{o.brandName ?? "BDQ"} · {KIND_LABEL[o.kind] ?? o.kind}</p>
-                <span className={ended ? "badge-rpa badge-rpa--muted" : "badge-rpa"}>{ended ? "Ended" : validityLabel(new Date(o.endsAtIso), now)}</span>
+                <span className={ended ? "badge-bdq badge-bdq--muted" : "badge-bdq"}>{ended ? "Ended" : validityLabel(new Date(o.endsAtIso), now)}</span>
               </div>
               <p className="f-exat mt-[var(--space-sm)] f-h42">{o.title}</p>
               <p className="f-paragraph-small mt-[var(--space-xs)] opacity-75">{o.terms}</p>
@@ -76,7 +76,7 @@ function OfferRedeem({ offer, onClose }: { offer: OfferDto; onClose: () => void 
   const release = () => { if (timer.current) clearTimeout(timer.current); };
 
   return (
-    <div role="dialog" aria-label={offer.title} aria-modal className="gama-1 bg-1 paint fixed inset-0 z-[60] flex flex-col items-center justify-center px-[var(--space-2xl)] text-center">
+    <div role="dialog" aria-label={offer.title} aria-modal className="bdq-night paint fixed inset-0 z-[60] flex flex-col items-center justify-center px-[var(--space-2xl)] text-center">
       <button type="button" onClick={onClose} aria-label="Close" className="absolute right-[var(--space-xl)] top-[var(--space-xl)] f-h42">×</button>
       <p className="kicker opacity-80">{offer.brandName ?? "BDQ Social"}</p>
       <h2 className="f-exat mt-[var(--space-sm)] max-w-[16ch] f-h60">{offer.title}</h2>

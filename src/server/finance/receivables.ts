@@ -3,7 +3,7 @@ import { db } from "@/server/db";
 
 /**
  * Accounts receivable + cash accountability (read-only).
- * Receivable  = stall bookings advanced to PENDING but with no CAPTURED payment (money owed).
+ * Receivable  = stall bookings advanced to PENDING_PAYMENT but with no CAPTURED payment (money owed).
  * Cash-in-hand = captured OFFLINE payments grouped by the staff member who recorded them.
  */
 
@@ -13,7 +13,7 @@ const stallPrice = (s: { priceInPaise: number | null; stallType: { priceInPaise:
 export async function getReceivables(eventId?: string) {
   const bookings = await db.booking.findMany({
     where: {
-      status: "PENDING",
+      status: "PENDING_PAYMENT",
       ...(eventId ? { eventId } : {}),
       payment: { is: null }, // no payment row at all → uncollected
     },

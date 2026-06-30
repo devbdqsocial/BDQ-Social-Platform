@@ -3,7 +3,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbLd } from "@/lib/seo/jsonld";
 
 /**
- * Public breadcrumb trail — renders the visible RPA-styled nav AND the matching BreadcrumbList
+ * Public breadcrumb trail — renders the visible BDQ-styled nav AND the matching BreadcrumbList
  * JSON-LD from one source (Google wants the visible trail to mirror the schema). Used on
  * article-style pages (content hubs); cinematic hero detail pages emit breadcrumbLd directly
  * to avoid intruding on the full-bleed hero.

@@ -2,7 +2,7 @@
 import { useEffect, useRef } from "react";
 import { gsap } from "@/lib/gsap";
 
-// RPA custom cursor (#mouse): a yellow dot that follows with lerp 0.2 (mix-blend-mode:difference,
+// BDQ custom cursor (#mouse): a yellow dot that follows with lerp 0.2 (mix-blend-mode:difference,
 // styled in globals.css), expanding over interactive targets. Pointer-fine only; off on touch/reduced.
 export function Cursor() {
   const ref = useRef<HTMLDivElement>(null);

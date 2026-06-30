@@ -24,6 +24,8 @@ export function POSForm({ eventId, ticketTypes }: { eventId: string; ticketTypes
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [paymentReference, setPaymentReference] = useState("");
+  const [paymentNote, setPaymentNote] = useState("");
   const phoneField = useFieldValidation(phone10);
   const emailField = useFieldValidation(emailOptional);
 
@@ -57,6 +59,14 @@ export function POSForm({ eventId, ticketTypes }: { eventId: string; ticketTypes
     const phoneOk = phoneField.validate(phone);
     const emailOk = emailField.validate(email);
     if (!phoneOk || !emailOk) return;
+    if (!paymentReference.trim()) {
+      toast.error("Payment reference is required.");
+      return;
+    }
+    if (!paymentNote.trim()) {
+      toast.error("Payment note is required.");
+      return;
+    }
     setLoading(true);
     try {
       await issueOfflineTickets({
@@ -66,6 +76,8 @@ export function POSForm({ eventId, ticketTypes }: { eventId: string; ticketTypes
         email,
         items,
         paymentMode: mode,
+        paymentReference,
+        paymentNote,
       });
       
       toast.success(`Issued ${items.reduce((a, b) => a + b.qty, 0)} tickets.`);
@@ -74,6 +86,8 @@ export function POSForm({ eventId, ticketTypes }: { eventId: string; ticketTypes
       setName("");
       setPhone("");
       setEmail("");
+      setPaymentReference("");
+      setPaymentNote("");
       setCart({});
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to issue tickets");
@@ -184,7 +198,29 @@ export function POSForm({ eventId, ticketTypes }: { eventId: string; ticketTypes
               <span>Total</span>
               <span>₹{(subtotal / 100).toFixed(2)}</span>
             </div>
-            
+            <div className="space-y-3 border-t pt-4">
+              <div className="space-y-2">
+                <Label htmlFor="payment-reference">Payment reference</Label>
+                <Input
+                  id="payment-reference"
+                  value={paymentReference}
+                  onChange={(e) => setPaymentReference(e.target.value)}
+                  placeholder="Cash receipt or UPI UTR"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="payment-note">Payment note</Label>
+                <Input
+                  id="payment-note"
+                  value={paymentNote}
+                  onChange={(e) => setPaymentNote(e.target.value)}
+                  placeholder="Who received it and where"
+                  required
+                />
+              </div>
+            </div>
+
             <div className="pt-6 space-y-3">
               <Button 
                 className="w-full" 

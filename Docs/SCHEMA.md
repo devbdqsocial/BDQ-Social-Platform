@@ -46,7 +46,7 @@ enum DiscountSource  { NONE EARLY_BIRD BULK COUPON }
 enum StallStatus     { AVAILABLE HELD PENDING BOOKED BLOCKED }
 enum StallKind       { STALL INFRA }          // infra = stage/aisle/zone/etc (non-sellable)
 enum VendorApproval  { SUBMITTED UNDER_REVIEW APPROVED REJECTED }
-enum BookingStatus   { HELD PENDING BOOKED REJECTED CANCELLED }
+enum BookingStatus   { RESERVED HELD PENDING_PAYMENT PENDING BOOKED REJECTED CANCELLED }
 enum BookingSource   { VENDOR ADMIN }
 enum AssetKind       { LOGO BANNER PRODUCT KYC_DOC }
 enum ContractStatus  { SENT SIGNED }
@@ -205,6 +205,8 @@ model Order {
   discountSource DiscountSource @default(NONE)
   couponId      String?
   coupon        Coupon?      @relation(fields: [couponId], references: [id])
+  gatewayOrderId String?     @unique
+  clientOrderKey String?     @unique
   utm           Json?                             // {source,medium,campaign}
   expiresAt     DateTime?                         // unpaid expiry
   createdAt     DateTime     @default(now())
@@ -243,7 +245,7 @@ model Payment {
   booking       Booking?       @relation(fields: [bookingId], references: [id])
   gateway       PaymentGateway
   mode          PaymentMode
-  gatewayRef    String?        @unique            // idempotency key (RZP payment id)
+  gatewayRef    String?        @unique            // idempotency key (RZP payment id or offline ref)
   amount        Int
   status        PaymentStatus  @default(CREATED)
   recordedById  String?                           // admin who logged offline
@@ -251,6 +253,17 @@ model Payment {
   createdAt     DateTime       @default(now())
 
   @@index([orderId])
+}
+
+model WebhookEvent {
+  id         String   @id @default(cuid())
+  provider   String
+  eventId    String
+  eventType  String?
+  receivedAt DateTime @default(now())
+
+  @@unique([provider, eventId])
+  @@index([provider, receivedAt])
 }
 
 model Coupon {
@@ -334,7 +347,7 @@ model Booking {
   vendorProfile   VendorProfile? @relation(fields: [vendorProfileId], references: [id])
   source          BookingSource @default(VENDOR)
   adminDetails    Json?                             // when source=ADMIN (name/phone entered)
-  status          BookingStatus @default(HELD)
+  status          BookingStatus @default(RESERVED)
   payment         Payment?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
@@ -458,12 +471,13 @@ Prisma can't express partial-unique in schema, so add this in a migration:
 -- One ACTIVE booking per stall (prevents double-booking under races)
 CREATE UNIQUE INDEX one_active_booking_per_stall
   ON "Booking" ("stallId")
-  WHERE "status" IN ('HELD','PENDING','BOOKED');
+  WHERE "status" IN ('RESERVED','PENDING_PAYMENT','BOOKED');
 ```
 
 Other DB-level guarantees already in schema: unique `Ticket.qrToken`, unique `Payment.gatewayRef`
-(idempotent fulfilment), unique `Coupon.code`, unique `MapLayout.eventId`, unique
-`Stall(eventId,label)`, unique `StallTypeDef(eventId,name)`, unique `Outbox.dedupeKey`.
+(idempotent fulfilment), unique `Order.gatewayOrderId`, unique `Order.clientOrderKey`,
+unique `WebhookEvent(provider,eventId)`, unique `Coupon.code`, unique `MapLayout.eventId`,
+unique `Stall(eventId,label)`, unique `StallTypeDef(eventId,name)`, unique `Outbox.dedupeKey`.
 
 ---
 
@@ -476,6 +490,7 @@ Other DB-level guarantees already in schema: unique `Ticket.qrToken`, unique `Pa
 | `Order(userId,status)`, `Order(eventId,status)` | my-orders + admin sales |
 | `Ticket(orderId)`, `Ticket.qrToken` | fulfilment + scan lookup |
 | `Payment.gatewayRef` | webhook idempotency |
+| `WebhookEvent(provider,eventId)` | webhook delivery dedupe |
 | `ScheduleItem(eventId,startsAt)` | timetable render |
 | `AuditLog(entity,entityId,createdAt)` / `(actorId,createdAt)` | audit viewer filters |
 | `Outbox(status)` | sender polls queued rows |

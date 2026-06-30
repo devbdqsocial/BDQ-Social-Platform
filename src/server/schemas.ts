@@ -53,6 +53,18 @@ export const stallTypeSchema = z.object({
 });
 
 /** Buy tickets. Group max 10 per order (BUSINESS-RULES §1.5). */
+const utmSchema = z
+  .object({
+    source: z.string().trim().min(1).max(120).optional(),
+    medium: z.string().trim().min(1).max(120).optional(),
+    campaign: z.string().trim().min(1).max(120).optional(),
+    term: z.string().trim().min(1).max(120).optional(),
+    content: z.string().trim().min(1).max(120).optional(),
+    ref: z.string().trim().min(1).max(120).optional(),
+  })
+  .strict()
+  .refine((v) => Object.keys(v).length > 0);
+
 export const createOrderSchema = z.object({
   eventId: id,
   items: z
@@ -62,7 +74,8 @@ export const createOrderSchema = z.object({
       message: "Max 10 tickets per order",
     }),
   couponCode: z.string().trim().min(1).optional(),
-  utm: z.record(z.string(), z.string()).optional(),
+  utm: utmSchema.optional(),
+  clientOrderKey: z.string().uuid().optional(),
 });
 
 export const couponSchema = z

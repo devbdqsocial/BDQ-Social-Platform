@@ -66,7 +66,7 @@ export function TicketReveal({ orderId, eventName, admitCount, startsAtIso }: { 
       onClick={skip}
       role="dialog"
       aria-label="Tickets confirmed"
-      className="gama-1 bg-1 paint fixed inset-0 z-[60] flex flex-col items-center justify-center overflow-hidden text-center"
+      className="bdq-night paint fixed inset-0 z-[60] flex flex-col items-center justify-center overflow-hidden text-center"
       style={{ animation: reduced ? undefined : "reveal-wipe .4s var(--ease-out, ease) both" }}
     >
       <canvas ref={canvasRef} aria-hidden className="pointer-events-none absolute inset-0 h-full w-full" />

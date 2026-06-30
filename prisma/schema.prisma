@@ -477,6 +477,7 @@ model Order {
   couponId       String?
   coupon         Coupon?        @relation(fields: [couponId], references: [id])
   gatewayOrderId String?        @unique
+  clientOrderKey String?        @unique
   items          Json?
   utm            Json?
   expiresAt      DateTime?
@@ -533,6 +534,17 @@ model Payment {
   @@index([orderId])
   @@index([createdAt]) // reconciliation/date-range queries
   @@index([status, createdAt]) // admin finance aggregates (captured payments by date)
+}
+
+model WebhookEvent {
+  id         String   @id @default(cuid())
+  provider   String
+  eventId    String
+  eventType  String?
+  receivedAt DateTime @default(now())
+
+  @@unique([provider, eventId])
+  @@index([provider, receivedAt])
 }
 
 model Coupon {
@@ -731,7 +743,7 @@ model Booking {
   vendorProfile   VendorProfile? @relation(fields: [vendorProfileId], references: [id])
   source          BookingSource  @default(VENDOR)
   adminDetails    Json?
-  status          BookingStatus  @default(HELD)
+  status          BookingStatus  @default(RESERVED)
   gatewayOrderId  String?        @unique
   payBy           DateTime? // deadline to pay after admin approval (RESERVED→PENDING_PAYMENT window)
   payment         Payment?

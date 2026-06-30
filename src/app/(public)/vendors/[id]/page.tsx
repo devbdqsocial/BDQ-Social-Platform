@@ -49,7 +49,7 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
           { name: v.brandName, path: `/vendors/${v.id}` },
         ])}
       />
-      <section data-header-mode="light" className="gama-1 bg-1 paint flex min-h-[85svh] items-end py-[var(--space-5xl)]">
+      <section data-header-mode="light" className="bdq-night paint flex min-h-[85svh] items-end py-[var(--space-5xl)]">
         <div className="wrapper w-full">
           <Link href="/vendors" data-cursor className="f-paragraph-small f-bold t-upper" style={{ letterSpacing: "0.14em" }}>
             ← All brands
@@ -97,15 +97,15 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
       </section>
 
       {liveOffers.length > 0 && (
-        <section className="gama-2 surface-2 paint py-[var(--space-4xl)]">
+        <section className="bdq-rose paint py-[var(--space-4xl)]">
           <div className="wrapper">
             <h2 className="f-exat f-h42">Live offers</h2>
             <ul className="mt-[var(--space-lg)] grid gap-[var(--space-lg)] sm:grid-cols-2">
               {liveOffers.map((o) => (
-                <li key={o.id} className="surface-1 p-[var(--space-lg)]" style={{ border: "1px solid color-mix(in srgb, currentColor 22%, transparent)" }}>
+                <li key={o.id} className="bdq-surface p-[var(--space-lg)]" style={{ border: "1px solid color-mix(in srgb, currentColor 22%, transparent)" }}>
                   <div className="flex items-center justify-between gap-[var(--space-md)]">
                     <p className="f-exat f-h32">{o.title}</p>
-                    <span className="badge-rpa">{validityLabel(new Date(o.endsAtIso))}</span>
+                    <span className="badge-bdq">{validityLabel(new Date(o.endsAtIso))}</span>
                   </div>
                   <p className="f-paragraph-small mt-[var(--space-xs)] opacity-75">{o.terms}</p>
                   <Link href="/offers" data-cursor className="f-paragraph-small f-bold t-upper link-underline mt-[var(--space-md)] inline-block" style={{ letterSpacing: "0.06em" }}>Show at stall →</Link>
@@ -131,7 +131,7 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
         </section>
       )}
 
-      <section className="gama-3 bg-3 paint flex min-h-[60svh] items-center py-[var(--space-5xl)]">
+      <section className="bdq-spark paint flex min-h-[60svh] items-center py-[var(--space-5xl)]">
         <div className="wrapper text-center">
           <h2 className="f-exat mx-auto max-w-[18ch] f-h100">
             Find {v.brandName} at the market.

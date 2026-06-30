@@ -9,9 +9,10 @@ import { getVendor, listAssignableStalls } from "@/server/vendors/admin-service"
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
-import { Select } from "@/components/ui/input";
+import { Input, Select } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { approveAction, approveForPaymentAction, assignStallAction, logCallbackAction, rejectAction } from "./actions";
+import { formatPaise } from "@/lib/utils";
+import { approveForPaymentAction, assignStallAction, logCallbackAction, recordOfflinePaymentAction, rejectAction } from "./actions";
 
 export const metadata: Metadata = { title: "Vendor" };
 
@@ -21,6 +22,10 @@ const STATUS: Record<string, { label: string; variant: "primary" | "warning" | "
   APPROVED: { label: "Approved", variant: "success" },
   REJECTED: { label: "Declined", variant: "danger" },
 };
+
+function stallAmount(stall: { priceInPaise: number | null; stallType: { priceInPaise: number } | null }) {
+  return stall.priceInPaise ?? stall.stallType?.priceInPaise ?? 0;
+}
 
 export default async function AdminVendorDetail({ params }: { params: Promise<{ id: string }> }) {
   await requirePermission("VENDOR_VIEW");
@@ -35,6 +40,7 @@ export default async function AdminVendorDetail({ params }: { params: Promise<{ 
   const KYC_DOC_LABELS: Record<string, string> = { pan: "PAN card", fssai: "FSSAI", gst: "GST cert", id: "Photo ID" };
   const kycDocs = Object.entries(KYC_DOC_LABELS).filter(([k]) => docUrls[k]?.url);
   const reserved = v.bookings.find((b) => b.status === "RESERVED");
+  const pendingPayments = v.bookings.filter((b) => b.status === "PENDING_PAYMENT");
   const signed = v.contract?.status === "SIGNED";
 
   return (
@@ -105,6 +111,36 @@ export default async function AdminVendorDetail({ params }: { params: Promise<{ 
         </Card>
       )}
 
+      {pendingPayments.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Record offline stall payment</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {pendingPayments.map((b) => {
+              const amountPaise = stallAmount(b.stall);
+              return (
+                <ActionForm key={b.id} action={recordOfflinePaymentAction} success="Offline payment recorded" className="grid gap-3 border-b border-border pb-4 last:border-0 last:pb-0 md:grid-cols-[1fr_1fr_auto] md:items-end">
+                  <input type="hidden" name="id" value={v.id} />
+                  <input type="hidden" name="bookingId" value={b.id} />
+                  <input type="hidden" name="amountPaise" value={amountPaise} />
+                  <div className="md:col-span-3 text-sm text-muted-foreground">
+                    {b.event.name} · stall {b.stall.label} · {formatPaise(amountPaise)}
+                  </div>
+                  <Field label="Payment reference">
+                    <Input name="gatewayRef" placeholder="Cash receipt or UPI UTR" required />
+                  </Field>
+                  <Field label="Payment note">
+                    <Input name="note" placeholder="Who received it and where" required />
+                  </Field>
+                  <Button type="submit" disabled={amountPaise <= 0}>Mark paid</Button>
+                </ActionForm>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
+
       {!decided && (
         <Card>
           <CardHeader>
@@ -139,19 +175,6 @@ export default async function AdminVendorDetail({ params }: { params: Promise<{ 
               </ActionForm>
             )}
 
-            <ActionForm action={approveAction} success="Vendor approved & stall assigned" className="flex flex-wrap items-end gap-3 border-t border-border pt-4">
-              <input type="hidden" name="id" value={v.id} />
-              <Field label="Assign a stall" className="min-w-56 flex-1">
-                <Select name="stallId" required>
-                  <option value="">Choose a stall…</option>
-                  {stalls.map((s) => (
-                    <option key={s.id} value={s.id}>{s.event.name} · {s.label} ({s.status})</option>
-                  ))}
-                </Select>
-              </Field>
-              <Button type="submit">Approve &amp; assign</Button>
-            </ActionForm>
-
             <ActionForm action={rejectAction} success="Application declined">
               <input type="hidden" name="id" value={v.id} />
               <Button type="submit" variant="ghost" size="sm">Decline application</Button>
@@ -163,7 +186,7 @@ export default async function AdminVendorDetail({ params }: { params: Promise<{ 
       {v.approvalStatus === "APPROVED" && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Assign a stall</CardTitle>
+            <CardTitle className="text-base">Assign a stall for payment</CardTitle>
           </CardHeader>
           <CardContent>
             {stalls.length === 0 ? (
@@ -171,7 +194,7 @@ export default async function AdminVendorDetail({ params }: { params: Promise<{ 
                 No stalls available yet — build the event layout first under Events → Event layout.
               </p>
             ) : (
-              <ActionForm action={assignStallAction} success="Stall assigned" className="flex flex-wrap items-end gap-3">
+              <ActionForm action={assignStallAction} success="Stall assigned for payment" className="flex flex-wrap items-end gap-3">
                 <input type="hidden" name="id" value={v.id} />
                 <Field label="Stall" className="min-w-56 flex-1">
                   <Select name="stallId" required>
@@ -181,7 +204,7 @@ export default async function AdminVendorDetail({ params }: { params: Promise<{ 
                     ))}
                   </Select>
                 </Field>
-                <Button type="submit">Assign stall</Button>
+                <Button type="submit">Assign for payment</Button>
               </ActionForm>
             )}
           </CardContent>

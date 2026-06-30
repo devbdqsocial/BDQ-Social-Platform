@@ -1,7 +1,7 @@
 import { PrismaClient, Prisma } from "@prisma/client";
 
-// Proves vendor approval creates a Booking (BOOKED) and the partial-unique index blocks assigning
-// the same stall twice. Mirrors src/server/vendors/admin-service.ts approveVendor.
+// Proves vendor approval creates a payment-pending Booking and the partial-unique index blocks
+// assigning the same stall twice.
 // Run: node --env-file=.env scripts/verify-approval.mjs
 
 const db = new PrismaClient();
@@ -22,21 +22,21 @@ async function main() {
   await db.booking.deleteMany({ where: { stallId: stall.id } });
   await db.stall.update({ where: { id: stall.id }, data: { status: "AVAILABLE", holdUntil: null } });
 
-  // approve A → Booking + Stall BOOKED
+  // approve A -> Booking(PENDING_PAYMENT) + Stall HELD until payment capture
   await db.$transaction(async (tx) => {
-    await tx.booking.create({ data: { eventId: event.id, stallId: stall.id, vendorProfileId: pa.id, source: "VENDOR", status: "BOOKED" } });
-    await tx.stall.update({ where: { id: stall.id }, data: { status: "BOOKED" } });
+    await tx.booking.create({ data: { eventId: event.id, stallId: stall.id, vendorProfileId: pa.id, source: "VENDOR", status: "PENDING_PAYMENT", payBy: new Date(Date.now() + 48 * 3600 * 1000) } });
+    await tx.stall.update({ where: { id: stall.id }, data: { status: "HELD" } });
     await tx.vendorProfile.update({ where: { id: pa.id }, data: { approvalStatus: "APPROVED" } });
   });
   const sAfter = await db.stall.findUnique({ where: { id: stall.id } });
-  const bA = await db.booking.findFirst({ where: { stallId: stall.id, vendorProfileId: pa.id, status: "BOOKED" } });
-  console.log(`A approved: booking=${!!bA}, stall=${sAfter.status}`);
-  if (!bA || sAfter.status !== "BOOKED") throw new Error("FAIL: A approval");
+  const bA = await db.booking.findFirst({ where: { stallId: stall.id, vendorProfileId: pa.id, status: "PENDING_PAYMENT" } });
+  console.log(`A approved for payment: booking=${!!bA}, stall=${sAfter.status}`);
+  if (!bA || sAfter.status !== "HELD") throw new Error("FAIL: A approval");
 
-  // approve B → same stall → must be blocked by the partial-unique index
+  // approve B -> same stall -> must be blocked by the partial-unique index
   let blocked = false;
   try {
-    await db.booking.create({ data: { eventId: event.id, stallId: stall.id, vendorProfileId: pb.id, source: "VENDOR", status: "BOOKED" } });
+    await db.booking.create({ data: { eventId: event.id, stallId: stall.id, vendorProfileId: pb.id, source: "VENDOR", status: "PENDING_PAYMENT" } });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") blocked = true;
     else throw e;
@@ -49,7 +49,7 @@ async function main() {
   await db.stall.update({ where: { id: stall.id }, data: { status: "AVAILABLE", holdUntil: null } });
   await db.vendorProfile.deleteMany({ where: { id: { in: [pa.id, pb.id] } } });
   await db.user.deleteMany({ where: { id: { in: ["vtest_a", "vtest_b"] } } });
-  console.log("OK: approval creates Booking + no double-assign");
+  console.log("OK: approval creates payment-pending Booking + no double-assign");
 }
 
 main()

@@ -16,7 +16,7 @@ export async function PostEventMemories({ eventName, brandCount, sponsorCount }:
   ].filter(Boolean);
 
   return (
-    <section className="gama-2 surface-2 paint py-[var(--space-4xl)]">
+    <section className="bdq-rose paint py-[var(--space-4xl)]">
       <div className="wrapper max-w-[68rem]">
         <p className="kicker opacity-75">That&apos;s a wrap</p>
         <h2 className="f-exat f-h76 mt-[var(--space-sm)] max-w-[18ch]">The night that was</h2>

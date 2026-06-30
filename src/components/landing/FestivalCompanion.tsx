@@ -16,7 +16,7 @@ const TILES: { href: string; label: string; sub: string; icon: LucideIcon }[] = 
 
 export function FestivalCompanion() {
   return (
-    <section className="gama-1 bg-1 paint py-[var(--space-3xl)]">
+    <section className="bdq-night paint py-[var(--space-3xl)]">
       <div className="wrapper max-w-[68rem]">
         <p className="kicker opacity-75">Your festival companion · live now</p>
         <h2 className="f-exat f-h60 mt-[var(--space-sm)]">Everything you need, in your pocket</h2>

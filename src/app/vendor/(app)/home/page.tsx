@@ -86,6 +86,8 @@ export default async function VendorHome({ searchParams }: { searchParams: Promi
 
   const label = booking?.stall.label;
   const fee = booking ? booking.stall.priceInPaise ?? booking.stall.stallType?.priceInPaise ?? 0 : 0;
+  const vendorUrl = `https://${process.env.APP_BASE_DOMAIN ?? "bdqsocial.com"}/vendors/${profile.id}?ref=vendor-${profile.id}`;
+  const vendorShareHref = `https://wa.me/?text=${encodeURIComponent(`We are joining BDQ Social. See our stall profile: ${vendorUrl}`)}`;
   const isFood = profile.productCategory === "Food & Beverage";
 
   // Payment node sub-line — the highest-anxiety state gets explicit copy + SLA (vendor-portal.md §3).
@@ -167,7 +169,7 @@ export default async function VendorHome({ searchParams }: { searchParams: Promi
           <p className="kicker opacity-60">Vendor portal</p>
           <h1 className="f-exat f-h60 truncate">{profile.brandName}</h1>
         </div>
-        <span className={`badge-rpa ml-auto shrink-0 ${rejected ? "" : "badge-rpa--muted"}`}>
+        <span className={`badge-bdq ml-auto shrink-0 ${rejected ? "" : "badge-bdq--muted"}`}>
           {APPROVAL_BADGE[profile.approvalStatus] ?? profile.approvalStatus}
         </span>
       </header>
@@ -246,6 +248,9 @@ export default async function VendorHome({ searchParams }: { searchParams: Promi
                 <Link href="/vendor/add-ons" className="link--split f-paragraph font-bold" style={{ color: "var(--light-blue)" }}>
                   Order tables, chairs &amp; power <span className="arrow">→</span>
                 </Link>
+                <a href={vendorShareHref} target="_blank" rel="noopener noreferrer" className="link--split f-paragraph font-bold">
+                  Share your stall profile <span className="arrow">-&gt;</span>
+                </a>
               </div>
             ) : rejected ? (
               <div className="space-y-[var(--space-md)]">
@@ -268,6 +273,9 @@ export default async function VendorHome({ searchParams }: { searchParams: Promi
                   </div>
                 )}
                 <PayStep bookingId={booking.id} amountPaise={fee} />
+                <a href={vendorShareHref} target="_blank" rel="noopener noreferrer" className="link--split f-paragraph-small font-bold">
+                  Announce your approval <span className="arrow">-&gt;</span>
+                </a>
               </div>
             ) : (
               <div className="space-y-[var(--space-md)]">

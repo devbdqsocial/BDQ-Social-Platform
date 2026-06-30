@@ -46,7 +46,7 @@ error. ✅ Expanded this pass to include guide/schedule/offers/gallery + both co
 | OG image generation | ✅ (pre-existing) | Site default + dynamic per-event (name/date/location) via `next/og`. |
 | robots.txt / sitemap.xml | ✅ | Both bypass middleware (matcher excludes them). |
 | metadataBase | ✅ (pre-existing) | Env-derived; absolute URLs resolve. |
-| Mobile-first / viewport | ✅ | Responsive RPA layout, theme-color set. |
+| Mobile-first / viewport | ✅ | Responsive BDQ layout, theme-color set. |
 | JS rendering for bots | ✅ (pre-existing) | `htmlLimitedBots: /./` in `next.config.ts` forces full `<head>` metadata for all UAs. |
 | CSP vs crawlability | ✅ | Strict nonce CSP doesn't block Googlebot. JSON-LD is a non-executable data block → no nonce needed (see [`JsonLd.tsx`](../../src/components/seo/JsonLd.tsx)). |
 | hreflang | n/a | Single locale `en-IN`. Not needed. |

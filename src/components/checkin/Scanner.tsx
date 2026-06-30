@@ -14,6 +14,7 @@ type Result = {
   admitted?: number;
   remaining?: number;
   admitCount?: number;
+  message?: string;
 };
 
 const BANNER: Record<ResultKind, { bg: string; fg: string; label: string }> = {
@@ -26,6 +27,12 @@ const BANNER: Record<ResultKind, { bg: string; fg: string; label: string }> = {
 const newId = () =>
   typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
 
+const CHECKIN_ERROR: Record<string, string> = {
+  UNAUTHENTICATED: "Sign in again on this device.",
+  FORBIDDEN: "This account does not have check-in access.",
+  VALIDATION: "That QR payload is not a valid BDQ ticket token.",
+};
+
 /** Returns the server Result, or null on a network failure (treat as offline → queue). */
 async function postScan(item: QueuedScan): Promise<Result | null> {
   try {
@@ -35,7 +42,13 @@ async function postScan(item: QueuedScan): Promise<Result | null> {
       body: JSON.stringify(item),
     });
     const json = await res.json();
-    return res.ok && json.ok ? json.data : { result: "INVALID" };
+    if (res.ok && json.ok) return json.data;
+    if (res.status >= 500) return null;
+    const code = json?.error?.code;
+    return {
+      result: "INVALID",
+      message: CHECKIN_ERROR[code] ?? (res.status === 429 ? "Too many scans from this device. Pause briefly and try again." : "Ticket could not be checked in."),
+    };
   } catch {
     return null;
   }
@@ -123,7 +136,7 @@ export function Scanner() {
       );
     } catch {
       setScanning(false);
-      setResult({ result: "INVALID" });
+      setResult({ result: "INVALID", message: "Camera unavailable. Check browser permission, then use manual entry if needed." });
     }
   };
 
@@ -170,6 +183,7 @@ export function Scanner() {
               {(result.remaining ?? 0) > 0 && ` · ${result.remaining} more can still enter on this QR`}
             </p>
           )}
+          {result.result !== "VALID" && result.message && <p className="mt-1 text-sm opacity-90">{result.message}</p>}
         </div>
       )}
 
