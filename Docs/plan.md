@@ -30,7 +30,7 @@ Do these once before P0. Keep all secrets server-side; fill `.env` (see [project
 - [ ] **P-1.3** Create **Firebase** project; enable **Phone** auth; generate web config + Admin SDK service account. Verify: web config + admin creds saved.
 - [ ] **P-1.4** Create **Razorpay** account (Test mode); get key id/secret; configure a webhook secret (URL set in P1). Verify: test keys saved.
 - [ ] **P-1.5** Create **Interakt** account (WhatsApp BSP); get API key/base URL; start ticket template approval. Verify: API key saved, template submitted.
-- [ ] **P-1.6** Create **Resend** account; verify sending domain/`EMAIL_FROM`. Verify: test email sends.
+- [ ] **P-1.6** Create **SendGrid** account; verify sending sender/domain/`EMAIL_FROM`. Verify: test email sends.
 - [ ] **P-1.7** Create **Cloudinary** account; get cloud name/key/secret; an upload preset. Verify: a manual test upload works.
 - [ ] **P-1.8** Create **Vercel** project linked to the repo; plan wildcard domain `*.bdqsocial.com` + apex (DNS in P0.13). Verify: empty deploy succeeds.
 
@@ -72,7 +72,7 @@ and buy a ticket that arrives on WhatsApp + email.
 - [ ] **P1.8** **Razorpay order**: `POST /api/orders` creates `Order(PENDING)` + RZP order; checkout on client. dep: P1.6, P-1.4. Verify: test checkout opens with correct amount.
 - [ ] **P1.9** **Webhook fulfilment:** `POST /api/payments/razorpay/webhook` — **verify signature**, **idempotent by gatewayRef**, txn: Order→PAID + issue Tickets + enqueue notifications. dep: P1.8. Verify: test-mode payment marks order paid exactly once (replay webhook = no dup).
 - [ ] **P1.10** **Ticket + signed QR:** one `Ticket` per seat with a **signed `qrToken`**; QR image via `qrcode`. dep: P1.9. Verify: ticket row created; QR decodes to a valid token.
-- [ ] **P1.11** **Notifications outbox:** write outbox rows on issue; sender sends **Interakt WhatsApp** (QR media) + **Resend email**; retries; **WhatsApp→email/SMS fallback**; idempotent send. dep: P1.10, P-1.5, P-1.6. Verify: paid test order delivers WhatsApp + email within ~60s; forced WA failure falls back.
+- [ ] **P1.11** **Notifications outbox:** write outbox rows on issue; sender sends **Interakt WhatsApp** (QR media) + **SendGrid email**; retries; **WhatsApp→email/SMS fallback**; idempotent send. dep: P1.10, P-1.5, P-1.6. Verify: paid test order delivers WhatsApp + email within ~60s; forced WA failure falls back.
 - [ ] **P1.12** **My Tickets** page (QR, status, share/download; offline-cached). dep: P1.10. Verify: tickets list shows; QR viewable offline.
 - [ ] **P1.13** **Growth bits:** waitlist/notify-me, **UTM capture** on entry links (store on Order), social-share reward coupon. dep: P1.7. Verify: UTM persisted on an order; waitlist signup stored; share yields a coupon.
 - [ ] **P1.14** **Basic analytics** (admin): registrations, ticket sales over time, revenue. dep: P1.9. Verify: dashboard numbers match seeded test sales.

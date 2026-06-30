@@ -94,28 +94,28 @@ export default async function CampaignsPage({ searchParams }: PageProps) {
           </div>
 
           <div className="grid gap-6 md:grid-cols-2">
-            {/* Resend Configuration Block */}
+            {/* SendGrid Configuration Block */}
             <div className="rounded-xl border bg-card/60 backdrop-blur-md p-6 space-y-4 shadow-sm">
               <div className="flex justify-between items-start">
                 <div>
-                  <h3 className="font-semibold text-base">Resend Email API</h3>
+                  <h3 className="font-semibold text-base">SendGrid Email API</h3>
                   <p className="text-xs text-muted-foreground">Used for sending raw HTML layout broadcast emails.</p>
                 </div>
                 <div className={`px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide border ${
-                  settings.RESEND_API_KEY ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
+                  settings.SENDGRID_API_KEY ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
                 }`}>
-                  {settings.RESEND_API_KEY ? "Active" : "Not Configured"}
+                  {settings.SENDGRID_API_KEY ? "Active" : "Not Configured"}
                 </div>
               </div>
 
               <form action={updateSettingAction} className="space-y-4 pt-2 border-t border-muted">
-                <input type="hidden" name="key" value="RESEND_API_KEY" />
-                <Field label="Resend API Key" hint="Starts with re_">
-                  <Input 
+                <input type="hidden" name="key" value="SENDGRID_API_KEY" />
+                <Field label="SendGrid API Key" hint="Starts with SG.">
+                  <Input
                     type="password"
-                    name="value" 
-                    placeholder={settings.RESEND_API_KEY ? "••••••••••••••••••••••••" : "Paste new Resend key"} 
-                    required 
+                    name="value"
+                    placeholder={settings.SENDGRID_API_KEY ? "••••••••••••••••••••••••" : "Paste new SendGrid key"}
+                    required
                   />
                 </Field>
                 <Button type="submit" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white">
@@ -125,7 +125,7 @@ export default async function CampaignsPage({ searchParams }: PageProps) {
 
               <form action={updateSettingAction} className="space-y-4 pt-4 border-t border-muted">
                 <input type="hidden" name="key" value="EMAIL_FROM" />
-                <Field label="Sender Email address (EMAIL_FROM)" hint="Needs to be a verified domain on Resend">
+                <Field label="Sender Email address (EMAIL_FROM)" hint="Needs to be a verified sender on SendGrid">
                   <Input 
                     name="value" 
                     defaultValue={settings.EMAIL_FROM} 

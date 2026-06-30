@@ -19,7 +19,7 @@ function; the rest activate a feature and stay dormant until set.
 | `NEXT_PUBLIC_FIREBASE_*` (API_KEY, AUTH_DOMAIN, PROJECT_ID, STORAGE_BUCKET, MESSAGING_SENDER_ID, APP_ID) | for customer/vendor login | phone OTP (`firebase-client.ts`) |
 | `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, `NEXT_PUBLIC_RAZORPAY_KEY_ID` | for payments | order create + webhook + checkout |
 | `WHATSAPP_PROVIDER`, `WHATSAPP_CLOUD_TOKEN`, `WHATSAPP_CLOUD_PHONE_ID`, `WHATSAPP_TEMPLATE_TICKET` | for WhatsApp | Cloud API (`src/lib/whatsapp-cloud.ts`) |
-| `RESEND_API_KEY`, `EMAIL_FROM` | for email | ticket + reminder emails |
+| `SENDGRID_API_KEY`, `EMAIL_FROM` | for email | ticket + reminder emails |
 | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | for asset upload | vendor logos/products |
 
 ## 2. Database
@@ -41,7 +41,7 @@ function; the rest activate a feature and stay dormant until set.
    is mandatory for SUPER_ADMIN/ADMIN). After this one bootstrap, manage everything in-app:
    - **My Profile › Account** — enable/reset 2FA and regenerate backup codes (no scripts).
    - **Staff › Invite by email** — new admins set their own password + 2FA from a secure link
-     (needs `RESEND_API_KEY`/`EMAIL_FROM`); first login without 2FA is auto-routed to `/admin/setup-2fa`.
+     (needs `SENDGRID_API_KEY`/`EMAIL_FROM`); first login without 2FA is auto-routed to `/admin/setup-2fa`.
    - Locked out? Sign in with a saved **backup code** in place of the authenticator code.
 
 ## 3. Vercel + DNS
@@ -57,7 +57,7 @@ function; the rest activate a feature and stay dormant until set.
 - **Razorpay** → Dashboard → Webhooks → `https://bdqsocial.com/api/payments/razorpay/webhook`, secret
   = `RAZORPAY_WEBHOOK_SECRET`, events `payment.captured`. Fulfilment is idempotent + reconciled.
 - **WhatsApp Cloud** → approve a `ticket_confirmation` body template (3 vars: event, count, link).
-- **Resend** → verify the `EMAIL_FROM` domain (else only the account owner receives mail).
+- **SendGrid** → verify the `EMAIL_FROM` sender/domain (unverified senders are rejected at send time).
 
 ## 5. Go / no-go
 

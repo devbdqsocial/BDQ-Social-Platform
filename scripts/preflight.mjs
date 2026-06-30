@@ -7,7 +7,7 @@ const REQUIRED = ["DATABASE_URL", "DATABASE_URL_DIRECT", "SESSION_SECRET", "CRON
 
 const FEATURES = {
   "Payments (Razorpay)": ["RAZORPAY_KEY_ID", "RAZORPAY_KEY_SECRET", "RAZORPAY_WEBHOOK_SECRET", "NEXT_PUBLIC_RAZORPAY_KEY_ID"],
-  "Email (Resend)": ["RESEND_API_KEY", "EMAIL_FROM"],
+  "Email (SendGrid)": ["SENDGRID_API_KEY", "EMAIL_FROM"],
   "WhatsApp (Cloud API)": ["WHATSAPP_CLOUD_TOKEN", "WHATSAPP_CLOUD_PHONE_ID"],
   "Login (Firebase)": ["NEXT_PUBLIC_FIREBASE_API_KEY", "NEXT_PUBLIC_FIREBASE_PROJECT_ID"],
   "Uploads (Cloudinary)": ["CLOUDINARY_CLOUD_NAME", "CLOUDINARY_API_KEY", "CLOUDINARY_API_SECRET"],
@@ -35,8 +35,8 @@ console.log("\nSafety:");
 if (process.env.DEV_ADMIN === "true" || process.env.DEV_VENDOR === "true") {
   warn("DEV_ADMIN/DEV_VENDOR is true — must be off in production (open admin/vendor access).");
 }
-if (process.env.EMAIL_FROM && /onboarding@resend\.dev/.test(process.env.EMAIL_FROM)) {
-  warn("EMAIL_FROM is the Resend sandbox — verify a real domain or mail only reaches the account owner.");
+if (process.env.SENDGRID_API_KEY && !process.env.EMAIL_FROM) {
+  warn("SENDGRID_API_KEY is set but EMAIL_FROM is empty — SendGrid rejects sends from an unverified sender.");
 }
 
 console.log("\nDatabase:");

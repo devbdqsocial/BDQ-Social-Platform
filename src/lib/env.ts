@@ -51,7 +51,7 @@ const schema = z.object({
   INTERAKT_BASE_URL: z.string().optional(),
   INTERAKT_TEMPLATE_TICKET: z.string().optional(),
   INTERAKT_TEMPLATE_WAITLIST: z.string().optional(),
-  RESEND_API_KEY: z.string().optional(),
+  SENDGRID_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().optional(),
   CLOUDINARY_CLOUD_NAME: z.string().optional(),
   CLOUDINARY_API_KEY: z.string().optional(),

@@ -1,6 +1,6 @@
 import "server-only";
 import { db } from "@/server/db";
-import { resendConfigured } from "@/lib/resend";
+import { emailConfigured } from "@/lib/sendgrid";
 
 /** Read-only Communication overview: provider config + outbox queue health. Reuses the Outbox table. */
 
@@ -35,7 +35,7 @@ export async function communicationOverview() {
   const count = (s: "QUEUED" | "SENT" | "FAILED") => grouped.find((g) => g.status === s)?._count._all ?? 0;
 
   return {
-    email: { configured: resendConfigured() },
+    email: { configured: await emailConfigured() },
     whatsapp: { provider: provider ?? null, configured: whatsappConfigured },
     queue: { queued: count("QUEUED"), sent: count("SENT"), failed: count("FAILED") },
     lastSentAt: lastSent?.sentAt ? lastSent.sentAt.toISOString() : null,

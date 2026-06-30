@@ -205,7 +205,7 @@ export function verifyEmailHtml(): string {
     preheader: "BDQ Social email integration test",
     eyebrow: "Integration test",
     title: "Email is working",
-    intro: "Resend can send using the configured BDQ Social sender.",
+    intro: "SendGrid can send using the configured BDQ Social sender.",
     body: emailPanel(`<p style="margin:0;color:${brand.ink};font-weight:800">Delivery path verified.</p>`, brand.green),
   });
 }

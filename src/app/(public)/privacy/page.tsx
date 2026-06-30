@@ -36,7 +36,7 @@ export default function PrivacyPage() {
         <li><strong>Razorpay</strong> — payment processing.</li>
         <li><strong>Google Firebase</strong> — phone-number OTP authentication.</li>
         <li><strong>Cloudinary</strong> — image/asset hosting.</li>
-        <li><strong>Resend</strong> — transactional email.</li>
+        <li><strong>SendGrid</strong> — transactional email.</li>
         <li><strong>Interakt / Meta (WhatsApp)</strong> — transactional WhatsApp messages.</li>
         <li><strong>Neon / Vercel</strong> — database and application hosting.</li>
       </ul>

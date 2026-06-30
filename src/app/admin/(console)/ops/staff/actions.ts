@@ -7,7 +7,7 @@ import { requireAdminRole } from "@/server/auth/guard";
 import { upsertStaff, removeStaffAccess, revokeStaffSessions, StaffEmailTakenError } from "@/server/staff/service";
 import { isStaffPreset, type StaffPreset } from "@/lib/staff-presets";
 import { createInviteToken, inviteUrl } from "@/server/auth/invite";
-import { resendConfigured, sendEmail } from "@/lib/resend";
+import { emailConfigured, sendEmail } from "@/lib/sendgrid";
 import { staffInviteEmailHtml } from "@/lib/email-template";
 
 /**
@@ -69,8 +69,8 @@ export async function inviteStaffAction(formData: FormData): Promise<Result<null
     if (isAdminPreset && session.role !== "SUPER_ADMIN") {
       throw new Error("Only Super Admin can invite an Admin.");
     }
-    if (!resendConfigured()) {
-      throw new Error("Email isn't configured (RESEND_API_KEY). Use the password field above to set a temp password instead.");
+    if (!(await emailConfigured())) {
+      throw new Error("Email isn't configured (SENDGRID_API_KEY). Use the password field above to set a temp password instead.");
     }
 
     const role = isAdminPreset ? "ADMIN" : "STAFF";

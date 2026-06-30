@@ -46,7 +46,7 @@ export default async function CommunicationPage() {
       <Card>
         <CardHeader><CardTitle>Providers</CardTitle></CardHeader>
         <CardContent className="grid gap-4">
-          <ProviderRow name="Email (Resend)" ok={o.email.configured} detail="Transactional email" />
+          <ProviderRow name="Email (SendGrid)" ok={o.email.configured} detail="Transactional email" />
           <ProviderRow name="WhatsApp" ok={o.whatsapp.configured} detail={o.whatsapp.provider ? `Provider: ${o.whatsapp.provider}` : "No provider set"} />
         </CardContent>
       </Card>

@@ -17,7 +17,7 @@ host locally). Per-action RBAC is enforced server-side, not by the middleware.
 
 Next.js 15 (App Router, server actions + route handlers) · TypeScript strict · Tailwind v4 +
 shadcn/ui · Prisma + Neon Postgres · Firebase phone OTP + jose session cookie · Razorpay
-(webhook-driven, idempotent) · react-konva map · WhatsApp Cloud API (or Interakt) · Resend email ·
+(webhook-driven, idempotent) · react-konva map · WhatsApp Cloud API (or Interakt) · SendGrid email ·
 Cloudinary · Vercel + cron. **Docs are the source of truth** — see [Docs/](Docs/) (`project.md`, `ARCHITECTURE.md`,
 `SCHEMA.md`, `API.md`, `BUSINESS-RULES.md`, `design.md`, `plan.md`).
 
@@ -42,7 +42,7 @@ DEV_ADMIN=true                     # auto-login seeded SUPER_ADMIN (dev only)
 DEV_VENDOR=true                    # auto-login seeded vendor   (dev only)
 ```
 
-Razorpay / Firebase / Interakt / Resend / Cloudinary keys are **optional** — those features no-op or
+Razorpay / Firebase / Interakt / SendGrid / Cloudinary keys are **optional** — those features no-op or
 are exercised by the verify scripts when unset. `DEV_ADMIN`/`DEV_VENDOR` make the admin and vendor
 zones usable without real login; they are **staging-only and must be `false` in production**
 (see [src/server/auth/guard.ts](src/server/auth/guard.ts)).
@@ -52,7 +52,7 @@ A full click-by-click test tour is in [Docs/TESTING.md](Docs/TESTING.md).
 ## Verify scripts
 
 Each proves one slice against the real DB without spending money (real Razorpay *order* = no charge;
-self-signed webhooks; Resend's simulated address). Run the dev server, then in another shell:
+self-signed webhooks; SendGrid sandbox mode). Run the dev server, then in another shell:
 
 ```bash
 node --env-file=.env scripts/verify-<name>.mjs
@@ -66,7 +66,7 @@ node --env-file=.env scripts/verify-<name>.mjs
 | `verify-stall-payment` | Stall booking payment path → Booking PENDING |
 | `verify-approval` | Vendor approval flips stall to BOOKED; reject frees it |
 | `verify-checkin` / `verify-checkin-sync` | QR check-in + idempotent offline re-sync |
-| `verify-email` | Resend send (simulated address) |
+| `verify-email` | SendGrid send (sandbox mode) |
 | `verify-cloudinary` | Signed direct-upload signature |
 | `verify-ratelimit` | DB fixed-window rate limiting trips |
 
@@ -83,7 +83,7 @@ node --env-file=.env scripts/verify-<name>.mjs
    | `DEV_ADMIN`, `DEV_VENDOR` | staging only | `true` for staging, omit/`false` in prod |
    | `NEXT_PUBLIC_FIREBASE_*` | for real login | phone OTP |
    | `RAZORPAY_*`, `NEXT_PUBLIC_RAZORPAY_KEY_ID` | for payments | + webhook secret |
-   | `RESEND_API_KEY`, `EMAIL_FROM` | for email | |
+   | `SENDGRID_API_KEY`, `EMAIL_FROM` | for email | |
    | `WHATSAPP_CLOUD_TOKEN`, `WHATSAPP_CLOUD_PHONE_ID` (+ `WHATSAPP_TEMPLATE_TICKET`) | for WhatsApp | official Cloud API; dormant until set |
    | `INTERAKT_API_KEY`, `INTERAKT_BASE_URL`, `INTERAKT_TEMPLATE_TICKET` | alt WhatsApp | Interakt BSP (set `WHATSAPP_PROVIDER=interakt`) |
    | `CLOUDINARY_*` | for asset upload | |

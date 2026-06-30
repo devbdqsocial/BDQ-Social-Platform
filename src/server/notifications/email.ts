@@ -1,7 +1,7 @@
 import { fmtDateTime, fmtDateFull } from "@/lib/date-formats";
 import "server-only";
 import { db } from "@/server/db";
-import type { EmailAttachment } from "@/lib/resend";
+import type { EmailAttachment } from "@/lib/sendgrid";
 import { financeDigestEmailHtml, reminderEmailHtml, ticketEmailHtml, ticketEmailSubject } from "@/lib/email-template";
 import { getEventPnl } from "@/server/finance/pnl";
 import { formatPaise } from "@/lib/utils";

@@ -32,7 +32,7 @@ within 10 minutes.
 | # | Item | Verify |
 | --- | --- | --- |
 | 2.1 | **[BLOCKER]** External scheduler (§1) | see §1 |
-| 2.2 | **[BLOCKER]** Prod env vars set on Vercel: `SESSION_SECRET` (≥32), `CRON_SECRET` (≥32), `RAZORPAY_*` (live keys + webhook secret), `DATABASE_URL(+_DIRECT)`, Firebase public config, `RESEND_API_KEY`+`EMAIL_FROM`, Cloudinary trio, `KYC_ENC_KEY`, `CAMPAIGN_WEBHOOK_SECRET`, `APP_BASE_DOMAIN`; `ADMIN_NO_2FA_EMAILS`/`DEV_*` **absent** | Deploy boots (env.ts enforces); `scripts/preflight.mjs` |
+| 2.2 | **[BLOCKER]** Prod env vars set on Vercel: `SESSION_SECRET` (≥32), `CRON_SECRET` (≥32), `RAZORPAY_*` (live keys + webhook secret), `DATABASE_URL(+_DIRECT)`, Firebase public config, `SENDGRID_API_KEY`+`EMAIL_FROM`, Cloudinary trio, `KYC_ENC_KEY`, `CAMPAIGN_WEBHOOK_SECRET`, `APP_BASE_DOMAIN`; `ADMIN_NO_2FA_EMAILS`/`DEV_*` **absent** | Deploy boots (env.ts enforces); `scripts/preflight.mjs` |
 | 2.3 | **[BLOCKER]** Prod DB migrated BEFORE deploying schema-dependent code — prod is the Vercel Neon (ep-dry-sunset), not the local-.env DB | `prisma migrate deploy` against prod direct URL; `migrate status` clean |
 | 2.4 | **[BLOCKER]** Razorpay live mode: webhook URL `https://bdqsocial.com/api/payments/razorpay/webhook` registered for `payment.captured` + `order.paid`, secret matches env; a real ₹1 purchase end-to-end (P4.7) | ₹1 ticket arrives on email; webhook log 200 |
 | 2.5 | WhatsApp: Cloud API token + phone id live, `ticket_confirmation` template **approved by Meta** (lead time!), or provider consciously left dormant (email-only delivery at launch is acceptable — decide, don't drift) | `scripts/verify-outbox.mjs` against prod config |

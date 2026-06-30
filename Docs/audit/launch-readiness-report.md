@@ -24,7 +24,7 @@ Built, tested (312 unit + gated DB integration), prod-migrated, deployed to `mai
 - **Payments core:** webhook-driven, **idempotent** (by `gatewayRef`), amount-verified fulfilment for
   tickets + stalls + add-ons; oversold guards; reconcile cron (tickets only — see §5).
 - **Platform:** Prisma + Neon (two DBs), CSP nonce in prod, CI on `main`, Firebase phone OTP +
-  Cloudinary + Resend configured, Sentry **wired** (inert until a DSN is set).
+  Cloudinary + SendGrid configured, Sentry **wired** (inert until a DSN is set).
 
 Honest read: the *software* is launch-grade. That is necessary, not sufficient.
 

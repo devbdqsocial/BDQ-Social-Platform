@@ -284,15 +284,15 @@ export function updateSystemSetting(session: Session, key: string, value: string
  * Business Intent: Expose configured keys to settings layout without displaying secret values entirely.
  */
 /** Secret values are never returned to the client — only a "configured" marker. */
-const SECRET_SETTING_KEYS = new Set(["RESEND_API_KEY", "WHATSAPP_CLOUD_TOKEN"]);
+const SECRET_SETTING_KEYS = new Set(["SENDGRID_API_KEY", "WHATSAPP_CLOUD_TOKEN"]);
 
 export async function getCampaignSettings(): Promise<Record<string, string>> {
   const settings = await db.systemSetting.findMany();
   const result: Record<string, string> = {
-    RESEND_API_KEY: process.env.RESEND_API_KEY ? "CONFIGURED_IN_ENV" : "",
+    SENDGRID_API_KEY: process.env.SENDGRID_API_KEY ? "CONFIGURED_IN_ENV" : "",
     WHATSAPP_CLOUD_TOKEN: process.env.WHATSAPP_CLOUD_TOKEN ? "CONFIGURED_IN_ENV" : "",
     WHATSAPP_CLOUD_PHONE_ID: process.env.WHATSAPP_CLOUD_PHONE_ID || "",
-    EMAIL_FROM: process.env.EMAIL_FROM || "Event Portal <onboarding@resend.dev>"
+    EMAIL_FROM: process.env.EMAIL_FROM || "BDQ Social <hi@bdqsocial.com>"
   };
 
   settings.forEach(s => {

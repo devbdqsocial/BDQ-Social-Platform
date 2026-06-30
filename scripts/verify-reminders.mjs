@@ -1,21 +1,22 @@
 import { PrismaClient } from "@prisma/client";
 
 // Proves the reminders cron: a paid order on an imminent event enqueues a reminder Outbox row that
-// drains to SENT (real Resend send to the simulated address). Dev server running.
+// drains to SENT (real SendGrid send; 202 accepted at send time). Dev server running.
 // Run: node --env-file=.env scripts/verify-reminders.mjs
 
 const db = new PrismaClient();
 const APP = "http://localhost:3000";
 const CRON = process.env.CRON_SECRET;
+const TO = process.env.VERIFY_EMAIL_TO || process.env.EMAIL_FROM?.match(/<([^>]+)>/)?.[1] || "verify@bdqsocial.com";
 
 async function main() {
   if (!CRON) throw new Error("CRON_SECRET not set");
   const ts = Date.now();
 
   const user = await db.user.upsert({
-    where: { email: "delivered@resend.dev" },
+    where: { email: TO },
     update: { role: "CUSTOMER" },
-    create: { email: "delivered@resend.dev", role: "CUSTOMER", name: "Reminder Test" },
+    create: { email: TO, role: "CUSTOMER", name: "Reminder Test" },
   });
   const event = await db.event.create({
     data: {
@@ -39,7 +40,7 @@ async function main() {
     console.log(`reminder outbox: ${ob?.status} (lastError=${ob?.lastError ?? "-"})`);
     if (!ob || ob.status !== "SENT") throw new Error("FAIL: reminder was not sent");
 
-    console.log("OK: reminders cron enqueued + sent (Resend simulated address)");
+    console.log("OK: reminders cron enqueued + sent (real SendGrid send)");
   } finally {
     await db.outbox.deleteMany({ where: { dedupeKey } });
     await db.order.deleteMany({ where: { id: order.id } });

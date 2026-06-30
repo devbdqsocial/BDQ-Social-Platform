@@ -47,7 +47,7 @@
       - [ ] Meta WhatsApp Cloud API: WABA verified, phone number, then submit
             `event_tomorrow` / `event_today` / `event_thanks` templates (**during R6.5 — weeks
             of lead time**)
-      - [ ] Confirm Cloudinary/Razorpay/Resend/Neon prod creds present in Vercel env
+      - [ ] Confirm Cloudinary/Razorpay/SendGrid/Neon prod creds present in Vercel env
             (`.env.example` is the key list)
 - [x] **P-0.6** Read-once ritual for every participating agent: AGENT_RULES.md + the spec docs
       for their assigned phase. Verify: session log row says "rules read". ✓ session 1.

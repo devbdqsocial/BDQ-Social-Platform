@@ -65,13 +65,13 @@ See the consolidated ADR table in §24.
           ┌────────────┘   │   │   │   │   │   └───────────┐
           ▼                ▼   ▼   ▼   ▼   ▼               ▼
      ┌─────────┐   ┌────────┐ ┌───────┐ ┌────────┐ ┌─────────┐ ┌────────┐
-     │ Firebase │   │Razorpay│ │Interakt│ │ Resend │ │Cloudinary│ │  Neon  │
+     │ Firebase │   │Razorpay│ │Interakt│ │SendGrid│ │Cloudinary│ │  Neon  │
      │  Auth    │   │  (pay) │ │ (WA)   │ │ (email)│ │ (assets) │ │   PG   │
      └─────────┘   └────────┘ └───────┘ └────────┘ └─────────┘ └────────┘
 ```
 
 External systems: **Firebase Auth** (OTP/identity), **Razorpay** (payments + webhooks),
-**Interakt** (WhatsApp BSP), **Resend** (email), **Cloudinary** (asset storage/CDN),
+**Interakt** (WhatsApp BSP), **SendGrid** (email), **Cloudinary** (asset storage/CDN),
 **Neon** (Postgres). All secrets are server-side only.
 
 ---
@@ -93,7 +93,7 @@ External systems: **Firebase Auth** (OTP/identity), **Razorpay** (payments + web
                                         │
         ┌───────────────┬───────────────┼───────────────┬───────────────┐
         ▼               ▼               ▼               ▼               ▼
-   Neon Postgres   Firebase Admin   Razorpay API   Interakt/Resend   Cloudinary
+   Neon Postgres   Firebase Admin   Razorpay API   Interakt/SendGrid   Cloudinary
    (data)          (verify token)   + webhook in   (outbound msgs)   (assets)
 
    Vercel Cron ──► /api/cron/* (release holds, expire orders, reminders, reports)
@@ -164,7 +164,7 @@ functions. UI and route handlers call services, never Prisma directly.
 | bookings | Booking (vendor + admin-created) | map, payments, vendors |
 | tickets | Order, Ticket | payments, notifications, events |
 | payments | Payment, Razorpay orders/webhook | tickets, bookings |
-| notifications | outbox, templates | Interakt, Resend |
+| notifications | outbox, templates | Interakt, SendGrid |
 | checkin | CheckIn | tickets, auth |
 | sponsors | Sponsor, placements | events |
 | analytics | read-only aggregates | all (read) |
@@ -191,7 +191,7 @@ Rule: dependencies point **inward/down**; cycles are avoided by routing cross-cu
 │ Data access: Prisma client (src/server/db.ts)                    │
 ├──────────────────────────────────────────────────────────────┤
 │ External adapters: src/lib/* (razorpay, firebase-admin, interakt,│
-│   resend, cloudinary, qr, totp, ratelimit)                       │
+│   sendgrid, cloudinary, qr, totp, ratelimit)                       │
 └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -324,7 +324,7 @@ only, timeouts, retry with backoff, idempotency, and a graceful fallback.
 | Firebase Auth | inbound verify | Admin SDK verify ID token | n/a | block login, show retry |
 | Razorpay | out (create order) + in (webhook) | create order; **verify webhook signature** | unique `gatewayRef`; fulfil-once | reconcile via Razorpay API if webhook missed |
 | Interakt (WhatsApp) | outbound | template send w/ QR media | outbox row + send-once flag | retry, then **email + SMS** fallback |
-| Resend (email) | outbound | transactional send | outbox row | retry; mark failed for ops |
+| SendGrid (email) | outbound | transactional send | outbox row | retry; mark failed for ops |
 | Cloudinary | outbound (signed) | signed direct upload from client | per-asset publicId | reject + ask re-upload |
 | Neon | data | pooled Prisma | transactions | surface 503, retry idempotent reads |
 
@@ -413,7 +413,7 @@ never trusts client-provided URLs. Delivery is via Cloudinary's CDN with on-the-
 ```
 issue Ticket ─► write Outbox(rows: WhatsApp, Email) ─► Sender
    Sender: for each row → adapter.send() → mark SENT | (retry/backoff) → FAILED after N
-   Channel priority: WhatsApp (Interakt) → Email (Resend) → SMS fallback
+   Channel priority: WhatsApp (Interakt) → Email (SendGrid) → SMS fallback
    Each send is idempotent (outbox id + channel), so retries never double-send
 ```
 
@@ -480,7 +480,7 @@ privilege + minimization + audit).
 | Firebase OTP | Spark quota | SMS OTP volume at sale spikes | dedicated SMS provider behind auth adapter |
 | Razorpay | usage-based | none fixed | n/a (per-txn fee) |
 | Interakt | trial/tier | per-message at scale | paid messaging tier |
-| Resend | 3k/mo | email volume | paid tier |
+| SendGrid | 3k/mo | email volume | paid tier |
 | Cloudinary | 25 GB | asset volume/bandwidth | paid tier |
 
 Scale levers when traffic grows: move live-map to websockets (or a pub/sub), add a real queue/
@@ -520,7 +520,7 @@ src/
   server/<module>/         → domain services + state machines              (Domain)
   server/db.ts             → Prisma client                                 (Data access)
   server/audit.ts          → withAudit() wrapper                           (Cross-cutting)
-  lib/                     → razorpay, firebase-admin, interakt, resend,
+  lib/                     → razorpay, firebase-admin, interakt, sendgrid,
                              cloudinary, qr, totp, ratelimit, zod          (Adapters)
   components/              → ui, MapCanvas, MapDesigner, Scanner, charts    (Presentation)
   pwa/                     → manifest + service worker

@@ -74,14 +74,14 @@ PENDING).
 
 ## Notifications
 
-Ticket delivery goes through a durable outbox (email via Resend, WhatsApp via Interakt — dormant
+Ticket delivery goes through a durable outbox (email via SendGrid, WhatsApp via Interakt — dormant
 until `INTERAKT_API_KEY` is set). Prove the drain end-to-end:
 
 ```bash
 node --env-file=.env scripts/verify-outbox.mjs
 ```
-→ an EMAIL row goes QUEUED → SENT via `POST /api/cron/notify-retry` (real Resend send to its
-simulated address). With no Interakt key, no WhatsApp rows are enqueued.
+→ an EMAIL row goes QUEUED → SENT via `POST /api/cron/notify-retry` (real SendGrid send). With no
+Interakt key, no WhatsApp rows are enqueued.
 
 ## Full verify-script list
 

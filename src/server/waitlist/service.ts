@@ -1,7 +1,7 @@
 import "server-only";
 import { db } from "@/server/db";
 import { withAudit } from "@/server/audit";
-import { resendConfigured, sendEmail } from "@/lib/resend";
+import { emailConfigured, sendEmail } from "@/lib/sendgrid";
 import type { Session } from "@/server/auth/guard";
 import { waitlistEmailHtml } from "@/lib/email-template";
 
@@ -33,9 +33,10 @@ export function notifyWaitlist(session: Session, eventId: string) {
       const eventName = event?.name ?? "Event";
       const url = `https://${process.env.APP_BASE_DOMAIN ?? "bdqsocial.com"}/events/${event?.slug ?? ""}`;
 
+      const canEmail = await emailConfigured();
       let notified = 0;
       for (const w of pending) {
-        if (resendConfigured() && w.contact?.includes("@")) {
+        if (canEmail && w.contact?.includes("@")) {
           try {
             await sendEmail({
               to: w.contact,

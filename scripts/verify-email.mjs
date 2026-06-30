@@ -1,11 +1,13 @@
-import { Resend } from "resend";
+import sgMail from "@sendgrid/mail";
 
-// Proves the Resend key + send path by emailing Resend's simulated success address.
+// Proves the SendGrid key + send path using sandbox mode (validates without delivering).
 // Run: node --env-file=.env scripts/verify-email.mjs
 
-const key = process.env.RESEND_API_KEY;
-if (!key) throw new Error("RESEND_API_KEY not set");
-const from = process.env.EMAIL_FROM ?? "BDQ Social <hello@bdqsocial.com>";
+const key = process.env.SENDGRID_API_KEY;
+if (!key) throw new Error("SENDGRID_API_KEY not set");
+const fromRaw = process.env.EMAIL_FROM ?? "BDQ Social <hello@bdqsocial.com>";
+const m = fromRaw.match(/^\s*(.*?)\s*<([^>]+)>\s*$/);
+const from = m ? { email: m[2].trim(), name: m[1] || undefined } : { email: fromRaw.trim() };
 
 const html = `<!doctype html>
 <html lang="en">
@@ -16,22 +18,24 @@ const html = `<!doctype html>
       <h1 style="margin:8px 0 0;font-size:32px;line-height:1.05">Email is working</h1>
     </div>
     <div style="background:#FFFFFF;border:1px solid #DDD8F0;border-top:none;border-radius:0 0 22px 22px;padding:28px">
-      <p style="margin:0;font-weight:800">Resend integration verified for BDQ Social.</p>
+      <p style="margin:0;font-weight:800">SendGrid integration verified for BDQ Social.</p>
     </div>
   </div>
 </body>
 </html>`;
 
-const resend = new Resend(key);
-const { data, error } = await resend.emails.send({
-  from,
-  to: "delivered@resend.dev",
-  subject: "BDQ Social - email integration test",
-  html,
-});
+sgMail.setApiKey(key);
 
-if (error) {
-  console.error("FAIL:", JSON.stringify(error));
+try {
+  const [res] = await sgMail.send({
+    from,
+    to: from.email,
+    subject: "BDQ Social - email integration test",
+    html,
+    mailSettings: { sandboxMode: { enable: true } },
+  });
+  console.log("OK validated (sandbox, no delivery), message id:", res.headers["x-message-id"] ?? "(none)");
+} catch (err) {
+  console.error("FAIL:", JSON.stringify(err?.response?.body ?? err?.message ?? err));
   process.exit(1);
 }
-console.log("OK sent (simulated), message id:", data?.id);

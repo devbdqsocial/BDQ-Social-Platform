@@ -1,6 +1,6 @@
 import "server-only";
 import { db } from "@/server/db";
-import { resendConfigured, sendEmail } from "@/lib/resend";
+import { emailConfigured, sendEmail } from "@/lib/sendgrid";
 import { whatsAppConfigured, sendWhatsAppText } from "@/lib/whatsapp";
 import { channelsFor } from "@/lib/notify-channels";
 import { buildReminderEmail, buildTicketEmail, buildFinanceDigestEmail } from "@/server/notifications/email";
@@ -31,7 +31,7 @@ export async function enqueueTicketNotifications(orderId: string): Promise<void>
   const channels = channelsFor({
     email: order.user.email,
     phone: order.user.phone,
-    emailOn: resendConfigured(),
+    emailOn: await emailConfigured(),
     waOn: whatsAppConfigured(),
   });
 

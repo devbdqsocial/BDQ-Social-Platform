@@ -2,18 +2,19 @@ import { PrismaClient } from "@prisma/client";
 import { randomUUID } from "crypto";
 
 // Proves the notification Outbox drains via the cron processor: create a PAID order + ticket,
-// enqueue an EMAIL row to Resend's simulated address (real send, no real inbox), POST the
-// notify-retry cron, assert the row flips QUEUED -> SENT. Also confirms WhatsApp stays dormant
-// when INTERAKT_API_KEY is unset. Needs the dev server running.
+// enqueue an EMAIL row to a sink address (SendGrid returns 202 at send time, so SENT is asserted
+// regardless of deliverability), POST the notify-retry cron, assert the row flips QUEUED -> SENT.
+// Also confirms WhatsApp stays dormant when INTERAKT_API_KEY is unset. Needs the dev server running.
 // Run: npm run dev  (in another shell)  then  node --env-file=.env scripts/verify-outbox.mjs
 
 const db = new PrismaClient();
 const APP = "http://localhost:3000";
 const CRON_SECRET = process.env.CRON_SECRET;
+const TO = process.env.VERIFY_EMAIL_TO || process.env.EMAIL_FROM?.match(/<([^>]+)>/)?.[1] || "verify@bdqsocial.com";
 
 async function main() {
   if (!CRON_SECRET) throw new Error("CRON_SECRET not set");
-  if (!process.env.RESEND_API_KEY) throw new Error("RESEND_API_KEY not set (needed for the real send)");
+  if (!process.env.SENDGRID_API_KEY) throw new Error("SENDGRID_API_KEY not set (needed for the real send)");
 
   // WhatsApp must be dormant when no provider is configured (Cloud API or Interakt)
   const waConfigured =
@@ -42,11 +43,11 @@ async function main() {
     },
   });
 
-  // 2) enqueue an EMAIL row to the simulated address (decoupled from the user's real email)
+  // 2) enqueue an EMAIL row to the sink address (decoupled from the user's real email)
   const outbox = await db.outbox.create({
     data: {
       channel: "EMAIL",
-      toAddress: "delivered@resend.dev",
+      toAddress: TO,
       template: "ticket",
       payload: { orderId: order.id },
       dedupeKey: `verify-outbox:${order.id}:EMAIL`,
@@ -67,7 +68,7 @@ async function main() {
   await db.outbox.delete({ where: { id: outbox.id } });
   await db.ticket.deleteMany({ where: { orderId: order.id } });
   await db.order.delete({ where: { id: order.id } });
-  console.log("OK: outbox drained EMAIL -> SENT (real Resend send, simulated address); WhatsApp dormant");
+  console.log("OK: outbox drained EMAIL -> SENT (real SendGrid send); WhatsApp dormant");
 }
 
 main()
