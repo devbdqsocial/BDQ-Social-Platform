@@ -21,6 +21,7 @@ import { searchLayout } from "@/lib/map/search";
 import { exportFilename } from "@/lib/map/map-export";
 import { quintileBounds, heatmapFill, type HeatmapMode } from "@/lib/map/heatmap";
 import { diffStats, versionCapState, type VersionMeta, type VersionSnapshot } from "@/lib/map/versions";
+import { fitTransform, gridLinesForView, wheelFactor, worldRectFt, zoomAtPoint, type View } from "@/lib/map/viewport";
 import type { UploadSignature } from "@/lib/cloudinary";
 import { useHistory } from "../useHistory";
 
@@ -82,9 +83,10 @@ export function useDesignerState({
 
   const { present: elements, commit, reset, undo, redo, canUndo, canRedo } = useHistory<EditorElement[]>(initial);
 
-  // viewport + prefs
+  // viewport + prefs — the stage is a controlled camera (see lib/map/viewport.ts)
   const [width, setWidth] = useState(900);
-  const [scale, setScale] = useState(1);
+  const [view, setView] = useState<View>({ x: 0, y: 0, scale: 1 });
+  const scale = view.scale;
   const [snap, setSnap] = useState(true);
   const [gridFt, setGridFt] = useState(initialCanvas?.gridFt ?? 5);
   const [canvas, setCanvas] = useState<CanvasMeta>(initialCanvas ?? DEFAULT_CANVAS);
@@ -180,14 +182,21 @@ export function useDesignerState({
   const attendance = attendanceOverride ?? expectedAttendance;
   const throughput = useMemo(() => throughputReport(entryFlow, attendance), [entryFlow, attendance]);
 
-  const gridLines = useMemo(() => {
-    let step = gridFt > 0 ? gridFt : 5;
-    while (canvas.widthFt / step > 120 || canvas.heightFt / step > 120) step *= 2;
-    const lines: { points: number[] }[] = [];
-    for (let x = 0; x <= canvas.widthFt + 0.001; x += step) lines.push({ points: [x * pxPerFt, 0, x * pxPerFt, height] });
-    for (let y = 0; y <= canvas.heightFt + 0.001; y += step) lines.push({ points: [0, y * pxPerFt, width, y * pxPerFt] });
-    return lines;
-  }, [gridFt, canvas.widthFt, canvas.heightFt, pxPerFt, width, height]);
+  // Endless graph paper: grid + background always cover the VISIBLE world window, not just the
+  // canvas rect, so zooming out or panning never runs off the paper.
+  const worldRect = useMemo(() => worldRectFt(view, { width, height }, pxPerFt), [view, width, height, pxPerFt]);
+  const gridLines = useMemo(() => gridLinesForView(worldRect, gridFt, pxPerFt), [worldRect, gridFt, pxPerFt]);
+
+  // Fit targets the plot (boundary bbox) when one exists, else the canvas rect.
+  const fitBbox = useMemo(() => {
+    if (boundary && boundary.length >= 3) {
+      const xs = boundary.map((p) => p[0]);
+      const ys = boundary.map((p) => p[1]);
+      return { x0: Math.min(...xs), y0: Math.min(...ys), x1: Math.max(...xs), y1: Math.max(...ys) };
+    }
+    return { x0: 0, y0: 0, x1: canvas.widthFt, y1: canvas.heightFt };
+  }, [boundary, canvas.widthFt, canvas.heightFt]);
+  const fitScale = useMemo(() => fitTransform(fitBbox, { width, height }, pxPerFt).scale, [fitBbox, width, height, pxPerFt]);
 
   const colorById = useMemo(() => Object.fromEntries(stallTypes.map((t) => [t.id, t.color])), [stallTypes]);
   const fillFor = useCallback(
@@ -335,18 +344,24 @@ export function useDesignerState({
     setCalibrating(false);
   }, [patchBg]);
 
-  const fit = useCallback(() => { setScale(1); stageRef.current?.position({ x: 0, y: 0 }); }, []);
-  const zoom = useCallback((factor: number) => setScale((s) => Math.min(4, Math.max(0.2, s * factor))), []);
+  const fit = useCallback(() => setView(fitTransform(fitBbox, { width, height }, pxPerFt)), [fitBbox, width, height, pxPerFt]);
+  const zoom = useCallback((factor: number) =>
+    setView((v) => zoomAtPoint(v, { x: width / 2, y: height / 2 }, factor, fitScale)), [width, height, fitScale]);
+  /** Cursor-anchored smooth wheel zoom; pointer is in stage-container px. */
+  const wheelZoom = useCallback((pointer: { x: number; y: number }, deltaY: number) =>
+    setView((v) => zoomAtPoint(v, pointer, wheelFactor(deltaY), fitScale)), [fitScale]);
 
   // Search focus (§9.4): center a target at 1.5× and pulse it for 600 ms.
   const focusOn = useCallback((target: { xFt: number; yFt: number; widthFt?: number; heightFt?: number; id?: string }) => {
     const z = 1.5;
     const cx = (target.xFt + (target.widthFt ?? 0) / 2) * pxPerFt;
     const cy = (target.yFt + (target.heightFt ?? 0) / 2) * pxPerFt;
-    setScale(z);
-    if (target.id) setSelectedIds(new Set([target.id]));
-    requestAnimationFrame(() => stageRef.current?.position({ x: width / 2 - z * cx, y: height / 2 - z * cy }));
-    if (target.id) { setPulseId(target.id); setTimeout(() => setPulseId((p) => (p === target.id ? null : p)), 600); }
+    setView({ scale: z, x: width / 2 - z * cx, y: height / 2 - z * cy });
+    if (target.id) {
+      setSelectedIds(new Set([target.id]));
+      setPulseId(target.id);
+      setTimeout(() => setPulseId((p) => (p === target.id ? null : p)), 600);
+    }
   }, [pxPerFt, width, height]);
 
   const searchMatches = useMemo(() => searchLayout(searchQuery, elements, zones), [searchQuery, elements, zones]);
@@ -526,7 +541,7 @@ export function useDesignerState({
     // history
     elements, commit, reset, undo, redo, canUndo, canRedo,
     // viewport + prefs
-    width, scale, pxPerFt, height, zoom, fit, snap, setSnap, gridFt, setGridFt, toFt,
+    width, scale, view, setView, worldRect, pxPerFt, height, zoom, fit, wheelZoom, snap, setSnap, gridFt, setGridFt, toFt,
     // canvas + underlay
     canvas, setCanvas, setCanvasDim, bgImg, patchBg, calibrated, applyCalibration, onUploadBg, exportPng,
     // tools + draw

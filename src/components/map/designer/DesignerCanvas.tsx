@@ -58,11 +58,11 @@ const ElementNode = memo(function ElementNode({ el, pxPerFt, editable, isSel, is
 export function DesignerCanvas() {
   const d = useDesigner();
   const {
-    width, height, scale, pxPerFt, tool, canvas, bgImg, calibrated, layers,
+    width, height, view, setView, worldRect, pxPerFt, tool, canvas, bgImg, calibrated, layers,
     elements, zones, pathways, terrain, boundary, obstacles, ops, entryFlow, drawing, guides, marquee,
     measureLine, measureDist, measureCursor, selectedIds, violationIds, fillFor,
     salesView, scores, heatFillFor, compareSnapshot, previewMode, pulseId,
-    stageRef, trRef, toFt, zoom, patchBg, commit, setSelectedIds, setGuides,
+    stageRef, trRef, toFt, wheelZoom, patchBg, commit, setSelectedIds, setGuides,
     onStageMouseDown, onStageMouseMove, onStageMouseUp, onElementClick, onTransformEnd,
     finishDrawing, isDrawTool, isClosed,
   } = d;
@@ -103,19 +103,34 @@ export function DesignerCanvas() {
         ref={stageRef}
         width={width}
         height={height}
-        scaleX={scale}
-        scaleY={scale}
+        x={view.x}
+        y={view.y}
+        scaleX={view.scale}
+        scaleY={view.scale}
         draggable={tool === "pan"}
-        onWheel={(e) => { e.evt.preventDefault(); zoom(e.evt.deltaY > 0 ? 0.92 : 1.08); }}
+        onDragMove={(e) => { if (e.target === e.target.getStage()) setView((v) => ({ ...v, x: e.target.x(), y: e.target.y() })); }}
+        onWheel={(e) => {
+          e.evt.preventDefault();
+          const p = stageRef.current?.getPointerPosition() ?? { x: width / 2, y: height / 2 };
+          wheelZoom(p, e.evt.deltaY);
+        }}
         onMouseDown={onStageMouseDown}
         onMouseMove={onStageMouseMove}
         onMouseUp={onStageMouseUp}
         onDblClick={() => { if (tool === "measure") d.setMeasureCursor(null); else if (isDrawTool(tool) && drawing) finishDrawing(drawing); }}
       >
+        {/* Endless graph paper: surround + grid cover the visible WORLD window (any zoom/pan);
+            the canvas/plot rect reads as white paper against the muted surround. */}
         <Layer listening={false}>
-          <Rect x={0} y={0} width={width} height={height} fill="#FAFAFA" />
-          {d.gridLines.map((l, i) => <Line key={i} points={l.points} stroke="#E5E7EB" strokeWidth={1} />)}
-          <Rect x={0} y={0} width={width} height={height} stroke="#94A3B8" strokeWidth={2} dash={[6, 4]} />
+          <Rect
+            x={worldRect.x0 * pxPerFt} y={worldRect.y0 * pxPerFt}
+            width={(worldRect.x1 - worldRect.x0) * pxPerFt} height={(worldRect.y1 - worldRect.y0) * pxPerFt}
+            fill="#EEF0F3"
+          />
+          <Rect x={0} y={0} width={canvas.widthFt * pxPerFt} height={canvas.heightFt * pxPerFt} fill="#FBFBFA" />
+          {d.gridLines.minor.map((l, i) => <Line key={`gm${i}`} points={l.points} stroke="#E3E6EA" strokeWidth={1} strokeScaleEnabled={false} />)}
+          {d.gridLines.major.map((l, i) => <Line key={`gM${i}`} points={l.points} stroke="#D2D7DE" strokeWidth={1} strokeScaleEnabled={false} />)}
+          <Rect x={0} y={0} width={canvas.widthFt * pxPerFt} height={canvas.heightFt * pxPerFt} stroke="#94A3B8" strokeWidth={2} dash={[6, 4]} strokeScaleEnabled={false} />
         </Layer>
 
         {/* Underlay: full-canvas until calibrated, then true-scale at its offset; draggable while unlocked. */}
@@ -133,7 +148,7 @@ export function DesignerCanvas() {
                 onDragEnd={(e) => patchBg({ offsetXFt: toFt(e.target.x()), offsetYFt: toFt(e.target.y()) })}
               />
             ) : (
-              <KonvaImage image={bgImg} x={0} y={0} width={width} height={height} opacity={canvas.bgImage?.opacity ?? 0.5} />
+              <KonvaImage image={bgImg} x={0} y={0} width={canvas.widthFt * pxPerFt} height={canvas.heightFt * pxPerFt} opacity={canvas.bgImage?.opacity ?? 0.5} />
             )}
           </Layer>
         )}

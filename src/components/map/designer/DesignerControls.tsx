@@ -118,7 +118,7 @@ export function DesignerControls() {
         <Button variant="ghost" size="sm" className={iconBtn} title="Zoom out" onClick={() => zoom(0.8)}><ZoomOut className="size-4" /></Button>
         <span className="w-12 text-center text-xs text-muted-foreground">{Math.round(scale * 100)}%</span>
         <Button variant="ghost" size="sm" className={iconBtn} title="Zoom in" onClick={() => zoom(1.25)}><ZoomIn className="size-4" /></Button>
-        <Button variant="ghost" size="sm" className={iconBtn} title="Fit" onClick={fit}><Maximize className="size-4" /></Button>
+        <Button variant="ghost" size="sm" className={iconBtn} title="Fit to plot" onClick={fit}><Maximize className="size-4" /></Button>
         <span className="mx-1 h-6 w-px bg-border" />
         <Button variant="ghost" size="sm" className={iconBtn} title="Undo" disabled={!canUndo} onClick={undo}><Undo2 className="size-4" /></Button>
         <Button variant="ghost" size="sm" className={iconBtn} title="Redo" disabled={!canRedo} onClick={redo}><Redo2 className="size-4" /></Button>
