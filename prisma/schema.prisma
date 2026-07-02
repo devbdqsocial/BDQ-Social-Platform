@@ -401,15 +401,6 @@ model MapLayout {
   updatedAt    DateTime @updatedAt
 }
 
-// Reusable, event-independent layout (canvas + elements + stall types). Cloned onto an event.
-model LayoutTemplate {
-  id          String   @id @default(cuid())
-  name        String
-  layoutJson  Json
-  createdById String?
-  createdAt   DateTime @default(now())
-}
-
 // Global, reusable map-element catalog (stall sizes + infra). Dropped onto any map.
 model MapElement {
   id        String   @id @default(cuid())
@@ -425,22 +416,20 @@ model MapElement {
 
 // A named, reusable map (venue size + layout). Attach to any event. Geometry stored in feet.
 // Canonical venue model (R5.5 — designated as VenueMap; see Docs/audit/venue-map-audit.md).
-// `layoutJson` is the single LayoutV2 document. `legacyTemplateId` records provenance when a legacy
-// LayoutTemplate has been additively folded in (no drops).
+// `layoutJson` is the single LayoutV2 document — geometry only; prices/types live per-event.
 model EventMap {
-  id               String   @id @default(cuid())
-  name             String
-  description      String?
-  locationName     String?
-  unit             String   @default("FT") // FT | M (display only; stored in feet)
-  widthFt          Float
-  heightFt         Float
-  gridFt           Float    @default(5)
-  layoutJson       Json
-  legacyTemplateId String?  @unique // set when migrated from a LayoutTemplate (R5.5 Phase 4)
-  createdById      String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  locationName String?
+  unit         String   @default("FT") // FT | M (display only; stored in feet)
+  widthFt      Float
+  heightFt     Float
+  gridFt       Float    @default(5)
+  layoutJson   Json
+  createdById  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model Stall {

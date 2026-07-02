@@ -4,8 +4,7 @@ import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { requireAdminRole } from "@/server/auth/guard";
 import { saveEventMap } from "@/server/events/service";
-import { saveStallType, deleteStallType } from "@/server/map/stall-types";
-import { saveAsTemplate, applyTemplate } from "@/server/map/templates";
+import { saveStallType, deleteStallType, duplicateStallType } from "@/server/map/stall-types";
 import { stallTypeSchema } from "@/server/schemas";
 import { parseOrThrow } from "@/lib/validation";
 import { upgradeLayout, exceedsSizeCap } from "@/lib/map/layout-v2";
@@ -56,17 +55,9 @@ export async function deleteStallTypeAction(formData: FormData): Promise<void> {
   revalidatePath(`/admin/events/${eventId}/map`);
 }
 
-export async function saveTemplateAction(eventId: string, name: string): Promise<void> {
+export async function duplicateStallTypeAction(formData: FormData): Promise<void> {
   const session = await requireAdminRole();
-  if (name.trim().length < 2) throw new Error("Name the template");
-  await saveAsTemplate(session, eventId, name.trim());
+  const eventId = String(formData.get("eventId"));
+  await duplicateStallType(session, String(formData.get("id")));
   revalidatePath(`/admin/events/${eventId}/map`);
-}
-
-export async function applyTemplateAction(eventId: string, templateId: string): Promise<void> {
-  const session = await requireAdminRole();
-  if (!templateId) throw new Error("Choose a template");
-  await applyTemplate(session, eventId, templateId);
-  revalidatePath(`/admin/events/${eventId}/map`);
-  revalidatePath("/events");
 }
