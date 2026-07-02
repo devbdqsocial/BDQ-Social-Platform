@@ -60,7 +60,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
 
   const [sponsors, vendors] = await Promise.all([sponsorsForEventPublic(event.id), listApprovedVendors()]);
   const brands = vendors.slice(0, 8);
-  const hasStallLayout = !!event.mapLayout && event._count.stalls > 0;
+  const hasStallLayout = event.vendorStallsEnabled && !!event.mapLayout && event._count.stalls > 0;
   const guide = hasStallLayout ? await getEventGuide({ includeLayout: true, slug }) : null;
 
   const hasTickets = event.ticketTypes.length > 0;

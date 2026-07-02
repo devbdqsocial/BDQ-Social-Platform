@@ -26,14 +26,29 @@ const id = z.string().min(1);
 export const idActionSchema = z.object({ id });
 export const idActiveSchema = z.object({ id, active: z.boolean() });
 
-export const createEventSchema = z.object({
-  name: z.string().min(2),
-  description: z.string().optional(),
-  location: z.string().optional(),
-  startsAt: z.coerce.date(),
-  endsAt: z.coerce.date(),
-  capacity: z.number().int().positive().optional(),
-});
+export const createEventSchema = z
+  .object({
+    name: z.string().min(2),
+    description: z.string().optional(),
+    location: z.string().optional(),
+    startsAt: z.coerce.date(),
+    endsAt: z.coerce.date(),
+    capacity: z.number().int().positive().optional(),
+  })
+  .refine((v) => v.endsAt > v.startsAt, { message: "End time must be after the start time.", path: ["endsAt"] });
+
+/** Edit form — same as create plus an optional editable public slug (blank = keep current). */
+export const updateEventSchema = z
+  .object({
+    name: z.string().min(2),
+    description: z.string().optional(),
+    location: z.string().optional(),
+    startsAt: z.coerce.date(),
+    endsAt: z.coerce.date(),
+    capacity: z.number().int().positive().optional(),
+    slug: z.string().regex(/^[a-z0-9-]+$/, "Use lowercase letters, numbers and dashes only.").min(2).max(60).optional(),
+  })
+  .refine((v) => v.endsAt > v.startsAt, { message: "End time must be after the start time.", path: ["endsAt"] });
 
 export const ticketTypeSchema = z.object({
   name: z.string().min(1),
@@ -153,6 +168,8 @@ const hexColor = z
   .or(z.literal("").transform(() => undefined));
 
 export const eventThemeSchema = z.object({ primary: hexColor, accent: hexColor });
+
+export const setVendorStallsSchema = z.object({ enabled: z.boolean() });
 
 /** Event logistics: add-on ordering close window (hours before start) + vendor load-in/setup window. */
 export const eventLogisticsSchema = z

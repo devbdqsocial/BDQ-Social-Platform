@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "Book a stall" };
 
 export default async function VendorEventsPage() {
   await requireVendor();
-  const events = await listPublished();
+  const events = (await listPublished()).filter((e) => e.vendorStallsEnabled);
 
   return (
     <div className="max-w-2xl space-y-[var(--space-xl)]">

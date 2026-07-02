@@ -65,7 +65,9 @@ export default async function VendorEventStallsPage({ params }: { params: Promis
         </Link>
       </header>
 
-      {mapStalls.length === 0 ? (
+      {!event.vendorStallsEnabled ? (
+        <p className="f-paragraph-small opacity-70">This event doesn&apos;t take vendor stalls.</p>
+      ) : mapStalls.length === 0 ? (
         <p className="f-paragraph-small opacity-70">The event layout for this market isn&apos;t ready yet — check back soon.</p>
       ) : (
         <VendorStallReserve eventId={id} stalls={mapStalls} details={details} />

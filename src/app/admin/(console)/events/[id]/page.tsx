@@ -25,7 +25,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { publishEventAction } from "../actions";
 import { ActionForm } from "@/components/admin/action-form";
-import { addTicketTypeAction, deleteTicketTypeAction, addScheduleItemAction, setEventThemeAction, setPricingRulesAction, setEventLogisticsAction, updateEventAction, addEventDayAction, updateEventDayAction } from "./actions";
+import { addTicketTypeAction, deleteTicketTypeAction, addScheduleItemAction, setEventThemeAction, setPricingRulesAction, setEventLogisticsAction, setVendorStallsAction, updateEventAction, addEventDayAction, updateEventDayAction } from "./actions";
 import { DeleteEventButton } from "./DeleteEventButton";
 import { DeleteDayButton } from "./DeleteDayButton";
 
@@ -433,6 +433,31 @@ export default async function AdminEventEditor({
         {/* STALLS — venue map, stall types, add-ons; one canonical path to the designer */}
         <TabsContent value="stalls" className="space-y-6">
           <Card>
+            <SavingForm action={setVendorStallsAction} savedMessage="Saved">
+              <input type="hidden" name="eventId" value={event.id} />
+              <CardHeader>
+                <CardTitle className="text-base">Vendor stalls</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-wrap items-center justify-between gap-3">
+                <label className="flex items-start gap-2 text-sm">
+                  <input type="checkbox" name="vendorStallsEnabled" defaultChecked={event.vendorStallsEnabled} className="mt-0.5 size-4 rounded border-input accent-primary" />
+                  <span>
+                    <span className="font-medium">This event sells stall space to vendors</span>
+                    <span className="block text-xs text-muted-foreground">Turn off for ticket-only events — map and stall checks are skipped and vendor booking is hidden.</span>
+                  </span>
+                </label>
+                <Button type="submit" variant="outline" size="sm">Save</Button>
+              </CardContent>
+            </SavingForm>
+          </Card>
+
+          {!event.vendorStallsEnabled ? (
+            <p className="rounded-lg border border-border bg-muted/40 p-4 text-sm text-muted-foreground">
+              Vendor stalls are off — this event is ticket-only. Turn them on above to manage the venue map, stall types, and add-ons.
+            </p>
+          ) : (
+            <>
+          <Card>
             <CardHeader>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
@@ -499,6 +524,8 @@ export default async function AdminEventEditor({
               <p className="text-sm text-muted-foreground">{event._count.addOns > 0 ? `${event._count.addOns} add-on${event._count.addOns === 1 ? "" : "s"} configured.` : "None yet."}</p>
             </CardContent>
           </Card>
+            </>
+          )}
         </TabsContent>
 
         {/* SETTINGS — theme + logistics */}

@@ -35,6 +35,9 @@ export async function releaseExpiredHolds(now: Date = new Date()): Promise<numbe
  * serialises against double-reservation. Creates a Booking(RESERVED).
  */
 export async function reserveStall(vendorProfileId: string, userId: string, eventId: string, stallId: string) {
+  // Defense in depth: ticket-only events never take stall bookings, even via direct calls.
+  const event = await db.event.findUnique({ where: { id: eventId }, select: { vendorStallsEnabled: true } });
+  if (!event?.vendorStallsEnabled) throw new StallUnavailableError();
   try {
     return await db.$transaction(async (tx) => {
       const held = await tx.stall.updateMany({

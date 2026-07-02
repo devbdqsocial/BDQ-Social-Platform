@@ -3,9 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdminRole } from "@/server/auth/guard";
-import { addScheduleItem, addTicketType, autoStaggerDay, cloneScheduleDay, deleteEvent, deleteScheduleItem, deleteTicketType, setEventLogistics, setEventPricing, setEventTheme, updateEvent } from "@/server/events/service";
+import { addScheduleItem, addTicketType, autoStaggerDay, cloneScheduleDay, deleteEvent, deleteScheduleItem, deleteTicketType, setEventLogistics, setEventPricing, setEventTheme, setVendorStalls, updateEvent } from "@/server/events/service";
 import { addDay, updateDay, deleteDay } from "@/server/events/event-days";
-import { createEventSchema, eventDaySchema, eventLogisticsSchema, eventPricingSchema, eventThemeSchema, scheduleItemSchema, ticketTypeSchema } from "@/server/schemas";
+import { eventDaySchema, eventLogisticsSchema, eventPricingSchema, eventThemeSchema, scheduleItemSchema, setVendorStallsSchema, ticketTypeSchema, updateEventSchema } from "@/server/schemas";
 import { parseOrThrow } from "@/lib/validation";
 
 export async function addTicketTypeAction(formData: FormData): Promise<void> {
@@ -105,13 +105,15 @@ export async function deleteEventDayAction(formData: FormData): Promise<void> {
 export async function updateEventAction(formData: FormData): Promise<void> {
   const session = await requireAdminRole();
   const eventId = String(formData.get("eventId"));
-  const data = parseOrThrow(createEventSchema, {
+  const slug = String(formData.get("slug") || "").trim().toLowerCase();
+  const data = parseOrThrow(updateEventSchema, {
     name: formData.get("name"),
     description: formData.get("description") || undefined,
     location: formData.get("location") || undefined,
     startsAt: formData.get("startsAt"),
     endsAt: formData.get("endsAt"),
     capacity: formData.get("capacity") ? Number(formData.get("capacity")) : undefined,
+    slug: slug || undefined,
   });
   await updateEvent(session, eventId, data);
   revalidateEvent(eventId);
@@ -156,6 +158,15 @@ export async function setEventLogisticsAction(formData: FormData): Promise<void>
   });
   await setEventLogistics(session, eventId, data);
   revalidateEvent(eventId);
+}
+
+export async function setVendorStallsAction(formData: FormData): Promise<void> {
+  const session = await requireAdminRole();
+  const eventId = String(formData.get("eventId"));
+  const data = parseOrThrow(setVendorStallsSchema, { enabled: formData.get("vendorStallsEnabled") === "on" });
+  await setVendorStalls(session, eventId, data.enabled);
+  revalidateEvent(eventId);
+  revalidatePath("/vendor/events");
 }
 
 export async function setEventThemeAction(formData: FormData): Promise<void> {
