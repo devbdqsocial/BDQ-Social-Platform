@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { upgradeLayout } from "./layout-v2";
-import { applyLens } from "./lens";
+import { applyLens, layoutExtras } from "./lens";
 import { layoutToRenderLayout } from "./normalize";
 
 /** R5.5 Phases 6–7: one venue document, projected per lens / to the renderer. */
@@ -36,6 +36,25 @@ describe("applyLens", () => {
     const o = applyLens(sample(), "operations");
     expect(o.ops).toHaveLength(1);
     expect(o.entryFlow).toHaveLength(1);
+  });
+});
+
+describe("layoutExtras", () => {
+  it("customer: zones/entryFlow/annotations present, ops undefined", () => {
+    const x = layoutExtras(sample(), "customer");
+    expect(x.zones).toHaveLength(1);
+    expect(x.entryFlow).toHaveLength(1);
+    expect(x.annotations).toHaveLength(1);
+    expect(x.ops).toBeUndefined();
+  });
+
+  it("operations lens includes ops", () => {
+    expect(layoutExtras(sample(), "operations").ops).toHaveLength(1);
+  });
+
+  it("empty layout yields all-undefined extras (MapCanvas renders exactly as before)", () => {
+    const x = layoutExtras(upgradeLayout({}), "customer");
+    expect(Object.values(x).every((v) => v === undefined)).toBe(true);
   });
 });
 

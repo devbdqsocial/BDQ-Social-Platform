@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { stallsToRenderLayout, type StallLike } from "@/lib/map/normalize";
+import type { RenderExtras } from "@/lib/map/render-types";
 import { type StallStatus } from "@/lib/stall-colors";
 import { formatPaise } from "@/lib/utils";
 import { StallLegend } from "@/components/map/StallLegend";
@@ -40,7 +41,7 @@ export interface StallDetail {
 const STATUS_COPY: Record<string, string> = { AVAILABLE: "Available", BOOKED: "Taken", HELD: "On hold", PENDING: "Pending", BLOCKED: "Unavailable" };
 
 /** Approve-before-pay: selecting a stall RESERVES it (no payment) and moves to the agreement step. */
-export function VendorStallReserve({ eventId, stalls, details = {} }: { eventId: string; stalls: StallInput[]; details?: Record<string, StallDetail> }) {
+export function VendorStallReserve({ eventId, stalls, details = {}, extras }: { eventId: string; stalls: StallInput[]; details?: Record<string, StallDetail>; extras?: RenderExtras }) {
   const router = useRouter();
   const idByLabel = useMemo(() => Object.fromEntries(stalls.map((s) => [s.label, s.id])), [stalls]);
   const priceByLabel = useMemo(() => Object.fromEntries(stalls.map((s) => [s.label, s.priceInPaise])), [stalls]);
@@ -86,7 +87,7 @@ export function VendorStallReserve({ eventId, stalls, details = {} }: { eventId:
     <div className="grid gap-[var(--space-lg)] lg:grid-cols-[1fr_320px]">
       <div className="space-y-[var(--space-lg)]">
         <StallLegend />
-        <MapCanvas layout={layout} statuses={statuses} selected={selected} onSelect={toggle} focusLabel={sel ?? null} />
+        <MapCanvas layout={layout} statuses={statuses} selected={selected} onSelect={toggle} focusLabel={sel ?? null} extras={extras} />
       </div>
 
       {/* Stall sheet (map-system §11) — why-this-stall bullets + size + zone, then Reserve. */}

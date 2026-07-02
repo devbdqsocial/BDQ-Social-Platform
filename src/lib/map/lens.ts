@@ -1,4 +1,5 @@
 import type { LayoutV2 } from "@/lib/map/layout-v2";
+import type { RenderExtras } from "@/lib/map/render-types";
 
 /**
  * Venue lenses (R5.5 Phase 7). The venue is ONE document (`LayoutV2`); a lens controls what is
@@ -33,5 +34,23 @@ export function applyLens(layout: LayoutV2, lens: VenueLens): LayoutV2 {
     ops: show.has("ops") ? layout.ops : [],
     entryFlow: show.has("entryflow") ? layout.entryFlow : [],
     annotations: show.has("annotations") ? layout.annotations : [],
+  };
+}
+
+/**
+ * The venue document → the renderer's optional context for an audience (R5.5 Phase 6, finally
+ * consumed). Empty collections become `undefined` so `MapCanvas` with no extras renders exactly
+ * as before — stall geometry/status always stays row-sourced on booked surfaces.
+ */
+export function layoutExtras(layout: LayoutV2, lens: VenueLens): RenderExtras {
+  const l = applyLens(layout, lens);
+  const opt = <T,>(arr: T[]): T[] | undefined => (arr.length ? arr : undefined);
+  return {
+    boundary: l.boundary && l.boundary.points.length >= 3 ? (l.boundary.points as [number, number][]) : undefined,
+    zones: opt(l.zones),
+    pathways: opt(l.pathways),
+    entryFlow: opt(l.entryFlow),
+    ops: opt(l.ops),
+    annotations: opt(l.annotations),
   };
 }

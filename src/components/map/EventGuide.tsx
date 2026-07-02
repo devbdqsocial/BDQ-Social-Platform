@@ -123,7 +123,7 @@ export function EventGuide({ guide }: { guide: Guide }) {
         <div>
           <p className="kicker opacity-70">Take a look around</p>
           <div className="mt-[var(--space-sm)]">
-            <MapCanvas layout={guide.layout} statuses={statuses} />
+            <MapCanvas layout={guide.layout} statuses={statuses} extras={guide.extras ?? undefined} />
           </div>
         </div>
       )}

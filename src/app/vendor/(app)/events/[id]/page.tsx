@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { requireVendor } from "@/server/auth/guard";
 import { getEventWithStalls } from "@/server/events/service";
 import { upgradeLayout } from "@/lib/map/layout-v2";
+import { layoutExtras } from "@/lib/map/lens";
 import { scoreLayout, describeStall } from "@/server/map/scoring";
 import { zoneOf } from "@/lib/map/zones";
 import { VendorStallReserve, type StallDetail } from "@/components/vendor/VendorStallReserve";
@@ -70,7 +71,7 @@ export default async function VendorEventStallsPage({ params }: { params: Promis
       ) : mapStalls.length === 0 ? (
         <p className="f-paragraph-small opacity-70">The event layout for this market isn&apos;t ready yet — check back soon.</p>
       ) : (
-        <VendorStallReserve eventId={id} stalls={mapStalls} details={details} />
+        <VendorStallReserve eventId={id} stalls={mapStalls} details={details} extras={v2 ? layoutExtras(v2, "vendor") : undefined} />
       )}
     </div>
   );

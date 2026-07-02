@@ -1,9 +1,10 @@
 import { db } from "@/server/db";
 import { listPublished } from "@/server/events/service";
 import { upgradeLayout, type Zone } from "@/lib/map/layout-v2";
+import { layoutExtras } from "@/lib/map/lens";
 import { zoneOf } from "@/lib/map/zones";
 import { stallsToRenderLayout } from "@/lib/map/normalize";
-import type { RenderLayout } from "@/lib/map/render-types";
+import type { RenderExtras, RenderLayout } from "@/lib/map/render-types";
 
 /**
  * Customer event guide data (map-system §11b / customer-portal §3.4, R3.5). REAL data — the active
@@ -30,6 +31,8 @@ export interface EventGuide {
   hasLayout: boolean;
   layoutLocked: boolean;
   layout: RenderLayout | null; // booked stalls relabelled to brand names for the canvas
+  /** customer-lens venue context (zones/walkways/gates/signage) — stalls stay row-sourced */
+  extras: RenderExtras | null;
   brands: GuideBrand[];
   facilities: GuideFacility[];
   zones: { name: string }[];
@@ -129,6 +132,7 @@ export async function getEventGuide({ includeLayout, slug }: { includeLayout: bo
     hasLayout,
     layoutLocked: hasLayout && !includeLayout,
     layout,
+    extras: layoutV2 ? layoutExtras(layoutV2, "customer") : null,
     brands,
     facilities,
     zones: zones.map((z) => ({ name: z.name })),

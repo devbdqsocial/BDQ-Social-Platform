@@ -2,10 +2,13 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type Konva from "konva";
-import { Group, Label, Layer, Rect, Stage, Tag, Text } from "react-konva";
+import { Arrow, Group, Label, Layer, Line, Rect, Stage, Tag, Text } from "react-konva";
 import { ZoomIn, ZoomOut, Maximize, Search } from "lucide-react";
-import type { RenderLayout } from "@/lib/map/render-types";
+import type { RenderExtras, RenderLayout } from "@/lib/map/render-types";
 import { INFRA_COLOR, STALL_STATUS_COLORS, STATUS_LABEL, type StallStatus } from "@/lib/stall-colors";
+import { ZONE_COLOR_HEX, polygonCentroid } from "@/lib/map/zones";
+import { ENTRY_HEX, OPS_HEX } from "@/lib/map/entry-ops";
+import { catalogLabel } from "@/lib/map/catalog";
 
 interface Props {
   layout: RenderLayout;
@@ -15,13 +18,15 @@ interface Props {
   onSelect?: (label: string) => void;
   /** When set, animate-zoom to this stall (450ms ease-out, 2×) + a 600ms pulse (map-system §11). */
   focusLabel?: string | null;
+  /** Lens-filtered venue context (zones/walkways/gates/signage) — omit for exactly the old render. */
+  extras?: RenderExtras;
 }
 
 const clampScale = (s: number) => Math.min(6, Math.max(0.4, s));
 
 const NO_SELECTION: Set<string> = new Set();
 
-export default function MapCanvas({ layout, statuses, selected = NO_SELECTION, onSelect, focusLabel }: Props) {
+export default function MapCanvas({ layout, statuses, selected = NO_SELECTION, onSelect, focusLabel, extras }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
   const pinch = useRef(0);
@@ -170,6 +175,32 @@ export default function MapCanvas({ layout, statuses, selected = NO_SELECTION, o
         onTouchEnd={() => { pinch.current = 0; }}
       >
         <Layer>
+          {/* venue context under the stalls: zones → walkways → plot outline (all read-only) */}
+          {extras?.zones?.map((z) => {
+            const hex = ZONE_COLOR_HEX[z.color];
+            const [cx, cy] = polygonCentroid(z.points);
+            return (
+              <Group key={`z_${z.id}`} listening={false}>
+                <Line points={z.points.flatMap(([x, y]) => [x * pxPerFt, y * pxPerFt])} closed fill={hex} opacity={0.1} stroke={hex} strokeWidth={1} />
+                <Text x={cx * pxPerFt - 40} y={cy * pxPerFt - 5} width={80} align="center" text={z.name.toUpperCase()} fontSize={9} fontStyle="bold" fill={hex} opacity={0.85} />
+              </Group>
+            );
+          })}
+          {extras?.pathways?.map((p) => p.points.length >= 2 && (
+            <Line
+              key={`p_${p.id}`}
+              points={p.points.flatMap(([x, y]) => [x * pxPerFt, y * pxPerFt])}
+              stroke={p.type === "EMERGENCY" ? "#C0392B" : "#BCAE94"}
+              strokeWidth={p.widthFt * pxPerFt}
+              opacity={0.35} lineCap="round" lineJoin="round"
+              dash={p.type === "EMERGENCY" ? [p.widthFt * pxPerFt * 0.8, p.widthFt * pxPerFt * 0.5] : undefined}
+              listening={false}
+            />
+          ))}
+          {extras?.boundary && (
+            <Line points={extras.boundary.flatMap(([x, y]) => [x * pxPerFt, y * pxPerFt])} closed stroke="#01065B" strokeWidth={1.5} dash={[8, 5]} opacity={0.6} listening={false} />
+          )}
+
           {layout.elements.map((el, i) => {
             const x = el.xFt * pxPerFt;
             const y = el.yFt * pxPerFt;
@@ -217,6 +248,32 @@ export default function MapCanvas({ layout, statuses, selected = NO_SELECTION, o
               </Group>
             );
           })}
+
+          {/* gates / ticket counters / scan points + ops (operations lens only) + signage */}
+          {extras?.entryFlow?.map((o) => (
+            <Group key={`e_${o.id}`} listening={false} opacity={availableOnly ? 0.4 : 1}>
+              <Rect x={o.xFt * pxPerFt} y={o.yFt * pxPerFt} width={o.widthFt * pxPerFt} height={o.heightFt * pxPerFt} fill={ENTRY_HEX[o.type]} opacity={0.5} stroke="#01065B" strokeWidth={1} cornerRadius={2} rotation={o.rotation} />
+              <Text x={o.xFt * pxPerFt} y={o.yFt * pxPerFt + (o.heightFt * pxPerFt) / 2 - 4} width={o.widthFt * pxPerFt} align="center" text={o.label || catalogLabel(o.type)} fontSize={7} fill="#01065B" />
+            </Group>
+          ))}
+          {extras?.ops?.map((o) => (
+            <Group key={`o_${o.id}`} listening={false}>
+              <Rect x={o.xFt * pxPerFt} y={o.yFt * pxPerFt} width={o.widthFt * pxPerFt} height={o.heightFt * pxPerFt} fill={OPS_HEX[o.type]} opacity={0.55} stroke="#15120E" strokeWidth={1} cornerRadius={2} rotation={o.rotation} />
+              <Text x={o.xFt * pxPerFt} y={o.yFt * pxPerFt + (o.heightFt * pxPerFt) / 2 - 4} width={o.widthFt * pxPerFt} align="center" text={o.label || catalogLabel(o.type)} fontSize={7} fill="#FFFFFF" />
+            </Group>
+          ))}
+          {extras?.annotations?.map((a) => (
+            <Group key={`a_${a.id}`} x={a.xFt * pxPerFt} y={a.yFt * pxPerFt} rotation={a.rotation} listening={false}>
+              {a.type === "ARROW" ? (
+                <>
+                  <Arrow points={[0, 0, a.lengthFt * pxPerFt, 0]} stroke="#01065B" fill="#01065B" strokeWidth={2.5} pointerLength={9} pointerWidth={9} />
+                  {a.label && <Text x={0} y={5} width={a.lengthFt * pxPerFt} align="center" text={a.label} fontSize={9} fontStyle="bold" fill="#01065B" />}
+                </>
+              ) : (
+                <Text text={a.label || "Text"} fontSize={a.fontSize} fontStyle="bold" fill="#15120E" />
+              )}
+            </Group>
+          ))}
 
           {hovered && hovered.kind === "stall" && (
             <Label x={hovered.xFt * pxPerFt} y={hovered.yFt * pxPerFt - 16}>
