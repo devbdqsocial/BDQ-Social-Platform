@@ -66,7 +66,7 @@ const opsObjectSchema = z.object({
 
 const entryFlowSchema = z.object({
   id: z.string(),
-  type: z.enum(["GATE", "QUEUE_LANE", "SECURITY_CHECK", "SCAN_POINT", "BAG_CHECK", "WELCOME_ZONE"]),
+  type: z.enum(["GATE", "TICKET_COUNTER", "QUEUE_LANE", "SECURITY_CHECK", "SCAN_POINT", "BAG_CHECK", "WELCOME_ZONE"]),
   xFt: z.number(), yFt: z.number(), widthFt: z.number().positive(), heightFt: z.number().positive(),
   rotation: z.number().default(0), label: z.string().optional(), lanes: z.number().int().positive().optional(),
 });

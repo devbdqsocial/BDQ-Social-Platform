@@ -2,23 +2,15 @@
 
 import { Copy, Download, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  INFRA_TYPES,
-  type EditorElement,
-  type PaletteStallType,
-} from "@/lib/map/designer-ops";
+import { type EditorElement } from "@/lib/map/designer-ops";
 import { upgradeLayout, type LayoutV2 } from "@/lib/map/layout-v2";
-import type { SeedInfraType } from "@/server/map/seed-aarush-lawn";
 
 interface Props {
-  stallTypes: PaletteStallType[];
   snap: boolean;
   gridFt: number;
   hasSelection: boolean;
   onSnap: (v: boolean) => void;
   onGrid: (v: number) => void;
-  onAddStall: (t: PaletteStallType) => void;
-  onAddInfra: (t: SeedInfraType) => void;
   onDuplicate: () => void;
   onDelete: () => void;
   onLoadTemplate: () => void;
@@ -55,45 +47,6 @@ export function DesignerToolbar(props: Props) {
 
   return (
     <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card p-3">
-      <select
-        className={selectCls}
-        aria-label="Add stall"
-        defaultValue=""
-        onChange={(e) => {
-          const t = props.stallTypes.find((s) => s.id === e.target.value);
-          if (t) props.onAddStall(t);
-          e.target.value = "";
-        }}
-      >
-        <option value="" disabled>
-          + Add stall
-        </option>
-        {props.stallTypes.map((t) => (
-          <option key={t.id} value={t.id}>
-            {t.name} ({t.widthFt}×{t.heightFt}ft)
-          </option>
-        ))}
-      </select>
-
-      <select
-        className={selectCls}
-        aria-label="Add infrastructure"
-        defaultValue=""
-        onChange={(e) => {
-          if (e.target.value) props.onAddInfra(e.target.value as SeedInfraType);
-          e.target.value = "";
-        }}
-      >
-        <option value="" disabled>
-          + Add infra
-        </option>
-        {INFRA_TYPES.map((t) => (
-          <option key={t} value={t}>
-            {t.replace(/_/g, " ")}
-          </option>
-        ))}
-      </select>
-
       <Button variant="outline" size="sm" disabled={!props.hasSelection} onClick={props.onDuplicate}>
         <Copy className="size-4" /> Duplicate
       </Button>

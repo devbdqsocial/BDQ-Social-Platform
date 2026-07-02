@@ -1,22 +1,21 @@
 "use client";
 
 import {
-  ZoomIn, ZoomOut, Maximize, Undo2, Redo2, Hand, MousePointer2, Ruler, Spline, TreePine, Shapes, Route,
+  ZoomIn, ZoomOut, Maximize, Undo2, Redo2, Hand, MousePointer2, Ruler, Spline, Shapes, Route,
   AlignHorizontalJustifyStart, AlignHorizontalJustifyCenter, AlignHorizontalJustifyEnd,
   AlignVerticalJustifyStart, AlignVerticalJustifyCenter, AlignVerticalJustifyEnd,
-  AlignHorizontalSpaceBetween, AlignVerticalSpaceBetween, Grid2x2, Image as ImageIcon, Mountain, Gauge, Eye, Download, DoorOpen, Wrench, MoveRight, Type,
+  AlignHorizontalSpaceBetween, AlignVerticalSpaceBetween, Grid2x2, Image as ImageIcon, Mountain, Gauge, Eye, Download,
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { EXPORT_VARIANTS, VARIANT_LABEL, type ExportVariant } from "@/lib/map/map-export";
-import { OPS_TYPES, ENTRY_TYPES, humanizeType } from "@/lib/map/entry-ops";
 import { downloadMapPdf } from "./MapPdf";
-import { createInfra, createStall, seedToEditor } from "@/lib/map/designer-ops";
-import type { Obstacle, Pathway } from "@/lib/map/layout-v2";
+import { seedToEditor } from "@/lib/map/designer-ops";
+import type { Pathway } from "@/lib/map/layout-v2";
 import { TERRAIN_TYPES, terrainLabel, type TerrainType } from "@/lib/map/terrain";
 import { polygonArea } from "@/lib/map/geometry";
-import type { SeedInfraType } from "@/server/map/seed-aarush-lawn";
 import { Button } from "@/components/ui/button";
 import { DesignerToolbar } from "../DesignerToolbar";
+import { AddPalette } from "./AddPalette";
 import { useDesigner } from "./DesignerContext";
 
 const fmtInt = (n: number) => new Intl.NumberFormat("en-IN").format(Math.round(n));
@@ -27,14 +26,14 @@ export function DesignerControls() {
   const d = useDesigner();
   const {
     eventMode, saving, saveStatus, handleSave, canvas, setCanvasDim, uploadAction, bgFileRef, onUploadBg,
-    calibrated, setCalibrating, patchBg, setCanvas, stallTypes, snap, setSnap, gridFt, setGridFt,
-    selectedIds, addElements, deleteSelected, reset, setSelectedIds, buildLayoutV2,
+    calibrated, setCalibrating, patchBg, setCanvas, snap, setSnap, gridFt, setGridFt,
+    selectedIds, deleteSelected, reset, setSelectedIds, buildLayoutV2,
     tool, selectTool, zoom, scale, fit, undo, redo, canUndo, canRedo, doAlign, doDistribute,
     setBulkOpen, exportPng, drawing, isDrawTool, isClosed, finishDrawing, boundary, setBoundary,
-    pathType, setPathType, addObstacle, duplicateSelected, terrainType, setTerrainType,
+    pathType, setPathType, duplicateSelected, terrainType, setTerrainType,
     salesView, setSalesView, heatmapMode, setHeatmapMode,
     previewMode, setPreviewMode, searchQuery, setSearchQuery, searchMatches, focusOn,
-    captureFullCanvas, mapName, addOps, addEntry,
+    captureFullCanvas, mapName,
   } = d;
 
   const exportPdf = async (v: ExportVariant) => {
@@ -95,15 +94,14 @@ export function DesignerControls() {
         )}
       </div>
 
+      <AddPalette />
+
       <DesignerToolbar
-        stallTypes={stallTypes}
         snap={snap}
         gridFt={gridFt}
         hasSelection={selectedIds.size > 0}
         onSnap={setSnap}
         onGrid={setGridFt}
-        onAddStall={(t) => addElements([createStall(t)])}
-        onAddInfra={(t: SeedInfraType) => addElements([createInfra(t)])}
         onDuplicate={duplicateSelected}
         onDelete={deleteSelected}
         onLoadTemplate={() => { reset(seedToEditor()); setSelectedIds(new Set()); }}
@@ -224,27 +222,6 @@ export function DesignerControls() {
               {TERRAIN_TYPES.map((t) => <option key={t} value={t}>{terrainLabel(t)}</option>)}
             </select>
             <Button variant="ghost" size="sm" onClick={() => selectTool("terrain")}>Draw</Button>
-            <span className="mx-1 h-6 w-px bg-border" />
-            <span className="px-1 text-muted-foreground"><TreePine className="inline size-3.5" /> Obstacle:</span>
-            {(["TREE", "POLE", "BUILDING", "WALL", "WATER_BODY"] as Obstacle["type"][]).map((t) => (
-              <Button key={t} variant="ghost" size="sm" onClick={() => addObstacle(t)}>{t.charAt(0) + t.slice(1).toLowerCase().replace(/_/g, " ")}</Button>
-            ))}
-            <span className="mx-1 h-6 w-px bg-border" />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild><Button variant="ghost" size="sm"><DoorOpen className="size-3.5" /> Entry +</Button></DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                {ENTRY_TYPES.map((t) => <DropdownMenuItem key={t} onClick={() => addEntry(t)}>{humanizeType(t)}</DropdownMenuItem>)}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild><Button variant="ghost" size="sm"><Wrench className="size-3.5" /> Ops +</Button></DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                {OPS_TYPES.map((t) => <DropdownMenuItem key={t} onClick={() => addOps(t)}>{humanizeType(t)}</DropdownMenuItem>)}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <span className="mx-1 h-6 w-px bg-border" />
-            <Button variant="ghost" size="sm" onClick={() => d.addAnnotation("ARROW")}><MoveRight className="size-3.5" /> Arrow</Button>
-            <Button variant="ghost" size="sm" onClick={() => d.addAnnotation("TEXT")}><Type className="size-3.5" /> Text</Button>
           </>
         )}
       </div>
