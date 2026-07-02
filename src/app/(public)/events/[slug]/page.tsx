@@ -48,8 +48,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title: event.name,
     description,
     alternates: { canonical: url },
-    openGraph: { type: "website", url, title: event.name, description },
-    twitter: { card: "summary_large_image", title: event.name, description },
+    openGraph: { type: "website", url, title: event.name, description, images: [{ url: `/api/og/event/${slug}`, width: 1200, height: 630 }] },
+    twitter: { card: "summary_large_image", title: event.name, description, images: [`/api/og/event/${slug}`] },
   };
 }
 
