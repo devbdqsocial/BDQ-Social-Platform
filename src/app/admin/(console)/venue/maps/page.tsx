@@ -5,7 +5,7 @@ import { listMaps } from "@/server/map/maps";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 
-export const metadata: Metadata = { title: "Maps" };
+export const metadata: Metadata = { title: "Map Library" };
 
 const fmt = (n: number) => new Intl.NumberFormat("en-IN").format(Math.round(n));
 
@@ -16,7 +16,7 @@ export default async function MapsPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <PageHeader title="All maps" description="Reusable venue layouts. Build one to scale, then attach it to any event." />
+        <PageHeader title="Map Library" description="Reusable venue layouts — geometry only; pricing lives with each event. Build one to scale, then attach it to any event." />
         <Button asChild size="sm"><Link href="/admin/venue/maps/new">Create map</Link></Button>
       </div>
 

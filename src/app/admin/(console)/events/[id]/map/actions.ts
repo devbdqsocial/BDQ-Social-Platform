@@ -23,6 +23,7 @@ export async function saveMapAction(eventId: string, layout: unknown): Promise<v
   if (exceedsSizeCap(v2)) throw new Error("This layout is too large to save — delete old versions.");
   await saveEventMap(session, eventId, v2);
   revalidatePath(`/admin/events/${eventId}/map`);
+  revalidatePath(`/admin/events/${eventId}`); // Stalls tab stats
   revalidatePath("/events");
 }
 
