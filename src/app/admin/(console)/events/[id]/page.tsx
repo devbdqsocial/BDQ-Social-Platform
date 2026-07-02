@@ -3,17 +3,22 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdminRole } from "@/server/auth/guard";
 import { getByIdForAdmin, getEventReadiness } from "@/server/events/service";
+import { deriveSetupSteps } from "@/server/events/setup-steps";
 import { listMaps } from "@/server/map/maps";
 import { formatPaise } from "@/lib/utils";
 import { MapAttach } from "./MapAttach";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
-import { Input, Textarea, Select } from "@/components/ui/input";
+import { Input, Select } from "@/components/ui/input";
 import { listEventLineup } from "@/server/artists/bookings-service";
 import { listArtists } from "@/server/artists/admin-service";
 import { BookingPanel } from "@/components/admin/BookingPanel";
 import { EventRunOfShow } from "@/components/admin/EventRunOfShow";
+import { EventSetupChecklist } from "@/components/admin/EventSetupChecklist";
+import { EventDetailsFields } from "@/components/admin/EventDetailsFields";
+import { SavingForm } from "@/components/admin/SavingForm";
+import { ThemeColorField } from "@/components/admin/ThemeColorField";
 import { createBookingAction } from "../../artists/booking-actions";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -29,9 +34,16 @@ export const metadata: Metadata = { title: "Edit event" };
 const isLive = (s: string) => s === "PUBLISHED" || s === "LIVE";
 const dayLabelDate = (d: Date) => new Intl.DateTimeFormat("en-IN", { weekday: "short", day: "numeric", month: "short", timeZone: "Asia/Kolkata" }).format(d);
 
-export default async function AdminEventEditor({ params }: { params: Promise<{ id: string }> }) {
+export default async function AdminEventEditor({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string }>;
+}) {
   await requireAdminRole();
   const { id } = await params;
+  const { tab: requestedTab } = await searchParams;
   const [event, maps, lineup, roster, readiness] = await Promise.all([getByIdForAdmin(id), listMaps(), listEventLineup(id), listArtists(), getEventReadiness(id)]);
   if (!event) notFound();
   const theme = (event.theme as { primary?: string; accent?: string } | null) ?? null;
@@ -40,16 +52,39 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
     .slice()
     .sort((a, b) => a.minQty - b.minQty);
   const sections = [
+    ["overview", "Overview"],
     ["details", "Details"],
     ["tickets", `Tickets (${event.ticketTypes.length})`],
-    ["pricing", "Pricing"],
     ["schedule", `Schedule (${event.schedule.length})`],
     ["lineup", `Lineup (${lineup.length})`],
-    ["map", "Map"],
-    ["theme", "Theme"],
-    ["logistics", "Logistics"],
+    ["stalls", "Stalls"],
+    ["settings", "Settings"],
     ["danger", "Danger"],
   ] as const;
+  // Old bookmarks / deep links from the pre-merge tab set still land somewhere sensible.
+  const TAB_ALIASES: Record<string, string> = { pricing: "tickets", map: "stalls", theme: "settings", logistics: "settings" };
+  const requested = requestedTab ? (TAB_ALIASES[requestedTab] ?? requestedTab) : undefined;
+  const initialTab = sections.some(([value]) => value === requested) ? (requested as (typeof sections)[number][0]) : "overview";
+
+  const steps = deriveSetupSteps({
+    eventId: event.id,
+    vendorStallsEnabled: event.vendorStallsEnabled,
+    issues: readiness.issues,
+    counts: { days: event.days.length, scheduleItems: event.schedule.length, lineup: lineup.length, addOns: event._count.addOns },
+    hasPricingRules: !!earlyBird?.active || bulkTiers.length > 0,
+    hasTheme: !!(theme?.primary || theme?.accent),
+    hasLogistics: event.addOnCloseHours != null || event.loadInStartsAt != null,
+  });
+  const requiredSteps = steps.filter((s) => s.group !== "optional");
+  const nextStep = requiredSteps.find((s) => !s.done) ?? steps.find((s) => !s.done);
+  const effectivePrice = (s: { priceInPaise: number | null; stallType: { priceInPaise: number } | null }) => s.priceInPaise ?? s.stallType?.priceInPaise ?? 0;
+  const stallStats = {
+    total: event.stalls.length,
+    priced: event.stalls.filter((s) => effectivePrice(s) > 0).length,
+    booked: event.stalls.filter((s) => s.status === "BOOKED").length,
+    held: event.stalls.filter((s) => s.status === "HELD" || s.status === "PENDING").length,
+  };
+  const ticketsSold = event.ticketTypes.reduce((n, t) => n + t.soldQty, 0);
 
   return (
     <div className="space-y-6">
@@ -64,9 +99,17 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
             <Link href={`/events/${event.slug}`} className="font-medium text-primary hover:underline">/events/{event.slug}</Link>
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button asChild variant="outline" size="sm"><Link href={`/admin/events/${event.id}/map`}>Edit layout</Link></Button>
-          <Button asChild variant="outline" size="sm"><Link href={`/admin/events/${event.id}/add-ons`}>Stall add-ons</Link></Button>
+        <div className="flex flex-wrap items-center gap-2">
+          {event.status === "DRAFT" && (
+            <Link
+              href="?tab=overview"
+              className="inline-flex h-8 items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 text-xs font-medium hover:bg-muted"
+            >
+              {readiness.ready
+                ? "Setup complete — ready to publish"
+                : `Setup ${requiredSteps.filter((s) => s.done).length}/${requiredSteps.length}${nextStep ? ` · Next: ${nextStep.label}` : ""}`}
+            </Link>
+          )}
           <Button asChild variant="ghost" size="sm"><Link href={`/events/${event.slug}`}>View public page</Link></Button>
           {!isLive(event.status) && (
             <ActionForm action={publishEventAction} success="Event published">
@@ -77,84 +120,86 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
         </div>
       </div>
 
-      {!isLive(event.status) && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between gap-3">
-              <CardTitle className="text-base">Publish readiness</CardTitle>
-              <Badge variant={readiness.ready ? "success" : "warning"}>{readiness.ready ? "Ready" : `${readiness.issues.length} to fix`}</Badge>
-            </div>
-            <CardDescription>These checks must pass before the event can go live.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {readiness.ready ? (
-              <p className="text-sm text-muted-foreground">All launch checks are clear.</p>
-            ) : (
-              <ul className="space-y-2 text-sm">
-                {readiness.issues.map((issue) => (
-                  <li key={issue.key} className="rounded-lg border border-border p-3">
-                    <p className="font-medium">{issue.label}</p>
-                    <p className="mt-1 text-muted-foreground">{issue.detail}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {readiness.warnings.length > 0 && (
-              <ul className="mt-3 space-y-2 text-sm">
-                {readiness.warnings.map((w) => (
-                  <li key={w.key} className="rounded-lg border border-warning/40 bg-warning/10 p-3">
-                    <p className="font-medium">⚠ {w.label}</p>
-                    <p className="mt-1 text-muted-foreground">{w.detail} <span className="italic">Advisory — won&apos;t block publishing.</span></p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      <Tabs defaultValue="details" className="min-w-0 gap-4">
-        <TabsList className="!grid !h-auto w-full grid-cols-2 gap-2 rounded-xl border border-border bg-muted/40 p-2 sm:grid-cols-4 xl:grid-cols-9">
+      <Tabs key={initialTab} defaultValue={initialTab} className="min-w-0 gap-4">
+        <TabsList className="!flex !h-auto w-full flex-wrap justify-start gap-2 rounded-xl border border-border bg-muted/40 p-2">
           {sections.map(([value, label]) => (
             <TabsTrigger
               key={value}
               value={value}
-              className="h-10 min-w-0 rounded-lg px-3 text-center text-xs data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:text-sm"
+              className="h-10 whitespace-nowrap rounded-lg px-3 text-xs data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:text-sm"
             >
-              <span className="truncate">{label}</span>
+              {label}
             </TabsTrigger>
           ))}
         </TabsList>
 
+        {/* OVERVIEW — setup progress + key stats + quick links */}
+        <TabsContent value="overview" className="space-y-6">
+          <EventSetupChecklist eventId={event.id} status={event.status} steps={steps} readiness={readiness} />
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { label: "Ticket types", value: String(event.ticketTypes.length), sub: `${ticketsSold} sold` },
+              { label: "Orders", value: String(event._count.orders) },
+              { label: "Event days", value: event.days.length > 0 ? String(event.days.length) : "—", sub: `${event.schedule.length} schedule items` },
+              ...(event.vendorStallsEnabled ? [{ label: "Stalls booked", value: `${stallStats.booked}/${stallStats.total}`, sub: stallStats.held > 0 ? `${stallStats.held} held/pending` : undefined }] : []),
+            ].map((stat) => (
+              <div key={stat.label} className="rounded-lg border border-border bg-card p-4">
+                <p className="text-xs text-muted-foreground">{stat.label}</p>
+                <p className="mt-1 text-2xl font-semibold">{stat.value}</p>
+                {stat.sub && <p className="mt-0.5 text-xs text-muted-foreground">{stat.sub}</p>}
+              </div>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="outline" size="sm"><Link href={`/events/${event.slug}`}>View public page</Link></Button>
+            {event.vendorStallsEnabled && (
+              <>
+                <Button asChild variant="outline" size="sm"><Link href={`/admin/events/${event.id}/map`}>Open map designer</Link></Button>
+                <Button asChild variant="outline" size="sm"><Link href={`/admin/events/${event.id}/add-ons`}>Stall add-ons</Link></Button>
+              </>
+            )}
+          </div>
+        </TabsContent>
+
         {/* DETAILS */}
         <TabsContent value="details">
-          <Card asChild>
-            <form action={updateEventAction}>
+          <Card>
+            <SavingForm action={updateEventAction} guard savedMessage="Details saved">
               <input type="hidden" name="eventId" value={event.id} />
               <CardHeader>
                 <CardTitle className="text-base">Event details</CardTitle>
-                <CardDescription>Edit the basics. The public URL stays the same when you rename.</CardDescription>
+                <CardDescription>Edit the basics and the public page details.</CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4">
-                <Field label="Event name"><Input name="name" required defaultValue={event.name} /></Field>
-                <Field label="Short description"><Textarea name="description" rows={2} defaultValue={event.description ?? ""} placeholder="A line about the event for the public page." /></Field>
-                <Field label="Location"><Input name="location" defaultValue={event.location ?? ""} placeholder="Venue name, City" /></Field>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="Starts"><DateTimePicker name="startsAt" required defaultValue={event.startsAt} /></Field>
-                  <Field label="Ends"><DateTimePicker name="endsAt" required defaultValue={event.endsAt} /></Field>
-                </div>
-                {event.days.length > 0 && (
-                  <p className="text-xs text-muted-foreground">This is a multi-day event — the overall dates above are kept in sync from your per-day hours in the <span className="font-medium">Schedule</span> tab.</p>
-                )}
-                <Field label="Capacity" hint="Optional — leave blank for no limit."><Input type="number" name="capacity" min={1} defaultValue={event.capacity ?? ""} /></Field>
+                <EventDetailsFields
+                  defaults={{
+                    name: event.name,
+                    description: event.description,
+                    location: event.location,
+                    startsAt: event.startsAt,
+                    endsAt: event.endsAt,
+                    capacity: event.capacity,
+                    slug: event.slug,
+                  }}
+                  datesNote={
+                    event.days.length > 0 ? (
+                      <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+                        <Badge variant="primary">Synced</Badge>
+                        <span>Multi-day event — these dates follow your per-day hours in the <Link href="?tab=schedule" className="font-medium text-primary hover:underline">Schedule tab</Link>.</span>
+                      </div>
+                    ) : null
+                  }
+                />
                 <Button type="submit" className="w-fit">Save details</Button>
               </CardContent>
-            </form>
+            </SavingForm>
           </Card>
         </TabsContent>
 
         {/* TICKETS */}
-        <TabsContent value="tickets" className="space-y-4">
+        <TabsContent value="tickets" className="space-y-6">
           {event.ticketTypes.length === 0 ? (
             <p className="text-sm text-muted-foreground">No tickets yet — add your first one below.</p>
           ) : (
@@ -185,19 +230,17 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
                 <CardDescription>Set the price shoppers pay and how many are available.</CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4 sm:grid-cols-2">
-                <Field label="Ticket name" className="sm:col-span-2"><Input name="name" required placeholder="General, Couple, VIP…" /></Field>
-                <Field label="Price (₹)"><Input type="number" name="priceRupees" min={0} required placeholder="499" /></Field>
+                <Field label="Ticket name" required className="sm:col-span-2"><Input name="name" required placeholder="General, Couple, VIP…" /></Field>
+                <Field label="Price (₹)" required><Input type="number" name="priceRupees" min={0} required placeholder="499" /></Field>
                 <Field label="Early-bird price (₹)" hint="Optional"><Input type="number" name="earlyRupees" min={0} /></Field>
-                <Field label="How many available"><Input type="number" name="totalQty" min={1} required placeholder="2000" /></Field>
+                <Field label="How many available" required><Input type="number" name="totalQty" min={1} required placeholder="2000" /></Field>
                 <Field label="People admitted per ticket" hint="1 for solo, 2 for a couple pass."><Input type="number" name="attendeesPer" min={1} defaultValue={1} /></Field>
                 <Button type="submit" className="w-fit sm:col-span-2">Add ticket</Button>
               </CardContent>
             </form>
           </Card>
-        </TabsContent>
 
-        {/* PRICING — early-bird + bulk tiers (engine-driven; best single discount wins) */}
-        <TabsContent value="pricing">
+          {/* Pricing rules — early-bird + bulk tiers (engine-driven; best single discount wins) */}
           <Card asChild>
             <form action={setPricingRulesAction}>
               <input type="hidden" name="eventId" value={event.id} />
@@ -208,22 +251,22 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
                   shoppers get the single best of early-bird, bulk, or coupon.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="grid gap-5">
-                <div className="grid gap-3 rounded-lg border border-border p-4">
+              <CardContent className="grid gap-4">
+                <div className="grid gap-4 rounded-lg border border-border p-4">
                   <label className="flex items-center gap-2 text-sm font-medium">
-                    <input type="checkbox" name="earlyActive" defaultChecked={!!earlyBird?.active} className="size-4 rounded border-input" />
+                    <input type="checkbox" name="earlyActive" defaultChecked={!!earlyBird?.active} className="size-4 rounded border-input accent-primary" />
                     Early-bird active
                   </label>
                   <Field label="Early-bird discount (%)" hint="Applied to every ticket type that has no explicit early-bird price set in the Tickets tab.">
-                    <Input type="number" name="earlyPercent" min={0} max={100} defaultValue={earlyBird?.percent ?? ""} placeholder="15" className="sm:max-w-40" />
+                    <Input type="number" name="earlyPercent" min={0} max={100} defaultValue={earlyBird?.percent ?? ""} placeholder="15" className="sm:max-w-32" />
                   </Field>
                 </div>
 
-                <div className="grid gap-3 rounded-lg border border-border p-4">
+                <div className="grid gap-4 rounded-lg border border-border p-4">
                   <p className="text-sm font-medium">Bulk tiers</p>
                   <p className="text-xs text-muted-foreground">Discount on the whole order once total tickets cross a threshold. Bulk only kicks in above 5 tickets. Leave a row blank to skip it.</p>
                   {[0, 1, 2].map((i) => (
-                    <div key={i} className="grid items-end gap-3 sm:grid-cols-2">
+                    <div key={i} className="grid items-end gap-4 sm:grid-cols-2">
                       <Field label={`Tier ${i + 1} — min tickets`}><Input type="number" name={`minQty${i}`} min={6} defaultValue={bulkTiers[i]?.minQty ?? ""} placeholder={i === 0 ? "6" : i === 1 ? "10" : "20"} /></Field>
                       <Field label="Discount (%)"><Input type="number" name={`percent${i}`} min={0} max={100} defaultValue={bulkTiers[i]?.percent ?? ""} placeholder={i === 0 ? "5" : i === 1 ? "10" : "15"} /></Field>
                     </div>
@@ -237,7 +280,7 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
         </TabsContent>
 
         {/* SCHEDULE — event days + run of show */}
-        <TabsContent value="schedule" className="space-y-4">
+        <TabsContent value="schedule" className="space-y-6">
           {/* Event days */}
           <Card>
             <CardHeader>
@@ -250,13 +293,13 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
               ) : (
                 <ul className="space-y-2">
                   {event.days.map((d, idx) => (
-                    <li key={d.id} className="rounded-lg border border-border p-3">
-                      <form action={updateEventDayAction} className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <li key={d.id} className="rounded-lg border border-border p-4">
+                      <form action={updateEventDayAction} className="grid items-end gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         <input type="hidden" name="id" value={d.id} />
                         <input type="hidden" name="eventId" value={event.id} />
                         <Field label="Label" hint="Optional"><Input name="label" defaultValue={d.label ?? ""} placeholder={`Day ${idx + 1}`} /></Field>
-                        <Field label="Starts"><DateTimePicker name="startsAt" required defaultValue={d.startsAt} /></Field>
-                        <Field label="Ends"><DateTimePicker name="endsAt" required defaultValue={d.endsAt} /></Field>
+                        <Field label="Starts" required><DateTimePicker name="startsAt" required defaultValue={d.startsAt} /></Field>
+                        <Field label="Ends" required><DateTimePicker name="endsAt" required defaultValue={d.endsAt} /></Field>
                         <div className="flex items-center gap-2">
                           <Button type="submit" variant="outline" size="sm">Save</Button>
                         </div>
@@ -268,11 +311,11 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
                   ))}
                 </ul>
               )}
-              <form action={addEventDayAction} className="grid items-end gap-3 rounded-lg border border-dashed border-border p-3 sm:grid-cols-2 lg:grid-cols-4">
+              <form action={addEventDayAction} className="grid items-end gap-4 rounded-lg border border-dashed border-border p-4 sm:grid-cols-2 lg:grid-cols-4">
                 <input type="hidden" name="eventId" value={event.id} />
                 <Field label="Label" hint="Optional"><Input name="label" placeholder="Day 1, Opening night…" /></Field>
-                <Field label="Starts"><DateTimePicker name="startsAt" required /></Field>
-                <Field label="Ends"><DateTimePicker name="endsAt" required /></Field>
+                <Field label="Starts" required><DateTimePicker name="startsAt" required /></Field>
+                <Field label="Ends" required><DateTimePicker name="endsAt" required /></Field>
                 <div><Button type="submit" size="sm">Add day</Button></div>
               </form>
             </CardContent>
@@ -298,7 +341,7 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
               <ActionForm action={createBookingAction} success="Added to lineup — set the set time in the Lineup tab" className="flex flex-wrap items-end gap-2 border-t border-border pt-4">
                 <input type="hidden" name="eventId" value={event.id} />
                 <label className="grid gap-1.5 text-sm">
-                  <span className="font-medium">Add an artist</span>
+                  <span className="font-medium">Add an artist<span aria-hidden="true" className="text-destructive"> *</span></span>
                   <Select name="artistId" required className="w-64" defaultValue="">
                     <option value="" disabled>Choose an artist…</option>
                     {roster.map((a) => <option key={a.id} value={a.id}>{a.stageName}</option>)}
@@ -318,7 +361,7 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
                 <CardDescription>Sets, performances, and zone openings — shown on the event page.</CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4 sm:grid-cols-2">
-                <Field label="What's happening" className="sm:col-span-2"><Input name="title" required placeholder="Headline set, food court opens…" /></Field>
+                <Field label="What's happening" required className="sm:col-span-2"><Input name="title" required placeholder="Headline set, food court opens…" /></Field>
                 {event.days.length > 0 && (
                   <Field label="Day" className="sm:col-span-2" hint="Which event day this belongs to">
                     <Select name="eventDayId" defaultValue="">
@@ -327,7 +370,7 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
                     </Select>
                   </Field>
                 )}
-                <Field label="Starts"><DateTimePicker name="startsAt" required /></Field>
+                <Field label="Starts" required><DateTimePicker name="startsAt" required /></Field>
                 <Field label="Ends" hint="Optional"><DateTimePicker name="endsAt" /></Field>
                 <Field label="Stage / zone" hint="Optional"><Input name="stageOrZone" placeholder="Main Stage" /></Field>
                 <Field label="Performer" hint="Optional"><Input name="performer" /></Field>
@@ -348,7 +391,7 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
               <ActionForm action={createBookingAction} success="Added to lineup" className="flex flex-wrap items-end gap-2">
                 <input type="hidden" name="eventId" value={event.id} />
                 <label className="grid gap-1.5 text-sm">
-                  <span className="font-medium">Add an artist</span>
+                  <span className="font-medium">Add an artist<span aria-hidden="true" className="text-destructive"> *</span></span>
                   <Select name="artistId" required className="w-64" defaultValue="">
                     <option value="" disabled>Choose an artist…</option>
                     {roster.map((a) => <option key={a.id} value={a.id}>{a.stageName}</option>)}
@@ -387,21 +430,79 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
           </Card>
         </TabsContent>
 
-        {/* MAP */}
-        <TabsContent value="map">
+        {/* STALLS — venue map, stall types, add-ons; one canonical path to the designer */}
+        <TabsContent value="stalls" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Event layout</CardTitle>
-              <CardDescription>Attach a reusable map, or open the layout editor for this event.</CardDescription>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <CardTitle className="text-base">Venue map</CardTitle>
+                  <CardDescription>Draw stalls, zones and infrastructure in the designer — vendors book from this layout.</CardDescription>
+                </div>
+                <Button asChild size="sm"><Link href={`/admin/events/${event.id}/map`}>Open map designer</Link></Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {stallStats.total > 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-medium text-foreground">{stallStats.total}</span> stalls ·{" "}
+                  <span className="font-medium text-foreground">{stallStats.priced}</span> priced ·{" "}
+                  <span className="font-medium text-foreground">{stallStats.booked}</span> booked
+                  {stallStats.held > 0 && <> · <span className="font-medium text-foreground">{stallStats.held}</span> held/pending</>}
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground">No stalls yet — open the designer to draw the layout, or copy one from the map library below.</p>
+              )}
+              <div className="border-t border-border pt-4">
+                <MapAttach eventId={event.id} maps={maps.map((m) => ({ id: m.id, name: m.name }))} currentMapId={event.mapId} />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Stall types &amp; pricing</CardTitle>
+              <CardDescription>Types set the default price and size for the stalls painted with them — managed in the <Link href={`/admin/events/${event.id}/map`} className="text-primary hover:underline">map designer</Link>.</CardDescription>
             </CardHeader>
             <CardContent>
-              <MapAttach eventId={event.id} maps={maps.map((m) => ({ id: m.id, name: m.name }))} currentMapId={event.mapId} />
+              {event.stallTypes.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No stall types yet — they&apos;re seeded when you first open the designer.</p>
+              ) : (
+                <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
+                  {event.stallTypes.map((t) => (
+                    <li key={t.id} className="flex items-center justify-between gap-3 p-3 text-sm">
+                      <span className="flex items-center gap-2">
+                        <span className="size-3 rounded-sm border border-border" style={{ backgroundColor: t.color ?? undefined }} />
+                        <span className="font-medium">{t.name}</span>
+                        <span className="text-muted-foreground">{t.widthFt}×{t.heightFt} ft</span>
+                        {!t.sellable && <Badge variant="neutral">Infra</Badge>}
+                      </span>
+                      <span className={t.priceInPaise > 0 ? "" : "text-muted-foreground"}>{t.priceInPaise > 0 ? formatPaise(t.priceInPaise) : "No price"}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <CardTitle className="text-base">Stall add-ons</CardTitle>
+                  <CardDescription>Extras vendors can order with their stall — tables, power, signage.</CardDescription>
+                </div>
+                <Button asChild variant="outline" size="sm"><Link href={`/admin/events/${event.id}/add-ons`}>Manage add-ons</Link></Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">{event._count.addOns > 0 ? `${event._count.addOns} add-on${event._count.addOns === 1 ? "" : "s"} configured.` : "None yet."}</p>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* THEME */}
-        <TabsContent value="theme">
+        {/* SETTINGS — theme + logistics */}
+        <TabsContent value="settings" className="space-y-6">
           <Card asChild>
             <form action={setEventThemeAction}>
               <input type="hidden" name="eventId" value={event.id} />
@@ -410,16 +511,14 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
                 <CardDescription>White-label this event&apos;s public page. Leave blank to use the BDQ brand.</CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4 sm:grid-cols-2">
-                <Field label="Primary colour" hint="Buttons + accents. Hex like #01065B."><Input name="primary" defaultValue={theme?.primary ?? ""} placeholder="#01065B" /></Field>
-                <Field label="Accent colour" hint="Highlights. Hex like #D69A22."><Input name="accent" defaultValue={theme?.accent ?? ""} placeholder="#D69A22" /></Field>
+                <ThemeColorField name="primary" label="Primary colour" hint="Buttons + accents. Hex like #01065B." defaultValue={theme?.primary ?? ""} placeholder="#01065B" />
+                <ThemeColorField name="accent" label="Accent colour" hint="Highlights. Hex like #D69A22." defaultValue={theme?.accent ?? ""} placeholder="#D69A22" />
                 <Button type="submit" className="w-fit sm:col-span-2">Save theme</Button>
               </CardContent>
             </form>
           </Card>
-        </TabsContent>
 
-        {/* LOGISTICS — add-on window + vendor load-in */}
-        <TabsContent value="logistics">
+          {/* Logistics — add-on window + vendor load-in */}
           <Card asChild>
             <form action={setEventLogisticsAction}>
               <input type="hidden" name="eventId" value={event.id} />
@@ -429,7 +528,7 @@ export default async function AdminEventEditor({ params }: { params: Promise<{ i
               </CardHeader>
               <CardContent className="grid gap-4">
                 <Field label="Add-on ordering closes (hours before start)" hint="Leave blank for the default of 48 hours.">
-                  <Input type="number" name="addOnCloseHours" min={0} max={720} defaultValue={event.addOnCloseHours ?? ""} placeholder="48" className="sm:max-w-40" />
+                  <Input type="number" name="addOnCloseHours" min={0} max={720} defaultValue={event.addOnCloseHours ?? ""} placeholder="48" className="sm:max-w-32" />
                 </Field>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field label="Vendor load-in starts" hint="When vendors can enter to set up — often 1–2 days before."><DateTimePicker name="loadInStartsAt" defaultValue={event.loadInStartsAt ?? undefined} /></Field>
