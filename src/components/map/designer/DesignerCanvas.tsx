@@ -3,7 +3,7 @@
 import { memo, useCallback, useRef } from "react";
 import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
-import { Group, Image as KonvaImage, Layer, Line, Rect, Stage, Text, Transformer } from "react-konva";
+import { Arrow, Group, Image as KonvaImage, Layer, Line, Rect, Stage, Text, Transformer } from "react-konva";
 import type { EditorElement } from "@/lib/map/designer-ops";
 import { ZONE_COLOR_HEX, polygonCentroid } from "@/lib/map/zones";
 import { TERRAIN_COLOR_HEX } from "@/lib/map/terrain";
@@ -293,6 +293,27 @@ export function DesignerCanvas() {
                 onDragEnd={(e) => d.setOps((arr) => arr.map((x) => (x.id === o.id ? { ...x, xFt: toFt(e.target.x()), yFt: toFt(e.target.y()) } : x)))}
               />
               {layers.labels.visible && <Text x={o.xFt * pxPerFt} y={o.yFt * pxPerFt + o.heightFt * pxPerFt / 2 - 4} width={o.widthFt * pxPerFt} align="center" text={o.label ?? ""} fontSize={7} fill="#FFFFFF" listening={false} />}
+            </Group>
+          ))}
+
+          {/* signage — wayfinding arrows + free text (annotations layer, visible to all lenses) */}
+          {layers.annotations.visible && d.annotations.map((a) => (
+            <Group
+              key={a.id}
+              x={a.xFt * pxPerFt}
+              y={a.yFt * pxPerFt}
+              rotation={a.rotation}
+              draggable={tool === "select" && !layers.annotations.locked}
+              onDragEnd={(e) => d.patchAnnotation(a.id, { xFt: toFt(e.target.x()), yFt: toFt(e.target.y()) })}
+            >
+              {a.type === "ARROW" ? (
+                <>
+                  <Arrow points={[0, 0, a.lengthFt * pxPerFt, 0]} stroke="#01065B" fill="#01065B" strokeWidth={3} pointerLength={10} pointerWidth={10} />
+                  {a.label && <Text x={0} y={6} width={a.lengthFt * pxPerFt} align="center" text={a.label} fontSize={10} fontStyle="bold" fill="#01065B" />}
+                </>
+              ) : (
+                <Text text={a.label || "Text"} fontSize={a.fontSize} fontStyle="bold" fill="#15120E" />
+              )}
             </Group>
           ))}
 

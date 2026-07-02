@@ -8,7 +8,7 @@ import { useDesigner } from "./DesignerContext";
 
 /** Right-column editable lists + advisories (build-plan R2.5.5). Pure render off the store. */
 export function DesignerSidePanels() {
-  const { violations, setSelectedIds, setOverrides, zones, setZones, pathWarnings, pathways, setPathways, obstacles, setObstacles, terrain, setTerrain, setVertexEdit } = useDesigner();
+  const { violations, setSelectedIds, setOverrides, zones, setZones, pathWarnings, pathways, setPathways, obstacles, setObstacles, terrain, setTerrain, setVertexEdit, annotations, patchAnnotation, removeAnnotation } = useDesigner();
 
   return (
     <>
@@ -107,6 +107,40 @@ export function DesignerSidePanels() {
                   <Button variant="ghost" size="sm" onClick={() => setVertexEdit({ target: "terrain", id: t.id })}>Edit points</Button>
                   <Button variant="ghost" size="sm" onClick={() => setTerrain((ts) => ts.filter((x) => x.id !== t.id))}>Remove</Button>
                 </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {annotations.length > 0 && (
+        <div className="space-y-2 rounded-xl border border-border bg-card p-4 text-sm">
+          <h2 className="font-display text-base font-semibold">Signage ({annotations.length})</h2>
+          <ul className="space-y-2">
+            {annotations.map((a) => (
+              <li key={a.id} className="flex flex-wrap items-center gap-2">
+                <span className="w-10 shrink-0 text-xs text-muted-foreground">{a.type === "ARROW" ? "Arrow" : "Text"}</span>
+                <input
+                  value={a.label}
+                  placeholder={a.type === "ARROW" ? "Caption" : "Text"}
+                  onChange={(e) => patchAnnotation(a.id, { label: e.target.value.slice(0, 40) })}
+                  className="h-8 min-w-0 flex-1 rounded-md border border-border bg-background px-2 text-sm"
+                />
+                <Button variant="ghost" size="sm" className="h-8 px-2" title="Rotate 45°" onClick={() => patchAnnotation(a.id, { rotation: (a.rotation + 45) % 360 })}>↻</Button>
+                {a.type === "ARROW" ? (
+                  <input
+                    type="number" min={4} max={100} value={a.lengthFt} title="Length (ft)"
+                    onChange={(e) => patchAnnotation(a.id, { lengthFt: Math.max(4, Math.min(100, Number(e.target.value))) })}
+                    className="h-8 w-16 rounded-md border border-border bg-background px-2 text-sm"
+                  />
+                ) : (
+                  <input
+                    type="number" min={8} max={48} value={a.fontSize} title="Font size"
+                    onChange={(e) => patchAnnotation(a.id, { fontSize: Math.max(8, Math.min(48, Number(e.target.value))) })}
+                    className="h-8 w-16 rounded-md border border-border bg-background px-2 text-sm"
+                  />
+                )}
+                <Button variant="ghost" size="sm" onClick={() => removeAnnotation(a.id)}>Remove</Button>
               </li>
             ))}
           </ul>

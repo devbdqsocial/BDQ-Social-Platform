@@ -1,5 +1,5 @@
 import type { EditorElement } from "@/lib/map/designer-ops";
-import type { Obstacle, Pathway, TerrainPatch, Zone } from "@/lib/map/layout-v2";
+import type { Annotation, Obstacle, Pathway, TerrainPatch, Zone } from "@/lib/map/layout-v2";
 import type { Pt } from "@/lib/map/geometry";
 
 /**
@@ -26,6 +26,8 @@ export interface VersionSnapshot {
   terrain: TerrainPatch[];
   obstacles: Obstacle[];
   boundary: Pt[] | null;
+  /** optional — snapshots saved before the signage layer existed restore to [] */
+  annotations?: Annotation[];
 }
 
 export interface VersionStats {

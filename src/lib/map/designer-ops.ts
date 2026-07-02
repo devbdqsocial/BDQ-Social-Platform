@@ -4,6 +4,7 @@ import {
   type SeedInfraType,
 } from "@/server/map/seed-aarush-lawn";
 import type { StallStatus } from "@/lib/stall-colors";
+import type { Annotation } from "@/lib/map/layout-v2";
 
 /**
  * Pure helpers for the admin map designer. Geometry is in FEET. Prices are admin-entered per
@@ -111,6 +112,20 @@ export function createInfra(type: SeedInfraType, xFt = 10, yFt = 10): EditorElem
     widthFt: 20,
     heightFt: 15,
     rotation: 0,
+  };
+}
+
+/** Signage factory — a wayfinding arrow or free text label (annotations layer). */
+export function createAnnotation(type: "ARROW" | "TEXT", xFt = 20, yFt = 20): Annotation {
+  return {
+    id: newId(),
+    type,
+    xFt,
+    yFt,
+    rotation: 0,
+    label: type === "ARROW" ? "This way" : "Text",
+    lengthFt: 12,
+    fontSize: 12,
   };
 }
 

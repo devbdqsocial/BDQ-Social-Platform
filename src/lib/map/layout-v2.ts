@@ -14,7 +14,7 @@ export type Pt = [number, number];
 const point = z.tuple([z.number(), z.number()]);
 
 export const LAYER_IDS = [
-  "underlay", "terrain", "zones", "pathways", "stalls", "infra", "ops", "entryflow", "labels",
+  "underlay", "terrain", "zones", "pathways", "stalls", "infra", "ops", "entryflow", "annotations", "labels",
 ] as const;
 export type LayerId = (typeof LAYER_IDS)[number];
 
@@ -71,6 +71,18 @@ const entryFlowSchema = z.object({
   rotation: z.number().default(0), label: z.string().optional(), lanes: z.number().int().positive().optional(),
 });
 
+// Signage: wayfinding arrows + free text labels. Visible to every audience (lens keeps them).
+const annotationSchema = z.object({
+  id: z.string(),
+  type: z.enum(["ARROW", "TEXT"]),
+  xFt: z.number(),
+  yFt: z.number(),
+  rotation: z.number().default(0),
+  label: z.string().default(""), // arrow caption / text content
+  lengthFt: z.number().positive().default(12), // ARROW
+  fontSize: z.number().positive().default(12), // TEXT (canvas px at 1:1)
+});
+
 const layerStateSchema = z.object({ visible: z.boolean(), locked: z.boolean() });
 
 export const layoutV2Schema = z.object({
@@ -90,6 +102,7 @@ export const layoutV2Schema = z.object({
   elements: z.array(elementSchema).default([]),
   ops: z.array(opsObjectSchema).default([]),
   entryFlow: z.array(entryFlowSchema).default([]),
+  annotations: z.array(annotationSchema).default([]),
   // Loose-keyed so a stored layout missing a newer layer still parses; `upgradeLayout` fills
   // every LAYER_ID via defaultLayers(). Consumers index with a LayerId.
   layers: z.record(z.string(), layerStateSchema).default({}),
@@ -103,6 +116,7 @@ export type Zone = z.infer<typeof zoneSchema>;
 export type Pathway = z.infer<typeof pathwaySchema>;
 export type OpsObject = z.infer<typeof opsObjectSchema>;
 export type EntryFlowObject = z.infer<typeof entryFlowSchema>;
+export type Annotation = z.infer<typeof annotationSchema>;
 
 type LayerState = { visible: boolean; locked: boolean };
 const defaultLayers = (): Record<string, LayerState> =>

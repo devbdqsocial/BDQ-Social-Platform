@@ -4,7 +4,7 @@ import {
   ZoomIn, ZoomOut, Maximize, Undo2, Redo2, Hand, MousePointer2, Ruler, Spline, TreePine, Shapes, Route,
   AlignHorizontalJustifyStart, AlignHorizontalJustifyCenter, AlignHorizontalJustifyEnd,
   AlignVerticalJustifyStart, AlignVerticalJustifyCenter, AlignVerticalJustifyEnd,
-  AlignHorizontalSpaceBetween, AlignVerticalSpaceBetween, Grid2x2, Image as ImageIcon, Mountain, Gauge, Eye, Download, DoorOpen, Wrench,
+  AlignHorizontalSpaceBetween, AlignVerticalSpaceBetween, Grid2x2, Image as ImageIcon, Mountain, Gauge, Eye, Download, DoorOpen, Wrench, MoveRight, Type,
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { EXPORT_VARIANTS, VARIANT_LABEL, type ExportVariant } from "@/lib/map/map-export";
@@ -242,6 +242,9 @@ export function DesignerControls() {
                 {OPS_TYPES.map((t) => <DropdownMenuItem key={t} onClick={() => addOps(t)}>{humanizeType(t)}</DropdownMenuItem>)}
               </DropdownMenuContent>
             </DropdownMenu>
+            <span className="mx-1 h-6 w-px bg-border" />
+            <Button variant="ghost" size="sm" onClick={() => d.addAnnotation("ARROW")}><MoveRight className="size-3.5" /> Arrow</Button>
+            <Button variant="ghost" size="sm" onClick={() => d.addAnnotation("TEXT")}><Type className="size-3.5" /> Text</Button>
           </>
         )}
       </div>

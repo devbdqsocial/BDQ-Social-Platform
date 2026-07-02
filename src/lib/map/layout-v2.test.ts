@@ -75,6 +75,27 @@ describe("upgradeLayout (R2.5.1)", () => {
   });
 });
 
+describe("annotations (signage layer)", () => {
+  it("older v2 docs without annotations parse to an empty array", () => {
+    const out = upgradeLayout({ v: 2, canvas: { widthFt: 100, heightFt: 100 } });
+    expect(out.annotations).toEqual([]);
+  });
+
+  it("round-trips arrows and text with defaults filled", () => {
+    const doc = {
+      ...upgradeLayout(v1),
+      annotations: [
+        { id: "a1", type: "ARROW" as const, xFt: 5, yFt: 5, rotation: 90, label: "Entry", lengthFt: 20, fontSize: 12 },
+        { id: "a2", type: "TEXT" as const, xFt: 50, yFt: 10, rotation: 0, label: "Food court", lengthFt: 12, fontSize: 16 },
+      ],
+    };
+    const out = upgradeLayout(doc);
+    expect(out.annotations).toHaveLength(2);
+    expect(out.annotations[0]).toMatchObject({ type: "ARROW", label: "Entry", lengthFt: 20, rotation: 90 });
+    expect(out.annotations[1]).toMatchObject({ type: "TEXT", fontSize: 16 });
+  });
+});
+
 describe("stripEventData (save to library)", () => {
   it("removes prices, type links, statuses and version history; keeps geometry", () => {
     const layout = upgradeLayout(v1);

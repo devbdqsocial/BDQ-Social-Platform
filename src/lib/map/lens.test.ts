@@ -13,6 +13,7 @@ function sample() {
   l.zones = [{ id: "z1", name: "Food", color: "green", points: [[0, 0], [10, 0], [10, 10]] }];
   l.ops = [{ id: "o1", type: "MEDICAL", xFt: 5, yFt: 5, widthFt: 5, heightFt: 5, rotation: 0 }];
   l.entryFlow = [{ id: "g1", type: "GATE", xFt: 0, yFt: 0, widthFt: 10, heightFt: 5, rotation: 0 }];
+  l.annotations = [{ id: "a1", type: "ARROW", xFt: 1, yFt: 1, rotation: 0, label: "This way", lengthFt: 12, fontSize: 12 }];
   return l;
 }
 
@@ -22,11 +23,12 @@ describe("applyLens", () => {
     expect(applyLens(l, "admin")).toBe(l);
   });
 
-  it("customer hides ops + entry flow, keeps zones + elements", () => {
+  it("customer hides ops but keeps entry flow (gates/counters), zones, signage, elements", () => {
     const c = applyLens(sample(), "customer");
     expect(c.ops).toHaveLength(0);
-    expect(c.entryFlow).toHaveLength(0);
+    expect(c.entryFlow).toHaveLength(1);
     expect(c.zones).toHaveLength(1);
+    expect(c.annotations).toHaveLength(1);
     expect(c.elements).toHaveLength(2);
   });
 

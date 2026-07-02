@@ -9,10 +9,10 @@ export type VenueLens = "admin" | "vendor" | "customer" | "operations";
 
 /** Layers each lens reveals (subset of LAYER_IDS). `elements` (stalls + infra) are always present. */
 export const LENS_LAYERS: Record<VenueLens, readonly string[]> = {
-  admin: ["underlay", "terrain", "zones", "pathways", "stalls", "infra", "ops", "entryflow", "labels"],
-  vendor: ["zones", "pathways", "stalls", "infra", "labels"],
-  customer: ["zones", "pathways", "stalls", "infra", "labels"],
-  operations: ["zones", "pathways", "stalls", "infra", "ops", "entryflow", "labels"],
+  admin: ["underlay", "terrain", "zones", "pathways", "stalls", "infra", "ops", "entryflow", "annotations", "labels"],
+  vendor: ["zones", "pathways", "stalls", "infra", "entryflow", "annotations", "labels"],
+  customer: ["zones", "pathways", "stalls", "infra", "entryflow", "annotations", "labels"],
+  operations: ["zones", "pathways", "stalls", "infra", "ops", "entryflow", "annotations", "labels"],
 };
 
 /**
@@ -32,5 +32,6 @@ export function applyLens(layout: LayoutV2, lens: VenueLens): LayoutV2 {
     pathways: show.has("pathways") ? layout.pathways : [],
     ops: show.has("ops") ? layout.ops : [],
     entryFlow: show.has("entryflow") ? layout.entryFlow : [],
+    annotations: show.has("annotations") ? layout.annotations : [],
   };
 }

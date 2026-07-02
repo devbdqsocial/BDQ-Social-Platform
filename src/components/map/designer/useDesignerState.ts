@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type Konva from "konva";
 import {
-  duplicate, snapToGrid, DEFAULT_CANVAS,
+  createAnnotation, duplicate, snapToGrid, DEFAULT_CANVAS,
   type CanvasMeta, type EditorElement, type PaletteStallType,
 } from "@/lib/map/designer-ops";
-import { ZONE_COLORS, type LayoutV2, type Obstacle, type Pathway, type TerrainPatch, type Zone, type ZoneColor, type OpsObject, type EntryFlowObject } from "@/lib/map/layout-v2";
+import { ZONE_COLORS, type Annotation, type LayoutV2, type Obstacle, type Pathway, type TerrainPatch, type Zone, type ZoneColor, type OpsObject, type EntryFlowObject } from "@/lib/map/layout-v2";
 import { createOps, createEntry, type OpsType, type EntryType } from "@/lib/map/entry-ops";
 import type { TerrainType } from "@/lib/map/terrain";
 import { mapViolations, pathwayWarnings, MIN_PATH_WIDTH } from "@/lib/map/validation";
@@ -35,11 +35,11 @@ import { useHistory } from "../useHistory";
 
 export type Tool = "select" | "pan" | "measure" | "boundary" | "zone" | "pathway" | "terrain";
 
-export const LAYER_IDS = ["underlay", "terrain", "zones", "pathways", "stalls", "infra", "ops", "entryflow", "labels"] as const;
+export const LAYER_IDS = ["underlay", "terrain", "zones", "pathways", "stalls", "infra", "ops", "entryflow", "annotations", "labels"] as const;
 export type LayerId = (typeof LAYER_IDS)[number];
 export const LAYER_LABELS: Record<LayerId, string> = {
   underlay: "Ground plan", terrain: "Terrain", zones: "Zones", pathways: "Pathways",
-  stalls: "Stalls", infra: "Facilities", ops: "Operations", entryflow: "Entry flow", labels: "Labels",
+  stalls: "Stalls", infra: "Facilities", ops: "Operations", entryflow: "Entry flow", annotations: "Signage", labels: "Labels",
 };
 export interface LayerState { visible: boolean; locked: boolean }
 
@@ -113,6 +113,7 @@ export function useDesignerState({
   const [overrides, setOverrides] = useState<Set<string>>(new Set());
   const [ops, setOps] = useState<OpsObject[]>(initialLayout?.ops ?? []);
   const [entryFlow, setEntryFlow] = useState<EntryFlowObject[]>(initialLayout?.entryFlow ?? []);
+  const [annotations, setAnnotations] = useState<Annotation[]>(initialLayout?.annotations ?? []);
   // point-by-point polygon editing (plot/zones/pathways/terrain) — replaces redraw-only shapes
   const [vertexEdit, setVertexEdit] = useState<{ target: "boundary" | "zone" | "pathway" | "terrain"; id?: string } | null>(null);
   const [versions, setVersions] = useState<VersionMeta[]>((initialLayout?.versions ?? []) as VersionMeta[]);
@@ -253,7 +254,7 @@ export function useDesignerState({
   }, [heatmapMode, heatmapValueOf, heatmapBounds]);
 
   // Versions (§9 / R2.5.13): named snapshots of the editable collections; cap 10, warn at 8.
-  const snapshotNow = useCallback((): VersionSnapshot => ({ elements, zones, pathways, terrain, obstacles, boundary }), [elements, zones, pathways, terrain, obstacles, boundary]);
+  const snapshotNow = useCallback((): VersionSnapshot => ({ elements, zones, pathways, terrain, obstacles, boundary, annotations }), [elements, zones, pathways, terrain, obstacles, boundary, annotations]);
   const versionCap = versionCapState(versions.length);
   const saveVersion = useCallback((name: string) => {
     if (!versionCapState(versions.length).canSave) return;
@@ -273,6 +274,7 @@ export function useDesignerState({
     setTerrain(snap.terrain ?? []);
     setObstacles(snap.obstacles ?? []);
     setBoundary(snap.boundary ?? null);
+    setAnnotations(snap.annotations ?? []); // pre-signage snapshots restore clean
     commit(snap.elements ?? []); // elements ride the undo stack → restore is undoable
   }, [versions, commit, setZones, setPathways, setTerrain, setObstacles, setBoundary]);
   const compareSnapshot = useMemo<VersionSnapshot | null>(() => {
@@ -294,8 +296,9 @@ export function useDesignerState({
     infra: elements.filter((e) => e.kind === "infra").length,
     ops: ops.length,
     entryflow: entryFlow.length,
+    annotations: annotations.length,
     labels: elements.length,
-  }), [bgImg, terrain, zones, pathways, elements, ops, entryFlow]);
+  }), [bgImg, terrain, zones, pathways, elements, ops, entryFlow, annotations]);
 
   // transformer attaches to a single selection
   useEffect(() => {
@@ -334,6 +337,9 @@ export function useDesignerState({
   const addOps = useCallback((type: OpsType) => setOps((o) => [...o, createOps(type)]), []);
   const addEntry = useCallback((type: EntryType) => setEntryFlow((o) => [...o, createEntry(type)]), []);
   const patchEntry = useCallback((id: string, p: Partial<EntryFlowObject>) => setEntryFlow((arr) => arr.map((e) => (e.id === id ? { ...e, ...p } : e))), []);
+  const addAnnotation = useCallback((type: Annotation["type"]) => setAnnotations((a) => [...a, createAnnotation(type)]), []);
+  const patchAnnotation = useCallback((id: string, p: Partial<Annotation>) => setAnnotations((arr) => arr.map((a) => (a.id === id ? { ...a, ...p } : a))), []);
+  const removeAnnotation = useCallback((id: string) => setAnnotations((arr) => arr.filter((a) => a.id !== id)), []);
 
   const doAlign = useCallback((m: AlignMode) => { if (selectedIds.size > 1) commit(alignElements(elements, selectedIds, m)); }, [elements, selectedIds, commit]);
   const doDistribute = useCallback((axis: "h" | "v") => { if (selectedIds.size > 2) commit(distributeElements(elements, selectedIds, axis)); }, [elements, selectedIds, commit]);
@@ -551,9 +557,9 @@ export function useDesignerState({
         : {}),
       boundary: boundary && boundary.length >= 3 ? { points: boundary } : undefined,
       obstacles, terrain, zones, pathways, elements,
-      ops, entryFlow, layers, versions,
+      ops, entryFlow, annotations, layers, versions,
     };
-  }, [gridFt, canvas, boundary, obstacles, terrain, zones, pathways, elements, ops, entryFlow, layers, versions]);
+  }, [gridFt, canvas, boundary, obstacles, terrain, zones, pathways, elements, ops, entryFlow, annotations, layers, versions]);
 
   // Duplicate labels get auto-renamed at save time ("A-2" → "A-2-2") — surface that BEFORE it
   // happens: first Save click warns, second click (without label edits in between) proceeds.
@@ -600,6 +606,8 @@ export function useDesignerState({
     applyPlot, vertexEdit, setVertexEdit, vertexPoints, updateVertexPoints,
     // ops + entry-flow objects (§8 / R2.5.16)
     ops, setOps, addOps, entryFlow, setEntryFlow, addEntry, patchEntry,
+    // signage (annotations layer)
+    annotations, addAnnotation, patchAnnotation, removeAnnotation,
     // layers
     layers, toggleLayerVisible, toggleLayerLock, setAllLayersVisible, layerCounts,
     // derived
