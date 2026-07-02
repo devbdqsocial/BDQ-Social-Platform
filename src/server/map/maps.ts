@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import { db } from "@/server/db";
 import { withAudit } from "@/server/audit";
 import type { Session } from "@/server/auth/guard";
-import { upgradeLayout, type LayoutV2 } from "@/lib/map/layout-v2";
+import { stripEventData, upgradeLayout, type LayoutV2 } from "@/lib/map/layout-v2";
 import { saveEventMap } from "@/server/events/service";
 
 /** Named, reusable maps (venue size + layout). Geometry stored in feet; attach to any event. */
@@ -69,6 +69,45 @@ export function saveMapLayout(session: Session, mapId: string, layout: LayoutV2)
           },
         });
         return { result: m, after: { elements: layout.elements.length } };
+      },
+    };
+  });
+}
+
+/**
+ * "Save to library": snapshot this event's layout as a reusable EventMap. Geometry only —
+ * `stripEventData` drops prices, stall-type links, statuses, and version history, so the library
+ * map never carries one event's pricing into another. Creating links the event to the new map.
+ */
+export function saveEventLayoutToLibrary(session: Session, eventId: string, target: { name: string } | { mapId: string }) {
+  const isUpdate = "mapId" in target;
+  return withAudit(session, { action: isUpdate ? "UPDATE" : "CREATE", entity: "EventMap", ...(isUpdate ? { entityId: target.mapId } : {}) }, async () => {
+    const ml = await db.mapLayout.findUnique({ where: { eventId }, select: { layoutJson: true, opsLayerJson: true } });
+    if (!ml) throw new Error("This event has no layout to save yet.");
+    const layout = stripEventData(upgradeLayout(ml.layoutJson, ml.opsLayerJson));
+    const data = {
+      layoutJson: layout as unknown as Prisma.InputJsonValue,
+      widthFt: layout.canvas.widthFt,
+      heightFt: layout.canvas.heightFt,
+      gridFt: layout.canvas.gridFt ?? 5,
+    };
+    if (isUpdate) {
+      const before = await db.eventMap.findUnique({ where: { id: target.mapId }, select: { name: true } });
+      if (!before) throw new Error("Linked map not found");
+      return {
+        before,
+        run: async () => {
+          const m = await db.eventMap.update({ where: { id: target.mapId }, data });
+          return { result: m, after: { id: m.id, elements: layout.elements.length } };
+        },
+      };
+    }
+    return {
+      before: null,
+      run: async () => {
+        const m = await db.eventMap.create({ data: { ...data, name: target.name, createdById: session.userId } });
+        await db.event.update({ where: { id: eventId }, data: { mapId: m.id } });
+        return { result: m, after: { id: m.id, name: m.name, elements: layout.elements.length } };
       },
     };
   });

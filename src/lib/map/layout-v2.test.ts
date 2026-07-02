@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { upgradeLayout, layoutV2Schema, exceedsSizeCap, LAYER_IDS, type LayoutV2 } from "./layout-v2";
+import { upgradeLayout, layoutV2Schema, exceedsSizeCap, stripEventData, LAYER_IDS, type LayoutV2 } from "./layout-v2";
 
 const v1 = {
   version: 1 as const,
@@ -72,5 +72,22 @@ describe("upgradeLayout (R2.5.1)", () => {
     expect(exceedsSizeCap(small)).toBe(false);
     const huge = { ...small, elements: Array.from({ length: 60000 }, (_, i) => ({ ...v1.elements[0], id: `e${i}` })) };
     expect(exceedsSizeCap(huge as LayoutV2)).toBe(true);
+  });
+});
+
+describe("stripEventData (save to library)", () => {
+  it("removes prices, type links, statuses and version history; keeps geometry", () => {
+    const layout = upgradeLayout(v1);
+    layout.versions = [{ id: "v1", name: "snap", createdAt: "2026-07-01", createdBy: "u1", data: { secret: true } }];
+    const out = stripEventData(layout);
+    const stall = out.elements.find((e) => e.id === "a")!;
+    expect(stall.priceInPaise).toBeUndefined();
+    expect(stall.stallTypeId).toBeUndefined();
+    expect(stall.status).toBeUndefined();
+    expect(stall).toMatchObject({ label: "A-1", xFt: 10, yFt: 10, widthFt: 10, heightFt: 10, type: "Small", kind: "stall" });
+    expect(out.versions).toEqual([]);
+    expect(out.canvas).toEqual(layout.canvas);
+    // pure — input untouched
+    expect(layout.elements.find((e) => e.id === "a")!.priceInPaise).toBe(500000);
   });
 });

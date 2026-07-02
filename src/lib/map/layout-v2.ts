@@ -185,6 +185,19 @@ export function exceedsSizeCap(layout: LayoutV2): boolean {
 }
 
 /**
+ * Library maps are geometry-only: strip per-event data (prices, stall-type links, statuses) from
+ * every element, and drop the event's version history (its snapshots embed priced elements).
+ * Used by "Save to library" so an EventMap never carries one event's pricing into another.
+ */
+export function stripEventData(layout: LayoutV2): LayoutV2 {
+  return {
+    ...layout,
+    elements: layout.elements.map(({ priceInPaise: _price, stallTypeId: _type, status: _status, ...rest }) => rest),
+    versions: [],
+  };
+}
+
+/**
  * Bridge any stored layout (v1 or v2) to the shape the current designer edits — `{ elements,
  * canvas }` — so it "loads both" (build-plan R2.5.1 acceptance). The v2 underlay collapses back
  * to the designer's `canvas.bgImage` for now; the dedicated calibration + sub-collection editors

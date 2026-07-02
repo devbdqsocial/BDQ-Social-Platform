@@ -4,10 +4,12 @@ import { notFound } from "next/navigation";
 import { requireAdminRole } from "@/server/auth/guard";
 import { getByIdForAdmin } from "@/server/events/service";
 import { ensureStallTypes } from "@/server/map/stall-types";
+import { getMap } from "@/server/map/maps";
 import { type PaletteStallType } from "@/lib/map/designer-ops";
 import { editorFromLayout, upgradeLayout } from "@/lib/map/layout-v2";
 import { MapDesignerLoader } from "@/components/map/MapDesignerLoader";
 import { StallTypesManager } from "./StallTypesManager";
+import { SaveToLibrary } from "./SaveToLibrary";
 import { saveMapAction, getMapUploadSignatureAction } from "./actions";
 
 export const metadata: Metadata = { title: "Event layout" };
@@ -18,7 +20,10 @@ export default async function EventMapPage({ params }: { params: Promise<{ id: s
   const event = await getByIdForAdmin(id);
   if (!event) notFound();
 
-  const types = await ensureStallTypes(event.id);
+  const [types, linkedMap] = await Promise.all([
+    ensureStallTypes(event.id),
+    event.mapId ? getMap(event.mapId) : null,
+  ]);
   const palette: PaletteStallType[] = types.map((t) => ({
     id: t.id,
     name: t.name,
@@ -54,9 +59,12 @@ export default async function EventMapPage({ params }: { params: Promise<{ id: s
             Set the venue size, define stall types, then arrange stalls and zones to scale. Saving updates this event&apos;s live map.
           </p>
         </div>
-        <Link href={`/admin/events/${event.id}`} className="shrink-0 text-sm text-muted-foreground hover:text-foreground">
-          ← Back to event
-        </Link>
+        <div className="flex shrink-0 items-center gap-3">
+          <SaveToLibrary eventId={event.id} linkedMap={linkedMap ? { id: linkedMap.id, name: linkedMap.name } : null} />
+          <Link href={`/admin/events/${event.id}?tab=stalls`} className="text-sm text-muted-foreground hover:text-foreground">
+            ← Back to Stalls
+          </Link>
+        </div>
       </header>
 
       <StallTypesManager eventId={event.id} types={types} placedByType={placedByType} />

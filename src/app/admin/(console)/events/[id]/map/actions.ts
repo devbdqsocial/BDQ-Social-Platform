@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { requireAdminRole } from "@/server/auth/guard";
 import { saveEventMap } from "@/server/events/service";
+import { saveEventLayoutToLibrary } from "@/server/map/maps";
 import { saveStallType, deleteStallType, duplicateStallType } from "@/server/map/stall-types";
 import { stallTypeSchema } from "@/server/schemas";
 import { parseOrThrow } from "@/lib/validation";
@@ -59,5 +60,13 @@ export async function duplicateStallTypeAction(formData: FormData): Promise<void
   const session = await requireAdminRole();
   const eventId = String(formData.get("eventId"));
   await duplicateStallType(session, String(formData.get("id")));
+  revalidatePath(`/admin/events/${eventId}/map`);
+}
+
+export async function saveToLibraryAction(eventId: string, target: { name: string } | { mapId: string }): Promise<void> {
+  const session = await requireAdminRole();
+  if ("name" in target && target.name.trim().length < 2) throw new Error("Name the map");
+  await saveEventLayoutToLibrary(session, eventId, "name" in target ? { name: target.name.trim() } : target);
+  revalidatePath("/admin/venue/maps");
   revalidatePath(`/admin/events/${eventId}/map`);
 }
