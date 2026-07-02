@@ -28,6 +28,20 @@ export function alignElements(els: EditorElement[], ids: Set<string>, mode: Alig
   return els.map((e) => (ids.has(e.id) ? { ...e, ...move(e) } : e));
 }
 
+/** Paint order = array order: move the selection to the end (front) preserving its own order. */
+export function bringToFront(els: EditorElement[], ids: Set<string>): EditorElement[] {
+  const sel = pick(els, ids);
+  if (!sel.length) return els;
+  return [...els.filter((e) => !ids.has(e.id)), ...sel];
+}
+
+/** Move the selection to the start (back) preserving its own order. */
+export function sendToBack(els: EditorElement[], ids: Set<string>): EditorElement[] {
+  const sel = pick(els, ids);
+  if (!sel.length) return els;
+  return [...sel, ...els.filter((e) => !ids.has(e.id))];
+}
+
 export function distributeElements(els: EditorElement[], ids: Set<string>, axis: "h" | "v"): EditorElement[] {
   const sel = pick(els, ids);
   if (sel.length < 3) return els;

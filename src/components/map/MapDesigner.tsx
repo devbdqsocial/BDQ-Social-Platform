@@ -67,6 +67,8 @@ export default function MapDesigner(props: MapDesignerProps = {}) {
             onBulkPatch={(p) => { if (selectedIds.size) commit(bulkPatch(elements, selectedIds, p)); }}
             onApplySuggestions={d.applySuggestions}
             onRelabel={(prefix, start) => { if (selectedIds.size) commit(relabel(elements, selectedIds, prefix, start)); }}
+            onBringToFront={d.bringSelectedToFront}
+            onSendToBack={d.sendSelectedToBack}
           />
           <HeatmapLegend />
           <SummaryPanel

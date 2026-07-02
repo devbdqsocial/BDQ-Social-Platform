@@ -313,7 +313,14 @@ export function DesignerCanvas() {
             </>
           )}
           <PolygonEditor />
-          <Transformer ref={trRef} rotateEnabled flipEnabled={false} ignoreStroke />
+          <Transformer
+            ref={trRef}
+            rotateEnabled
+            flipEnabled={false}
+            ignoreStroke
+            rotationSnaps={Array.from({ length: 24 }, (_, i) => i * 15)}
+            rotationSnapTolerance={6}
+          />
         </Layer>
       </Stage>
     </div>

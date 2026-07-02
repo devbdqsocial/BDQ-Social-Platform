@@ -35,6 +35,8 @@ export function useDesignerKeyboard(d: DesignerApi) {
         if (k === "v") { selectTool("select"); return; }
         if (k === "h") { selectTool("pan"); return; }
         if (k === "s") { setSalesView((prev) => !prev); return; }
+        if (e.key === "]") { d.bringSelectedToFront(); return; }
+        if (e.key === "[") { d.sendSelectedToBack(); return; }
         if (e.key === "/") { e.preventDefault(); document.getElementById("designer-search")?.focus(); return; }
         if (e.key === "Enter" && drawing && drawing.length >= (isClosed(tool) ? 3 : 2)) { finishDrawing(drawing); return; }
         if (e.key === "Escape") { setMeasurePts([]); setMeasureCursor(null); setDrawing(null); setSelectedIds(new Set()); d.setVertexEdit(null); return; }

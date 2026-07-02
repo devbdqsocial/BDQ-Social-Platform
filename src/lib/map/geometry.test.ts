@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { polygonArea, polygonPerimeter, pathLength, usedSqFt, occupancy, type Pt } from "./geometry";
+import { constrainAxis, polygonArea, polygonPerimeter, pathLength, usedSqFt, occupancy, type Pt } from "./geometry";
 import type { EditorElement } from "@/lib/map/designer-ops";
 
 const sq: Pt[] = [[0, 0], [10, 0], [10, 10], [0, 10]];
@@ -32,5 +32,13 @@ describe("geometry (R2.5.4)", () => {
     expect(usedSqFt(els)).toBe(280);
     expect(occupancy(els, 1000)).toBeCloseTo(0.28, 5);
     expect(occupancy(els, 0)).toBe(0);
+  });
+});
+
+describe("constrainAxis", () => {
+  it("projects onto the dominant axis", () => {
+    expect(constrainAxis([0, 0], [10, 3])).toEqual([10, 0]);
+    expect(constrainAxis([0, 0], [2, -9])).toEqual([0, -9]);
+    expect(constrainAxis([5, 5], [15, 15])).toEqual([15, 5]); // tie goes horizontal
   });
 });

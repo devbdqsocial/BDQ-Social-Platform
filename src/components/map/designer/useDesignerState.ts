@@ -12,9 +12,9 @@ import type { TerrainType } from "@/lib/map/terrain";
 import { mapViolations, pathwayWarnings, MIN_PATH_WIDTH } from "@/lib/map/validation";
 import { validationReport } from "@/lib/map/validation-report";
 import { throughputReport } from "@/lib/map/throughput";
-import { alignElements, distributeElements, nudge, type AlignMode } from "@/lib/map/designer-actions";
+import { alignElements, bringToFront, distributeElements, nudge, sendToBack, type AlignMode } from "@/lib/map/designer-actions";
 import { INFRA_COLOR, STALL_STATUS_COLORS } from "@/lib/stall-colors";
-import { pathLength, type Pt } from "@/lib/map/geometry";
+import { constrainAxis, pathLength, type Pt } from "@/lib/map/geometry";
 import { scoreLayout, suggestPaise } from "@/server/map/scoring";
 import { zoneOf } from "@/lib/map/zones";
 import { searchLayout } from "@/lib/map/search";
@@ -337,6 +337,8 @@ export function useDesignerState({
 
   const doAlign = useCallback((m: AlignMode) => { if (selectedIds.size > 1) commit(alignElements(elements, selectedIds, m)); }, [elements, selectedIds, commit]);
   const doDistribute = useCallback((axis: "h" | "v") => { if (selectedIds.size > 2) commit(distributeElements(elements, selectedIds, axis)); }, [elements, selectedIds, commit]);
+  const bringSelectedToFront = useCallback(() => { if (selectedIds.size) commit(bringToFront(elements, selectedIds)); }, [elements, selectedIds, commit]);
+  const sendSelectedToBack = useCallback(() => { if (selectedIds.size) commit(sendToBack(elements, selectedIds)); }, [elements, selectedIds, commit]);
 
   const setCanvasDim = useCallback((key: "widthFt" | "heightFt", v: number) =>
     setCanvas((c) => ({ ...c, [key]: Math.max(10, Math.min(5000, Math.round(v))) })), []);
@@ -497,7 +499,9 @@ export function useDesignerState({
     if (!p) return;
     if (tool === "measure") { setMeasurePts((pts) => [...pts, ptToFt(p)]); return; }
     if (isDrawTool(tool)) {
-      const v = ptToFt(p);
+      let v = ptToFt(p);
+      const prev = drawing?.length ? drawing[drawing.length - 1] : null;
+      if (e.evt.shiftKey && prev) v = constrainAxis(prev, v); // Shift = draw straight
       if (isClosed(tool) && drawing && drawing.length >= 3) {
         const [fx, fy] = drawing[0];
         if (Math.hypot(v[0] - fx, v[1] - fy) <= 8) { finishDrawing(drawing); return; }
@@ -510,12 +514,17 @@ export function useDesignerState({
     setMarquee({ x: p.x, y: p.y, w: 0, h: 0 });
   }, [tool, drawing, relPointer, ptToFt, finishDrawing]);
 
-  const onStageMouseMove = useCallback(() => {
+  const onStageMouseMove = useCallback((e?: Konva.KonvaEventObject<MouseEvent>) => {
     const p = relPointer();
     if (p) setCursorFt(ptToFt(p));
-    if ((tool === "measure" || isDrawTool(tool)) && p) setMeasureCursor(ptToFt(p));
+    if ((tool === "measure" || isDrawTool(tool)) && p) {
+      let v = ptToFt(p);
+      const prev = drawing?.length ? drawing[drawing.length - 1] : null;
+      if (e?.evt.shiftKey && prev && isDrawTool(tool)) v = constrainAxis(prev, v);
+      setMeasureCursor(v);
+    }
     setMarquee((m) => (m && p ? { ...m, w: p.x - m.x, h: p.y - m.y } : m));
-  }, [tool, relPointer, ptToFt]);
+  }, [tool, drawing, relPointer, ptToFt]);
 
   const onStageMouseUp = useCallback(() => {
     if (!marquee) return;
@@ -611,6 +620,7 @@ export function useDesignerState({
     guides, setGuides, marquee, patchOne, onTransformEnd, onElementClick, onStageMouseDown, onStageMouseMove, onStageMouseUp,
     // element actions
     addElements, deleteSelected, duplicateSelected, copySelected, pasteClipboard, nudgeSelected, doAlign, doDistribute,
+    bringSelectedToFront, sendSelectedToBack,
     // save + ui
     saving, saveStatus, setSaveStatus, handleSave, buildLayoutV2,
     bulkOpen, setBulkOpen, calibrating, setCalibrating,

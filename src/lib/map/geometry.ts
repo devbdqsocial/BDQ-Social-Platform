@@ -40,6 +40,11 @@ export function pathLength(points: Pt[]): number {
   return p;
 }
 
+/** Project `pt` onto the dominant axis relative to `prev` — Shift-draw straight lines. */
+export function constrainAxis(prev: Pt, pt: Pt): Pt {
+  return Math.abs(pt[0] - prev[0]) >= Math.abs(pt[1] - prev[1]) ? [pt[0], prev[1]] : [prev[0], pt[1]];
+}
+
 /** Shortest distance from a point to a line segment, in feet. */
 export function pointToSegment([px, py]: Pt, [ax, ay]: Pt, [bx, by]: Pt): number {
   const dx = bx - ax;

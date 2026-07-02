@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { alignElements, distributeElements, bulkPatch, relabel, type AlignMode } from "./designer-actions";
+import { alignElements, bringToFront, distributeElements, bulkPatch, relabel, sendToBack, type AlignMode } from "./designer-actions";
 import type { EditorElement } from "./designer-ops";
 
 const el = (id: string, x: number, y: number, w = 10, h = 10): EditorElement => ({
@@ -75,6 +75,19 @@ describe("relabel", () => {
   it("renumbers the selection in element order from a prefix+start", () => {
     const out = relabel(fixture(), all, "A-", 5);
     expect(out.map((e) => e.label)).toEqual(["A-5", "A-6", "A-7"]);
+  });
+});
+
+describe("z-order", () => {
+  it("bringToFront moves the selection to the end, preserving order", () => {
+    expect(bringToFront(fixture(), new Set(["a"])).map((e) => e.id)).toEqual(["b", "c", "a"]);
+    expect(bringToFront(fixture(), new Set(["a", "b"])).map((e) => e.id)).toEqual(["c", "a", "b"]);
+  });
+
+  it("sendToBack moves the selection to the start; empty selection is a no-op", () => {
+    expect(sendToBack(fixture(), new Set(["c"])).map((e) => e.id)).toEqual(["c", "a", "b"]);
+    const els = fixture();
+    expect(sendToBack(els, new Set())).toBe(els);
   });
 });
 

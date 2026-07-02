@@ -8,7 +8,7 @@ import { useDesigner } from "./DesignerContext";
 
 /** Right-column editable lists + advisories (build-plan R2.5.5). Pure render off the store. */
 export function DesignerSidePanels() {
-  const { violations, setSelectedIds, setOverrides, zones, setZones, pathWarnings, pathways, setPathways, obstacles, setObstacles } = useDesigner();
+  const { violations, setSelectedIds, setOverrides, zones, setZones, pathWarnings, pathways, setPathways, obstacles, setObstacles, terrain, setTerrain, setVertexEdit } = useDesigner();
 
   return (
     <>
@@ -44,6 +44,7 @@ export function DesignerSidePanels() {
                     onChange={(e) => setZones((zs) => zs.map((x) => (x.id === z.id ? { ...x, name: e.target.value.slice(0, 24) } : x)))}
                     className="h-8 min-w-0 flex-1 rounded-md border border-border bg-background px-2 text-sm"
                   />
+                  <Button variant="ghost" size="sm" onClick={() => setVertexEdit({ target: "zone", id: z.id })}>Edit points</Button>
                   <Button variant="ghost" size="sm" onClick={() => setZones((zs) => zs.filter((x) => x.id !== z.id))}>Remove</Button>
                 </div>
                 <div className="flex flex-wrap gap-1 pl-6">
@@ -87,7 +88,25 @@ export function DesignerSidePanels() {
                   className="h-8 w-20 rounded-md border border-border bg-background px-2 text-sm"
                 />
                 <span className="text-xs text-muted-foreground">ft</span>
-                <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setPathways((ps) => ps.filter((x) => x.id !== p.id))}>Remove</Button>
+                <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setVertexEdit({ target: "pathway", id: p.id })}>Edit points</Button>
+                <Button variant="ghost" size="sm" onClick={() => setPathways((ps) => ps.filter((x) => x.id !== p.id))}>Remove</Button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {terrain.length > 0 && (
+        <div className="space-y-1.5 rounded-xl border border-border bg-card p-4 text-sm">
+          <h2 className="font-display text-base font-semibold">Terrain ({terrain.length})</h2>
+          <ul className="space-y-1">
+            {terrain.map((t) => (
+              <li key={t.id} className="flex items-center justify-between gap-2">
+                <span className="truncate capitalize">{t.type.toLowerCase()}</span>
+                <span className="flex shrink-0 gap-1">
+                  <Button variant="ghost" size="sm" onClick={() => setVertexEdit({ target: "terrain", id: t.id })}>Edit points</Button>
+                  <Button variant="ghost" size="sm" onClick={() => setTerrain((ts) => ts.filter((x) => x.id !== t.id))}>Remove</Button>
+                </span>
               </li>
             ))}
           </ul>

@@ -2,7 +2,7 @@
 
 import { Circle, Group, Line } from "react-konva";
 import { insertMidpoint, movePoint, removePoint } from "@/lib/map/plot";
-import type { Pt } from "@/lib/map/geometry";
+import { constrainAxis, type Pt } from "@/lib/map/geometry";
 import { useDesigner } from "./DesignerContext";
 
 /**
@@ -61,7 +61,11 @@ export function PolygonEditor() {
           strokeWidth={1.5}
           strokeScaleEnabled={false}
           draggable
-          onDragMove={(e) => d.updateVertexPoints(movePoint(points, i, [e.target.x() / px, e.target.y() / px]))}
+          onDragMove={(e) => {
+            let to: Pt = [e.target.x() / px, e.target.y() / px];
+            if (e.evt.shiftKey && points.length > 1) to = constrainAxis(points[(i - 1 + points.length) % points.length], to);
+            d.updateVertexPoints(movePoint(points, i, to));
+          }}
           onDragEnd={(e) => d.updateVertexPoints(movePoint(points, i, [d.toFt(e.target.x()), d.toFt(e.target.y())]))}
           onDblClick={() => d.updateVertexPoints(removePoint(points, i, closed))}
           onDblTap={() => d.updateVertexPoints(removePoint(points, i, closed))}

@@ -16,6 +16,18 @@ interface Props {
   onBulkPatch: (patch: Partial<EditorElement>) => void;
   onApplySuggestions: (scope: "selected" | "zone") => void;
   onRelabel: (prefix: string, start: number) => void;
+  onBringToFront: () => void;
+  onSendToBack: () => void;
+}
+
+function OrderButtons({ onBringToFront, onSendToBack }: { onBringToFront: () => void; onSendToBack: () => void }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-xs text-muted-foreground">Order</span>
+      <Button size="sm" variant="outline" className="h-7 flex-1" onClick={onBringToFront} title="Bring to front (])">To front</Button>
+      <Button size="sm" variant="outline" className="h-7 flex-1" onClick={onSendToBack} title="Send to back ([)">To back</Button>
+    </div>
+  );
 }
 
 const fmtRupees = (paise: number) => `₹${(paise / 100).toLocaleString("en-IN")}`;
@@ -127,7 +139,7 @@ function BulkEditForm({ count, stallTypes, onBulkPatch }: { count: number; stall
   );
 }
 
-export function DesignerInspector({ element, multiCount, stallTypes, score, suggestion, salesView, onChange, onBulkPatch, onApplySuggestions, onRelabel }: Props) {
+export function DesignerInspector({ element, multiCount, stallTypes, score, suggestion, salesView, onChange, onBulkPatch, onApplySuggestions, onRelabel, onBringToFront, onSendToBack }: Props) {
   if (multiCount > 1) {
     return (
       <aside className="space-y-3 rounded-xl border border-border bg-card p-4">
@@ -145,6 +157,7 @@ export function DesignerInspector({ element, multiCount, stallTypes, score, sugg
             <p className="text-[11px] text-muted-foreground">Sets each stall&apos;s price from its type base × score. You still Save to commit.</p>
           </div>
         )}
+        <OrderButtons onBringToFront={onBringToFront} onSendToBack={onSendToBack} />
         <BulkEditForm count={multiCount} stallTypes={stallTypes} onBulkPatch={onBulkPatch} />
         <RelabelForm onRelabel={onRelabel} />
       </aside>
@@ -181,6 +194,8 @@ export function DesignerInspector({ element, multiCount, stallTypes, score, sugg
         <NumberField label="Height (ft)" value={element.heightFt} onChange={(v) => onChange({ heightFt: Math.max(1, v) })} />
         <NumberField label="Rotation (°)" value={element.rotation} onChange={(v) => onChange({ rotation: v })} />
       </div>
+
+      <OrderButtons onBringToFront={onBringToFront} onSendToBack={onSendToBack} />
 
       {isStall && (
         <>
