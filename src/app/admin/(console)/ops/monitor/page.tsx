@@ -4,10 +4,12 @@ import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { requireAdminRole } from "@/server/auth/guard";
 import { getActiveEvent } from "@/server/admin/event-context";
 import { getOpsSnapshot } from "@/server/ops/tasks";
+import { getOpsMap } from "@/server/map/admin-service";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { KpiCard } from "@/components/charts/kpi-card";
 import { AutoRefresh } from "@/components/admin/auto-refresh";
+import { OpsLiveMap } from "@/components/admin/OpsLiveMap";
 
 export const metadata: Metadata = { title: "Live Monitor" };
 export const dynamic = "force-dynamic";
@@ -15,7 +17,10 @@ export const dynamic = "force-dynamic";
 export default async function LiveMonitorPage() {
   await requireAdminRole();
   const { active } = await getActiveEvent();
-  const { live, recentCheckins } = await getOpsSnapshot(active?.id);
+  const [{ live, recentCheckins }, opsMap] = await Promise.all([
+    getOpsSnapshot(active?.id),
+    active ? getOpsMap(active.id) : null,
+  ]);
 
   return (
     <div className="space-y-6">
@@ -28,6 +33,15 @@ export default async function LiveMonitorPage() {
         <KpiCard label="Tickets issued" value={live.ticketsSold} sub="all-time for event" />
         <KpiCard label="Stalls booked" value={`${live.stalls.booked}/${live.stalls.total}`} sub={`${Math.round(live.stalls.pct * 100)}% occupancy`} />
       </div>
+
+      {opsMap && (
+        <Card>
+          <CardHeader><CardTitle className="text-base">Venue map — live stall status</CardTitle></CardHeader>
+          <CardContent>
+            <OpsLiveMap layout={opsMap.layout} statuses={opsMap.statuses} extras={opsMap.extras} />
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader><CardTitle className="text-base">Recent check-ins</CardTitle></CardHeader>
