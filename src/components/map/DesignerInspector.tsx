@@ -190,6 +190,15 @@ export function DesignerInspector({ element, multiCount, stallTypes, score, sugg
               onChange={(e) => onChange({ priceInPaise: e.target.value === "" ? undefined : Math.round(Number(e.target.value) * 100) })}
               className={fieldCls} />
           </label>
+          {(() => {
+            const t = element.stallTypeId ? stallTypes.find((st) => st.id === element.stallTypeId) : undefined;
+            if (!t || t.priceInPaise <= 0) return null;
+            return element.priceInPaise == null ? (
+              <p className="text-xs text-muted-foreground">Using type price: <b className="text-foreground">{fmtRupees(t.priceInPaise)}</b> ({t.name})</p>
+            ) : (
+              <p className="text-xs text-muted-foreground">Overrides type price {fmtRupees(t.priceInPaise)} ({t.name}) — clear to use it.</p>
+            );
+          })()}
           {suggestion != null && score && (
             <div className="flex items-center justify-between gap-2 rounded-md border border-dashed border-border bg-muted/40 px-2 py-1.5">
               <span className="text-xs text-muted-foreground">Suggested: <b className="text-foreground">{fmtRupees(suggestion)}</b> (score {score.total})</span>

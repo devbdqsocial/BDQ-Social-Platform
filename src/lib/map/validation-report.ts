@@ -23,9 +23,11 @@ export interface ValidationInput {
   obstacles: Obstacle[];
   pathways: Pathway[];
   overrides: Set<string>;
+  /** StallTypeDef ids with a price > 0 — a stall priced via its type is not "unpriced" */
+  pricedTypeIds?: Set<string>;
 }
 
-export function validationReport({ elements, boundary, obstacles, pathways, overrides }: ValidationInput): ValidationItem[] {
+export function validationReport({ elements, boundary, obstacles, pathways, overrides, pricedTypeIds }: ValidationInput): ValidationItem[] {
   const out: ValidationItem[] = [];
 
   // §4 boundary / obstacle overlaps (errors)
@@ -51,10 +53,11 @@ export function validationReport({ elements, boundary, obstacles, pathways, over
     if (group.length > 1) out.push({ key: `dup:${group[0].id}`, severity: "warning", message: `Duplicate label "${group[0].label}" (${group.length} stalls)`, focusId: group[0].id });
   }
 
-  // unpriced sellable stalls (warning)
+  // unpriced sellable stalls (warning) — effective price = stall override, else its type's price
   for (const s of stalls) {
-    if (s.status !== "BLOCKED" && s.priceInPaise == null) {
-      out.push({ key: `price:${s.id}`, severity: "warning", message: `${s.label} has no price`, focusId: s.id });
+    const typePriced = !!s.stallTypeId && !!pricedTypeIds?.has(s.stallTypeId);
+    if (s.status !== "BLOCKED" && s.priceInPaise == null && !typePriced) {
+      out.push({ key: `price:${s.id}`, severity: "warning", message: `${s.label} has no price (set one, or price its stall type)`, focusId: s.id });
     }
   }
 

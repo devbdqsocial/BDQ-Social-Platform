@@ -21,6 +21,13 @@ describe("validationReport", () => {
     expect(r.find((i) => i.key.startsWith("price:"))).toBeUndefined();
   });
 
+  it("does not flag a stall priced via its stall type", () => {
+    const el = stall("A-1", 0, 0, { priceInPaise: undefined, stallTypeId: "st1" });
+    expect(validationReport({ ...base, elements: [el], pricedTypeIds: new Set(["st1"]) }).find((i) => i.key.startsWith("price:"))).toBeUndefined();
+    // same stall with an unpriced type still warns
+    expect(validationReport({ ...base, elements: [el], pricedTypeIds: new Set() }).find((i) => i.key.startsWith("price:"))).toBeDefined();
+  });
+
   it("flags duplicate labels once per group", () => {
     const r = validationReport({ ...base, elements: [stall("F-1", 0, 0, { label: "F-1" }), stall("x", 20, 0, { label: "F-1" }), stall("y", 40, 0, { label: "F-1" })] });
     const dups = r.filter((i) => i.key.startsWith("dup:"));

@@ -23,10 +23,15 @@ export function SummaryPanel({
   const rollups = useMemo(() => zoneRollups(elements, zones), [elements, zones]);
   const summary = useMemo(() => {
     const nameById = Object.fromEntries(stallTypes.map((t) => [t.id, t.name]));
+    const priceById = Object.fromEntries(stallTypes.map((t) => [t.id, t.priceInPaise]));
     const stalls = elements.filter((e) => e.kind === "stall");
     const blocked = stalls.filter((s) => s.status === "BLOCKED").length;
     const sellable = stalls.length - blocked;
-    const totalPaise = stalls.reduce((sum, s) => sum + (s.status === "BLOCKED" ? 0 : s.priceInPaise ?? 0), 0);
+    // Effective price mirrors checkout: stall override, else its type's price.
+    const totalPaise = stalls.reduce(
+      (sum, s) => sum + (s.status === "BLOCKED" ? 0 : s.priceInPaise ?? (s.stallTypeId ? priceById[s.stallTypeId] ?? 0 : 0)),
+      0,
+    );
     const byType = new Map<string, number>();
     for (const s of stalls) {
       const key = s.stallTypeId ? nameById[s.stallTypeId] ?? "Other" : "Untyped";

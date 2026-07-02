@@ -171,7 +171,11 @@ export function useDesignerState({
   const violationIds = useMemo(() => new Set(violations.map((v) => v.elementId)), [violations]);
   const pathWarnings = useMemo(() => pathwayWarnings(pathways, elements), [pathways, elements]);
   // Consolidated validation drawer (§4/§7/§8 + dup-label + unpriced) + throughput rollup (R2.5.16)
-  const validation = useMemo(() => validationReport({ elements, boundary, obstacles, pathways, overrides }), [elements, boundary, obstacles, pathways, overrides]);
+  const pricedTypeIds = useMemo(() => new Set(stallTypes.filter((t) => t.priceInPaise > 0).map((t) => t.id)), [stallTypes]);
+  const validation = useMemo(
+    () => validationReport({ elements, boundary, obstacles, pathways, overrides, pricedTypeIds }),
+    [elements, boundary, obstacles, pathways, overrides, pricedTypeIds],
+  );
   // Throughput demand is REAL now (R2.5.17): the event's ticket total, overridable for what-ifs.
   const attendance = attendanceOverride ?? expectedAttendance;
   const throughput = useMemo(() => throughputReport(entryFlow, attendance), [entryFlow, attendance]);
@@ -493,17 +497,28 @@ export function useDesignerState({
     };
   }, [gridFt, canvas, boundary, obstacles, terrain, zones, pathways, elements, ops, entryFlow, layers, versions]);
 
+  // Duplicate labels get auto-renamed at save time ("A-2" → "A-2-2") — surface that BEFORE it
+  // happens: first Save click warns, second click (without label edits in between) proceeds.
+  const dupAckRef = useRef(false);
+  const dupCount = useMemo(() => validation.filter((v) => v.key.startsWith("dup:")).length, [validation]);
+  useEffect(() => { dupAckRef.current = false; }, [elements]);
+
   const handleSave = useCallback(async () => {
     if (!eventId || !saveAction) return;
     if (violations.length > 0) {
       setSaveStatus(`${violations.length} stall(s) cross the boundary or an obstacle — fix or override them first.`);
       return;
     }
+    if (dupCount > 0 && !dupAckRef.current) {
+      dupAckRef.current = true;
+      setSaveStatus(`${dupCount} duplicate label${dupCount === 1 ? "" : "s"} will be auto-renamed on save (e.g. A-2 → A-2-2). Fix them in the validation panel, or press Save again to continue.`);
+      return;
+    }
     setSaving(true); setSaveStatus(null);
     try { await saveAction(eventId, buildLayoutV2()); setSaveStatus("Saved to event."); }
     catch (err) { setSaveStatus(err instanceof Error ? err.message : "Save failed"); }
     finally { setSaving(false); }
-  }, [eventId, saveAction, violations.length, buildLayoutV2]);
+  }, [eventId, saveAction, violations.length, dupCount, buildLayoutV2]);
 
   return {
     // config + refs
