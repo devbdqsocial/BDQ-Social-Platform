@@ -37,7 +37,7 @@ export function useDesignerKeyboard(d: DesignerApi) {
         if (k === "s") { setSalesView((prev) => !prev); return; }
         if (e.key === "/") { e.preventDefault(); document.getElementById("designer-search")?.focus(); return; }
         if (e.key === "Enter" && drawing && drawing.length >= (isClosed(tool) ? 3 : 2)) { finishDrawing(drawing); return; }
-        if (e.key === "Escape") { setMeasurePts([]); setMeasureCursor(null); setDrawing(null); setSelectedIds(new Set()); return; }
+        if (e.key === "Escape") { setMeasurePts([]); setMeasureCursor(null); setDrawing(null); setSelectedIds(new Set()); d.setVertexEdit(null); return; }
       }
       const step = e.shiftKey ? 10 : 1;
       const dir = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];

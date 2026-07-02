@@ -3,7 +3,8 @@ import { Prisma } from "@prisma/client";
 import { db } from "@/server/db";
 import { withAudit } from "@/server/audit";
 import type { Session } from "@/server/auth/guard";
-import { stripEventData, upgradeLayout, type LayoutV2 } from "@/lib/map/layout-v2";
+import { layoutV2Schema, stripEventData, upgradeLayout, type LayoutV2 } from "@/lib/map/layout-v2";
+import { canvasForPlot, lShapePlot, rectPlot } from "@/lib/map/plot";
 import { saveEventMap } from "@/server/events/service";
 
 /** Named, reusable maps (venue size + layout). Geometry stored in feet; attach to any event. */
@@ -16,6 +17,8 @@ export interface CreateMapInput {
   widthFt: number;
   heightFt: number;
   gridFt: number;
+  /** Plot-first: width/height describe the PLOT; the canvas is sized around it with a margin. */
+  plot?: { kind: "RECT" | "L"; cutWidthFt?: number; cutDepthFt?: number };
 }
 
 export function listMaps() {
@@ -30,21 +33,35 @@ export function createMap(session: Session, input: CreateMapInput) {
   return withAudit(session, { action: "CREATE", entity: "EventMap" }, async () => ({
     before: null,
     run: async () => {
-      const layoutJson = {
-        version: 1,
-        canvas: { widthFt: input.widthFt, heightFt: input.heightFt, gridFt: input.gridFt },
-        elements: [],
-      } as unknown as Prisma.InputJsonValue;
+      // Plot-first: presets become the boundary polygon; the canvas is the plot bbox + margin.
+      const plotPoints = input.plot
+        ? input.plot.kind === "L"
+          ? lShapePlot(input.widthFt, input.heightFt, input.plot.cutWidthFt ?? Math.round(input.widthFt / 3), input.plot.cutDepthFt ?? Math.round(input.heightFt / 3))
+          : rectPlot(input.widthFt, input.heightFt)
+        : null;
+      const placed = plotPoints ? canvasForPlot(plotPoints) : null;
+      const widthFt = placed?.widthFt ?? input.widthFt;
+      const heightFt = placed?.heightFt ?? input.heightFt;
+      const layout = layoutV2Schema.parse({
+        v: 2,
+        canvas: {
+          widthFt,
+          heightFt,
+          gridFt: [1, 2, 5, 10].includes(input.gridFt) ? input.gridFt : 5,
+          displayUnit: input.unit,
+        },
+        ...(placed ? { boundary: { points: placed.points } } : {}),
+      });
       const m = await db.eventMap.create({
         data: {
           name: input.name,
           description: input.description || null,
           locationName: input.locationName || null,
           unit: input.unit,
-          widthFt: input.widthFt,
-          heightFt: input.heightFt,
-          gridFt: input.gridFt,
-          layoutJson,
+          widthFt,
+          heightFt,
+          gridFt: layout.canvas.gridFt,
+          layoutJson: layout as unknown as Prisma.InputJsonValue,
           createdById: session.userId,
         },
       });

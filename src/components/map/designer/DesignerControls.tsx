@@ -13,6 +13,7 @@ import { downloadMapPdf } from "./MapPdf";
 import { createInfra, createStall, seedToEditor } from "@/lib/map/designer-ops";
 import type { Obstacle, Pathway } from "@/lib/map/layout-v2";
 import { TERRAIN_TYPES, terrainLabel, type TerrainType } from "@/lib/map/terrain";
+import { polygonArea } from "@/lib/map/geometry";
 import type { SeedInfraType } from "@/server/map/seed-aarush-lawn";
 import { Button } from "@/components/ui/button";
 import { DesignerToolbar } from "../DesignerToolbar";
@@ -60,7 +61,10 @@ export function DesignerControls() {
           Venue width (ft)
           <input type="number" min={10} value={canvas.heightFt} onChange={(e) => setCanvasDim("heightFt", Number(e.target.value))} className="h-9 w-24 rounded-md border border-border bg-background px-2 text-sm" />
         </label>
-        <p className="pb-1.5 text-sm"><span className="text-muted-foreground">Area:</span> <span className="font-medium">{fmtInt(canvas.widthFt * canvas.heightFt)} sq ft</span></p>
+        <p className="pb-1.5 text-sm">
+          <span className="text-muted-foreground">{boundary ? "Plot area:" : "Area:"}</span>{" "}
+          <span className="font-medium">{fmtInt(boundary ? polygonArea(boundary) : canvas.widthFt * canvas.heightFt)} sq ft</span>
+        </p>
         {uploadAction && (
           <div className="flex items-end gap-2">
             <Button type="button" variant="outline" size="sm" onClick={() => bgFileRef.current?.click()}>
@@ -177,7 +181,14 @@ export function DesignerControls() {
 
       {/* structure row — boundary + zones + pathways + obstacles */}
       <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-border bg-card p-2 text-xs">
-        {isDrawTool(tool) ? (
+        {d.vertexEdit && d.vertexPoints ? (
+          <>
+            <span className="text-foreground">
+              Editing points — drag a corner to move it, click a small dot to add one, double-click a corner to remove it.
+            </span>
+            <Button variant="outline" size="sm" onClick={() => d.setVertexEdit(null)}>Done</Button>
+          </>
+        ) : isDrawTool(tool) ? (
           <>
             <span className="text-foreground">
               Drawing {tool} · {(drawing?.length ?? 0)} pts — {isClosed(tool) ? "click the first point or Enter to close" : "double-click or Enter to finish"}, Esc to cancel
@@ -189,12 +200,13 @@ export function DesignerControls() {
             <span className="px-1 text-muted-foreground">Boundary:</span>
             {boundary ? (
               <>
-                <span className="text-foreground">{boundary.length}-pt set</span>
-                <Button variant="ghost" size="sm" onClick={() => setBoundary(null)}>Clear</Button>
+                <span className="text-foreground">{boundary.length}-pt plot</span>
+                <Button variant="ghost" size="sm" onClick={() => d.setVertexEdit({ target: "boundary" })}>Edit points</Button>
                 <Button variant="ghost" size="sm" onClick={() => selectTool("boundary")}>Redraw</Button>
+                <Button variant="ghost" size="sm" onClick={() => setBoundary(null)}>Clear</Button>
               </>
             ) : (
-              <Button variant="ghost" size="sm" onClick={() => selectTool("boundary")}><Spline className="size-4" /> Draw boundary (B)</Button>
+              <Button variant="ghost" size="sm" onClick={() => selectTool("boundary")}><Spline className="size-4" /> Draw plot boundary (B)</Button>
             )}
             <span className="mx-1 h-6 w-px bg-border" />
             <Button variant="ghost" size="sm" onClick={() => selectTool("zone")}><Shapes className="size-4" /> Add zone (Z)</Button>

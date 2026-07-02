@@ -13,12 +13,15 @@ export function SummaryPanel({
   stallTypes,
   zones = [],
   venueSqFt,
+  isPlot = false,
 }: {
   elements: EditorElement[];
   stallTypes: PaletteStallType[];
   zones?: Zone[];
-  /** venue area for occupancy — boundary area later (R2.5.3); canvas W×H for now */
+  /** venue area for the space budget — the plot polygon's area when a boundary is set, else canvas W×H */
   venueSqFt?: number;
+  /** true when venueSqFt comes from the plot boundary (labels the budget rows accordingly) */
+  isPlot?: boolean;
 }) {
   const rollups = useMemo(() => zoneRollups(elements, zones), [elements, zones]);
   const summary = useMemo(() => {
@@ -51,7 +54,13 @@ export function SummaryPanel({
       <div className="flex justify-between"><span className="text-muted-foreground">Sellable</span><span className="font-medium">{summary.sellable}</span></div>
       {summary.blocked > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Blocked</span><span className="font-medium">{summary.blocked}</span></div>}
       <div className="flex justify-between"><span className="text-muted-foreground">Infra / zones</span><span className="font-medium">{summary.infra}</span></div>
-      <div className="flex justify-between border-t border-border pt-2"><span className="text-muted-foreground">Used area</span><span className="font-medium tabular-nums">{fmtArea(summary.used)}</span></div>
+      {venueSqFt != null && (
+        <div className="flex justify-between border-t border-border pt-2"><span className="text-muted-foreground">{isPlot ? "Plot area" : "Canvas area"}</span><span className="font-medium tabular-nums">{fmtArea(venueSqFt)}</span></div>
+      )}
+      <div className={venueSqFt != null ? "flex justify-between" : "flex justify-between border-t border-border pt-2"}><span className="text-muted-foreground">Used area</span><span className="font-medium tabular-nums">{fmtArea(summary.used)}</span></div>
+      {venueSqFt != null && (
+        <div className="flex justify-between"><span className="text-muted-foreground">Free space</span><span className="font-medium tabular-nums">{fmtArea(Math.max(0, venueSqFt - summary.used))}</span></div>
+      )}
       {summary.occ != null && (
         <div className="flex justify-between"><span className="text-muted-foreground">Occupancy</span><span className="font-medium tabular-nums">{fmtPct(summary.occ)}</span></div>
       )}

@@ -11,6 +11,7 @@ import { TIER_HEX } from "@/server/map/scoring";
 import { OPS_HEX, ENTRY_HEX } from "@/lib/map/entry-ops";
 import { snapToNeighbours, nudge } from "@/lib/map/designer-actions";
 import { useDesigner } from "./DesignerContext";
+import { PolygonEditor } from "./PolygonEditor";
 
 /**
  * Memoized element node (R2.5.17 perf). Re-renders ONLY when its own props change (geometry,
@@ -128,6 +129,10 @@ export function DesignerCanvas() {
             fill="#EEF0F3"
           />
           <Rect x={0} y={0} width={canvas.widthFt * pxPerFt} height={canvas.heightFt * pxPerFt} fill="#FBFBFA" />
+          {/* the plot itself reads as bright paper against the canvas + surround */}
+          {boundary && boundary.length >= 3 && (
+            <Line points={boundary.flatMap(([x, y]) => [x * pxPerFt, y * pxPerFt])} closed fill="#FFFFFF" />
+          )}
           {d.gridLines.minor.map((l, i) => <Line key={`gm${i}`} points={l.points} stroke="#E3E6EA" strokeWidth={1} strokeScaleEnabled={false} />)}
           {d.gridLines.major.map((l, i) => <Line key={`gM${i}`} points={l.points} stroke="#D2D7DE" strokeWidth={1} strokeScaleEnabled={false} />)}
           <Rect x={0} y={0} width={canvas.widthFt * pxPerFt} height={canvas.heightFt * pxPerFt} stroke="#94A3B8" strokeWidth={2} dash={[6, 4]} strokeScaleEnabled={false} />
@@ -307,6 +312,7 @@ export function DesignerCanvas() {
               />
             </>
           )}
+          <PolygonEditor />
           <Transformer ref={trRef} rotateEnabled flipEnabled={false} ignoreStroke />
         </Layer>
       </Stage>

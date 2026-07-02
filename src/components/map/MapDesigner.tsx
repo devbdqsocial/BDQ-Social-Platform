@@ -8,6 +8,8 @@ import { useDesignerKeyboard } from "./designer/useDesignerKeyboard";
 import { DesignerProvider } from "./designer/DesignerContext";
 import { DesignerControls, DesignerStatusBar } from "./designer/DesignerControls";
 import { DesignerCanvas } from "./designer/DesignerCanvas";
+import { PlotSetupCard } from "./designer/PlotSetupCard";
+import { polygonArea } from "@/lib/map/geometry";
 import { DesignerSidePanels } from "./designer/DesignerSidePanels";
 import { LayersPanel } from "./designer/LayersPanel";
 import { HeatmapLegend } from "./designer/HeatmapLegend";
@@ -47,6 +49,7 @@ export default function MapDesigner(props: MapDesignerProps = {}) {
       <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
         <div className="space-y-3">
           <DesignerControls />
+          {!d.boundary && elements.length === 0 && <PlotSetupCard />}
           <DesignerCanvas />
           <DesignerStatusBar />
         </div>
@@ -66,7 +69,13 @@ export default function MapDesigner(props: MapDesignerProps = {}) {
             onRelabel={(prefix, start) => { if (selectedIds.size) commit(relabel(elements, selectedIds, prefix, start)); }}
           />
           <HeatmapLegend />
-          <SummaryPanel elements={elements} stallTypes={stallTypes} zones={zones} venueSqFt={canvas.widthFt * canvas.heightFt} />
+          <SummaryPanel
+            elements={elements}
+            stallTypes={stallTypes}
+            zones={zones}
+            venueSqFt={d.boundary ? polygonArea(d.boundary) : canvas.widthFt * canvas.heightFt}
+            isPlot={!!d.boundary}
+          />
           <ValidationPanel />
           <VersionsPanel />
           <DesignerSidePanels />
