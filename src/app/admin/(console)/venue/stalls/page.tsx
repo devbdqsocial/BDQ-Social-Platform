@@ -19,7 +19,9 @@ export default async function StallInventoryPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <PageHeader title="Stall inventory" description="Every stall in the active event, layout structure, and assignments." />
-        <Button asChild size="sm" variant="outline"><Link href="/admin/venue/map">Open map builder</Link></Button>
+        <Button asChild size="sm" variant="outline">
+          <Link href={active ? `/admin/events/${active.id}/map` : "/admin/venue/maps"}>Open map designer</Link>
+        </Button>
       </div>
 
       {active ? (

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { updateCampaignAction, publishCampaignAction, getCampaignProgressAction } from "./actions";
 import { pauseCampaignAction, resumeCampaignAction, cancelCampaignAction } from "../../actions";
 import { Button } from "@/components/ui/button";
+import { ConfirmButton } from "@/components/admin/ConfirmButton";
 import { Field } from "@/components/ui/field";
 import { Input, Textarea, Select } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -199,10 +200,8 @@ export function CampaignBuilder({ campaign: initialCampaign }: { campaign: Campa
     }, 0);
   };
 
-  // Publish / Send trigger
+  // Publish / Send trigger (confirmation handled by the ConfirmButton wrapping the trigger)
   const handlePublish = async () => {
-    if (!confirm("Are you sure you want to queue this campaign? This will immediately begin dispatching notifications.")) return;
-    
     setIsPublishing(true);
     const res = await publishCampaignAction(campaign.id);
     setIsPublishing(false);
@@ -225,10 +224,6 @@ export function CampaignBuilder({ campaign: initialCampaign }: { campaign: Campa
     } else if (action === "resume") {
       res = await resumeCampaignAction(campaign.id);
     } else {
-      if (!confirm("Are you sure you want to cancel? Remaining queued deliveries will be permanently aborted.")) {
-        setIsQueueActionLoading(false);
-        return;
-      }
       res = await cancelCampaignAction(campaign.id);
     }
     setIsQueueActionLoading(false);
@@ -478,14 +473,23 @@ export function CampaignBuilder({ campaign: initialCampaign }: { campaign: Campa
           {/* DRAFT: Ready to dispatch button */}
           {campaign.status === "DRAFT" && (
             <div className="space-y-3 pt-2">
-              <Button
-                variant="default"
-                onClick={handlePublish}
-                disabled={isPublishing}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-md shadow-emerald-500/10"
-              >
-                {isPublishing ? "Queuing..." : "Send Campaign Now"}
-              </Button>
+              <ConfirmButton
+                trigger={
+                  <Button
+                    variant="default"
+                    disabled={isPublishing}
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-md shadow-emerald-500/10"
+                  >
+                    {isPublishing ? "Queuing..." : "Send Campaign Now"}
+                  </Button>
+                }
+                title="Queue this campaign?"
+                description="Dispatching begins immediately and notifies real customers."
+                confirmLabel="Send now"
+                confirmVariant="default"
+                onConfirm={handlePublish}
+                pending={isPublishing}
+              />
               <p className="text-2xs text-muted-foreground text-center">
                 This triggers immediate dispatch. Auto-saved changes are synced.
               </p>
@@ -516,14 +520,22 @@ export function CampaignBuilder({ campaign: initialCampaign }: { campaign: Campa
                   </Button>
                 )}
 
-                <Button
-                  variant="outline"
-                  onClick={() => handleQueueAction("cancel")}
-                  disabled={isQueueActionLoading}
-                  className="flex-1 border-rose-500/30 text-rose-600 hover:bg-rose-500/10 gap-1.5"
-                >
-                  <XCircle className="h-4 w-4" /> Cancel
-                </Button>
+                <ConfirmButton
+                  trigger={
+                    <Button
+                      variant="outline"
+                      disabled={isQueueActionLoading}
+                      className="flex-1 border-rose-500/30 text-rose-600 hover:bg-rose-500/10 gap-1.5"
+                    >
+                      <XCircle className="h-4 w-4" /> Cancel
+                    </Button>
+                  }
+                  title="Cancel this campaign?"
+                  description="Remaining queued deliveries will be permanently aborted."
+                  confirmLabel="Cancel campaign"
+                  onConfirm={() => handleQueueAction("cancel")}
+                  pending={isQueueActionLoading}
+                />
               </div>
               <p className="text-2xs text-muted-foreground text-center">
                 Queue state switches are applied immediately to background jobs.

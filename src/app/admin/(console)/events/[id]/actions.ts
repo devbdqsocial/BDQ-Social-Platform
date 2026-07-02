@@ -132,9 +132,11 @@ export async function deleteEventAction(formData: FormData): Promise<void> {
 export async function setPricingRulesAction(formData: FormData): Promise<void> {
   const session = await requireAdminRole();
   const eventId = String(formData.get("eventId"));
-  const bulkTiers = [0, 1, 2]
-    .map((i) => ({ minQty: Number(formData.get(`minQty${i}`)), percent: Number(formData.get(`percent${i}`)) }))
-    .filter((t) => t.minQty > 0 && t.percent > 0);
+  const bulkTiers: { minQty: number; percent: number }[] = [];
+  for (let i = 0; formData.has(`minQty${i}`); i++) {
+    const tier = { minQty: Number(formData.get(`minQty${i}`)), percent: Number(formData.get(`percent${i}`)) };
+    if (tier.minQty > 0 && tier.percent > 0) bulkTiers.push(tier);
+  }
   const earlyPercent = formData.get("earlyPercent");
   const data = parseOrThrow(eventPricingSchema, {
     bulkTiers,

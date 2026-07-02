@@ -6,6 +6,7 @@ import type { listCampaigns } from "@/server/campaigns/service";
 import { DataTable } from "@/components/data-table/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmButton } from "@/components/admin/ConfirmButton";
 import { sendCampaignAction } from "./actions";
 
 type Row = Awaited<ReturnType<typeof listCampaigns>>[number];
@@ -20,13 +21,18 @@ const columns: ColumnDef<Row>[] = [
   {
     id: "actions", header: "", enableSorting: false,
     cell: ({ row }) => (row.original.status === "DRAFT" && row.original.channel === "EMAIL" ? (
-      <form
-        action={sendCampaignAction}
-        onSubmit={(e) => { if (!confirm(`Send "${row.original.name}" to its audience now? This emails real customers.`)) e.preventDefault(); }}
-      >
-        <input type="hidden" name="id" value={row.original.id} />
-        <Button type="submit" size="sm">Send</Button>
-      </form>
+      <ConfirmButton
+        trigger={<Button type="button" size="sm">Send</Button>}
+        title={`Send “${row.original.name}” now?`}
+        description="This emails real customers in its audience immediately."
+        confirmLabel="Send campaign"
+        confirmVariant="default"
+        onConfirm={() => {
+          const fd = new FormData();
+          fd.set("id", row.original.id);
+          void sendCampaignAction(fd);
+        }}
+      />
     ) : null),
   },
 ];

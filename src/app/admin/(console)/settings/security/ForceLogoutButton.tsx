@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { ConfirmButton } from "@/components/admin/ConfirmButton";
 import { forceLogoutAllAction } from "./actions";
 
 export function ForceLogoutButton() {
@@ -11,7 +12,6 @@ export function ForceLogoutButton() {
   const [busy, setBusy] = useState(false);
 
   const run = async () => {
-    if (!confirm("Sign out every admin and staff member (except you) from all devices?")) return;
     setBusy(true);
     try {
       const { count } = await forceLogoutAllAction();
@@ -25,8 +25,17 @@ export function ForceLogoutButton() {
   };
 
   return (
-    <Button variant="outline" className="w-fit text-destructive" onClick={run} disabled={busy}>
-      {busy ? "Working…" : "Force log out all admins"}
-    </Button>
+    <ConfirmButton
+      trigger={
+        <Button variant="outline" className="w-fit text-destructive" disabled={busy}>
+          {busy ? "Working…" : "Force log out all admins"}
+        </Button>
+      }
+      title="Force log out all admins?"
+      description="Signs out every admin and staff member (except you) from all devices."
+      confirmLabel="Log everyone out"
+      onConfirm={run}
+      pending={busy}
+    />
   );
 }

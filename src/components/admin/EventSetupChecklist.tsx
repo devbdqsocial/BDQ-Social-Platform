@@ -2,9 +2,7 @@ import Link from "next/link";
 import { Check, Circle, Minus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ActionForm } from "@/components/admin/action-form";
-import { publishEventAction } from "@/app/admin/(console)/events/actions";
+import { PublishEventButton } from "@/components/admin/PublishEventButton";
 import type { EventReadinessIssue } from "@/server/events/service";
 import type { SetupStep } from "@/server/events/setup-steps";
 
@@ -103,12 +101,7 @@ export function EventSetupChecklist({
           </ul>
         )}
 
-        {readiness.ready && (
-          <ActionForm action={publishEventAction} success="Event published">
-            <input type="hidden" name="id" value={eventId} />
-            <Button type="submit" className="w-fit">Publish event</Button>
-          </ActionForm>
-        )}
+        <PublishEventButton eventId={eventId} ready={readiness.ready} issues={readiness.issues} label="Publish event" />
       </CardContent>
     </Card>
   );

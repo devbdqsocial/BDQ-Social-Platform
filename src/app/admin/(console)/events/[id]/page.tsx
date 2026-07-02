@@ -18,13 +18,16 @@ import { BookingPanel } from "@/components/admin/BookingPanel";
 import { EventRunOfShow } from "@/components/admin/EventRunOfShow";
 import { EventSetupChecklist } from "@/components/admin/EventSetupChecklist";
 import { EventDetailsFields } from "@/components/admin/EventDetailsFields";
+import { BulkTiersEditor } from "@/components/admin/BulkTiersEditor";
 import { SavingForm } from "@/components/admin/SavingForm";
 import { ThemeColorField } from "@/components/admin/ThemeColorField";
 import { createBookingAction } from "../../artists/booking-actions";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Ticket } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
-import { publishEventAction } from "../actions";
+import { PublishEventButton } from "@/components/admin/PublishEventButton";
 import { ActionForm } from "@/components/admin/action-form";
 import { addTicketTypeAction, deleteTicketTypeAction, addScheduleItemAction, setEventThemeAction, setPricingRulesAction, setEventLogisticsAction, setVendorStallsAction, updateEventAction, addEventDayAction, updateEventDayAction } from "./actions";
 import { DeleteEventButton } from "./DeleteEventButton";
@@ -128,12 +131,7 @@ export default async function AdminEventEditor({
             </Link>
           )}
           <Button asChild variant="ghost" size="sm"><Link href={`/events/${event.slug}`}>View public page</Link></Button>
-          {!isLive(event.status) && (
-            <ActionForm action={publishEventAction} success="Event published">
-              <input type="hidden" name="id" value={event.id} />
-              <Button type="submit" size="sm" disabled={!readiness.ready}>Publish</Button>
-            </ActionForm>
-          )}
+          {!isLive(event.status) && <PublishEventButton eventId={event.id} ready={readiness.ready} issues={readiness.issues} />}
         </div>
       </div>
 
@@ -218,7 +216,12 @@ export default async function AdminEventEditor({
         {/* TICKETS */}
         <TabsContent value="tickets" className="space-y-6">
           {event.ticketTypes.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No tickets yet — add your first one below.</p>
+            <EmptyState
+              icon={Ticket}
+              title="No tickets yet"
+              description="Add your first ticket type below — at least one paid ticket is required to publish."
+              className="py-10"
+            />
           ) : (
             <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-card">
               {event.ticketTypes.map((t) => (
@@ -281,13 +284,8 @@ export default async function AdminEventEditor({
 
                 <div className="grid gap-4 rounded-lg border border-border p-4">
                   <p className="text-sm font-medium">Bulk tiers</p>
-                  <p className="text-xs text-muted-foreground">Discount on the whole order once total tickets cross a threshold. Bulk only kicks in above 5 tickets. Leave a row blank to skip it.</p>
-                  {[0, 1, 2].map((i) => (
-                    <div key={i} className="grid items-end gap-4 sm:grid-cols-2">
-                      <Field label={`Tier ${i + 1} — min tickets`}><Input type="number" name={`minQty${i}`} min={6} defaultValue={bulkTiers[i]?.minQty ?? ""} placeholder={i === 0 ? "6" : i === 1 ? "10" : "20"} /></Field>
-                      <Field label="Discount (%)"><Input type="number" name={`percent${i}`} min={0} max={100} defaultValue={bulkTiers[i]?.percent ?? ""} placeholder={i === 0 ? "5" : i === 1 ? "10" : "15"} /></Field>
-                    </div>
-                  ))}
+                  <p className="text-xs text-muted-foreground">Discount on the whole order once total tickets cross a threshold. Bulk only kicks in above 5 tickets.</p>
+                  <BulkTiersEditor defaults={bulkTiers} />
                 </div>
 
                 <Button type="submit" className="w-fit">Save pricing rules</Button>
@@ -342,7 +340,7 @@ export default async function AdminEventEditor({
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Run of show</CardTitle>
-              <CardDescription>The full timeline, day by day — artist sets (managed in the Lineup) plus everything else.</CardDescription>
+              <CardDescription>The full timeline, day by day. Artist sets appear here automatically once confirmed in the Lineup tab — edit their times there.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <EventRunOfShow

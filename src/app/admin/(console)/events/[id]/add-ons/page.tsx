@@ -26,7 +26,7 @@ export default async function AdminAddOnsPage({ params }: { params: Promise<{ id
   return (
     <div className="max-w-3xl space-y-6">
       <div>
-        <Link href={`/admin/events/${id}`} className="text-sm text-muted-foreground hover:text-foreground">← {event.name}</Link>
+        <Link href={`/admin/events/${id}?tab=stalls`} className="text-sm text-muted-foreground hover:text-foreground">← {event.name} · Stalls</Link>
         <h1 className="mt-1 font-display text-3xl font-bold tracking-tight">Stall add-ons</h1>
         <p className="mt-1 text-sm text-muted-foreground">Extras BOOKED vendors can order (table, chairs, power, signage). Prices in ₹; stock optional.</p>
       </div>
@@ -40,13 +40,13 @@ export default async function AdminAddOnsPage({ params }: { params: Promise<{ id
                 <input type="hidden" name="id" value={a.id} />
                 <input type="hidden" name="eventId" value={id} />
                 <CardContent className="grid gap-3 pt-6 sm:grid-cols-2">
-                  <Field label="Name" className="sm:col-span-2"><Input name="name" required defaultValue={a.name} /></Field>
-                  <Field label="Price (₹)"><Input type="number" name="priceRupees" min={1} required defaultValue={a.pricePaise / 100} /></Field>
+                  <Field label="Name" required className="sm:col-span-2"><Input name="name" required defaultValue={a.name} /></Field>
+                  <Field label="Price (₹)" required><Input type="number" name="priceRupees" min={1} required defaultValue={a.pricePaise / 100} /></Field>
                   <Field label="Max per stall"><Input type="number" name="maxPerBooking" min={1} defaultValue={a.maxPerBooking} /></Field>
                   <Field label="Stock" hint="Blank = unlimited"><Input type="number" name="stock" min={0} defaultValue={a.stock ?? ""} /></Field>
                   <Field label="Sold"><Input value={a.sold} disabled /></Field>
                   <label className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" name="active" defaultChecked={a.active} className="size-4" /> Active (shown to vendors)
+                    <input type="checkbox" name="active" defaultChecked={a.active} className="size-4 rounded border-input accent-primary" /> Active (shown to vendors)
                   </label>
                   <div className="flex gap-2 sm:col-span-2">
                     <Button type="submit" size="sm">Save</Button>
@@ -77,8 +77,8 @@ export default async function AdminAddOnsPage({ params }: { params: Promise<{ id
             <CardDescription>Vendors order these after their stall is BOOKED, until 48h before the event.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
-            <Field label="Name" className="sm:col-span-2"><Input name="name" required placeholder="Folding table, Power point (5A)…" /></Field>
-            <Field label="Price (₹)"><Input type="number" name="priceRupees" min={1} required placeholder="300" /></Field>
+            <Field label="Name" required className="sm:col-span-2"><Input name="name" required placeholder="Folding table, Power point (5A)…" /></Field>
+            <Field label="Price (₹)" required><Input type="number" name="priceRupees" min={1} required placeholder="300" /></Field>
             <Field label="Max per stall" hint="Default 5"><Input type="number" name="maxPerBooking" min={1} placeholder="5" /></Field>
             <Field label="Stock" hint="Blank = unlimited"><Input type="number" name="stock" min={0} /></Field>
             <Button type="submit" className="w-fit sm:col-span-2">Add add-on</Button>
