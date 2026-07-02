@@ -5,9 +5,31 @@ import type { DesignerApi } from "./useDesignerState";
 
 /**
  * Global keyboard shortcuts for the designer (build-plan R2.5.5). Effect-only; reads the store.
- * Ignores typing in form fields. V/H/M/B/Z/P tools · Ctrl+Z/Y undo/redo · Ctrl+C/V/D copy/paste/
- * duplicate · Del · arrows nudge (Shift ×10) · Enter finish draw · Esc cancel.
+ * Ignores typing in form fields. KEY_BINDINGS is the single table both this handler and the
+ * ShortcutHelp dialog render from, so help can't drift from behavior.
  */
+export const KEY_BINDINGS: { keys: string; does: string }[] = [
+  { keys: "V", does: "Select tool" },
+  { keys: "H", does: "Pan tool" },
+  { keys: "M", does: "Measure distance" },
+  { keys: "B", does: "Draw plot boundary" },
+  { keys: "Z", does: "Draw zone" },
+  { keys: "P", does: "Draw pathway" },
+  { keys: "T", does: "Paint terrain" },
+  { keys: "S", does: "Toggle sales view" },
+  { keys: "Shift (drawing / dragging a point)", does: "Constrain to straight lines" },
+  { keys: "Enter or double-click", does: "Finish drawing" },
+  { keys: "Esc", does: "Cancel drawing / point editing / selection" },
+  { keys: "Ctrl+Z · Ctrl+Shift+Z or Ctrl+Y", does: "Undo · redo" },
+  { keys: "Ctrl+C · Ctrl+V · Ctrl+D", does: "Copy · paste · duplicate" },
+  { keys: "Delete / Backspace", does: "Delete selection" },
+  { keys: "Arrows · Shift+Arrows", does: "Nudge 1 ft · 10 ft" },
+  { keys: "] · [", does: "Bring to front · send to back" },
+  { keys: "Shift-click or drag on empty canvas", does: "Multi-select" },
+  { keys: "/", does: "Focus search" },
+  { keys: "?", does: "This help" },
+];
+
 export function useDesignerKeyboard(d: DesignerApi) {
   const {
     elements, selectedIds, setSelectedIds, undo, redo, commit, copySelected, pasteClipboard,
@@ -32,9 +54,11 @@ export function useDesignerKeyboard(d: DesignerApi) {
         if (k === "b") { selectTool("boundary"); return; }
         if (k === "z") { selectTool("zone"); return; }
         if (k === "p") { selectTool("pathway"); return; }
+        if (k === "t") { selectTool("terrain"); return; }
         if (k === "v") { selectTool("select"); return; }
         if (k === "h") { selectTool("pan"); return; }
         if (k === "s") { setSalesView((prev) => !prev); return; }
+        if (e.key === "?") { d.setHelpOpen((v) => !v); return; }
         if (e.key === "]") { d.bringSelectedToFront(); return; }
         if (e.key === "[") { d.sendSelectedToBack(); return; }
         if (e.key === "/") { e.preventDefault(); document.getElementById("designer-search")?.focus(); return; }

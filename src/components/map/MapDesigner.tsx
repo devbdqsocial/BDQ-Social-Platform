@@ -19,6 +19,7 @@ import { DesignerInspector } from "./DesignerInspector";
 import { SummaryPanel } from "./SummaryPanel";
 import { BulkGridDialog } from "./BulkGridDialog";
 import { CalibrationModal } from "./CalibrationModal";
+import { ShortcutHelp } from "./designer/ShortcutHelp";
 import { makeGrid, relabel, bulkPatch } from "@/lib/map/designer-actions";
 
 export interface MapDesignerProps {
@@ -91,6 +92,8 @@ export default function MapDesigner(props: MapDesignerProps = {}) {
             onCreate={(type, opts) => { addElements(makeGrid(type, opts)); d.setBulkOpen(false); }}
           />
         )}
+
+        <ShortcutHelp />
 
         {d.calibrating && canvas.bgImage && (
           <CalibrationModal

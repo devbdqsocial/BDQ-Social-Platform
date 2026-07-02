@@ -4,7 +4,7 @@ import {
   ZoomIn, ZoomOut, Maximize, Undo2, Redo2, Hand, MousePointer2, Ruler, Spline, Shapes, Route,
   AlignHorizontalJustifyStart, AlignHorizontalJustifyCenter, AlignHorizontalJustifyEnd,
   AlignVerticalJustifyStart, AlignVerticalJustifyCenter, AlignVerticalJustifyEnd,
-  AlignHorizontalSpaceBetween, AlignVerticalSpaceBetween, Grid2x2, Image as ImageIcon, Mountain, Gauge, Eye, Download,
+  AlignHorizontalSpaceBetween, AlignVerticalSpaceBetween, CircleHelp, Grid2x2, Image as ImageIcon, Mountain, Gauge, Eye, Download,
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { EXPORT_VARIANTS, VARIANT_LABEL, type ExportVariant } from "@/lib/map/map-export";
@@ -18,7 +18,6 @@ import { DesignerToolbar } from "../DesignerToolbar";
 import { AddPalette } from "./AddPalette";
 import { useDesigner } from "./DesignerContext";
 
-const fmtInt = (n: number) => new Intl.NumberFormat("en-IN").format(Math.round(n));
 const iconBtn = "h-9 w-9 p-0";
 
 /** Top control rows: save · ground-plan/calibration · palette toolbar · power toolbar · structure. */
@@ -169,6 +168,7 @@ export function DesignerControls() {
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
+        <Button variant="ghost" size="sm" className={iconBtn} title="Keyboard shortcuts (?)" onClick={() => d.setHelpOpen(true)}><CircleHelp className="size-4" /></Button>
         <Button variant={previewMode ? "secondary" : "outline"} size="sm" title="Vendor preview — hide admin layers" onClick={() => setPreviewMode((v) => !v)}><Eye className="size-4" /> Preview</Button>
         <Button variant={salesView ? "secondary" : "outline"} size="sm" title="Sales view — stall scores (S)" disabled={previewMode} onClick={() => setSalesView((v) => !v)}><Gauge className="size-4" /> Sales</Button>
         {salesView && (
@@ -247,7 +247,7 @@ export function DesignerStatusBar() {
             ? `${selected.label}: ${fmtLen(selected.widthFt, displayUnit)} × ${fmtLen(selected.heightFt, displayUnit)} · ${fmtAreaU(selected.widthFt * selected.heightFt, displayUnit)}`
             : selectedIds.size > 1
               ? `${selectedIds.size} selected`
-              : "nothing selected"}
+              : "nothing selected — drag on empty canvas or shift-click to multi-select · ? for shortcuts"}
       </span>
     </div>
   );

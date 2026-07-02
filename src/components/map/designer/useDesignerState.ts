@@ -138,6 +138,7 @@ export function useDesignerState({
   const [pulseId, setPulseId] = useState<string | null>(null); // search focus highlight
   const [searchQuery, setSearchQuery] = useState("");
   const [calibrating, setCalibrating] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
   const [bgImg, setBgImg] = useState<HTMLImageElement | null>(null);
@@ -633,7 +634,7 @@ export function useDesignerState({
     bringSelectedToFront, sendSelectedToBack,
     // save + ui
     saving, saveStatus, setSaveStatus, handleSave, buildLayoutV2,
-    bulkOpen, setBulkOpen, calibrating, setCalibrating,
+    bulkOpen, setBulkOpen, calibrating, setCalibrating, helpOpen, setHelpOpen,
   };
 }
 
