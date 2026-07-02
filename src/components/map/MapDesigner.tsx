@@ -89,7 +89,12 @@ export default function MapDesigner(props: MapDesignerProps = {}) {
           <BulkGridDialog
             stallTypes={stallTypes}
             onClose={() => d.setBulkOpen(false)}
-            onCreate={(type, opts) => { addElements(makeGrid(type, opts)); d.setBulkOpen(false); }}
+            onCreate={(type, opts) => {
+              // snap the grid's origin so bulk-created stalls land on the drawing grid
+              const snap = (v: number) => Math.round(v / d.gridFt) * d.gridFt;
+              addElements(makeGrid(type, { ...opts, startXFt: snap(opts.startXFt), startYFt: snap(opts.startYFt) }));
+              d.setBulkOpen(false);
+            }}
           />
         )}
 

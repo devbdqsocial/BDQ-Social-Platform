@@ -9,6 +9,14 @@ export function HeatmapLegend() {
   const { heatmapMode, heatmapBounds } = useDesigner();
   if (heatmapMode === "off") return null;
 
+  if (heatmapBounds.length === 0) {
+    return (
+      <aside className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        Heatmap · no {heatmapMode === "price" ? "priced" : "scored"} stalls yet — set prices (or add stalls) to see the ramp.
+      </aside>
+    );
+  }
+
   const fmt = (v: number) => (heatmapMode === "price" ? formatPaise(v) : String(Math.round(v)));
   // 5 buckets from 4 bounds: "≤ b0", "b0–b1", … , "≥ b3"
   const labels = heatmapBounds.length === 4

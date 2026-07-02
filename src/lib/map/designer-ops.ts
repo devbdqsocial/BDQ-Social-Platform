@@ -129,8 +129,9 @@ export function createAnnotation(type: "ARROW" | "TEXT", xFt = 20, yFt = 20): An
   };
 }
 
-export function duplicate(el: EditorElement): EditorElement {
-  return { ...el, id: newId(), xFt: el.xFt + 5, yFt: el.yFt + 5, label: `${el.label}*` };
+/** Copy with an offset of one grid cell so duplicates land on-grid (was a fixed 5 ft). */
+export function duplicate(el: EditorElement, offsetFt = 5): EditorElement {
+  return { ...el, id: newId(), xFt: el.xFt + offsetFt, yFt: el.yFt + offsetFt, label: `${el.label}*` };
 }
 
 /** Main Exhibition Grounds seed template → editable elements (geometry/sizes only, no prices). */

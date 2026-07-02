@@ -126,7 +126,11 @@ export function useDesignerState({
     return Object.fromEntries(LAYER_IDS.map((id) => [id, stored[id] ?? { visible: true, locked: false }])) as Record<LayerId, LayerState>;
   });
   const toggleLayerVisible = useCallback((id: LayerId) => setLayers((l) => ({ ...l, [id]: { ...l[id], visible: !l[id].visible } })), []);
-  const toggleLayerLock = useCallback((id: LayerId) => setLayers((l) => ({ ...l, [id]: { ...l[id], locked: !l[id].locked } })), []);
+  const toggleLayerLock = useCallback((id: LayerId) => {
+    setLayers((l) => ({ ...l, [id]: { ...l[id], locked: !l[id].locked } }));
+    // Locking an element layer drops the selection so resize handles don't linger on locked nodes.
+    if (id === "stalls" || id === "infra") setSelectedIds(new Set());
+  }, []);
   const setAllLayersVisible = useCallback((visible: boolean) => setLayers((l) => Object.fromEntries(LAYER_IDS.map((id) => [id, { ...l[id], visible }])) as Record<LayerId, LayerState>), []);
 
   // UI flags
@@ -153,8 +157,11 @@ export function useDesignerState({
     img.src = url;
   }, [canvas.bgImage?.url]);
 
+  // Scratch (non-event) mode persists to localStorage — debounced so rapid drags don't stutter.
   useEffect(() => {
-    if (!eventMode && elements.length) localStorage.setItem(STORAGE_KEY, JSON.stringify(elements));
+    if (eventMode || !elements.length) return;
+    const t = setTimeout(() => localStorage.setItem(STORAGE_KEY, JSON.stringify(elements)), 500);
+    return () => clearTimeout(t);
   }, [elements, eventMode]);
 
   useEffect(() => {
@@ -302,14 +309,16 @@ export function useDesignerState({
     labels: elements.length,
   }), [bgImg, terrain, zones, pathways, elements, ops, entryFlow, annotations]);
 
-  // transformer attaches to a single selection
+  // transformer attaches to a single selection — but never on a locked layer's element
   useEffect(() => {
     const tr = trRef.current; const stage = stageRef.current;
     if (!tr || !stage) return;
-    const node = selectedId ? stage.findOne(`#${selectedId}`) : null;
+    const sel = selectedId ? elements.find((e) => e.id === selectedId) : null;
+    const layerLocked = sel ? layers[sel.kind === "infra" ? "infra" : "stalls"].locked : false;
+    const node = selectedId && !layerLocked ? stage.findOne(`#${selectedId}`) : null;
     tr.nodes(node ? [node] : []);
     tr.getLayer()?.batchDraw();
-  }, [selectedId, elements, scale, width, canvas.widthFt, canvas.heightFt]);
+  }, [selectedId, elements, layers, scale, width, canvas.widthFt, canvas.heightFt]);
 
   // ── actions ──────────────────────────────────────────────────────────────
   const patchOne = useCallback((id: string, p: Partial<EditorElement>) => elements.map((e) => (e.id === id ? { ...e, ...p } : e)), [elements]);
@@ -323,11 +332,11 @@ export function useDesignerState({
     setSelectedIds(new Set());
   }, [elements, selectedIds, commit]);
   const duplicateSelected = useCallback(() => {
-    const copies = elements.filter((el) => selectedIds.has(el.id)).map(duplicate);
+    const copies = elements.filter((el) => selectedIds.has(el.id)).map((el) => duplicate(el, gridFt));
     if (copies.length) addElements(copies);
-  }, [elements, selectedIds, addElements]);
+  }, [elements, selectedIds, addElements, gridFt]);
   const copySelected = useCallback(() => { clipboard.current = elements.filter((el) => selectedIds.has(el.id)); }, [elements, selectedIds]);
-  const pasteClipboard = useCallback(() => { if (clipboard.current.length) addElements(clipboard.current.map(duplicate)); }, [addElements]);
+  const pasteClipboard = useCallback(() => { if (clipboard.current.length) addElements(clipboard.current.map((el) => duplicate(el, gridFt))); }, [addElements, gridFt]);
   const nudgeSelected = useCallback((dx: number, dy: number) => { if (selectedIds.size) commit(nudge(elements, selectedIds, dx, dy)); }, [elements, selectedIds, commit]);
 
   const addObstacle = useCallback((type: Obstacle["type"]) => {
