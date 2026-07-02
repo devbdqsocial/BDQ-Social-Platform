@@ -90,6 +90,7 @@ export function useDesignerState({
   const scale = view.scale;
   const [snap, setSnap] = useState(true);
   const [gridFt, setGridFt] = useState(initialCanvas?.gridFt ?? 5);
+  const [displayUnit, setDisplayUnit] = useState<"FT" | "M">(initialLayout?.canvas.displayUnit ?? "FT");
   const [canvas, setCanvas] = useState<CanvasMeta>(initialCanvas ?? DEFAULT_CANVAS);
 
   // selection + tools
@@ -551,7 +552,7 @@ export function useDesignerState({
     const bg = canvas.bgImage;
     return {
       v: 2,
-      canvas: { widthFt: canvas.widthFt, heightFt: canvas.heightFt, gridFt: g, displayUnit: "FT" },
+      canvas: { widthFt: canvas.widthFt, heightFt: canvas.heightFt, gridFt: g, displayUnit },
       ...(bg
         ? { underlay: { url: bg.url, publicId: "", ftPerPx: bg.ftPerPx ?? 0, offsetXFt: bg.offsetXFt ?? 0, offsetYFt: bg.offsetYFt ?? 0, rotationDeg: 0, opacity: bg.opacity, locked: bg.locked ?? false } }
         : {}),
@@ -559,7 +560,7 @@ export function useDesignerState({
       obstacles, terrain, zones, pathways, elements,
       ops, entryFlow, annotations, layers, versions,
     };
-  }, [gridFt, canvas, boundary, obstacles, terrain, zones, pathways, elements, ops, entryFlow, annotations, layers, versions]);
+  }, [gridFt, displayUnit, canvas, boundary, obstacles, terrain, zones, pathways, elements, ops, entryFlow, annotations, layers, versions]);
 
   // Duplicate labels get auto-renamed at save time ("A-2" → "A-2-2") — surface that BEFORE it
   // happens: first Save click warns, second click (without label edits in between) proceeds.
@@ -591,6 +592,7 @@ export function useDesignerState({
     elements, commit, reset, undo, redo, canUndo, canRedo,
     // viewport + prefs
     width, scale, view, setView, worldRect, pxPerFt, height, zoom, fit, wheelZoom, snap, setSnap, gridFt, setGridFt, toFt,
+    displayUnit, setDisplayUnit,
     // canvas + underlay
     canvas, setCanvas, setCanvasDim, bgImg, patchBg, calibrated, applyCalibration, onUploadBg, exportPng,
     // tools + draw

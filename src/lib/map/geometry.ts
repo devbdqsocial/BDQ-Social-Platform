@@ -84,6 +84,14 @@ const nf1 = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 1 });
 
 export const fmtFt = (ft: number): string => `${nf1.format(ft)} ft`;
 export const fmtArea = (sqft: number): string => `${nf.format(sqft)} sq ft`;
+
+/** Display-unit aware formatters (storage is ALWAYS feet; only readouts convert). */
+export type DisplayUnit = "FT" | "M";
+export const FT_PER_M = 3.28084;
+export const fmtLen = (ft: number, unit: DisplayUnit = "FT"): string =>
+  unit === "M" ? `${nf1.format(ft / FT_PER_M)} m` : `${nf1.format(ft)} ft`;
+export const fmtAreaU = (sqft: number, unit: DisplayUnit = "FT"): string =>
+  unit === "M" ? `${nf.format(sqft / (FT_PER_M * FT_PER_M))} sq m` : `${nf.format(sqft)} sq ft`;
 export const fmtPct = (frac: number): string => `${nf1.format(frac * 100)}%`;
 /** Distance label with the metric twin, e.g. "120.0 ft (36.6 m)". */
 export const fmtDistance = (ft: number): string => `${nf1.format(ft)} ft (${nf1.format(ft / 3.28084)} m)`;

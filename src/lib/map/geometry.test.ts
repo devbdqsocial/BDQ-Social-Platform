@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { constrainAxis, polygonArea, polygonPerimeter, pathLength, usedSqFt, occupancy, type Pt } from "./geometry";
+import { constrainAxis, fmtAreaU, fmtLen, polygonArea, polygonPerimeter, pathLength, usedSqFt, occupancy, type Pt } from "./geometry";
 import type { EditorElement } from "@/lib/map/designer-ops";
 
 const sq: Pt[] = [[0, 0], [10, 0], [10, 10], [0, 10]];
@@ -32,6 +32,15 @@ describe("geometry (R2.5.4)", () => {
     expect(usedSqFt(els)).toBe(280);
     expect(occupancy(els, 1000)).toBeCloseTo(0.28, 5);
     expect(occupancy(els, 0)).toBe(0);
+  });
+});
+
+describe("display-unit formatters", () => {
+  it("converts feet readouts to meters without touching storage", () => {
+    expect(fmtLen(32.8084, "M")).toBe("10 m");
+    expect(fmtLen(10, "FT")).toBe("10 ft");
+    expect(fmtAreaU(1076.39, "M")).toBe("100 sq m");
+    expect(fmtAreaU(500, "FT")).toBe("500 sq ft");
   });
 });
 

@@ -77,6 +77,7 @@ export default function MapDesigner(props: MapDesignerProps = {}) {
             zones={zones}
             venueSqFt={d.boundary ? polygonArea(d.boundary) : canvas.widthFt * canvas.heightFt}
             isPlot={!!d.boundary}
+            unit={d.displayUnit}
           />
           <ValidationPanel />
           <VersionsPanel />

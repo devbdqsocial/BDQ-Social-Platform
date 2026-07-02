@@ -12,7 +12,7 @@ import { downloadMapPdf } from "./MapPdf";
 import { seedToEditor } from "@/lib/map/designer-ops";
 import type { Pathway } from "@/lib/map/layout-v2";
 import { TERRAIN_TYPES, terrainLabel, type TerrainType } from "@/lib/map/terrain";
-import { polygonArea } from "@/lib/map/geometry";
+import { fmtAreaU, fmtLen, polygonArea } from "@/lib/map/geometry";
 import { Button } from "@/components/ui/button";
 import { DesignerToolbar } from "../DesignerToolbar";
 import { AddPalette } from "./AddPalette";
@@ -62,7 +62,7 @@ export function DesignerControls() {
         </label>
         <p className="pb-1.5 text-sm">
           <span className="text-muted-foreground">{boundary ? "Plot area:" : "Area:"}</span>{" "}
-          <span className="font-medium">{fmtInt(boundary ? polygonArea(boundary) : canvas.widthFt * canvas.heightFt)} sq ft</span>
+          <span className="font-medium">{fmtAreaU(boundary ? polygonArea(boundary) : canvas.widthFt * canvas.heightFt, d.displayUnit)}</span>
         </p>
         {uploadAction && (
           <div className="flex items-end gap-2">
@@ -121,6 +121,10 @@ export function DesignerControls() {
         <span className="w-12 text-center text-xs text-muted-foreground">{Math.round(scale * 100)}%</span>
         <Button variant="ghost" size="sm" className={iconBtn} title="Zoom in" onClick={() => zoom(1.25)}><ZoomIn className="size-4" /></Button>
         <Button variant="ghost" size="sm" className={iconBtn} title="Fit to plot" onClick={fit}><Maximize className="size-4" /></Button>
+        <span className="mx-1 h-6 w-px bg-border" />
+        {(["FT", "M"] as const).map((u) => (
+          <Button key={u} variant={d.displayUnit === u ? "secondary" : "ghost"} size="sm" className="h-8 px-2 text-xs" title={u === "FT" ? "Show feet" : "Show meters"} onClick={() => d.setDisplayUnit(u)}>{u.toLowerCase()}</Button>
+        ))}
         <span className="mx-1 h-6 w-px bg-border" />
         <Button variant="ghost" size="sm" className={iconBtn} title="Undo" disabled={!canUndo} onClick={undo}><Undo2 className="size-4" /></Button>
         <Button variant="ghost" size="sm" className={iconBtn} title="Redo" disabled={!canRedo} onClick={redo}><Redo2 className="size-4" /></Button>
@@ -231,19 +235,16 @@ export function DesignerControls() {
 
 /** Live status: cursor position, zoom, current selection / measurement (map-system §3). */
 export function DesignerStatusBar() {
-  const { cursorFt, scale, tool, measureLine, measureDist, selected, selectedIds } = useDesigner();
-  // formatters kept inline to avoid importing the geometry module twice
-  const fmtFtN = (ft: number) => `${new Intl.NumberFormat("en-IN", { maximumFractionDigits: 1 }).format(ft)} ft`;
-  const fmtAreaN = (a: number) => `${new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(a)} sq ft`;
+  const { cursorFt, scale, tool, measureLine, measureDist, selected, selectedIds, displayUnit } = useDesigner();
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-xl border border-border bg-card px-3 py-2 text-xs text-muted-foreground">
-      <span className="tabular-nums">{cursorFt ? `x ${cursorFt[0]} ft · y ${cursorFt[1]} ft` : "—"}</span>
+      <span className="tabular-nums">{cursorFt ? `x ${fmtLen(cursorFt[0], displayUnit)} · y ${fmtLen(cursorFt[1], displayUnit)}` : "—"}</span>
       <span className="tabular-nums">zoom {Math.round(scale * 100)}%</span>
       <span className="tabular-nums">
         {tool === "measure" && measureLine.length >= 2
-          ? `distance ${fmtFtN(measureDist)}`
+          ? `distance ${fmtLen(measureDist, displayUnit)}`
           : selected
-            ? `${selected.label}: ${selected.widthFt}×${selected.heightFt} ft · ${fmtAreaN(selected.widthFt * selected.heightFt)}`
+            ? `${selected.label}: ${fmtLen(selected.widthFt, displayUnit)} × ${fmtLen(selected.heightFt, displayUnit)} · ${fmtAreaU(selected.widthFt * selected.heightFt, displayUnit)}`
             : selectedIds.size > 1
               ? `${selectedIds.size} selected`
               : "nothing selected"}
