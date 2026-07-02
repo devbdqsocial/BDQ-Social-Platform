@@ -187,7 +187,7 @@ export function getByIdForAdmin(id: string) {
       days: { orderBy: { sortOrder: "asc" } },
       mapLayout: true,
       stallTypes: { orderBy: { priceInPaise: "asc" } },
-      stalls: { where: { kind: "STALL" }, select: { id: true, status: true, priceInPaise: true, stallType: { select: { priceInPaise: true } } } },
+      stalls: { where: { kind: "STALL" }, select: { id: true, label: true, status: true, priceInPaise: true, stallType: { select: { priceInPaise: true } } } },
       _count: { select: { orders: true, addOns: true } },
     },
   });

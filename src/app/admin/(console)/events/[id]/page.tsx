@@ -6,7 +6,8 @@ import { getByIdForAdmin, getEventReadiness } from "@/server/events/service";
 import { deriveSetupSteps } from "@/server/events/setup-steps";
 import { listMaps } from "@/server/map/maps";
 import { formatPaise } from "@/lib/utils";
-import { MapAttach } from "./MapAttach";
+import { MapAttach, type MapSummary } from "./MapAttach";
+import { upgradeLayout } from "@/lib/map/layout-v2";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
@@ -85,6 +86,22 @@ export default async function AdminEventEditor({
     held: event.stalls.filter((s) => s.status === "HELD" || s.status === "PENDING").length,
   };
   const ticketsSold = event.ticketTypes.reduce((n, t) => n + t.soldQty, 0);
+
+  // Attach-dialog summaries: what each library map would do to THIS event (type matches by name,
+  // booked stalls whose labels the incoming map lacks — those keep their spots and may overlap).
+  const eventTypeNames = new Set(event.stallTypes.map((t) => t.name.trim().toLowerCase()));
+  const activeStallLabels = event.stalls.filter((s) => s.status === "BOOKED" || s.status === "HELD" || s.status === "PENDING").map((s) => s.label);
+  const mapSummaries: MapSummary[] = maps.map((m) => {
+    const stallEls = upgradeLayout(m.layoutJson).elements.filter((e) => e.kind === "stall");
+    const labels = new Set(stallEls.map((e) => e.label.trim()));
+    return {
+      id: m.id,
+      name: m.name,
+      stallCount: stallEls.length,
+      matchedTypeCount: stallEls.filter((e) => eventTypeNames.has(e.type.trim().toLowerCase())).length,
+      missingActiveLabels: activeStallLabels.filter((l) => !labels.has(l.trim())),
+    };
+  });
 
   return (
     <div className="space-y-6">
@@ -479,7 +496,7 @@ export default async function AdminEventEditor({
                 <p className="text-sm text-muted-foreground">No stalls yet — open the designer to draw the layout, or copy one from the map library below.</p>
               )}
               <div className="border-t border-border pt-4">
-                <MapAttach eventId={event.id} maps={maps.map((m) => ({ id: m.id, name: m.name }))} currentMapId={event.mapId} />
+                <MapAttach eventId={event.id} maps={mapSummaries} currentMapId={event.mapId} activeStallCount={activeStallLabels.length} />
               </div>
             </CardContent>
           </Card>

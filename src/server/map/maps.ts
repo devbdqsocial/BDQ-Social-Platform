@@ -113,7 +113,12 @@ export function saveEventLayoutToLibrary(session: Session, eventId: string, targ
   });
 }
 
-/** Attach a map to an event: clone its elements into the event's bookable stalls + set Event.mapId. */
+/**
+ * Attach a map to an event: clone its elements into the event's bookable stalls + set Event.mapId.
+ * Library maps are geometry-only, so any element price is stripped and each stall adopts the
+ * event's StallTypeDef whose name matches its type tag — pricing then comes from the event's
+ * types (or per-stall prices set later in the designer).
+ */
 export function attachMapToEvent(session: Session, eventId: string, mapId: string) {
   return withAudit(session, { action: "UPDATE", entity: "Event", entityId: eventId }, async () => ({
     before: null,
@@ -121,8 +126,13 @@ export function attachMapToEvent(session: Session, eventId: string, mapId: strin
       const map = await db.eventMap.findUnique({ where: { id: mapId } });
       if (!map) throw new Error("Map not found");
       const v2 = upgradeLayout(map.layoutJson);
-      // catalog ids (MapElement) don't exist as per-event StallTypeDef — drop the link, keep geometry.
-      const elements = v2.elements.map((e) => ({ ...e, stallTypeId: undefined }));
+      const types = await db.stallTypeDef.findMany({ where: { eventId }, select: { id: true, name: true } });
+      const typeByName = new Map(types.map((t) => [t.name.trim().toLowerCase(), t.id]));
+      const elements = v2.elements.map((e) => ({
+        ...e,
+        priceInPaise: undefined,
+        stallTypeId: e.kind === "stall" ? typeByName.get(e.type.trim().toLowerCase()) : undefined,
+      }));
       await db.event.update({ where: { id: eventId }, data: { mapId } });
       await saveEventMap(session, eventId, { ...v2, elements });
       return { result: { eventId, mapId }, after: { mapId } };
