@@ -40,23 +40,30 @@ export class PublishBlockedError extends Error {
 const hasValue = (value?: string | null) => !!value?.trim();
 const hasPlaceholder = (value: string) => value.includes("[") || value.includes("]");
 
-export async function getEventReadiness(id: string): Promise<{ ready: boolean; issues: EventReadinessIssue[]; warnings: EventReadinessIssue[] }> {
-  const event = await db.event.findUnique({
-    where: { id },
-    select: {
-      name: true,
-      description: true,
-      location: true,
-      startsAt: true,
-      endsAt: true,
-      capacity: true,
-      ticketTypes: { select: { priceInPaise: true, totalQty: true, attendeesPer: true } },
-      mapLayout: { select: { id: true } },
-      stalls: { where: { kind: "STALL" }, select: { priceInPaise: true } },
-    },
-  });
-  if (!event) return { ready: false, issues: [{ key: "event", label: "Event exists", detail: "The event could not be found." }], warnings: [] };
+/** Relation subset `deriveReadinessIssues` needs beyond plain scalar columns. Usable both as a
+ * `select` (with the scalars below) and, unspread, as an `include` (scalars come free there). */
+const READINESS_RELATIONS = {
+  ticketTypes: { select: { priceInPaise: true, totalQty: true, attendeesPer: true } },
+  mapLayout: { select: { id: true } },
+  stalls: { where: { kind: "STALL" as const }, select: { priceInPaise: true, stallType: { select: { priceInPaise: true } } } },
+} satisfies Prisma.EventInclude;
 
+const READINESS_SELECT = {
+  name: true,
+  description: true,
+  location: true,
+  startsAt: true,
+  endsAt: true,
+  capacity: true,
+  vendorStallsEnabled: true,
+  ...READINESS_RELATIONS,
+} satisfies Prisma.EventSelect;
+
+type ReadinessInput = Prisma.EventGetPayload<{ select: typeof READINESS_SELECT }>;
+
+/** Pure predicate set behind `getEventReadiness` — shared by the per-event page and the events
+ * list's readiness badge so there's one definition of "ready to publish". */
+export function deriveReadinessIssues(event: ReadinessInput): { issues: EventReadinessIssue[]; warnings: EventReadinessIssue[] } {
   const issues: EventReadinessIssue[] = [];
   const warnings: EventReadinessIssue[] = [];
   if (!hasValue(event.name) || !hasValue(event.description) || !hasValue(event.location)) {
@@ -68,8 +75,9 @@ export async function getEventReadiness(id: string): Promise<{ ready: boolean; i
   if (!event.ticketTypes.some((t) => t.priceInPaise > 0 && t.totalQty > 0 && t.attendeesPer > 0)) {
     issues.push({ key: "tickets", label: "Paid ticket type", detail: "Add at least one ticket type with price, capacity, and attendees per ticket." });
   }
-  if (!event.mapLayout || event.stalls.length === 0 || !event.stalls.some((s) => (s.priceInPaise ?? 0) > 0)) {
-    issues.push({ key: "venue", label: "Venue map and stall pricing", detail: "Attach a map layout and add at least one priced sellable stall." });
+  // Effective stall price mirrors what checkout charges: stall override, else its type's price.
+  if (event.vendorStallsEnabled && (!event.mapLayout || !event.stalls.some((s) => (s.priceInPaise ?? s.stallType?.priceInPaise ?? 0) > 0))) {
+    issues.push({ key: "venue", label: "Venue map and stall pricing", detail: "Attach a map layout and price at least one sellable stall (directly or via its stall type)." });
   }
   if ([LEGAL.entity, LEGAL.email, LEGAL.phone, LEGAL.address, LEGAL.grievanceOfficer, LEGAL.grievanceEmail].some(hasPlaceholder)) {
     issues.push({ key: "legal", label: "Legal/support details", detail: "Replace bracketed legal and support placeholders before launch." });
@@ -87,6 +95,14 @@ export async function getEventReadiness(id: string): Promise<{ ready: boolean; i
     }
   }
 
+  return { issues, warnings };
+}
+
+export async function getEventReadiness(id: string): Promise<{ ready: boolean; issues: EventReadinessIssue[]; warnings: EventReadinessIssue[] }> {
+  const event = await db.event.findUnique({ where: { id }, select: READINESS_SELECT });
+  if (!event) return { ready: false, issues: [{ key: "event", label: "Event exists", detail: "The event could not be found." }], warnings: [] };
+
+  const { issues, warnings } = deriveReadinessIssues(event);
   return { ready: issues.length === 0, issues, warnings };
 }
 
@@ -101,14 +117,15 @@ function slugify(s: string): string {
   );
 }
 
-async function uniqueSlug(name: string): Promise<string> {
+async function uniqueSlug(name: string, excludeId?: string): Promise<string> {
   const base = slugify(name);
   let slug = base;
   let n = 2;
-  while (await db.event.findUnique({ where: { slug }, select: { id: true } })) {
+  for (;;) {
+    const existing = await db.event.findUnique({ where: { slug }, select: { id: true } });
+    if (!existing || existing.id === excludeId) return slug;
     slug = `${base}-${n++}`;
   }
-  return slug;
 }
 
 /* Public DISPLAY reads are cached 60s (owner-approved staleness). unstable_cache JSON-serializes,
@@ -140,6 +157,21 @@ export function listAllForAdmin() {
   return db.event.findMany({
     orderBy: { createdAt: "desc" },
     include: { _count: { select: { ticketTypes: true, orders: true } } },
+  });
+}
+
+/** Events list page only — do not use `listAllForAdmin` for this, it's shared by several
+ * unrelated admin pages (waitlist, sponsors, check-in, analytics, expenses, coupons) that don't
+ * need the extra readiness includes below. Computes each row's readiness in-memory (reusing
+ * `deriveReadinessIssues`) instead of one `getEventReadiness` query per row. */
+export async function listForAdminTable() {
+  const events = await db.event.findMany({
+    orderBy: { createdAt: "desc" },
+    include: { _count: { select: { ticketTypes: true, orders: true } }, ...READINESS_RELATIONS },
+  });
+  return events.map((event) => {
+    const { issues } = deriveReadinessIssues(event);
+    return { ...event, readiness: { ready: issues.length === 0, issueCount: issues.length, missing: issues.map((i) => i.label) } };
   });
 }
 
@@ -572,22 +604,26 @@ export interface UpdateEventInput {
   startsAt: Date;
   endsAt: Date;
   capacity?: number;
+  /** When set, changes the public URL slug. Left blank → slug stays as-is (stable on rename). */
+  slug?: string;
 }
 
 export function updateEvent(session: Session, id: string, input: UpdateEventInput) {
   return withAudit(session, { action: "UPDATE", entity: "Event", entityId: id }, async () => {
     const before = await db.event.findUnique({
       where: { id },
-      select: { name: true, description: true, location: true, startsAt: true, endsAt: true, capacity: true },
+      select: { name: true, slug: true, description: true, location: true, startsAt: true, endsAt: true, capacity: true },
     });
     return {
       before,
       run: async () => {
-        // Slug stays stable on rename to preserve the public URL.
+        // Slug stays stable on rename unless the admin explicitly edits it (breaks old links).
+        const slug = input.slug ? await uniqueSlug(input.slug, id) : undefined;
         const event = await db.event.update({
           where: { id },
           data: {
             name: input.name,
+            ...(slug ? { slug } : {}),
             description: input.description ?? null,
             location: input.location ?? null,
             startsAt: input.startsAt,
@@ -595,6 +631,20 @@ export function updateEvent(session: Session, id: string, input: UpdateEventInpu
             capacity: input.capacity ?? null,
           },
         });
+        return { result: event, after: event };
+      },
+    };
+  });
+}
+
+/** Ticket-only switch: off skips the venue readiness gate and hides vendor booking surfaces. */
+export function setVendorStalls(session: Session, id: string, enabled: boolean) {
+  return withAudit(session, { action: "UPDATE", entity: "Event", entityId: id }, async () => {
+    const before = await db.event.findUnique({ where: { id }, select: { vendorStallsEnabled: true } });
+    return {
+      before,
+      run: async () => {
+        const event = await db.event.update({ where: { id }, data: { vendorStallsEnabled: enabled }, select: { id: true, vendorStallsEnabled: true } });
         return { result: event, after: event };
       },
     };

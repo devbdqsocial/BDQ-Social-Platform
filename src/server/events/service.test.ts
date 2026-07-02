@@ -11,9 +11,38 @@ vi.mock("@/server/db", () => ({
   db: { event: { findUnique: mocks.eventFindUnique } },
 }));
 
-import { getBySlug } from "./service";
+import { deriveReadinessIssues, getBySlug } from "./service";
 
 beforeEach(() => vi.clearAllMocks());
+
+describe("deriveReadinessIssues venue gate", () => {
+  const baseEvent = {
+    name: "Night Market",
+    description: "d",
+    location: "Vadodara",
+    startsAt: new Date("2026-10-01T12:00:00.000Z"),
+    endsAt: new Date("2026-10-01T18:00:00.000Z"),
+    capacity: null,
+    vendorStallsEnabled: true,
+    ticketTypes: [{ priceInPaise: 50000, totalQty: 10, attendeesPer: 1 }],
+    mapLayout: { id: "layout_1" },
+    stalls: [] as { priceInPaise: number | null; stallType: { priceInPaise: number } | null }[],
+  };
+  const venueIssue = (e: typeof baseEvent) => deriveReadinessIssues(e).issues.some((i) => i.key === "venue");
+
+  it("accepts a stall priced via its type (matches what checkout charges)", () => {
+    expect(venueIssue({ ...baseEvent, stalls: [{ priceInPaise: null, stallType: { priceInPaise: 500000 } }] })).toBe(false);
+  });
+
+  it("blocks when no stall has an effective price", () => {
+    expect(venueIssue({ ...baseEvent, stalls: [{ priceInPaise: null, stallType: null }] })).toBe(true);
+    expect(venueIssue({ ...baseEvent, stalls: [] })).toBe(true);
+  });
+
+  it("skips the venue gate entirely when vendor stalls are off", () => {
+    expect(venueIssue({ ...baseEvent, vendorStallsEnabled: false, mapLayout: null as unknown as { id: string }, stalls: [] })).toBe(false);
+  });
+});
 
 describe("getBySlug", () => {
   it("does not select public stall geometry or layout JSON", async () => {
