@@ -1,0 +1,1 @@
+ALTER TABLE "Event" ADD COLUMN "vendorStallsEnabled" BOOLEAN NOT NULL DEFAULT true;

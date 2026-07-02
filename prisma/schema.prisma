@@ -241,6 +241,7 @@ model Event {
   earlyBird   Json?
   capacity    Int?
   addOnCloseHours Int? // hours before startsAt that stall add-on ordering closes (default 48 in code)
+  vendorStallsEnabled Boolean @default(true) // off = ticket-only event: venue readiness skipped, vendor booking hidden
   loadInStartsAt  DateTime? // vendor setup-access window (often 1-2 days before the event)
   loadInEndsAt    DateTime?
   createdById String?
