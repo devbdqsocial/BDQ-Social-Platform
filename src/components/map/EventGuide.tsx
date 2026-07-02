@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import type { StallStatus } from "@/lib/stall-colors";
 import type { EventGuide as Guide, GuideBrand, Bucket } from "@/server/map/guide";
 import { MapLoginPrompt } from "./MapLoginPrompt";
+import { ZoneLegend } from "./ZoneLegend";
 
 const MapCanvas = dynamic(() => import("./MapCanvas"), {
   ssr: false,
@@ -124,6 +125,11 @@ export function EventGuide({ guide }: { guide: Guide }) {
           <p className="kicker opacity-70">Take a look around</p>
           <div className="mt-[var(--space-sm)]">
             <MapCanvas layout={guide.layout} statuses={statuses} extras={guide.extras ?? undefined} />
+            {guide.extras?.zones && (
+              <div className="mt-[var(--space-sm)]">
+                <ZoneLegend zones={guide.extras.zones} />
+              </div>
+            )}
           </div>
         </div>
       )}

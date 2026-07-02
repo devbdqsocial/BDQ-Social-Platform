@@ -8,6 +8,7 @@ import type { RenderExtras } from "@/lib/map/render-types";
 import { type StallStatus } from "@/lib/stall-colors";
 import { formatPaise } from "@/lib/utils";
 import { StallLegend } from "@/components/map/StallLegend";
+import { ZoneLegend } from "@/components/map/ZoneLegend";
 import { reserveStallAction } from "@/app/vendor/(app)/onboarding/actions";
 
 const MapCanvas = dynamic(() => import("@/components/map/MapCanvas"), {
@@ -88,6 +89,7 @@ export function VendorStallReserve({ eventId, stalls, details = {}, extras }: { 
       <div className="space-y-[var(--space-lg)]">
         <StallLegend />
         <MapCanvas layout={layout} statuses={statuses} selected={selected} onSelect={toggle} focusLabel={sel ?? null} extras={extras} />
+        {extras?.zones && <ZoneLegend zones={extras.zones} />}
       </div>
 
       {/* Stall sheet (map-system §11) — why-this-stall bullets + size + zone, then Reserve. */}
