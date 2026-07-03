@@ -4,6 +4,7 @@ import { memo, useCallback, useEffect, useRef, useState } from "react";
 import Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { Arrow, Group, Image as KonvaImage, Layer, Line, Rect, Stage, Text, Transformer } from "react-konva";
+import { Maximize, ZoomIn, ZoomOut } from "lucide-react";
 import type { EditorElement } from "@/lib/map/designer-ops";
 import { ZONE_COLOR_HEX, polygonCentroid } from "@/lib/map/zones";
 import { TERRAIN_COLOR_HEX } from "@/lib/map/terrain";
@@ -193,6 +194,20 @@ export function DesignerCanvas() {
       onPointerDownCapture={onMidPanDown}
     >
       <RenameOverlay />
+      {/* on-canvas zoom controls (bottom-right) */}
+      <div className="absolute bottom-2 right-2 z-10 flex flex-col items-center gap-1">
+        {(() => {
+          const btn = "relative grid size-8 place-items-center rounded-md border border-border bg-background/90 text-foreground shadow-sm hover:bg-muted after:absolute after:-inset-1.5";
+          return (
+            <>
+              <button type="button" aria-label="Zoom in" title="Zoom in (+)" className={btn} onClick={() => d.zoom(1.25)}><ZoomIn className="size-4" /></button>
+              <span className="rounded-md border border-border bg-background/90 px-1 py-0.5 text-[10px] tabular-nums text-muted-foreground shadow-sm">{Math.round(view.scale * 100)}%</span>
+              <button type="button" aria-label="Zoom out" title="Zoom out (−)" className={btn} onClick={() => d.zoom(0.8)}><ZoomOut className="size-4" /></button>
+              <button type="button" aria-label="Fit to plot" title="Fit to plot (0)" className={btn} onClick={d.fit}><Maximize className="size-4" /></button>
+            </>
+          );
+        })()}
+      </div>
       <Stage
         ref={stageRef}
         width={width}

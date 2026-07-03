@@ -249,7 +249,9 @@ export function useDesignerState({
 
   // ── derived geometry ─────────────────────────────────────────────────────
   const pxPerFt = width / canvas.widthFt;
-  const height = canvas.heightFt * pxPerFt;
+  // Fixed work-area height — the world is endless, so editing venue/plot size must never resize
+  // the stage (it used to follow the canvas aspect). Width-derived for aspect stability.
+  const height = Math.min(700, Math.max(420, Math.round(width * 0.6)));
   const toFt = useCallback(
     (px: number) => (snap ? snapToGrid(px / pxPerFt, gridFt) : Math.round((px / pxPerFt) * 100) / 100),
     [snap, pxPerFt, gridFt],
@@ -555,6 +557,15 @@ export function useDesignerState({
   }, []);
 
   const fit = useCallback(() => setView(fitTransform(fitBbox, { width, height }, pxPerFt)), [fitBbox, width, height, pxPerFt]);
+
+  // Auto-fit once on open (after the container width is measured) so an existing plot/layout is
+  // centred instead of wherever {0,0,scale 1} happens to land.
+  const fitRef = useRef(fit); fitRef.current = fit;
+  const hasContentRef = useRef(false); hasContentRef.current = !!boundary || elements.length > 0;
+  useEffect(() => {
+    const id = requestAnimationFrame(() => { if (hasContentRef.current) fitRef.current(); });
+    return () => cancelAnimationFrame(id);
+  }, []);
   const zoom = useCallback((factor: number) =>
     setView((v) => zoomAtPoint(v, { x: width / 2, y: height / 2 }, factor, fitScale)), [width, height, fitScale]);
   /** Jump to an absolute zoom level (e.g. 0.5 / 1 / 2), centred on the viewport. */
@@ -644,9 +655,12 @@ export function useDesignerState({
   }, []);
   const placingGhost = useMemo(() => (placing ? ghostSizeFor(placing.kind, placing.key, placing.stallType) : null), [placing]);
   const ghostFt = useMemo((): Pt | null => {
-    if (!placing || !cursorFt) return null;
-    return snap ? [snapToGrid(cursorFt[0], gridFt), snapToGrid(cursorFt[1], gridFt)] : cursorFt;
-  }, [placing, cursorFt, snap, gridFt]);
+    if (!placing || !cursorFt || !placingGhost) return null;
+    // centre the ghost under the cursor, then snap its top-left
+    const cx = cursorFt[0] - placingGhost[0] / 2;
+    const cy = cursorFt[1] - placingGhost[1] / 2;
+    return snap ? [snapToGrid(cx, gridFt), snapToGrid(cy, gridFt)] : [cx, cy];
+  }, [placing, placingGhost, cursorFt, snap, gridFt]);
   const stampPlacement = useCallback(() => {
     if (!placing || !ghostFt) return;
     const [x, y] = ghostFt;
