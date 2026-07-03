@@ -276,7 +276,11 @@ export function useDesignerState({
   // Endless graph paper: grid + background always cover the VISIBLE world window, not just the
   // canvas rect, so zooming out or panning never runs off the paper.
   const worldRect = useMemo(() => worldRectFt(view, { width, height }, pxPerFt), [view, width, height, pxPerFt]);
-  const gridLines = useMemo(() => gridLinesForView(worldRect, gridFt, pxPerFt), [worldRect, gridFt, pxPerFt]);
+  // Plot dimensions (bbox) — size inputs edit these when a plot exists; its corner is the ruler
+  // origin (and the bold-line anchor) so "188 ft" reads 0…188 along the plot edge.
+  const plotDims = useMemo(() => (boundary && boundary.length >= 3 ? plotBbox(boundary) : null), [boundary]);
+  const plotOrigin = useMemo((): [number, number] => (plotDims ? [plotDims.x0, plotDims.y0] : [0, 0]), [plotDims]);
+  const gridLines = useMemo(() => gridLinesForView(worldRect, gridFt, pxPerFt, plotOrigin), [worldRect, gridFt, pxPerFt, plotOrigin]);
 
   // Fit targets the plot (boundary bbox) when one exists, else the canvas rect.
   const fitBbox = useMemo(() => {
@@ -525,8 +529,6 @@ export function useDesignerState({
     setCalibrating(false);
   }, [patchBg]);
 
-  // Plot dimensions (bbox) — the size inputs edit THESE when a plot exists, not the canvas.
-  const plotDims = useMemo(() => (boundary && boundary.length >= 3 ? plotBbox(boundary) : null), [boundary]);
   /** Grow (never shrink) the canvas so the plot + margin always stays on paper. */
   const growCanvasFor = useCallback((pts: Pt[]) => {
     const bb = plotBbox(pts);
@@ -861,7 +863,7 @@ export function useDesignerState({
     boundary, setBoundary, obstacles, setObstacles, addObstacle, zones, setZones, pathways, setPathways,
     terrain, setTerrain, terrainType, setTerrainType, overrides, setOverrides,
     // plot + vertex editing (plot-first model)
-    applyPlot, vertexEdit, setVertexEdit, vertexPoints, updateVertexPoints, plotDims, setPlotDim,
+    applyPlot, vertexEdit, setVertexEdit, vertexPoints, updateVertexPoints, plotDims, plotOrigin, setPlotDim,
     // ops + entry-flow objects (§8 / R2.5.16)
     ops, setOps, addOps, entryFlow, setEntryFlow, addEntry, patchEntry,
     // signage (annotations layer)

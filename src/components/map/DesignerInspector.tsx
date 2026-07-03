@@ -19,6 +19,8 @@ interface Props {
   obj: SelectedObjData | null;
   onObjChange: (patch: ObjPatch) => void;
   onObjDelete: () => void;
+  /** ruler origin (plot corner) — X/Y display in plot coordinates; storage stays canvas-based */
+  origin: [number, number];
   onChange: (patch: Partial<EditorElement>) => void;
   onBulkPatch: (patch: Partial<EditorElement>) => void;
   onApplySuggestions: (scope: "selected" | "zone") => void;
@@ -153,7 +155,7 @@ const OBJ_KIND_LABEL: Record<SelectedObjData["kind"], string> = {
 
 /** Type-aware editor for the selected non-element object — the one editing surface for gates,
  * facilities, obstacles and signage (the cramped side-panel inputs are gone). */
-function ObjInspector({ obj, onChange, onDelete }: { obj: SelectedObjData; onChange: (p: ObjPatch) => void; onDelete: () => void }) {
+function ObjInspector({ obj, onChange, onDelete, origin }: { obj: SelectedObjData; onChange: (p: ObjPatch) => void; onDelete: () => void; origin: [number, number] }) {
   const dta = obj.data;
   const isRect = obj.kind !== "annotation";
   const lanes = obj.kind === "entry" && (dta.type === "QUEUE_LANE" || dta.type === "SCAN_POINT");
@@ -170,8 +172,8 @@ function ObjInspector({ obj, onChange, onDelete }: { obj: SelectedObjData; onCha
       </label>
 
       <div className="grid grid-cols-2 gap-2">
-        <NumberField label="X (ft)" value={dta.xFt} onChange={(v) => onChange({ xFt: v })} />
-        <NumberField label="Y (ft)" value={dta.yFt} onChange={(v) => onChange({ yFt: v })} />
+        <NumberField label="X (ft)" value={dta.xFt - origin[0]} onChange={(v) => onChange({ xFt: v + origin[0] })} />
+        <NumberField label="Y (ft)" value={dta.yFt - origin[1]} onChange={(v) => onChange({ yFt: v + origin[1] })} />
         {isRect && "widthFt" in dta && (
           <>
             <NumberField label="Width (ft)" value={dta.widthFt} onChange={(v) => onChange({ widthFt: Math.max(1, v) })} />
@@ -193,7 +195,7 @@ function ObjInspector({ obj, onChange, onDelete }: { obj: SelectedObjData; onCha
   );
 }
 
-export function DesignerInspector({ element, multiCount, stallTypes, score, suggestion, salesView, obj, onObjChange, onObjDelete, onChange, onBulkPatch, onApplySuggestions, onRelabel, onBringToFront, onSendToBack }: Props) {
+export function DesignerInspector({ element, multiCount, stallTypes, score, suggestion, salesView, obj, onObjChange, onObjDelete, origin, onChange, onBulkPatch, onApplySuggestions, onRelabel, onBringToFront, onSendToBack }: Props) {
   if (multiCount > 1) {
     return (
       <aside className="space-y-3 rounded-xl border border-border bg-card p-4">
@@ -219,7 +221,7 @@ export function DesignerInspector({ element, multiCount, stallTypes, score, sugg
   }
 
   if (!element) {
-    if (obj) return <ObjInspector obj={obj} onChange={onObjChange} onDelete={onObjDelete} />;
+    if (obj) return <ObjInspector obj={obj} onChange={onObjChange} onDelete={onObjDelete} origin={origin} />;
     return (
       <aside className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
         Click anything on the map to edit it — stalls, gates, facilities, signage. Drag to move, handles resize/rotate, shift-drag to multi-select.
@@ -243,8 +245,8 @@ export function DesignerInspector({ element, multiCount, stallTypes, score, sugg
       </label>
 
       <div className="grid grid-cols-2 gap-2">
-        <NumberField label="X (ft)" value={element.xFt} onChange={(v) => onChange({ xFt: v })} />
-        <NumberField label="Y (ft)" value={element.yFt} onChange={(v) => onChange({ yFt: v })} />
+        <NumberField label="X (ft)" value={element.xFt - origin[0]} onChange={(v) => onChange({ xFt: v + origin[0] })} />
+        <NumberField label="Y (ft)" value={element.yFt - origin[1]} onChange={(v) => onChange({ yFt: v + origin[1] })} />
         <NumberField label="Width (ft)" value={element.widthFt} onChange={(v) => onChange({ widthFt: Math.max(1, v) })} />
         <NumberField label="Height (ft)" value={element.heightFt} onChange={(v) => onChange({ heightFt: Math.max(1, v) })} />
         <NumberField label="Rotation (°)" value={element.rotation} onChange={(v) => onChange({ rotation: v })} />

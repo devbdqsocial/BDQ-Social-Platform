@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clampScale, fitTransform, gridLinesForView, wheelFactor, worldRectFt, zoomAtPoint, type View } from "./viewport";
+import { clampScale, fitTransform, gridLinesForView, rulerTicks, wheelFactor, worldRectFt, zoomAtPoint, type View } from "./viewport";
 
 const viewport = { width: 900, height: 600 };
 const pxPerFt = 3; // 300 ft wide world at scale 1
@@ -34,11 +34,31 @@ describe("gridLinesForView", () => {
     expect(minor.some((l) => l.points[0] === 5 * pxPerFt && l.points[0] === l.points[2])).toBe(true);
   });
 
+  it("majors re-anchor to the plot origin", () => {
+    const rect = { x0: 0, y0: 0, x1: 100, y1: 100 };
+    const { major, minor } = gridLinesForView(rect, 5, pxPerFt, [20, 20]);
+    const isVerticalAt = (l: { points: number[] }, ft: number) => l.points[0] === ft * pxPerFt && l.points[0] === l.points[2];
+    expect(major.some((l) => isVerticalAt(l, 20))).toBe(true); // plot corner is bold
+    expect(minor.some((l) => isVerticalAt(l, 0))).toBe(true); // world 0 no longer bold
+    expect(major.some((l) => isVerticalAt(l, 45))).toBe(true); // 20 + 25
+  });
+
   it("density guard doubles the step for huge windows", () => {
     const rect = { x0: 0, y0: 0, x1: 5000, y1: 5000 };
     const { stepFt } = gridLinesForView(rect, 5, pxPerFt);
     expect(stepFt).toBeGreaterThanOrEqual(40); // 5000/5=1000 lines → doubled until ≤160
     expect(5000 / stepFt).toBeLessThanOrEqual(160);
+  });
+});
+
+describe("rulerTicks", () => {
+  it("ticks sit on the origin-anchored 5×step cadence and label from the origin", () => {
+    const ticks = rulerTicks(-60, 200, 5, 20, (ft) => ft * 2);
+    // cadence 25 anchored at 20: -55, -30, -5, 20, 45, … ; first ≥ -60 is -55
+    expect(ticks[0]).toEqual({ pos: -110, label: -75 });
+    expect(ticks.find((t) => t.label === 0)).toEqual({ pos: 40, label: 0 }); // plot corner (world 20)
+    expect(ticks.some((t) => t.label === 25)).toBe(true);
+    expect(ticks.every((t) => t.pos <= 400)).toBe(true); // never past the visible end
   });
 });
 

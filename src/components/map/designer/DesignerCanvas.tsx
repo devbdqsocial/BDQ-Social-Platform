@@ -13,6 +13,7 @@ import { OPS_HEX, ENTRY_HEX } from "@/lib/map/entry-ops";
 import { snapToNeighbours, nudge } from "@/lib/map/designer-actions";
 import { useDesigner } from "./DesignerContext";
 import { PolygonEditor } from "./PolygonEditor";
+import { RulerOverlay } from "./RulerOverlay";
 
 // Left button only: Konva 10 defaults to [0, 1], which would let middle-drag MOVE elements.
 // Middle-mouse is reserved for panning (handled at the wrapper, capture phase).
@@ -194,6 +195,7 @@ export function DesignerCanvas() {
       onPointerDownCapture={onMidPanDown}
     >
       <RenameOverlay />
+      <RulerOverlay />
       {/* on-canvas zoom controls (bottom-right) */}
       <div className="absolute bottom-2 right-2 z-10 flex flex-col items-center gap-1">
         {(() => {

@@ -41,8 +41,9 @@ export interface GridLines {
 const MAJOR_EVERY = 5;
 
 /** Grid lines (stage px) covering a world rect. Density-guarded like the old canvas grid; every
- * 5th line is "major" so zoomed-out views keep a readable cadence. */
-export function gridLinesForView(rect: WorldRect, gridFt: number, pxPerFt: number): GridLines {
+ * 5th line is "major". Majors anchor at `majorOrigin` (the plot corner when one exists) so the
+ * ruler's labeled ticks land exactly on bold lines and the plot corner reads 0. */
+export function gridLinesForView(rect: WorldRect, gridFt: number, pxPerFt: number, majorOrigin: [number, number] = [0, 0]): GridLines {
   let step = gridFt > 0 ? gridFt : 5;
   while ((rect.x1 - rect.x0) / step > 160 || (rect.y1 - rect.y0) / step > 160) step *= 2;
 
@@ -56,14 +57,36 @@ export function gridLinesForView(rect: WorldRect, gridFt: number, pxPerFt: numbe
   const startX = Math.floor(rect.x0 / step) * step;
   for (let x = startX; x <= rect.x1 + step / 2; x += step) {
     const line = { points: [x * pxPerFt, y0px, x * pxPerFt, y1px] };
-    (Math.round(x / step) % MAJOR_EVERY === 0 ? major : minor).push(line);
+    (Math.round((x - majorOrigin[0]) / step) % MAJOR_EVERY === 0 ? major : minor).push(line);
   }
   const startY = Math.floor(rect.y0 / step) * step;
   for (let y = startY; y <= rect.y1 + step / 2; y += step) {
     const line = { points: [x0px, y * pxPerFt, x1px, y * pxPerFt] };
-    (Math.round(y / step) % MAJOR_EVERY === 0 ? major : minor).push(line);
+    (Math.round((y - majorOrigin[1]) / step) % MAJOR_EVERY === 0 ? major : minor).push(line);
   }
   return { minor, major, stepFt: step };
+}
+
+export interface RulerTick {
+  /** screen px along the axis (via the caller's camera transform) */
+  pos: number;
+  /** feet from the ruler origin (the plot corner reads 0) */
+  label: number;
+}
+
+/** Ruler tick marks on the origin-anchored major cadence, covering the visible world range. */
+export function rulerTicks(
+  startFt: number,
+  endFt: number,
+  stepFt: number,
+  originFt: number,
+  toScreen: (ft: number) => number,
+): RulerTick[] {
+  const tick = stepFt * MAJOR_EVERY;
+  const first = Math.ceil((startFt - originFt) / tick) * tick + originFt;
+  const out: RulerTick[] = [];
+  for (let f = first; f <= endFt; f += tick) out.push({ pos: toScreen(f), label: Math.round(f - originFt) });
+  return out;
 }
 
 /** Camera that centers a world bbox (feet) in the viewport with a px margin. */
