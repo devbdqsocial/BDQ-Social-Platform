@@ -309,52 +309,88 @@ export function DesignerCanvas() {
             />
           )}
 
-          {/* fixed obstacles — draggable, muted brown */}
-          {obstacles.map((o) => (
-            <Rect
-              key={o.id}
-              x={o.xFt * pxPerFt} y={o.yFt * pxPerFt} width={o.widthFt * pxPerFt} height={o.heightFt * pxPerFt}
-              fill="#7A5C43" opacity={0.55} stroke="#4E4639" strokeWidth={1} cornerRadius={2}
-              draggable={tool === "select" && !spaceDown}
-              onDragEnd={(e) => d.setObstacles((arr) => arr.map((x) => (x.id === o.id ? { ...x, xFt: toFt(e.target.x()), yFt: toFt(e.target.y()) } : x)))}
-            />
-          ))}
-
-          {/* entry-flow objects (§8) — gates/lanes/scan points; lavender family */}
-          {layers.entryflow.visible && entryFlow.map((o) => (
-            <Group key={o.id} listening={!layers.entryflow.locked}>
+          {/* fixed obstacles — click-to-edit, draggable, muted brown */}
+          {obstacles.map((o) => {
+            const isSel = d.selectedObj?.id === o.id;
+            return (
               <Rect
+                key={o.id}
+                id={o.id}
                 x={o.xFt * pxPerFt} y={o.yFt * pxPerFt} width={o.widthFt * pxPerFt} height={o.heightFt * pxPerFt}
-                fill={ENTRY_HEX[o.type]} opacity={0.5} stroke="#01065B" strokeWidth={1} cornerRadius={2}
-                draggable={tool === "select" && !layers.entryflow.locked && !spaceDown}
-                onDragEnd={(e) => d.setEntryFlow((arr) => arr.map((x) => (x.id === o.id ? { ...x, xFt: toFt(e.target.x()), yFt: toFt(e.target.y()) } : x)))}
+                rotation={o.rotation}
+                fill="#7A5C43" opacity={0.55} stroke={isSel ? "#D69A22" : "#4E4639"} strokeWidth={isSel ? 2 : 1} cornerRadius={2}
+                listening={!d.placing}
+                draggable={tool === "select" && !spaceDown && !d.placing}
+                onClick={() => d.onObjClick("obstacle", o.id)}
+                onTap={() => d.onObjClick("obstacle", o.id)}
+                onDragStart={() => d.onObjClick("obstacle", o.id)}
+                onDragEnd={(e) => d.patchObstacle(o.id, { xFt: toFt(e.target.x()), yFt: toFt(e.target.y()) })}
+                onTransformEnd={(e) => d.onObjTransformEnd("obstacle", o.id, e.target)}
               />
-              {layers.labels.visible && <Text x={o.xFt * pxPerFt} y={o.yFt * pxPerFt + o.heightFt * pxPerFt / 2 - 4} width={o.widthFt * pxPerFt} align="center" text={o.lanes ? `${o.label} ×${o.lanes}` : o.label ?? ""} fontSize={7} fill="#01065B" listening={false} />}
-            </Group>
-          ))}
+            );
+          })}
 
-          {/* ops objects (§8) — security/medical/power; muted neutrals (hidden in vendor preview) */}
-          {!previewMode && layers.ops.visible && ops.map((o) => (
-            <Group key={o.id} listening={!layers.ops.locked}>
-              <Rect
-                x={o.xFt * pxPerFt} y={o.yFt * pxPerFt} width={o.widthFt * pxPerFt} height={o.heightFt * pxPerFt}
-                fill={OPS_HEX[o.type]} opacity={0.55} stroke="#15120E" strokeWidth={1} cornerRadius={2}
-                draggable={tool === "select" && !layers.ops.locked && !spaceDown}
-                onDragEnd={(e) => d.setOps((arr) => arr.map((x) => (x.id === o.id ? { ...x, xFt: toFt(e.target.x()), yFt: toFt(e.target.y()) } : x)))}
-              />
-              {layers.labels.visible && <Text x={o.xFt * pxPerFt} y={o.yFt * pxPerFt + o.heightFt * pxPerFt / 2 - 4} width={o.widthFt * pxPerFt} align="center" text={o.label ?? ""} fontSize={7} fill="#FFFFFF" listening={false} />}
-            </Group>
-          ))}
+          {/* entry-flow objects (§8) — gates/lanes/scan points; click-to-edit; lavender family */}
+          {layers.entryflow.visible && entryFlow.map((o) => {
+            const isSel = d.selectedObj?.id === o.id;
+            return (
+              <Group key={o.id}>
+                <Rect
+                  id={o.id}
+                  x={o.xFt * pxPerFt} y={o.yFt * pxPerFt} width={o.widthFt * pxPerFt} height={o.heightFt * pxPerFt}
+                  rotation={o.rotation}
+                  fill={ENTRY_HEX[o.type]} opacity={0.5} stroke={isSel ? "#D69A22" : "#01065B"} strokeWidth={isSel ? 2 : 1} cornerRadius={2}
+                  listening={!layers.entryflow.locked && !d.placing}
+                  draggable={tool === "select" && !layers.entryflow.locked && !spaceDown && !d.placing}
+                  onClick={() => d.onObjClick("entry", o.id)}
+                  onTap={() => d.onObjClick("entry", o.id)}
+                  onDragStart={() => d.onObjClick("entry", o.id)}
+                  onDragEnd={(e) => d.patchEntry(o.id, { xFt: toFt(e.target.x()), yFt: toFt(e.target.y()) })}
+                  onTransformEnd={(e) => d.onObjTransformEnd("entry", o.id, e.target)}
+                />
+                {layers.labels.visible && <Text x={o.xFt * pxPerFt} y={o.yFt * pxPerFt + o.heightFt * pxPerFt / 2 - 4} width={o.widthFt * pxPerFt} align="center" text={o.lanes ? `${o.label} ×${o.lanes}` : o.label ?? ""} fontSize={7} fill="#01065B" listening={false} />}
+              </Group>
+            );
+          })}
+
+          {/* ops objects (§8) — click-to-edit; muted neutrals (hidden in vendor preview) */}
+          {!previewMode && layers.ops.visible && ops.map((o) => {
+            const isSel = d.selectedObj?.id === o.id;
+            return (
+              <Group key={o.id}>
+                <Rect
+                  id={o.id}
+                  x={o.xFt * pxPerFt} y={o.yFt * pxPerFt} width={o.widthFt * pxPerFt} height={o.heightFt * pxPerFt}
+                  rotation={o.rotation}
+                  fill={OPS_HEX[o.type]} opacity={0.55} stroke={isSel ? "#D69A22" : "#15120E"} strokeWidth={isSel ? 2 : 1} cornerRadius={2}
+                  listening={!layers.ops.locked && !d.placing}
+                  draggable={tool === "select" && !layers.ops.locked && !spaceDown && !d.placing}
+                  onClick={() => d.onObjClick("ops", o.id)}
+                  onTap={() => d.onObjClick("ops", o.id)}
+                  onDragStart={() => d.onObjClick("ops", o.id)}
+                  onDragEnd={(e) => d.patchOps(o.id, { xFt: toFt(e.target.x()), yFt: toFt(e.target.y()) })}
+                  onTransformEnd={(e) => d.onObjTransformEnd("ops", o.id, e.target)}
+                />
+                {layers.labels.visible && <Text x={o.xFt * pxPerFt} y={o.yFt * pxPerFt + o.heightFt * pxPerFt / 2 - 4} width={o.widthFt * pxPerFt} align="center" text={o.label ?? ""} fontSize={7} fill="#FFFFFF" listening={false} />}
+              </Group>
+            );
+          })}
 
           {/* signage — wayfinding arrows + free text (annotations layer, visible to all lenses) */}
           {layers.annotations.visible && d.annotations.map((a) => (
             <Group
               key={a.id}
+              id={a.id}
               x={a.xFt * pxPerFt}
               y={a.yFt * pxPerFt}
               rotation={a.rotation}
-              draggable={tool === "select" && !layers.annotations.locked && !spaceDown}
+              listening={!layers.annotations.locked && !d.placing}
+              draggable={tool === "select" && !layers.annotations.locked && !spaceDown && !d.placing}
+              onClick={() => d.onObjClick("annotation", a.id)}
+              onTap={() => d.onObjClick("annotation", a.id)}
+              onDragStart={() => d.onObjClick("annotation", a.id)}
               onDragEnd={(e) => d.patchAnnotation(a.id, { xFt: toFt(e.target.x()), yFt: toFt(e.target.y()) })}
+              onTransformEnd={(e) => d.onObjTransformEnd("annotation", a.id, e.currentTarget ?? e.target)}
             >
               {a.type === "ARROW" ? (
                 <>
@@ -418,6 +454,8 @@ export function DesignerCanvas() {
             ignoreStroke
             rotationSnaps={Array.from({ length: 24 }, (_, i) => i * 15)}
             rotationSnapTolerance={6}
+            // signage is rotate-only: resizing its Group would scale the caption text
+            resizeEnabled={!(selectedIds.size === 0 && d.selectedObj?.kind === "annotation")}
           />
         </Layer>
       </Stage>

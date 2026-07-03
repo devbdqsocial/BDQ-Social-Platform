@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type Konva from "konva";
 import {
-  createAnnotation, createInfra, createStall, duplicate, snapToGrid, DEFAULT_CANVAS,
+  createAnnotation, createInfra, createStall, duplicate, rectPatchFromNode, snapToGrid, DEFAULT_CANVAS,
   type CanvasMeta, type EditorElement, type PaletteStallType,
 } from "@/lib/map/designer-ops";
 import { ghostSizeFor, OBSTACLE_SIZES, type PlaceKind } from "@/lib/map/catalog";
@@ -58,6 +58,20 @@ export interface Placing {
 const isDrawTool = (t: Tool) => t === "boundary" || t === "zone" || t === "pathway" || t === "terrain";
 const isClosed = (t: Tool) => t === "boundary" || t === "zone" || t === "terrain"; // pathway is an OPEN polyline
 
+/** Non-element canvas objects that are click-selectable + transformer-editable. */
+export type ObjKind = "ops" | "entry" | "obstacle" | "annotation";
+export type SelectedObjData =
+  | { kind: "ops"; data: OpsObject }
+  | { kind: "entry"; data: EntryFlowObject }
+  | { kind: "obstacle"; data: Obstacle }
+  | { kind: "annotation"; data: Annotation };
+
+/** Structural patch shared by every object kind — each patch fn narrows it to its own type. */
+export type ObjPatch = Partial<{
+  xFt: number; yFt: number; widthFt: number; heightFt: number; rotation: number;
+  label: string; lanes: number; lengthFt: number; fontSize: number;
+}>;
+
 export interface UseDesignerStateProps {
   eventId?: string;
   initialElements?: EditorElement[];
@@ -110,6 +124,9 @@ export function useDesignerState({
   const [panning, setPanning] = useState(false);
   const marqueeDidSelect = useRef(false);
   const [placing, setPlacing] = useState<Placing | null>(null);
+  // unified click-to-edit: any non-element object can hold the selection (mutually exclusive
+  // with element selection — one inspector surface for everything on the canvas)
+  const [selectedObj, setSelectedObj] = useState<{ kind: ObjKind; id: string } | null>(null);
   const [pathType, setPathType] = useState<Pathway["type"]>("MAIN");
   const [measurePts, setMeasurePts] = useState<Pt[]>([]);
   const [measureCursor, setMeasureCursor] = useState<Pt | null>(null);
@@ -366,16 +383,26 @@ export function useDesignerState({
     labels: elements.length,
   }), [bgImg, terrain, zones, pathways, elements, ops, entryFlow, annotations]);
 
-  // transformer attaches to a single selection — but never on a locked layer's element
+  // transformer attaches to the single live selection (element OR canvas object) — never on a
+  // locked layer's node
   useEffect(() => {
     const tr = trRef.current; const stage = stageRef.current;
     if (!tr || !stage) return;
-    const sel = selectedId ? elements.find((e) => e.id === selectedId) : null;
-    const layerLocked = sel ? layers[sel.kind === "infra" ? "infra" : "stalls"].locked : false;
-    const node = selectedId && !layerLocked ? stage.findOne(`#${selectedId}`) : null;
+    let node: Konva.Node | null | undefined = null;
+    if (selectedId) {
+      const sel = elements.find((e) => e.id === selectedId);
+      const layerLocked = sel ? layers[sel.kind === "infra" ? "infra" : "stalls"].locked : false;
+      node = !layerLocked ? stage.findOne(`#${selectedId}`) : null;
+    } else if (selectedObj) {
+      const locked =
+        selectedObj.kind === "ops" ? layers.ops.locked :
+        selectedObj.kind === "entry" ? layers.entryflow.locked :
+        selectedObj.kind === "annotation" ? layers.annotations.locked : false;
+      node = !locked ? stage.findOne(`#${selectedObj.id}`) : null;
+    }
     tr.nodes(node ? [node] : []);
     tr.getLayer()?.batchDraw();
-  }, [selectedId, elements, layers, scale, width, canvas.widthFt, canvas.heightFt]);
+  }, [selectedId, selectedObj, elements, ops, entryFlow, obstacles, annotations, layers, scale, width, canvas.widthFt, canvas.heightFt]);
 
   // ── actions ──────────────────────────────────────────────────────────────
   const patchOne = useCallback((id: string, p: Partial<EditorElement>) => elements.map((e) => (e.id === id ? { ...e, ...p } : e)), [elements]);
@@ -404,10 +431,47 @@ export function useDesignerState({
 
   const addOps = useCallback((type: OpsType, xFt?: number, yFt?: number) => setOps((o) => [...o, createOps(type, xFt, yFt)]), []);
   const addEntry = useCallback((type: EntryType, xFt?: number, yFt?: number) => setEntryFlow((o) => [...o, createEntry(type, xFt, yFt)]), []);
+  const patchOps = useCallback((id: string, p: Partial<OpsObject>) => setOps((arr) => arr.map((o) => (o.id === id ? { ...o, ...p } : o))), []);
   const patchEntry = useCallback((id: string, p: Partial<EntryFlowObject>) => setEntryFlow((arr) => arr.map((e) => (e.id === id ? { ...e, ...p } : e))), []);
+  const patchObstacle = useCallback((id: string, p: Partial<Obstacle>) => setObstacles((arr) => arr.map((o) => (o.id === id ? { ...o, ...p } : o))), []);
   const addAnnotation = useCallback((type: Annotation["type"], xFt?: number, yFt?: number) => setAnnotations((a) => [...a, createAnnotation(type, xFt, yFt)]), []);
   const patchAnnotation = useCallback((id: string, p: Partial<Annotation>) => setAnnotations((arr) => arr.map((a) => (a.id === id ? { ...a, ...p } : a))), []);
   const removeAnnotation = useCallback((id: string) => setAnnotations((arr) => arr.filter((a) => a.id !== id)), []);
+
+  // ── unified object selection ─────────────────────────────────────────────
+  const onObjClick = useCallback((kind: ObjKind, id: string) => {
+    setSelectedObj({ kind, id });
+    setSelectedIds(new Set());
+  }, []);
+  const selectedObjData = useMemo((): SelectedObjData | null => {
+    if (!selectedObj) return null;
+    const { kind, id } = selectedObj;
+    if (kind === "ops") { const o = ops.find((x) => x.id === id); return o ? { kind, data: o } : null; }
+    if (kind === "entry") { const o = entryFlow.find((x) => x.id === id); return o ? { kind, data: o } : null; }
+    if (kind === "obstacle") { const o = obstacles.find((x) => x.id === id); return o ? { kind, data: o } : null; }
+    const o = annotations.find((x) => x.id === id);
+    return o ? { kind: "annotation", data: o } : null;
+  }, [selectedObj, ops, entryFlow, obstacles, annotations]);
+  const patchObj = useCallback((kind: ObjKind, id: string, p: ObjPatch) => {
+    if (kind === "ops") patchOps(id, p as Partial<OpsObject>);
+    else if (kind === "entry") patchEntry(id, p as Partial<EntryFlowObject>);
+    else if (kind === "obstacle") patchObstacle(id, p as Partial<Obstacle>);
+    else patchAnnotation(id, p as Partial<Annotation>);
+  }, [patchOps, patchEntry, patchObstacle, patchAnnotation]);
+  const deleteSelectedObj = useCallback(() => {
+    if (!selectedObj) return;
+    const { kind, id } = selectedObj;
+    if (kind === "ops") setOps((a) => a.filter((x) => x.id !== id));
+    else if (kind === "entry") setEntryFlow((a) => a.filter((x) => x.id !== id));
+    else if (kind === "obstacle") setObstacles((a) => a.filter((x) => x.id !== id));
+    else removeAnnotation(id);
+    setSelectedObj(null);
+  }, [selectedObj, removeAnnotation]);
+  /** Delete key / toolbar: whichever selection is live — canvas object or elements. */
+  const deleteSelection = useCallback(() => {
+    if (selectedObj) deleteSelectedObj();
+    else deleteSelected();
+  }, [selectedObj, deleteSelectedObj, deleteSelected]);
 
   const doAlign = useCallback((m: AlignMode) => { if (selectedIds.size > 1) commit(alignElements(elements, selectedIds, m)); }, [elements, selectedIds, commit]);
   const doDistribute = useCallback((axis: "h" | "v") => { if (selectedIds.size > 2) commit(distributeElements(elements, selectedIds, axis)); }, [elements, selectedIds, commit]);
@@ -538,6 +602,7 @@ export function useDesignerState({
     setMeasurePts([]);
     setMeasureCursor(null);
     setSelectedIds(new Set());
+    setSelectedObj(null);
     setPlacing(p);
   }, []);
   const placingGhost = useMemo(() => (placing ? ghostSizeFor(placing.kind, placing.key, placing.stallType) : null), [placing]);
@@ -575,16 +640,25 @@ export function useDesignerState({
   const onTransformEnd = useCallback((id: string, node: Konva.Node) => {
     const sx = node.scaleX(); const sy = node.scaleY();
     node.scaleX(1); node.scaleY(1);
-    commit(patchOne(id, {
-      xFt: toFt(node.x()), yFt: toFt(node.y()),
-      widthFt: Math.max(1, toFt(node.width() * sx)), heightFt: Math.max(1, toFt(node.height() * sy)),
-      rotation: Math.round(node.rotation()),
-    }));
+    commit(patchOne(id, rectPatchFromNode({ x: node.x(), y: node.y(), width: node.width(), height: node.height(), scaleX: sx, scaleY: sy, rotation: node.rotation() }, toFt)));
   }, [commit, patchOne, toFt]);
+
+  /** Transformer write-back for canvas objects. Annotations are rotate-only (their Group scales
+   * caption text) — position + rotation write back; rect kinds take the full patch. */
+  const onObjTransformEnd = useCallback((kind: ObjKind, id: string, node: Konva.Node) => {
+    const sx = node.scaleX(); const sy = node.scaleY();
+    node.scaleX(1); node.scaleY(1);
+    if (kind === "annotation") {
+      patchAnnotation(id, { xFt: toFt(node.x()), yFt: toFt(node.y()), rotation: Math.round(node.rotation()) });
+      return;
+    }
+    patchObj(kind, id, rectPatchFromNode({ x: node.x(), y: node.y(), width: node.width(), height: node.height(), scaleX: sx, scaleY: sy, rotation: node.rotation() }, toFt));
+  }, [toFt, patchAnnotation, patchObj]);
 
   const onElementClick = useCallback((id: string, e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
     const evt = e.evt as { shiftKey?: boolean; metaKey?: boolean; ctrlKey?: boolean };
     const multi = !!(evt.shiftKey || evt.metaKey || evt.ctrlKey);
+    setSelectedObj(null);
     setSelectedIds((prev) => {
       if (!multi) return new Set([id]);
       const next = new Set(prev);
@@ -615,7 +689,7 @@ export function useDesignerState({
     }
     if (tool !== "select" || placing) return;
     // drag-empty = pan (the stage is draggable); Shift+drag = marquee multi-select
-    if (e.evt.shiftKey) setMarquee({ x: p.x, y: p.y, w: 0, h: 0 });
+    if (e.evt.shiftKey) { setSelectedObj(null); setMarquee({ x: p.x, y: p.y, w: 0, h: 0 }); }
   }, [tool, drawing, relPointer, ptToFt, finishDrawing, spaceDown, placing]);
 
   const onStageMouseMove = useCallback((e?: Konva.KonvaEventObject<MouseEvent>) => {
@@ -651,7 +725,7 @@ export function useDesignerState({
     if (e.target !== e.target.getStage()) return;
     if (marqueeDidSelect.current) { marqueeDidSelect.current = false; return; }
     const evt = e.evt as { shiftKey?: boolean; metaKey?: boolean; ctrlKey?: boolean };
-    if (tool === "select" && !(evt.shiftKey || evt.metaKey || evt.ctrlKey)) setSelectedIds(new Set());
+    if (tool === "select" && !(evt.shiftKey || evt.metaKey || evt.ctrlKey)) { setSelectedIds(new Set()); setSelectedObj(null); }
   }, [tool, placing, stampPlacement]);
 
   // Stage drags (pan). Elements are draggable nodes and win over the stage; draw/measure/vertex
@@ -742,6 +816,9 @@ export function useDesignerState({
     spaceDown, panning, setPanning, stageDraggable, onStageClick,
     // ghost placement
     placing, setPlacing, armPlacement, placingGhost, ghostFt,
+    // unified object selection
+    selectedObj, setSelectedObj, selectedObjData, onObjClick, onObjTransformEnd, patchObj,
+    patchOps, patchObstacle, deleteSelectedObj, deleteSelection,
     // guides + marquee + handlers
     guides, setGuides, marquee, patchOne, onTransformEnd, onElementClick, onStageMouseDown, onStageMouseMove, onStageMouseUp,
     // element actions

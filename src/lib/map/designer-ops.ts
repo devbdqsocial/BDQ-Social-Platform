@@ -129,6 +129,21 @@ export function createAnnotation(type: "ARROW" | "TEXT", xFt = 20, yFt = 20): An
   };
 }
 
+/** Transformer write-back: node px + accumulated scale → a snapped rect patch (scale is reset by
+ * the caller). Pure numbers in, so it's unit-testable and shared by elements and canvas objects. */
+export function rectPatchFromNode(
+  n: { x: number; y: number; width: number; height: number; scaleX: number; scaleY: number; rotation: number },
+  toFt: (px: number) => number,
+): { xFt: number; yFt: number; widthFt: number; heightFt: number; rotation: number } {
+  return {
+    xFt: toFt(n.x),
+    yFt: toFt(n.y),
+    widthFt: Math.max(1, toFt(n.width * n.scaleX)),
+    heightFt: Math.max(1, toFt(n.height * n.scaleY)),
+    rotation: Math.round(n.rotation),
+  };
+}
+
 /** Copy with an offset of one grid cell so duplicates land on-grid (was a fixed 5 ft). */
 export function duplicate(el: EditorElement, offsetFt = 5): EditorElement {
   return { ...el, id: newId(), xFt: el.xFt + offsetFt, yFt: el.yFt + offsetFt, label: `${el.label}*` };

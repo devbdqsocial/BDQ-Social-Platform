@@ -37,7 +37,7 @@ export const KEY_BINDINGS: { keys: string; does: string }[] = [
 export function useDesignerKeyboard(d: DesignerApi) {
   const {
     elements, selectedIds, setSelectedIds, undo, redo, commit, copySelected, pasteClipboard,
-    duplicateSelected, deleteSelected, nudgeSelected, selectTool, setSalesView,
+    duplicateSelected, nudgeSelected, selectTool, setSalesView,
     setMeasurePts, setMeasureCursor, setDrawing, drawing, tool, finishDrawing, isClosed,
   } = d;
 
@@ -51,7 +51,7 @@ export function useDesignerKeyboard(d: DesignerApi) {
       if (mod && e.key.toLowerCase() === "c") { copySelected(); return; }
       if (mod && e.key.toLowerCase() === "v") { e.preventDefault(); pasteClipboard(); return; }
       if (mod && e.key.toLowerCase() === "d") { e.preventDefault(); duplicateSelected(); return; }
-      if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); deleteSelected(); return; }
+      if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); d.deleteSelection(); return; }
       if (!mod) {
         const k = e.key.toLowerCase();
         if (k === "m") { selectTool("measure"); return; }
@@ -72,7 +72,7 @@ export function useDesignerKeyboard(d: DesignerApi) {
         if (e.key === "Enter" && drawing && drawing.length >= (isClosed(tool) ? 3 : 2)) { finishDrawing(drawing); return; }
         if (e.key === "Escape") {
           if (d.placing) { d.setPlacing(null); return; } // stop stamping first
-          setMeasurePts([]); setMeasureCursor(null); setDrawing(null); setSelectedIds(new Set()); d.setVertexEdit(null);
+          setMeasurePts([]); setMeasureCursor(null); setDrawing(null); setSelectedIds(new Set()); d.setSelectedObj(null); d.setVertexEdit(null);
           return;
         }
       }
@@ -85,5 +85,5 @@ export function useDesignerKeyboard(d: DesignerApi) {
     // The store callbacks are recreated per render but always current; re-bind on the reactive
     // bits the handler branches on (drawing/tool/selection) — listing every setter is noise.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [elements, selectedIds, drawing, tool, d.placing, undo, redo, commit, deleteSelected, finishDrawing]);
+  }, [elements, selectedIds, drawing, tool, d.placing, d.selectedObj, undo, redo, commit, d.deleteSelection, finishDrawing]);
 }
