@@ -11,6 +11,7 @@ import { TERRAIN_COLOR_HEX } from "@/lib/map/terrain";
 import { TIER_HEX } from "@/server/map/scoring";
 import { OPS_HEX, ENTRY_HEX } from "@/lib/map/entry-ops";
 import { snapToNeighbours, nudge } from "@/lib/map/designer-actions";
+import { catalogLabel } from "@/lib/map/catalog";
 import { fmtLen, fmtSize } from "@/lib/map/geometry";
 import { useDesigner } from "./DesignerContext";
 import { ElementLabel } from "./ElementLabel";
@@ -36,12 +37,13 @@ interface ElementNodeProps {
   fill: string;
   onClick: (id: string, e: KonvaEventObject<MouseEvent | TouchEvent>) => void;
   onDblClickId: (id: string, e: KonvaEventObject<MouseEvent | TouchEvent>) => void;
+  onHoverId: (id: string | null) => void;
   onDragStartId: (id: string) => void;
   onDragMoveId: (id: string, node: Konva.Node) => void;
   onDragEndId: (id: string, node: Konva.Node) => void;
   onTransformEndId: (id: string, node: Konva.Node) => void;
 }
-const ElementNode = memo(function ElementNode({ el, pxPerFt, editable, isSel, isViolation, fill, onClick, onDblClickId, onDragStartId, onDragMoveId, onDragEndId, onTransformEndId }: ElementNodeProps) {
+const ElementNode = memo(function ElementNode({ el, pxPerFt, editable, isSel, isViolation, fill, onClick, onDblClickId, onHoverId, onDragStartId, onDragMoveId, onDragEndId, onTransformEndId }: ElementNodeProps) {
   return (
     <Rect
       id={el.id}
@@ -58,6 +60,8 @@ const ElementNode = memo(function ElementNode({ el, pxPerFt, editable, isSel, is
       onTap={(e) => onClick(el.id, e)}
       onDblClick={(e) => onDblClickId(el.id, e)}
       onDblTap={(e) => onDblClickId(el.id, e)}
+      onMouseEnter={() => onHoverId(el.id)}
+      onMouseLeave={() => onHoverId(null)}
       onDragStart={() => onDragStartId(el.id)}
       onDragMove={(e) => onDragMoveId(el.id, e.target)}
       onDragEnd={(e) => onDragEndId(el.id, e.target)}
@@ -154,6 +158,10 @@ export function DesignerCanvas() {
     setRenaming({ kind: "element", id });
   }, [setRenaming]);
 
+  // hover tooltip — full name · type · size, so nothing is ever hidden by a fitted/floated label
+  const [hovered, setHovered] = useState<{ kind: "element" | "ops" | "entry" | "obstacle"; id: string } | null>(null);
+  const onHoverId = useCallback((id: string | null) => setHovered(id ? { kind: "element", id } : null), []);
+
   // Middle-mouse pan — intercepted at the wrapper (capture) so Konva never sees the button.
   const midPan = useRef<{ sx: number; sy: number; vx: number; vy: number } | null>(null);
   const onMidPanDown = useCallback((e: React.PointerEvent) => {
@@ -198,6 +206,35 @@ export function DesignerCanvas() {
     >
       <RenameOverlay />
       <RulerOverlay />
+      {(() => {
+        if (!hovered) return null;
+        const src =
+          hovered.kind === "element" ? elements.find((e) => e.id === hovered.id) :
+          hovered.kind === "ops" ? ops.find((o) => o.id === hovered.id) :
+          hovered.kind === "entry" ? entryFlow.find((o) => o.id === hovered.id) :
+          obstacles.find((o) => o.id === hovered.id);
+        if (!src) return null;
+        const typeLabel = hovered.kind === "element" ? src.type : catalogLabel((src as { type: string }).type);
+        const name = "label" in src && src.label ? src.label : typeLabel;
+        const text = `${name} · ${typeLabel} · ${fmtSize(src.widthFt, src.heightFt, displayUnit)}`;
+        const left = (src.xFt + src.widthFt / 2) * pxPerFt * view.scale + view.x;
+        const top = src.yFt * pxPerFt * view.scale + view.y;
+        return (
+          <div
+            className="pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-full rounded bg-[#15120E] px-1.5 py-0.5 text-[11px] font-medium whitespace-nowrap text-[#FBF7F0] shadow"
+            style={{ left, top: top - 4 }}
+          >
+            {text}
+          </div>
+        );
+      })()}
+      {/* placement mode — visible cancel affordance (Esc / right-click also cancel) */}
+      {d.placing && (
+        <div className="absolute bottom-2 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 rounded-full border border-border bg-background/95 px-3 py-1.5 text-xs shadow-md">
+          <span>Placing <span className="font-medium">{d.placing.label}</span> — click to stamp</span>
+          <button type="button" className="rounded-full border border-border px-2 py-0.5 font-medium hover:bg-muted" onClick={() => d.setPlacing(null)}>Cancel</button>
+        </div>
+      )}
       {/* on-canvas zoom controls (bottom-right) */}
       <div className="absolute bottom-2 right-2 z-10 flex flex-col items-center gap-1">
         {(() => {
@@ -237,6 +274,7 @@ export function DesignerCanvas() {
         onMouseUp={onStageMouseUp}
         onContextMenu={(e) => {
           e.evt.preventDefault();
+          if (d.placing) { d.setPlacing(null); return; } // right-click cancels placement
           const id = e.target.id() || e.target.getParent()?.id() || "";
           d.openContextMenu(id, { x: e.evt.clientX, y: e.evt.clientY });
         }}
@@ -311,6 +349,7 @@ export function DesignerCanvas() {
                 fill={(!previewMode && heatFillFor(el)) || fillFor(el)}
                 onClick={onElementClick}
                 onDblClickId={onDblClickId}
+                onHoverId={onHoverId}
                 onDragStartId={onDragStartId}
                 onDragMoveId={onDragMoveId}
                 onDragEndId={onDragEndId}
@@ -420,6 +459,8 @@ export function DesignerCanvas() {
                   draggable={tool === "select" && !spaceDown && !d.placing}
                   onClick={() => d.onObjClick("obstacle", o.id)}
                   onTap={() => d.onObjClick("obstacle", o.id)}
+                  onMouseEnter={() => setHovered({ kind: "obstacle", id: o.id })}
+                  onMouseLeave={() => setHovered((h) => (h?.id === o.id ? null : h))}
                   onDragStart={() => d.onObjClick("obstacle", o.id)}
                   onDragEnd={(e) => d.patchObstacle(o.id, { xFt: toFt(e.target.x()), yFt: toFt(e.target.y()) })}
                   onTransformEnd={(e) => d.onObjTransformEnd("obstacle", o.id, e.target)}
@@ -449,6 +490,8 @@ export function DesignerCanvas() {
                   draggable={tool === "select" && !layers.entryflow.locked && !spaceDown && !d.placing}
                   onClick={() => d.onObjClick("entry", o.id)}
                   onTap={() => d.onObjClick("entry", o.id)}
+                  onMouseEnter={() => setHovered({ kind: "entry", id: o.id })}
+                  onMouseLeave={() => setHovered((h) => (h?.id === o.id ? null : h))}
                   onDragStart={() => d.onObjClick("entry", o.id)}
                   onDragEnd={(e) => d.patchEntry(o.id, { xFt: toFt(e.target.x()), yFt: toFt(e.target.y()) })}
                   onTransformEnd={(e) => d.onObjTransformEnd("entry", o.id, e.target)}
@@ -478,6 +521,8 @@ export function DesignerCanvas() {
                   draggable={tool === "select" && !layers.ops.locked && !spaceDown && !d.placing}
                   onClick={() => d.onObjClick("ops", o.id)}
                   onTap={() => d.onObjClick("ops", o.id)}
+                  onMouseEnter={() => setHovered({ kind: "ops", id: o.id })}
+                  onMouseLeave={() => setHovered((h) => (h?.id === o.id ? null : h))}
                   onDragStart={() => d.onObjClick("ops", o.id)}
                   onDragEnd={(e) => d.patchOps(o.id, { xFt: toFt(e.target.x()), yFt: toFt(e.target.y()) })}
                   onTransformEnd={(e) => d.onObjTransformEnd("ops", o.id, e.target)}
