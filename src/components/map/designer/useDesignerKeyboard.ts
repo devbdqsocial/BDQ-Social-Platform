@@ -9,6 +9,9 @@ import type { DesignerApi } from "./useDesignerState";
  * ShortcutHelp dialog render from, so help can't drift from behavior.
  */
 export const KEY_BINDINGS: { keys: string; does: string }[] = [
+  { keys: "Drag empty canvas", does: "Pan the map" },
+  { keys: "Shift+drag", does: "Multi-select box" },
+  { keys: "Space (hold) or middle mouse", does: "Pan from anywhere" },
   { keys: "V", does: "Select tool" },
   { keys: "H", does: "Pan tool" },
   { keys: "M", does: "Measure distance" },

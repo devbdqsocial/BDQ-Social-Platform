@@ -96,6 +96,11 @@ export function useDesignerState({
   // selection + tools
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [tool, setTool] = useState<Tool>("select");
+  // pan model: drag empty canvas pans; Shift+drag marquees; Space-hold pans over anything
+  const [spaceDown, setSpaceDown] = useState(false);
+  const [shiftDown, setShiftDown] = useState(false);
+  const [panning, setPanning] = useState(false);
+  const marqueeDidSelect = useRef(false);
   const [pathType, setPathType] = useState<Pathway["type"]>("MAIN");
   const [measurePts, setMeasurePts] = useState<Pt[]>([]);
   const [measureCursor, setMeasureCursor] = useState<Pt | null>(null);
@@ -179,6 +184,33 @@ export function useDesignerState({
     if (dirtyFirstRun.current) { dirtyFirstRun.current = false; return; }
     setDirty(true);
   }, [elements, boundary, obstacles, zones, pathways, terrain, ops, entryFlow, annotations, canvas, gridFt, displayUnit, layers, versions]);
+
+  // Space/Shift trackers for the pan model. Space preventDefaults (page scroll) unless typing;
+  // both reset on window blur so a missed keyup can't leave the canvas stuck in pan mode.
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "Shift") setShiftDown(true);
+      if (e.code === "Space") {
+        const tag = (e.target as HTMLElement)?.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+        e.preventDefault();
+        setSpaceDown(true);
+      }
+    };
+    const up = (e: KeyboardEvent) => {
+      if (e.key === "Shift") setShiftDown(false);
+      if (e.code === "Space") setSpaceDown(false);
+    };
+    const blur = () => { setSpaceDown(false); setShiftDown(false); };
+    window.addEventListener("keydown", down);
+    window.addEventListener("keyup", up);
+    window.addEventListener("blur", blur);
+    return () => {
+      window.removeEventListener("keydown", down);
+      window.removeEventListener("keyup", up);
+      window.removeEventListener("blur", blur);
+    };
+  }, []);
 
   useEffect(() => {
     if (!dirty || !eventMode) return;
@@ -531,6 +563,7 @@ export function useDesignerState({
 
   const onStageMouseDown = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
     if (e.target !== e.target.getStage()) return;
+    if (spaceDown) return; // space-hold = pan, overrides every tool
     const p = relPointer();
     if (!p) return;
     if (tool === "measure") { setMeasurePts((pts) => [...pts, ptToFt(p)]); return; }
@@ -546,9 +579,9 @@ export function useDesignerState({
       return;
     }
     if (tool !== "select") return;
-    if (!(e.evt.shiftKey || e.evt.metaKey || e.evt.ctrlKey)) setSelectedIds(new Set());
-    setMarquee({ x: p.x, y: p.y, w: 0, h: 0 });
-  }, [tool, drawing, relPointer, ptToFt, finishDrawing]);
+    // drag-empty = pan (the stage is draggable); Shift+drag = marquee multi-select
+    if (e.evt.shiftKey) setMarquee({ x: p.x, y: p.y, w: 0, h: 0 });
+  }, [tool, drawing, relPointer, ptToFt, finishDrawing, spaceDown]);
 
   const onStageMouseMove = useCallback((e?: Konva.KonvaEventObject<MouseEvent>) => {
     const p = relPointer();
@@ -571,9 +604,23 @@ export function useDesignerState({
     if (Math.abs(marquee.w) > 4 && Math.abs(marquee.h) > 4) {
       const hit = elements.filter((el) => el.xFt < x2 && el.xFt + el.widthFt > x1 && el.yFt < y2 && el.yFt + el.heightFt > y1);
       setSelectedIds((prev) => new Set([...prev, ...hit.map((e) => e.id)]));
+      marqueeDidSelect.current = true; // the click that follows must not deselect
     }
     setMarquee(null);
   }, [marquee, pxPerFt, elements]);
+
+  /** Plain click on empty canvas deselects. Konva suppresses click after a real drag, so pans
+   * never deselect; a marquee that just selected consumes its trailing click. */
+  const onStageClick = useCallback((e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
+    if (e.target !== e.target.getStage()) return;
+    if (marqueeDidSelect.current) { marqueeDidSelect.current = false; return; }
+    const evt = e.evt as { shiftKey?: boolean; metaKey?: boolean; ctrlKey?: boolean };
+    if (tool === "select" && !(evt.shiftKey || evt.metaKey || evt.ctrlKey)) setSelectedIds(new Set());
+  }, [tool]);
+
+  // Stage drags (pan). Elements are draggable nodes and win over the stage; draw/measure/vertex
+  // editing keep the stage pinned so clicks place points instead of panning.
+  const stageDraggable = spaceDown || tool === "pan" || (tool === "select" && !shiftDown && !vertexEdit);
 
   // ── persistence ──────────────────────────────────────────────────────────
   const buildLayoutV2 = useCallback((): LayoutV2 => {
@@ -655,6 +702,8 @@ export function useDesignerState({
     previewMode, setPreviewMode, pulseId, searchQuery, setSearchQuery, searchMatches, focusOn,
     // exports (§12 / R2.5.15)
     mapName, captureFullCanvas,
+    // pan model
+    spaceDown, panning, setPanning, stageDraggable, onStageClick,
     // guides + marquee + handlers
     guides, setGuides, marquee, patchOne, onTransformEnd, onElementClick, onStageMouseDown, onStageMouseMove, onStageMouseUp,
     // element actions

@@ -1,7 +1,7 @@
 "use client";
 
-import { memo, useCallback, useRef } from "react";
-import type Konva from "konva";
+import { memo, useCallback, useEffect, useRef } from "react";
+import Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { Arrow, Group, Image as KonvaImage, Layer, Line, Rect, Stage, Text, Transformer } from "react-konva";
 import type { EditorElement } from "@/lib/map/designer-ops";
@@ -12,6 +12,10 @@ import { OPS_HEX, ENTRY_HEX } from "@/lib/map/entry-ops";
 import { snapToNeighbours, nudge } from "@/lib/map/designer-actions";
 import { useDesigner } from "./DesignerContext";
 import { PolygonEditor } from "./PolygonEditor";
+
+// Left button only: Konva 10 defaults to [0, 1], which would let middle-drag MOVE elements.
+// Middle-mouse is reserved for panning (handled at the wrapper, capture phase).
+Konva.dragButtons = [0];
 
 /**
  * Memoized element node (R2.5.17 perf). Re-renders ONLY when its own props change (geometry,
@@ -60,6 +64,7 @@ export function DesignerCanvas() {
   const d = useDesigner();
   const {
     width, height, view, setView, worldRect, pxPerFt, tool, canvas, bgImg, calibrated, layers,
+    spaceDown, panning, setPanning, stageDraggable, onStageClick,
     elements, zones, pathways, terrain, boundary, obstacles, ops, entryFlow, drawing, guides, marquee,
     measureLine, measureDist, measureCursor, selectedIds, violationIds, fillFor,
     salesView, scores, heatFillFor, compareSnapshot, previewMode, pulseId,
@@ -98,8 +103,48 @@ export function DesignerCanvas() {
   }, [setGuides]);
   const onTransformEndId = useCallback((id: string, node: Konva.Node) => onTransformEnd(id, node), [onTransformEnd]);
 
+  // Middle-mouse pan — intercepted at the wrapper (capture) so Konva never sees the button.
+  const midPan = useRef<{ sx: number; sy: number; vx: number; vy: number } | null>(null);
+  const onMidPanDown = useCallback((e: React.PointerEvent) => {
+    if (e.button !== 1) return;
+    e.preventDefault();
+    e.stopPropagation();
+    midPan.current = { sx: e.clientX, sy: e.clientY, vx: view.x, vy: view.y };
+    setPanning(true);
+    const move = (ev: PointerEvent) => {
+      const m = midPan.current;
+      if (m) setView((v) => ({ ...v, x: m.vx + ev.clientX - m.sx, y: m.vy + ev.clientY - m.sy }));
+    };
+    const up = () => {
+      midPan.current = null;
+      setPanning(false);
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  }, [view.x, view.y, setView, setPanning]);
+
+  // Cursor mirrors what a drag would do: grab/grabbing (pan), crosshair (draw/measure), default.
+  useEffect(() => {
+    const c = stageRef.current?.container();
+    if (!c) return;
+    c.style.cursor = panning
+      ? "grabbing"
+      : tool === "pan" || spaceDown
+        ? "grab"
+        : isDrawTool(tool) || tool === "measure"
+          ? "crosshair"
+          : "default";
+  }, [panning, spaceDown, tool, isDrawTool, stageRef]);
+
   return (
-    <div ref={d.wrapRef} className="overflow-hidden rounded-xl border border-border bg-card" style={{ touchAction: "none", maxHeight: "72vh" }}>
+    <div
+      ref={d.wrapRef}
+      className="overflow-hidden rounded-xl border border-border bg-card"
+      style={{ touchAction: "none", maxHeight: "72vh" }}
+      onPointerDownCapture={onMidPanDown}
+    >
       <Stage
         ref={stageRef}
         width={width}
@@ -108,7 +153,12 @@ export function DesignerCanvas() {
         y={view.y}
         scaleX={view.scale}
         scaleY={view.scale}
-        draggable={tool === "pan"}
+        draggable={stageDraggable}
+        dragDistance={3}
+        onClick={onStageClick}
+        onTap={onStageClick}
+        onDragStart={(e) => { if (e.target === e.target.getStage()) setPanning(true); }}
+        onDragEnd={(e) => { if (e.target === e.target.getStage()) setPanning(false); }}
         onDragMove={(e) => { if (e.target === e.target.getStage()) setView((v) => ({ ...v, x: e.target.x(), y: e.target.y() })); }}
         onWheel={(e) => {
           e.evt.preventDefault();
@@ -183,7 +233,7 @@ export function DesignerCanvas() {
                 key={el.id}
                 el={el}
                 pxPerFt={pxPerFt}
-                editable={tool === "select" && !layers[lid].locked}
+                editable={tool === "select" && !layers[lid].locked && !spaceDown}
                 isSel={selectedIds.has(el.id)}
                 isViolation={violationIds.has(el.id) && !previewMode}
                 fill={(!previewMode && heatFillFor(el)) || fillFor(el)}
@@ -265,7 +315,7 @@ export function DesignerCanvas() {
               key={o.id}
               x={o.xFt * pxPerFt} y={o.yFt * pxPerFt} width={o.widthFt * pxPerFt} height={o.heightFt * pxPerFt}
               fill="#7A5C43" opacity={0.55} stroke="#4E4639" strokeWidth={1} cornerRadius={2}
-              draggable={tool === "select"}
+              draggable={tool === "select" && !spaceDown}
               onDragEnd={(e) => d.setObstacles((arr) => arr.map((x) => (x.id === o.id ? { ...x, xFt: toFt(e.target.x()), yFt: toFt(e.target.y()) } : x)))}
             />
           ))}
@@ -276,7 +326,7 @@ export function DesignerCanvas() {
               <Rect
                 x={o.xFt * pxPerFt} y={o.yFt * pxPerFt} width={o.widthFt * pxPerFt} height={o.heightFt * pxPerFt}
                 fill={ENTRY_HEX[o.type]} opacity={0.5} stroke="#01065B" strokeWidth={1} cornerRadius={2}
-                draggable={tool === "select" && !layers.entryflow.locked}
+                draggable={tool === "select" && !layers.entryflow.locked && !spaceDown}
                 onDragEnd={(e) => d.setEntryFlow((arr) => arr.map((x) => (x.id === o.id ? { ...x, xFt: toFt(e.target.x()), yFt: toFt(e.target.y()) } : x)))}
               />
               {layers.labels.visible && <Text x={o.xFt * pxPerFt} y={o.yFt * pxPerFt + o.heightFt * pxPerFt / 2 - 4} width={o.widthFt * pxPerFt} align="center" text={o.lanes ? `${o.label} ×${o.lanes}` : o.label ?? ""} fontSize={7} fill="#01065B" listening={false} />}
@@ -289,7 +339,7 @@ export function DesignerCanvas() {
               <Rect
                 x={o.xFt * pxPerFt} y={o.yFt * pxPerFt} width={o.widthFt * pxPerFt} height={o.heightFt * pxPerFt}
                 fill={OPS_HEX[o.type]} opacity={0.55} stroke="#15120E" strokeWidth={1} cornerRadius={2}
-                draggable={tool === "select" && !layers.ops.locked}
+                draggable={tool === "select" && !layers.ops.locked && !spaceDown}
                 onDragEnd={(e) => d.setOps((arr) => arr.map((x) => (x.id === o.id ? { ...x, xFt: toFt(e.target.x()), yFt: toFt(e.target.y()) } : x)))}
               />
               {layers.labels.visible && <Text x={o.xFt * pxPerFt} y={o.yFt * pxPerFt + o.heightFt * pxPerFt / 2 - 4} width={o.widthFt * pxPerFt} align="center" text={o.label ?? ""} fontSize={7} fill="#FFFFFF" listening={false} />}
@@ -303,7 +353,7 @@ export function DesignerCanvas() {
               x={a.xFt * pxPerFt}
               y={a.yFt * pxPerFt}
               rotation={a.rotation}
-              draggable={tool === "select" && !layers.annotations.locked}
+              draggable={tool === "select" && !layers.annotations.locked && !spaceDown}
               onDragEnd={(e) => d.patchAnnotation(a.id, { xFt: toFt(e.target.x()), yFt: toFt(e.target.y()) })}
             >
               {a.type === "ARROW" ? (

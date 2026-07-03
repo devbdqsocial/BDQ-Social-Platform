@@ -262,7 +262,7 @@ export function DesignerStatusBar() {
             ? `${selected.label}: ${fmtLen(selected.widthFt, displayUnit)} × ${fmtLen(selected.heightFt, displayUnit)} · ${fmtAreaU(selected.widthFt * selected.heightFt, displayUnit)}`
             : selectedIds.size > 1
               ? `${selectedIds.size} selected`
-              : "nothing selected — drag on empty canvas or shift-click to multi-select · ? for shortcuts"}
+              : "drag to pan · shift-drag to multi-select · ? for shortcuts"}
       </span>
     </div>
   );
