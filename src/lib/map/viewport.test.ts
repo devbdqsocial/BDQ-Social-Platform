@@ -83,6 +83,15 @@ describe("zoomAtPoint", () => {
     const view: View = { x: 0, y: 0, scale: 4 };
     expect(zoomAtPoint(view, { x: 0, y: 0 }, 2, 1)).toBe(view);
   });
+
+  it("absolute presets: factor = target/current lands exactly on the preset (within clamps)", () => {
+    const view: View = { x: 12, y: -7, scale: 1.37 };
+    for (const target of [0.5, 1, 2]) {
+      expect(zoomAtPoint(view, { x: 450, y: 300 }, target / view.scale, 0.5).scale).toBeCloseTo(target);
+    }
+    // preset above MAX clamps to 4
+    expect(zoomAtPoint(view, { x: 450, y: 300 }, 10 / view.scale, 0.5).scale).toBe(4);
+  });
 });
 
 describe("wheelFactor", () => {

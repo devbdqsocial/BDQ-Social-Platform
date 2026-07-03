@@ -416,6 +416,9 @@ export function useDesignerState({
   const fit = useCallback(() => setView(fitTransform(fitBbox, { width, height }, pxPerFt)), [fitBbox, width, height, pxPerFt]);
   const zoom = useCallback((factor: number) =>
     setView((v) => zoomAtPoint(v, { x: width / 2, y: height / 2 }, factor, fitScale)), [width, height, fitScale]);
+  /** Jump to an absolute zoom level (e.g. 0.5 / 1 / 2), centred on the viewport. */
+  const zoomTo = useCallback((target: number) =>
+    setView((v) => zoomAtPoint(v, { x: width / 2, y: height / 2 }, target / v.scale, fitScale)), [width, height, fitScale]);
   /** Cursor-anchored smooth wheel zoom; pointer is in stage-container px. */
   const wheelZoom = useCallback((pointer: { x: number; y: number }, deltaY: number) =>
     setView((v) => zoomAtPoint(v, pointer, wheelFactor(deltaY), fitScale)), [fitScale]);
@@ -617,7 +620,7 @@ export function useDesignerState({
     // history
     elements, commit, reset, undo, redo, canUndo, canRedo,
     // viewport + prefs
-    width, scale, view, setView, worldRect, pxPerFt, height, zoom, fit, wheelZoom, snap, setSnap, gridFt, setGridFt, toFt,
+    width, scale, view, setView, worldRect, pxPerFt, height, zoom, zoomTo, fit, wheelZoom, snap, setSnap, gridFt, setGridFt, toFt,
     displayUnit, setDisplayUnit,
     // canvas + underlay
     canvas, setCanvas, setCanvasDim, bgImg, patchBg, calibrated, applyCalibration, onUploadBg, exportPng,

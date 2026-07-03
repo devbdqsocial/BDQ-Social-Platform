@@ -121,9 +121,19 @@ export function DesignerControls() {
         <Button variant={tool === "measure" ? "secondary" : "ghost"} size="sm" className={iconBtn} title="Measure distance (M)" onClick={() => selectTool("measure")}><Ruler className="size-4" /></Button>
         <Button variant={tool === "boundary" ? "secondary" : "ghost"} size="sm" className={iconBtn} title="Draw venue boundary (B)" onClick={() => selectTool("boundary")}><Spline className="size-4" /></Button>
         <span className="mx-1 h-6 w-px bg-border" />
-        <Button variant="ghost" size="sm" className={iconBtn} title="Zoom out" onClick={() => zoom(0.8)}><ZoomOut className="size-4" /></Button>
-        <span className="w-12 text-center text-xs text-muted-foreground">{Math.round(scale * 100)}%</span>
-        <Button variant="ghost" size="sm" className={iconBtn} title="Zoom in" onClick={() => zoom(1.25)}><ZoomIn className="size-4" /></Button>
+        <Button variant="ghost" size="sm" className={iconBtn} title="Zoom out (−)" onClick={() => zoom(0.8)}><ZoomOut className="size-4" /></Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-9 w-14 px-1 text-xs tabular-nums" title="Zoom presets">{Math.round(scale * 100)}%</Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-auto min-w-28">
+            {[0.5, 1, 2].map((z) => (
+              <DropdownMenuItem key={z} onClick={() => d.zoomTo(z)}>{z * 100}%</DropdownMenuItem>
+            ))}
+            <DropdownMenuItem onClick={fit}>Fit to plot (0)</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <Button variant="ghost" size="sm" className={iconBtn} title="Zoom in (+)" onClick={() => zoom(1.25)}><ZoomIn className="size-4" /></Button>
         <Button variant="ghost" size="sm" className={iconBtn} title="Fit to plot" onClick={fit}><Maximize className="size-4" /></Button>
         <span className="mx-1 h-6 w-px bg-border" />
         {(["FT", "M"] as const).map((u) => (

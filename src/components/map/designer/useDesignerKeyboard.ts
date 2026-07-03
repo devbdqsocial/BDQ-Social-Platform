@@ -25,6 +25,7 @@ export const KEY_BINDINGS: { keys: string; does: string }[] = [
   { keys: "Delete / Backspace", does: "Delete selection" },
   { keys: "Arrows · Shift+Arrows", does: "Nudge 1 ft · 10 ft" },
   { keys: "] · [", does: "Bring to front · send to back" },
+  { keys: "+ · − · 0", does: "Zoom in · out · fit to plot" },
   { keys: "Shift-click or drag on empty canvas", does: "Multi-select" },
   { keys: "/", does: "Focus search" },
   { keys: "?", does: "This help" },
@@ -59,6 +60,9 @@ export function useDesignerKeyboard(d: DesignerApi) {
         if (k === "h") { selectTool("pan"); return; }
         if (k === "s") { setSalesView((prev) => !prev); return; }
         if (e.key === "?") { d.setHelpOpen((v) => !v); return; }
+        if (e.key === "+" || e.key === "=") { d.zoom(1.25); return; }
+        if (e.key === "-") { d.zoom(0.8); return; }
+        if (e.key === "0") { d.fit(); return; }
         if (e.key === "]") { d.bringSelectedToFront(); return; }
         if (e.key === "[") { d.sendSelectedToBack(); return; }
         if (e.key === "/") { e.preventDefault(); document.getElementById("designer-search")?.focus(); return; }
