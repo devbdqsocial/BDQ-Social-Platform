@@ -143,6 +143,8 @@ export function useDesignerState({
   const [searchQuery, setSearchQuery] = useState("");
   const [calibrating, setCalibrating] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const dirtyFirstRun = useRef(true);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
   const [bgImg, setBgImg] = useState<HTMLImageElement | null>(null);
@@ -170,6 +172,20 @@ export function useDesignerState({
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
   }, []);
+
+  // Dirty tracking: exactly what buildLayoutV2 serializes — view/zoom/selection never trip it.
+  // (Undoing back to the saved state still reads dirty — accepted cheap approach.)
+  useEffect(() => {
+    if (dirtyFirstRun.current) { dirtyFirstRun.current = false; return; }
+    setDirty(true);
+  }, [elements, boundary, obstacles, zones, pathways, terrain, ops, entryFlow, annotations, canvas, gridFt, displayUnit, layers, versions]);
+
+  useEffect(() => {
+    if (!dirty || !eventMode) return;
+    const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty, eventMode]);
 
   // ── derived geometry ─────────────────────────────────────────────────────
   const pxPerFt = width / canvas.widthFt;
@@ -590,7 +606,7 @@ export function useDesignerState({
       return;
     }
     setSaving(true); setSaveStatus(null);
-    try { await saveAction(eventId, buildLayoutV2()); setSaveStatus("Saved to event."); }
+    try { await saveAction(eventId, buildLayoutV2()); setSaveStatus("Saved to event."); setDirty(false); }
     catch (err) { setSaveStatus(err instanceof Error ? err.message : "Save failed"); }
     finally { setSaving(false); }
   }, [eventId, saveAction, violations.length, dupCount, buildLayoutV2]);
@@ -642,7 +658,7 @@ export function useDesignerState({
     addElements, deleteSelected, duplicateSelected, copySelected, pasteClipboard, nudgeSelected, doAlign, doDistribute,
     bringSelectedToFront, sendSelectedToBack,
     // save + ui
-    saving, saveStatus, setSaveStatus, handleSave, buildLayoutV2,
+    saving, saveStatus, setSaveStatus, handleSave, buildLayoutV2, dirty,
     bulkOpen, setBulkOpen, calibrating, setCalibrating, helpOpen, setHelpOpen,
   };
 }

@@ -45,6 +45,11 @@ export function DesignerControls() {
       {eventMode && (
         <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-3">
           <Button size="sm" onClick={handleSave} disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
+          {d.dirty && !saving && (
+            <span className="flex items-center gap-1.5 text-sm" style={{ color: "var(--warning)" }}>
+              <span className="size-2 rounded-full bg-current" /> Unsaved changes
+            </span>
+          )}
           {saveStatus && <span className="text-sm text-muted-foreground">{saveStatus}</span>}
         </div>
       )}

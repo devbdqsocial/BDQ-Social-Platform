@@ -30,11 +30,12 @@ export function AddPalette() {
       <span className="px-1 text-xs font-medium text-muted-foreground"><Plus className="inline size-3.5" /> Add</span>
       <DropdownMenu>
         <DropdownMenuTrigger asChild><Button variant="outline" size="sm">Stalls</Button></DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
+        {/* w-auto overrides the primitive's trigger-width sizing so labels never wrap */}
+        <DropdownMenuContent align="start" className="w-auto min-w-48">
           {d.stallTypes.length === 0 && <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">No stall types yet — create them above.</DropdownMenuLabel>}
           {d.stallTypes.map((t) => (
-            <DropdownMenuItem key={t.id} onClick={() => d.addElements([createStall(t)])}>
-              {t.name} <span className="text-muted-foreground">({t.widthFt}×{t.heightFt} ft)</span>
+            <DropdownMenuItem key={t.id} className="whitespace-nowrap" onClick={() => d.addElements([createStall(t)])}>
+              {t.name} <span className="ml-auto pl-3 text-xs text-muted-foreground">{t.widthFt}×{t.heightFt} ft</span>
             </DropdownMenuItem>
           ))}
         </DropdownMenuContent>
@@ -42,10 +43,10 @@ export function AddPalette() {
       {CATALOG.map((cat) => (
         <DropdownMenu key={cat.category}>
           <DropdownMenuTrigger asChild><Button variant="outline" size="sm">{cat.category}</Button></DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
+          <DropdownMenuContent align="start" className="w-auto min-w-48">
             {cat.kind === "ops" && <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Shown to your team only</DropdownMenuLabel>}
             {cat.items.map((item) => (
-              <DropdownMenuItem key={item.key} onClick={() => add(cat.kind, item.key)}>{item.label}</DropdownMenuItem>
+              <DropdownMenuItem key={item.key} className="whitespace-nowrap" onClick={() => add(cat.kind, item.key)}>{item.label}</DropdownMenuItem>
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
