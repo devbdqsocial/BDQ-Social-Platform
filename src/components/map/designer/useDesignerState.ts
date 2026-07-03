@@ -127,6 +127,8 @@ export function useDesignerState({
   // unified click-to-edit: any non-element object can hold the selection (mutually exclusive
   // with element selection — one inspector surface for everything on the canvas)
   const [selectedObj, setSelectedObj] = useState<{ kind: ObjKind; id: string } | null>(null);
+  // double-click inline rename (floating input over the canvas)
+  const [renaming, setRenaming] = useState<{ kind: "element" | "annotation"; id: string } | null>(null);
   const [pathType, setPathType] = useState<Pathway["type"]>("MAIN");
   const [measurePts, setMeasurePts] = useState<Pt[]>([]);
   const [measureCursor, setMeasureCursor] = useState<Pt | null>(null);
@@ -855,6 +857,8 @@ export function useDesignerState({
     patchOps, patchObstacle, deleteSelectedObj, deleteSelection,
     // context menu
     ctxMenu, setCtxMenu, openContextMenu, duplicateObj,
+    // inline rename
+    renaming, setRenaming,
     // guides + marquee + handlers
     guides, setGuides, marquee, patchOne, onTransformEnd, onElementClick, onStageMouseDown, onStageMouseMove, onStageMouseUp,
     // element actions

@@ -29,6 +29,8 @@ export const KEY_BINDINGS: { keys: string; does: string }[] = [
   { keys: "Arrows · Shift+Arrows", does: "Nudge 1 ft · 10 ft" },
   { keys: "] · [", does: "Bring to front · send to back" },
   { keys: "+ · − · 0", does: "Zoom in · out · fit to plot" },
+  { keys: "Double-click", does: "Rename a stall / edit signage text" },
+  { keys: "Right-click", does: "Duplicate · delete · reorder menu" },
   { keys: "Shift-click or drag on empty canvas", does: "Multi-select" },
   { keys: "/", does: "Focus search" },
   { keys: "?", does: "This help" },

@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useEffect, useRef } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { Arrow, Group, Image as KonvaImage, Layer, Line, Rect, Stage, Text, Transformer } from "react-konva";
@@ -31,12 +31,13 @@ interface ElementNodeProps {
   isViolation: boolean;
   fill: string;
   onClick: (id: string, e: KonvaEventObject<MouseEvent | TouchEvent>) => void;
+  onDblClickId: (id: string, e: KonvaEventObject<MouseEvent | TouchEvent>) => void;
   onDragStartId: (id: string) => void;
   onDragMoveId: (id: string, node: Konva.Node) => void;
   onDragEndId: (id: string, node: Konva.Node) => void;
   onTransformEndId: (id: string, node: Konva.Node) => void;
 }
-const ElementNode = memo(function ElementNode({ el, pxPerFt, editable, isSel, isViolation, fill, onClick, onDragStartId, onDragMoveId, onDragEndId, onTransformEndId }: ElementNodeProps) {
+const ElementNode = memo(function ElementNode({ el, pxPerFt, editable, isSel, isViolation, fill, onClick, onDblClickId, onDragStartId, onDragMoveId, onDragEndId, onTransformEndId }: ElementNodeProps) {
   return (
     <Rect
       id={el.id}
@@ -51,6 +52,8 @@ const ElementNode = memo(function ElementNode({ el, pxPerFt, editable, isSel, is
       draggable={editable}
       onClick={(e) => onClick(el.id, e)}
       onTap={(e) => onClick(el.id, e)}
+      onDblClick={(e) => onDblClickId(el.id, e)}
+      onDblTap={(e) => onDblClickId(el.id, e)}
       onDragStart={() => onDragStartId(el.id)}
       onDragMove={(e) => onDragMoveId(el.id, e.target)}
       onDragEnd={(e) => onDragEndId(el.id, e.target)}
@@ -58,6 +61,45 @@ const ElementNode = memo(function ElementNode({ el, pxPerFt, editable, isSel, is
     />
   );
 });
+
+/** Floating rename input pinned over the renamed node via the camera transform. */
+function RenameOverlay() {
+  const d = useDesigner();
+  const r = d.renaming;
+  const target = r
+    ? r.kind === "element"
+      ? d.elements.find((e) => e.id === r.id)
+      : d.annotations.find((a) => a.id === r.id)
+    : null;
+  const [value, setValue] = useState("");
+  useEffect(() => { if (target) setValue(target.label); }, [r?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!r || !target) return null;
+
+  const left = target.xFt * d.pxPerFt * d.view.scale + d.view.x;
+  const top = target.yFt * d.pxPerFt * d.view.scale + d.view.y;
+  const width = r.kind === "element" && "widthFt" in target ? Math.max(80, target.widthFt * d.pxPerFt * d.view.scale) : 160;
+  const commitRename = () => {
+    const label = value.trim();
+    if (r.kind === "element") { if (label) d.commit(d.patchOne(r.id, { label })); }
+    else d.patchAnnotation(r.id, { label });
+    d.setRenaming(null);
+  };
+  return (
+    <input
+      autoFocus
+      value={value}
+      onChange={(e) => setValue(e.target.value.slice(0, 40))}
+      onFocus={(e) => e.target.select()}
+      onBlur={commitRename}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") commitRename();
+        else if (e.key === "Escape") d.setRenaming(null);
+      }}
+      className="absolute z-20 h-8 rounded-md border border-primary bg-background px-2 text-sm shadow-md"
+      style={{ left, top, width }}
+    />
+  );
+}
 
 /** Pure Konva render surface (build-plan R2.5.5). All state + handlers come from the store. */
 export function DesignerCanvas() {
@@ -102,6 +144,11 @@ export function DesignerCanvas() {
     setGuides([]);
   }, [setGuides]);
   const onTransformEndId = useCallback((id: string, node: Konva.Node) => onTransformEnd(id, node), [onTransformEnd]);
+  const setRenaming = d.setRenaming;
+  const onDblClickId = useCallback((id: string, e: KonvaEventObject<MouseEvent | TouchEvent>) => {
+    e.cancelBubble = true; // the stage dblclick finishes drawings — renaming must not
+    setRenaming({ kind: "element", id });
+  }, [setRenaming]);
 
   // Middle-mouse pan — intercepted at the wrapper (capture) so Konva never sees the button.
   const midPan = useRef<{ sx: number; sy: number; vx: number; vy: number } | null>(null);
@@ -141,10 +188,11 @@ export function DesignerCanvas() {
   return (
     <div
       ref={d.wrapRef}
-      className="overflow-hidden rounded-xl border border-border bg-card"
+      className="relative overflow-hidden rounded-xl border border-border bg-card"
       style={{ touchAction: "none", maxHeight: "72vh" }}
       onPointerDownCapture={onMidPanDown}
     >
+      <RenameOverlay />
       <Stage
         ref={stageRef}
         width={width}
@@ -243,6 +291,7 @@ export function DesignerCanvas() {
                 isViolation={violationIds.has(el.id) && !previewMode}
                 fill={(!previewMode && heatFillFor(el)) || fillFor(el)}
                 onClick={onElementClick}
+                onDblClickId={onDblClickId}
                 onDragStartId={onDragStartId}
                 onDragMoveId={onDragMoveId}
                 onDragEndId={onDragEndId}
@@ -393,6 +442,8 @@ export function DesignerCanvas() {
               draggable={tool === "select" && !layers.annotations.locked && !spaceDown && !d.placing}
               onClick={() => d.onObjClick("annotation", a.id)}
               onTap={() => d.onObjClick("annotation", a.id)}
+              onDblClick={(e) => { e.cancelBubble = true; setRenaming({ kind: "annotation", id: a.id }); }}
+              onDblTap={(e) => { e.cancelBubble = true; setRenaming({ kind: "annotation", id: a.id }); }}
               onDragStart={() => d.onObjClick("annotation", a.id)}
               onDragEnd={(e) => d.patchAnnotation(a.id, { xFt: toFt(e.target.x()), yFt: toFt(e.target.y()) })}
               onTransformEnd={(e) => d.onObjTransformEnd("annotation", a.id, e.currentTarget ?? e.target)}
