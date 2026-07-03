@@ -196,6 +196,7 @@ export function DesignerControls() {
           </DropdownMenuContent>
         </DropdownMenu>
         <Button variant="ghost" size="sm" className={iconBtn} title="Keyboard shortcuts (?)" onClick={() => d.setHelpOpen(true)}><CircleHelp className="size-4" /></Button>
+        <Button variant={d.showSizes ? "secondary" : "outline"} size="sm" title="Show W×H sizes on the map" onClick={() => d.setShowSizes((v) => !v)}><Ruler className="size-4" /> Sizes</Button>
         <Button variant={previewMode ? "secondary" : "outline"} size="sm" title="Vendor preview — hide admin layers" onClick={() => setPreviewMode((v) => !v)}><Eye className="size-4" /> Preview</Button>
         <Button variant={salesView ? "secondary" : "outline"} size="sm" title="Sales view — stall scores (S)" disabled={previewMode} onClick={() => setSalesView((v) => !v)}><Gauge className="size-4" /> Sales</Button>
         {salesView && (

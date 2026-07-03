@@ -11,6 +11,7 @@ import { TERRAIN_COLOR_HEX } from "@/lib/map/terrain";
 import { TIER_HEX } from "@/server/map/scoring";
 import { OPS_HEX, ENTRY_HEX } from "@/lib/map/entry-ops";
 import { snapToNeighbours, nudge } from "@/lib/map/designer-actions";
+import { fmtLen, fmtSize } from "@/lib/map/geometry";
 import { useDesigner } from "./DesignerContext";
 import { PolygonEditor } from "./PolygonEditor";
 import { RulerOverlay } from "./RulerOverlay";
@@ -111,7 +112,7 @@ export function DesignerCanvas() {
     spaceDown, panning, setPanning, stageDraggable, onStageClick,
     elements, zones, pathways, terrain, boundary, obstacles, ops, entryFlow, drawing, guides, marquee,
     measureLine, measureDist, measureCursor, selectedIds, violationIds, fillFor,
-    salesView, scores, heatFillFor, compareSnapshot, previewMode, pulseId,
+    salesView, scores, heatFillFor, compareSnapshot, previewMode, pulseId, showSizes, displayUnit, plotDims,
     stageRef, trRef, toFt, wheelZoom, patchBg, commit, setSelectedIds, setGuides,
     onStageMouseDown, onStageMouseMove, onStageMouseUp, onElementClick, onTransformEnd,
     finishDrawing, isDrawTool, isClosed,
@@ -319,7 +320,13 @@ export function DesignerCanvas() {
           {layers.labels.visible && elements.map((el) => {
             const lid = el.kind === "infra" ? "infra" : "stalls";
             if (!layers[lid].visible) return null;
-            return <Text key={`t_${el.id}`} x={el.xFt * pxPerFt} y={el.yFt * pxPerFt + (el.heightFt * pxPerFt) / 2 - 4} width={el.widthFt * pxPerFt} align="center" text={el.label} fontSize={8} fill="#15120E" listening={false} />;
+            const cy = el.yFt * pxPerFt + (el.heightFt * pxPerFt) / 2;
+            return (
+              <Group key={`t_${el.id}`} listening={false}>
+                <Text x={el.xFt * pxPerFt} y={cy - (showSizes ? 8 : 4)} width={el.widthFt * pxPerFt} align="center" text={el.label} fontSize={8} fill="#15120E" />
+                {showSizes && <Text x={el.xFt * pxPerFt} y={cy + 1} width={el.widthFt * pxPerFt} align="center" text={fmtSize(el.widthFt, el.heightFt, displayUnit)} fontSize={6.5} fill="#6B6255" />}
+              </Group>
+            );
           })}
 
           {/* Sales view (S): score badge per stall, tier-coloured (map-system §9.1) */}
@@ -372,6 +379,23 @@ export function DesignerCanvas() {
           {boundary && boundary.length >= 2 && (
             <Line points={boundary.flatMap(([x, y]) => [x * pxPerFt, y * pxPerFt])} closed stroke="#01065B" strokeWidth={2} dash={[8, 5]} listening={false} />
           )}
+          {/* plot edge dimensions — always shown; width above the top edge, depth left of the
+              left edge; font inverse-scaled so it stays readable at any zoom */}
+          {plotDims && (() => {
+            const { x0, y0, w, h } = plotDims;
+            const fs = 12 / view.scale;
+            const pad = 6 / view.scale;
+            return (
+              <Group listening={false}>
+                {/* width — centered above the top edge */}
+                <Text x={x0 * pxPerFt} y={y0 * pxPerFt - fs - pad} width={w * pxPerFt} align="center" text={fmtLen(w, displayUnit)} fontSize={fs} fontStyle="bold" fill="#01065B" />
+                {/* depth — rotated, centered along the left edge (reads bottom-to-top) */}
+                <Group x={x0 * pxPerFt} y={(y0 + h / 2) * pxPerFt} rotation={-90}>
+                  <Text x={-(h * pxPerFt) / 2} y={-fs - pad} width={h * pxPerFt} align="center" text={fmtLen(h, displayUnit)} fontSize={fs} fontStyle="bold" fill="#01065B" />
+                </Group>
+              </Group>
+            );
+          })()}
           {drawing && drawing.length >= 1 && (
             <Line
               points={[...drawing, ...(isDrawTool(tool) && measureCursor ? [measureCursor] : [])].flatMap(([x, y]) => [x * pxPerFt, y * pxPerFt])}
@@ -384,20 +408,24 @@ export function DesignerCanvas() {
           {obstacles.map((o) => {
             const isSel = d.selectedObj?.id === o.id;
             return (
-              <Rect
-                key={o.id}
-                id={o.id}
-                x={o.xFt * pxPerFt} y={o.yFt * pxPerFt} width={o.widthFt * pxPerFt} height={o.heightFt * pxPerFt}
-                rotation={o.rotation}
-                fill="#7A5C43" opacity={0.55} stroke={isSel ? "#D69A22" : "#4E4639"} strokeWidth={isSel ? 2 : 1} cornerRadius={2}
-                listening={!d.placing}
-                draggable={tool === "select" && !spaceDown && !d.placing}
-                onClick={() => d.onObjClick("obstacle", o.id)}
-                onTap={() => d.onObjClick("obstacle", o.id)}
-                onDragStart={() => d.onObjClick("obstacle", o.id)}
-                onDragEnd={(e) => d.patchObstacle(o.id, { xFt: toFt(e.target.x()), yFt: toFt(e.target.y()) })}
-                onTransformEnd={(e) => d.onObjTransformEnd("obstacle", o.id, e.target)}
-              />
+              <Group key={o.id}>
+                <Rect
+                  id={o.id}
+                  x={o.xFt * pxPerFt} y={o.yFt * pxPerFt} width={o.widthFt * pxPerFt} height={o.heightFt * pxPerFt}
+                  rotation={o.rotation}
+                  fill="#7A5C43" opacity={0.55} stroke={isSel ? "#D69A22" : "#4E4639"} strokeWidth={isSel ? 2 : 1} cornerRadius={2}
+                  listening={!d.placing}
+                  draggable={tool === "select" && !spaceDown && !d.placing}
+                  onClick={() => d.onObjClick("obstacle", o.id)}
+                  onTap={() => d.onObjClick("obstacle", o.id)}
+                  onDragStart={() => d.onObjClick("obstacle", o.id)}
+                  onDragEnd={(e) => d.patchObstacle(o.id, { xFt: toFt(e.target.x()), yFt: toFt(e.target.y()) })}
+                  onTransformEnd={(e) => d.onObjTransformEnd("obstacle", o.id, e.target)}
+                />
+                {showSizes && layers.labels.visible && o.rotation === 0 && (
+                  <Text x={o.xFt * pxPerFt} y={o.yFt * pxPerFt + o.heightFt * pxPerFt / 2 - 3} width={o.widthFt * pxPerFt} align="center" text={fmtSize(o.widthFt, o.heightFt, displayUnit)} fontSize={6} fill="#FFFFFF" opacity={0.8} listening={false} />
+                )}
+              </Group>
             );
           })}
 
@@ -419,7 +447,8 @@ export function DesignerCanvas() {
                   onDragEnd={(e) => d.patchEntry(o.id, { xFt: toFt(e.target.x()), yFt: toFt(e.target.y()) })}
                   onTransformEnd={(e) => d.onObjTransformEnd("entry", o.id, e.target)}
                 />
-                {layers.labels.visible && <Text x={o.xFt * pxPerFt} y={o.yFt * pxPerFt + o.heightFt * pxPerFt / 2 - 4} width={o.widthFt * pxPerFt} align="center" text={o.lanes ? `${o.label} ×${o.lanes}` : o.label ?? ""} fontSize={7} fill="#01065B" listening={false} />}
+                {layers.labels.visible && <Text x={o.xFt * pxPerFt} y={o.yFt * pxPerFt + o.heightFt * pxPerFt / 2 - (showSizes ? 8 : 4)} width={o.widthFt * pxPerFt} align="center" text={o.lanes ? `${o.label} ×${o.lanes}` : o.label ?? ""} fontSize={7} fill="#01065B" listening={false} />}
+                {showSizes && layers.labels.visible && <Text x={o.xFt * pxPerFt} y={o.yFt * pxPerFt + o.heightFt * pxPerFt / 2 + 1} width={o.widthFt * pxPerFt} align="center" text={fmtSize(o.widthFt, o.heightFt, displayUnit)} fontSize={6} fill="#01065B" opacity={0.7} listening={false} />}
               </Group>
             );
           })}
@@ -442,7 +471,8 @@ export function DesignerCanvas() {
                   onDragEnd={(e) => d.patchOps(o.id, { xFt: toFt(e.target.x()), yFt: toFt(e.target.y()) })}
                   onTransformEnd={(e) => d.onObjTransformEnd("ops", o.id, e.target)}
                 />
-                {layers.labels.visible && <Text x={o.xFt * pxPerFt} y={o.yFt * pxPerFt + o.heightFt * pxPerFt / 2 - 4} width={o.widthFt * pxPerFt} align="center" text={o.label ?? ""} fontSize={7} fill="#FFFFFF" listening={false} />}
+                {layers.labels.visible && <Text x={o.xFt * pxPerFt} y={o.yFt * pxPerFt + o.heightFt * pxPerFt / 2 - (showSizes ? 8 : 4)} width={o.widthFt * pxPerFt} align="center" text={o.label ?? ""} fontSize={7} fill="#FFFFFF" listening={false} />}
+                {showSizes && layers.labels.visible && <Text x={o.xFt * pxPerFt} y={o.yFt * pxPerFt + o.heightFt * pxPerFt / 2 + 1} width={o.widthFt * pxPerFt} align="center" text={fmtSize(o.widthFt, o.heightFt, displayUnit)} fontSize={6} fill="#FFFFFF" opacity={0.75} listening={false} />}
               </Group>
             );
           })}

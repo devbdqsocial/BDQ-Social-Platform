@@ -90,6 +90,11 @@ export type DisplayUnit = "FT" | "M";
 export const FT_PER_M = 3.28084;
 export const fmtLen = (ft: number, unit: DisplayUnit = "FT"): string =>
   unit === "M" ? `${nf1.format(ft / FT_PER_M)} m` : `${nf1.format(ft)} ft`;
+/** Compact W×H dimension label for on-map size badges, e.g. "10×12 ft" / "3×3.7 m". */
+export const fmtSize = (wFt: number, hFt: number, unit: DisplayUnit = "FT"): string =>
+  unit === "M"
+    ? `${nf1.format(wFt / FT_PER_M)}×${nf1.format(hFt / FT_PER_M)} m`
+    : `${nf1.format(wFt)}×${nf1.format(hFt)} ft`;
 export const fmtAreaU = (sqft: number, unit: DisplayUnit = "FT"): string =>
   unit === "M" ? `${nf.format(sqft / (FT_PER_M * FT_PER_M))} sq m` : `${nf.format(sqft)} sq ft`;
 export const fmtPct = (frac: number): string => `${nf1.format(frac * 100)}%`;

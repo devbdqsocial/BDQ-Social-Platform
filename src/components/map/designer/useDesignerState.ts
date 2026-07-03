@@ -169,6 +169,7 @@ export function useDesignerState({
   // UI flags
   const [bulkOpen, setBulkOpen] = useState(false);
   const [salesView, setSalesView] = useState(false);
+  const [showSizes, setShowSizes] = useState(true); // W×H labels on the map (default on)
   const [heatmapMode, setHeatmapMode] = useState<HeatmapMode>("off");
   const [attendanceOverride, setAttendanceOverride] = useState<number | null>(null); // throughput what-if (§8)
   const [previewMode, setPreviewMode] = useState(false); // vendor lens (§11)
@@ -875,7 +876,7 @@ export function useDesignerState({
     // throughput attendance (§8 / R2.5.17)
     attendance, attendanceFromTickets: expectedAttendance, attendanceOverride, setAttendanceOverride,
     // sales view (scoring §9.1) + price suggestions (§9.2) + heatmap (§9.3)
-    salesView, setSalesView, scores, selectedScore, suggestion, applySuggestions,
+    salesView, setSalesView, showSizes, setShowSizes, scores, selectedScore, suggestion, applySuggestions,
     heatmapMode, setHeatmapMode, heatFillFor, heatmapBounds,
     // versions (§9 / R2.5.13)
     versions, versionCap, saveVersion, restoreVersion, deleteVersion,
