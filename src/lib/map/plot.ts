@@ -18,11 +18,11 @@ export function lShapePlot(widthFt: number, depthFt: number, cutWidthFt: number,
   return [[0, 0], [widthFt, 0], [widthFt, depthFt - cd], [widthFt - cw, depthFt - cd], [widthFt - cw, depthFt], [0, depthFt]];
 }
 
-const clampDim = (v: number) => Math.max(10, Math.min(5000, Math.round(v)));
+const clampDim = (v: number) => Math.max(1, Math.round(v)); // no size cap; ≥1 render guard only
 
 /**
  * Canvas that comfortably contains a plot: translate the points so the bbox sits `marginFt` from
- * the origin, and size the canvas to bbox + 2×margin (clamped like `setCanvasDim`).
+ * the origin, and size the canvas to bbox + 2×margin.
  */
 export function canvasForPlot(points: Pt[], marginFt = 20): { points: Pt[]; widthFt: number; heightFt: number } {
   const xs = points.map((p) => p[0]);

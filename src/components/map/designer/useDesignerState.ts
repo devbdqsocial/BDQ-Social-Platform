@@ -513,8 +513,9 @@ export function useDesignerState({
   const bringSelectedToFront = useCallback(() => { if (selectedIds.size) commit(bringToFront(elements, selectedIds)); }, [elements, selectedIds, commit]);
   const sendSelectedToBack = useCallback(() => { if (selectedIds.size) commit(sendToBack(elements, selectedIds)); }, [elements, selectedIds, commit]);
 
+  // No size cap — the world-rect grid handles any canvas; ≥1 only guards pxPerFt = width ÷ 0.
   const setCanvasDim = useCallback((key: "widthFt" | "heightFt", v: number) =>
-    setCanvas((c) => ({ ...c, [key]: Math.max(10, Math.min(5000, Math.round(v))) })), []);
+    setCanvas((c) => ({ ...c, [key]: Math.max(1, Math.round(v)) })), []);
   const patchBg = useCallback((p: Partial<NonNullable<CanvasMeta["bgImage"]>>) =>
     setCanvas((c) => (c.bgImage ? { ...c, bgImage: { ...c.bgImage, ...p } } : c)), []);
   const applyCalibration = useCallback((ftPerPx: number) => {

@@ -25,9 +25,9 @@ describe("canvasForPlot", () => {
     expect(heightFt).toBe(290);
   });
 
-  it("clamps tiny and huge plots like setCanvasDim", () => {
-    expect(canvasForPlot(rectPlot(2, 2), 1).widthFt).toBe(10);
-    expect(canvasForPlot(rectPlot(9000, 9000), 20).widthFt).toBe(5000);
+  it("has no size cap — huge plots pass through; tiny ones keep the ≥1 render floor", () => {
+    expect(canvasForPlot(rectPlot(9000, 9000), 20).widthFt).toBe(9040);
+    expect(canvasForPlot(rectPlot(2, 2), 1).widthFt).toBe(4);
   });
 });
 

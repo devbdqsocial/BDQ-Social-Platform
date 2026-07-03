@@ -1,5 +1,6 @@
 "use client";
 
+import { NumInput } from "../NumInput";
 import { useDesigner } from "./DesignerContext";
 
 /**
@@ -42,9 +43,12 @@ export function ValidationPanel() {
           </p>
           <label className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
             <span>Expected attendance{attendanceOverride == null && attendanceFromTickets > 0 ? " (from tickets)" : ""}</span>
-            <input
-              type="number" min={0} value={attendanceOverride ?? (attendanceFromTickets || "")} placeholder="0"
-              onChange={(e) => setAttendanceOverride(e.target.value === "" ? null : Math.max(0, Number(e.target.value)))}
+            <NumInput
+              value={attendanceOverride}
+              allowEmpty
+              placeholder={attendanceFromTickets > 0 ? String(attendanceFromTickets) : "0"}
+              clamp={(v) => Math.max(0, Math.round(v))}
+              onCommit={setAttendanceOverride}
               className="h-7 w-24 rounded border border-border bg-background px-1 text-right text-xs"
             />
           </label>

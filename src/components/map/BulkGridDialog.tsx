@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { PaletteStallType } from "@/lib/map/designer-ops";
 import type { GridOpts } from "@/lib/map/designer-actions";
 import { Button } from "@/components/ui/button";
+import { NumInput } from "./NumInput";
 
 const cls = "h-9 w-full rounded-md border border-border bg-background px-2 text-sm text-foreground";
 
@@ -11,7 +12,7 @@ function Num({ label, value, onChange, min = 0 }: { label: string; value: number
   return (
     <label className="flex flex-col gap-1 text-xs text-muted-foreground">
       {label}
-      <input type="number" min={min} value={value} onChange={(e) => onChange(Number(e.target.value))} className={cls} />
+      <NumInput value={value} clamp={(v) => Math.max(min, Math.round(v))} onCommit={(v) => v != null && onChange(v)} className={cls} />
     </label>
   );
 }

@@ -15,6 +15,7 @@ import { TERRAIN_TYPES, terrainLabel, type TerrainType } from "@/lib/map/terrain
 import { fmtAreaU, fmtLen, polygonArea } from "@/lib/map/geometry";
 import { Button } from "@/components/ui/button";
 import { DesignerToolbar } from "../DesignerToolbar";
+import { NumInput } from "../NumInput";
 import { AddPalette } from "./AddPalette";
 import { useDesigner } from "./DesignerContext";
 
@@ -57,12 +58,12 @@ export function DesignerControls() {
       <div className="flex flex-wrap items-end gap-3 rounded-xl border border-border bg-card p-3">
         <label className="flex flex-col gap-1 text-xs text-muted-foreground">
           Venue length (ft)
-          <input type="number" min={10} value={canvas.widthFt} onChange={(e) => setCanvasDim("widthFt", Number(e.target.value))} className="h-9 w-24 rounded-md border border-border bg-background px-2 text-sm" />
+          <NumInput value={canvas.widthFt} onCommit={(v) => v != null && setCanvasDim("widthFt", v)} clamp={(v) => Math.max(1, Math.round(v))} className="h-9 w-24 rounded-md border border-border bg-background px-2 text-sm" />
         </label>
         <span className="pb-2 text-muted-foreground">×</span>
         <label className="flex flex-col gap-1 text-xs text-muted-foreground">
           Venue width (ft)
-          <input type="number" min={10} value={canvas.heightFt} onChange={(e) => setCanvasDim("heightFt", Number(e.target.value))} className="h-9 w-24 rounded-md border border-border bg-background px-2 text-sm" />
+          <NumInput value={canvas.heightFt} onCommit={(v) => v != null && setCanvasDim("heightFt", v)} clamp={(v) => Math.max(1, Math.round(v))} className="h-9 w-24 rounded-md border border-border bg-background px-2 text-sm" />
         </label>
         <p className="pb-1.5 text-sm">
           <span className="text-muted-foreground">{boundary ? "Plot area:" : "Area:"}</span>{" "}

@@ -5,6 +5,7 @@ import type { EditorElement, PaletteStallType } from "@/lib/map/designer-ops";
 import { describeStall, TIER_HEX, type StallScore } from "@/server/map/scoring";
 import { catalogLabel } from "@/lib/map/catalog";
 import type { ObjPatch, SelectedObjData } from "@/components/map/designer/useDesignerState";
+import { NumInput } from "@/components/map/NumInput";
 import { Button } from "@/components/ui/button";
 
 interface Props {
@@ -68,11 +69,12 @@ function ScoreBreakdown({ score }: { score: StallScore }) {
 
 const fieldCls = "h-9 rounded-md border border-border bg-background px-2 text-sm text-foreground";
 
+/** Deferred number field — commits once on blur/Enter (one undo entry per edit, no mid-typing jumps). */
 function NumberField({ label, value, step = 1, onChange }: { label: string; value: number; step?: number; onChange: (v: number) => void }) {
   return (
     <label className="flex flex-col gap-1 text-xs text-muted-foreground">
       {label}
-      <input type="number" step={step} value={Number.isFinite(value) ? value : 0} onChange={(e) => onChange(Number(e.target.value))} className={fieldCls} />
+      <NumInput value={Number.isFinite(value) ? value : 0} step={step} onCommit={(v) => v != null && onChange(v)} className={fieldCls} />
     </label>
   );
 }
@@ -254,9 +256,13 @@ export function DesignerInspector({ element, multiCount, stallTypes, score, sugg
         <>
           <label className="flex flex-col gap-1 text-xs text-muted-foreground">
             Price (₹) — admin-entered
-            <input type="number" min={0} step={1} value={rupees} placeholder="e.g. 15000"
-              onChange={(e) => onChange({ priceInPaise: e.target.value === "" ? undefined : Math.round(Number(e.target.value) * 100) })}
-              className={fieldCls} />
+            <NumInput
+              value={typeof rupees === "number" ? rupees : null}
+              allowEmpty
+              placeholder="e.g. 15000"
+              onCommit={(v) => onChange({ priceInPaise: v == null ? undefined : Math.round(Math.max(0, v) * 100) })}
+              className={fieldCls}
+            />
           </label>
           {(() => {
             const t = element.stallTypeId ? stallTypes.find((st) => st.id === element.stallTypeId) : undefined;

@@ -4,6 +4,7 @@ import { TriangleAlert } from "lucide-react";
 import { ZONE_COLORS } from "@/lib/map/layout-v2";
 import { ZONE_COLOR_HEX } from "@/lib/map/zones";
 import { Button } from "@/components/ui/button";
+import { NumInput } from "../NumInput";
 import { useDesigner } from "./DesignerContext";
 
 /** Right-column editable lists + advisories (build-plan R2.5.5). Pure render off the store. */
@@ -82,9 +83,10 @@ export function DesignerSidePanels() {
             {pathways.map((p) => (
               <li key={p.id} className="flex items-center gap-2">
                 <span className="w-20 shrink-0 text-xs capitalize">{p.type.toLowerCase()}</span>
-                <input
-                  type="number" min={4} max={40} value={p.widthFt}
-                  onChange={(e) => setPathways((ps) => ps.map((x) => (x.id === p.id ? { ...x, widthFt: Math.max(4, Math.min(40, Number(e.target.value))) } : x)))}
+                <NumInput
+                  value={p.widthFt}
+                  clamp={(v) => Math.max(1, v)}
+                  onCommit={(v) => v != null && setPathways((ps) => ps.map((x) => (x.id === p.id ? { ...x, widthFt: v } : x)))}
                   className="h-8 w-20 rounded-md border border-border bg-background px-2 text-sm"
                 />
                 <span className="text-xs text-muted-foreground">ft</span>
