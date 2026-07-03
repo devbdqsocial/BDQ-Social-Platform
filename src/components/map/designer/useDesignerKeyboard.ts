@@ -71,6 +71,7 @@ export function useDesignerKeyboard(d: DesignerApi) {
         if (e.key === "/") { e.preventDefault(); document.getElementById("designer-search")?.focus(); return; }
         if (e.key === "Enter" && drawing && drawing.length >= (isClosed(tool) ? 3 : 2)) { finishDrawing(drawing); return; }
         if (e.key === "Escape") {
+          if (d.ctxMenu) { d.setCtxMenu(null); return; }
           if (d.placing) { d.setPlacing(null); return; } // stop stamping first
           setMeasurePts([]); setMeasureCursor(null); setDrawing(null); setSelectedIds(new Set()); d.setSelectedObj(null); d.setVertexEdit(null);
           return;
@@ -85,5 +86,5 @@ export function useDesignerKeyboard(d: DesignerApi) {
     // The store callbacks are recreated per render but always current; re-bind on the reactive
     // bits the handler branches on (drawing/tool/selection) — listing every setter is noise.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [elements, selectedIds, drawing, tool, d.placing, d.selectedObj, undo, redo, commit, d.deleteSelection, finishDrawing]);
+  }, [elements, selectedIds, drawing, tool, d.placing, d.selectedObj, d.ctxMenu, undo, redo, commit, d.deleteSelection, finishDrawing]);
 }

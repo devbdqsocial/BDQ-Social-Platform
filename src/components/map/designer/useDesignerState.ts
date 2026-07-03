@@ -473,6 +473,39 @@ export function useDesignerState({
     else deleteSelected();
   }, [selectedObj, deleteSelectedObj, deleteSelected]);
 
+  // ── right-click context menu ─────────────────────────────────────────────
+  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; target: { type: "element"; id: string } | { type: "obj"; kind: ObjKind; id: string } } | null>(null);
+  const duplicateObj = useCallback((kind: ObjKind, id: string) => {
+    const off = gridFt;
+    const newId = (p: string) => `${p}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 5)}`;
+    const copy = <T extends { id: string; xFt: number; yFt: number }>(arr: T[], prefix: string): T[] => {
+      const o = arr.find((x) => x.id === id);
+      return o ? [...arr, { ...o, id: newId(prefix), xFt: o.xFt + off, yFt: o.yFt + off }] : arr;
+    };
+    if (kind === "ops") setOps((a) => copy(a, "ops"));
+    else if (kind === "entry") setEntryFlow((a) => copy(a, "ent"));
+    else if (kind === "obstacle") setObstacles((a) => copy(a, "obs"));
+    else setAnnotations((a) => copy(a, "ann"));
+  }, [gridFt]);
+  /** Resolve a right-clicked konva node id → select it + open the menu at screen coords. */
+  const openContextMenu = useCallback((id: string, pos: { x: number; y: number }) => {
+    if (!id) { setCtxMenu(null); return; }
+    if (elements.some((e) => e.id === id)) {
+      setSelectedObj(null);
+      setSelectedIds((prev) => (prev.has(id) ? prev : new Set([id])));
+      setCtxMenu({ ...pos, target: { type: "element", id } });
+      return;
+    }
+    const kind: ObjKind | null =
+      ops.some((o) => o.id === id) ? "ops" :
+      entryFlow.some((o) => o.id === id) ? "entry" :
+      obstacles.some((o) => o.id === id) ? "obstacle" :
+      annotations.some((a) => a.id === id) ? "annotation" : null;
+    if (!kind) { setCtxMenu(null); return; }
+    onObjClick(kind, id);
+    setCtxMenu({ ...pos, target: { type: "obj", kind, id } });
+  }, [elements, ops, entryFlow, obstacles, annotations, onObjClick]);
+
   const doAlign = useCallback((m: AlignMode) => { if (selectedIds.size > 1) commit(alignElements(elements, selectedIds, m)); }, [elements, selectedIds, commit]);
   const doDistribute = useCallback((axis: "h" | "v") => { if (selectedIds.size > 2) commit(distributeElements(elements, selectedIds, axis)); }, [elements, selectedIds, commit]);
   const bringSelectedToFront = useCallback(() => { if (selectedIds.size) commit(bringToFront(elements, selectedIds)); }, [elements, selectedIds, commit]);
@@ -820,6 +853,8 @@ export function useDesignerState({
     // unified object selection
     selectedObj, setSelectedObj, selectedObjData, onObjClick, onObjTransformEnd, patchObj,
     patchOps, patchObstacle, deleteSelectedObj, deleteSelection,
+    // context menu
+    ctxMenu, setCtxMenu, openContextMenu, duplicateObj,
     // guides + marquee + handlers
     guides, setGuides, marquee, patchOne, onTransformEnd, onElementClick, onStageMouseDown, onStageMouseMove, onStageMouseUp,
     // element actions

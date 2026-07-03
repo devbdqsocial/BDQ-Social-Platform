@@ -168,6 +168,11 @@ export function DesignerCanvas() {
         onMouseDown={onStageMouseDown}
         onMouseMove={onStageMouseMove}
         onMouseUp={onStageMouseUp}
+        onContextMenu={(e) => {
+          e.evt.preventDefault();
+          const id = e.target.id() || e.target.getParent()?.id() || "";
+          d.openContextMenu(id, { x: e.evt.clientX, y: e.evt.clientY });
+        }}
         onDblClick={() => { if (tool === "measure") d.setMeasureCursor(null); else if (isDrawTool(tool) && drawing) finishDrawing(drawing); }}
       >
         {/* Endless graph paper: surround + grid cover the visible WORLD window (any zoom/pan);

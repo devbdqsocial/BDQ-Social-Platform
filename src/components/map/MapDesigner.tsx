@@ -20,6 +20,7 @@ import { SummaryPanel } from "./SummaryPanel";
 import { BulkGridDialog } from "./BulkGridDialog";
 import { CalibrationModal } from "./CalibrationModal";
 import { ShortcutHelp } from "./designer/ShortcutHelp";
+import { DesignerContextMenu } from "./designer/DesignerContextMenu";
 import { makeGrid, relabel, bulkPatch } from "@/lib/map/designer-actions";
 
 export interface MapDesignerProps {
@@ -102,6 +103,7 @@ export default function MapDesigner(props: MapDesignerProps = {}) {
         )}
 
         <ShortcutHelp />
+        <DesignerContextMenu />
 
         {d.calibrating && canvas.bgImage && (
           <CalibrationModal
