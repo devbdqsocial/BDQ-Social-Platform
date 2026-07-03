@@ -56,14 +56,25 @@ export function DesignerControls() {
       )}
 
       <div className="flex flex-wrap items-end gap-3 rounded-xl border border-border bg-card p-3">
+        {/* with a plot: the inputs size the PLOT (canvas auto-grows around it); else the canvas */}
         <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-          Venue length (ft)
-          <NumInput value={canvas.widthFt} onCommit={(v) => v != null && setCanvasDim("widthFt", v)} clamp={(v) => Math.max(1, Math.round(v))} className="h-9 w-24 rounded-md border border-border bg-background px-2 text-sm" />
+          {d.plotDims ? "Plot width (ft)" : "Venue length (ft)"}
+          <NumInput
+            value={d.plotDims ? Math.round(d.plotDims.w * 10) / 10 : canvas.widthFt}
+            onCommit={(v) => v != null && (d.plotDims ? d.setPlotDim("w", v) : setCanvasDim("widthFt", v))}
+            clamp={(v) => Math.max(1, v)}
+            className="h-9 w-24 rounded-md border border-border bg-background px-2 text-sm"
+          />
         </label>
         <span className="pb-2 text-muted-foreground">×</span>
         <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-          Venue width (ft)
-          <NumInput value={canvas.heightFt} onCommit={(v) => v != null && setCanvasDim("heightFt", v)} clamp={(v) => Math.max(1, Math.round(v))} className="h-9 w-24 rounded-md border border-border bg-background px-2 text-sm" />
+          {d.plotDims ? "Plot depth (ft)" : "Venue width (ft)"}
+          <NumInput
+            value={d.plotDims ? Math.round(d.plotDims.h * 10) / 10 : canvas.heightFt}
+            onCommit={(v) => v != null && (d.plotDims ? d.setPlotDim("h", v) : setCanvasDim("heightFt", v))}
+            clamp={(v) => Math.max(1, v)}
+            className="h-9 w-24 rounded-md border border-border bg-background px-2 text-sm"
+          />
         </label>
         <p className="pb-1.5 text-sm">
           <span className="text-muted-foreground">{boundary ? "Plot area:" : "Area:"}</span>{" "}
@@ -202,7 +213,7 @@ export function DesignerControls() {
         {d.vertexEdit && d.vertexPoints ? (
           <>
             <span className="text-foreground">
-              Editing points — drag a corner to move it, click a small dot to add one, double-click a corner to remove it.
+              Editing points — drag a corner to move it, drag the shape to move the whole thing, click a small dot to add a corner, double-click one to remove it.
             </span>
             <Button variant="outline" size="sm" onClick={() => d.setVertexEdit(null)}>Done</Button>
           </>

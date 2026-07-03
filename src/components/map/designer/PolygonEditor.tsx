@@ -1,7 +1,7 @@
 "use client";
 
 import { Circle, Group, Line } from "react-konva";
-import { insertMidpoint, movePoint, removePoint } from "@/lib/map/plot";
+import { insertMidpoint, movePoint, removePoint, translatePoints } from "@/lib/map/plot";
 import { constrainAxis, type Pt } from "@/lib/map/geometry";
 import { useDesigner } from "./DesignerContext";
 
@@ -27,6 +27,23 @@ export function PolygonEditor() {
 
   return (
     <Group>
+      {/* draggable body — drag the shape itself to move the whole thing (snapped on release) */}
+      <Line
+        points={points.flatMap(([x, y]) => [x * px, y * px])}
+        closed={closed}
+        fill={closed ? "#6C75F5" : undefined}
+        opacity={closed ? 0.08 : 1}
+        stroke="transparent"
+        strokeWidth={closed ? 0 : 4}
+        hitStrokeWidth={closed ? 0 : 18 / d.view.scale}
+        draggable
+        onDragEnd={(e) => {
+          const dx = d.toFt(e.target.x());
+          const dy = d.toFt(e.target.y());
+          e.target.position({ x: 0, y: 0 });
+          if (dx !== 0 || dy !== 0) d.updateVertexPoints(translatePoints(points, dx, dy));
+        }}
+      />
       <Line
         points={points.flatMap(([x, y]) => [x * px, y * px])}
         closed={closed}

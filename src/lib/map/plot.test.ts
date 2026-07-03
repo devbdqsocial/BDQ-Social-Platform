@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { polygonArea } from "./geometry";
-import { canvasForPlot, insertMidpoint, lShapePlot, movePoint, rectPlot, removePoint } from "./plot";
+import { canvasForPlot, insertMidpoint, lShapePlot, movePoint, plotBbox, rectPlot, removePoint, resizePlot, translatePoints } from "./plot";
 
 describe("plot presets", () => {
   it("rectangle has w×d area", () => {
@@ -28,6 +28,22 @@ describe("canvasForPlot", () => {
   it("has no size cap — huge plots pass through; tiny ones keep the ≥1 render floor", () => {
     expect(canvasForPlot(rectPlot(9000, 9000), 20).widthFt).toBe(9040);
     expect(canvasForPlot(rectPlot(2, 2), 1).widthFt).toBe(4);
+  });
+});
+
+describe("resizePlot / translatePoints / plotBbox", () => {
+  it("scales an L-shape from its bbox min corner, preserving the shape ratio", () => {
+    const l = translatePoints(lShapePlot(400, 250, 100, 80), 20, 20); // origin at (20,20) like a preset
+    const out = resizePlot(l, 380, 188);
+    const bb = plotBbox(out);
+    expect(bb).toMatchObject({ x0: 20, y0: 20, w: 380, h: 188 });
+    // the cut scales proportionally: cut width 100 → 95 (380/400); points round to 0.1 ft
+    expect(Math.abs(polygonArea(out) - (380 * 188 - 95 * (80 * 188 / 250)))).toBeLessThan(10);
+  });
+
+  it("translatePoints moves every point; degenerate resize does not divide by zero", () => {
+    expect(translatePoints([[0, 0], [10, 0]], 5, -2)).toEqual([[5, -2], [15, -2]]);
+    expect(resizePlot([[10, 10], [10, 10], [10, 10]], 50, 50)).toHaveLength(3);
   });
 });
 

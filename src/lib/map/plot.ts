@@ -37,6 +37,28 @@ export function canvasForPlot(points: Pt[], marginFt = 20): { points: Pt[]; widt
   };
 }
 
+/** Axis-aligned bounding box of a polygon, in feet. */
+export function plotBbox(points: Pt[]): { x0: number; y0: number; w: number; h: number } {
+  const xs = points.map((p) => p[0]);
+  const ys = points.map((p) => p[1]);
+  const x0 = Math.min(...xs);
+  const y0 = Math.min(...ys);
+  return { x0, y0, w: Math.max(...xs) - x0, h: Math.max(...ys) - y0 };
+}
+
+/** Scale a plot to new bbox dimensions, anchored at its bbox min corner (shape preserved). */
+export function resizePlot(points: Pt[], targetW: number, targetH: number): Pt[] {
+  const { x0, y0, w, h } = plotBbox(points);
+  const kx = targetW / (w || 1);
+  const ky = targetH / (h || 1);
+  return points.map(([x, y]): Pt => [Math.round((x0 + (x - x0) * kx) * 10) / 10, Math.round((y0 + (y - y0) * ky) * 10) / 10]);
+}
+
+/** Translate every point by (dx, dy) feet — whole-shape move. */
+export function translatePoints(points: Pt[], dx: number, dy: number): Pt[] {
+  return points.map(([x, y]): Pt => [x + dx, y + dy]);
+}
+
 /** Move one vertex. */
 export function movePoint(points: Pt[], index: number, to: Pt): Pt[] {
   return points.map((p, i) => (i === index ? to : p));

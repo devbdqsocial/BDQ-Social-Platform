@@ -24,7 +24,7 @@ import { exportFilename } from "@/lib/map/map-export";
 import { quintileBounds, heatmapFill, type HeatmapMode } from "@/lib/map/heatmap";
 import { diffStats, versionCapState, type VersionMeta, type VersionSnapshot } from "@/lib/map/versions";
 import { fitTransform, gridLinesForView, wheelFactor, worldRectFt, zoomAtPoint, type View } from "@/lib/map/viewport";
-import { canvasForPlot } from "@/lib/map/plot";
+import { canvasForPlot, plotBbox, resizePlot } from "@/lib/map/plot";
 import type { UploadSignature } from "@/lib/cloudinary";
 import { useHistory } from "../useHistory";
 
@@ -525,6 +525,25 @@ export function useDesignerState({
     setCalibrating(false);
   }, [patchBg]);
 
+  // Plot dimensions (bbox) — the size inputs edit THESE when a plot exists, not the canvas.
+  const plotDims = useMemo(() => (boundary && boundary.length >= 3 ? plotBbox(boundary) : null), [boundary]);
+  /** Grow (never shrink) the canvas so the plot + margin always stays on paper. */
+  const growCanvasFor = useCallback((pts: Pt[]) => {
+    const bb = plotBbox(pts);
+    setCanvas((c) => ({
+      ...c,
+      widthFt: Math.max(c.widthFt, Math.ceil(bb.x0 + bb.w + 20)),
+      heightFt: Math.max(c.heightFt, Math.ceil(bb.y0 + bb.h + 20)),
+    }));
+  }, []);
+  const setPlotDim = useCallback((key: "w" | "h", v: number) => {
+    if (!boundary || boundary.length < 3) return;
+    const bb = plotBbox(boundary);
+    const next = resizePlot(boundary, key === "w" ? Math.max(1, v) : bb.w, key === "h" ? Math.max(1, v) : bb.h);
+    setBoundary(next);
+    growCanvasFor(next);
+  }, [boundary, growCanvasFor]);
+
   // Resolved vertex-edit surface: which polygon/polyline is being edited + how to write it back.
   const vertexPoints = useMemo((): { points: Pt[]; closed: boolean } | null => {
     if (!vertexEdit) return null;
@@ -542,11 +561,11 @@ export function useDesignerState({
   }, [vertexEdit, boundary, zones, pathways, terrain]);
   const updateVertexPoints = useCallback((pts: Pt[]) => {
     if (!vertexEdit) return;
-    if (vertexEdit.target === "boundary") setBoundary(pts);
+    if (vertexEdit.target === "boundary") { setBoundary(pts); growCanvasFor(pts); }
     else if (vertexEdit.target === "zone") setZones((zs) => zs.map((z) => (z.id === vertexEdit.id ? { ...z, points: pts } : z)));
     else if (vertexEdit.target === "pathway") setPathways((ps) => ps.map((p) => (p.id === vertexEdit.id ? { ...p, points: pts } : p)));
     else setTerrain((ts) => ts.map((t) => (t.id === vertexEdit.id ? { ...t, points: pts } : t)));
-  }, [vertexEdit]);
+  }, [vertexEdit, growCanvasFor]);
 
   // Plot-first: place a preset plot — boundary set, canvas sized to the plot + margin, view reset.
   const applyPlot = useCallback((rawPoints: Pt[]) => {
@@ -842,7 +861,7 @@ export function useDesignerState({
     boundary, setBoundary, obstacles, setObstacles, addObstacle, zones, setZones, pathways, setPathways,
     terrain, setTerrain, terrainType, setTerrainType, overrides, setOverrides,
     // plot + vertex editing (plot-first model)
-    applyPlot, vertexEdit, setVertexEdit, vertexPoints, updateVertexPoints,
+    applyPlot, vertexEdit, setVertexEdit, vertexPoints, updateVertexPoints, plotDims, setPlotDim,
     // ops + entry-flow objects (§8 / R2.5.16)
     ops, setOps, addOps, entryFlow, setEntryFlow, addEntry, patchEntry,
     // signage (annotations layer)
