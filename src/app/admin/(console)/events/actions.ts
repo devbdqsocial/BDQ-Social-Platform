@@ -1,8 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { requireAdminRole } from "@/server/auth/guard";
 import { action, ActionError } from "@/server/action";
 import { cloneEvent, createEvent, publishEvent, PublishBlockedError } from "@/server/events/service";
 import { archiveEvent, unarchiveEvent } from "@/server/events/archive-service";
@@ -27,6 +25,7 @@ const publish = action({
 });
 const archive = action({ auth: "ADMIN", input: idActionSchema, handler: (s, d) => archiveEvent(s, d.id) });
 const unarchive = action({ auth: "ADMIN", input: idActionSchema, handler: (s, d) => unarchiveEvent(s, d.id) });
+const clone = action({ auth: "ADMIN", input: idActionSchema, handler: (s, d) => cloneEvent(s, d.id) });
 
 function revalidateEvents() {
   revalidatePath("/admin/events");
@@ -65,9 +64,8 @@ export async function unarchiveEventAction(formData: FormData): Promise<Result<u
   return res;
 }
 
-export async function cloneEventAction(formData: FormData): Promise<void> {
-  const session = await requireAdminRole();
-  const created = await cloneEvent(session, String(formData.get("id")));
-  revalidateEvents();
-  redirect(`/admin/events/${created.id}`);
+export async function cloneEventAction(formData: FormData): Promise<Result<{ id: string }>> {
+  const res = await clone({ id: String(formData.get("id")) });
+  if (res.ok) revalidateEvents();
+  return res;
 }

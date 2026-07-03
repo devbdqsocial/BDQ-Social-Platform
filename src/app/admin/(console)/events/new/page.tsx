@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { requireAdminRole } from "@/server/auth/guard";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { WizardSteps } from "@/components/admin/WizardSteps";
-import { EventWizardBasics } from "@/components/admin/EventWizardBasics";
+import { NewEventForm } from "@/components/admin/NewEventForm";
 
 export const metadata: Metadata = { title: "Create event" };
 
@@ -12,15 +11,14 @@ export default async function NewEventPage() {
 
   return (
     <div className="max-w-2xl space-y-6">
-      <PageHeader title="Create event" description="Four quick steps — basics, tickets, layout, then publish. Each step saves as you go." />
-      <WizardSteps current="basics" />
+      <PageHeader title="Create event" description="Fill in the details — you'll add tickets, a map, and everything else on the next screen." />
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">The basics</CardTitle>
-          <CardDescription>Name, dates and venue. You can refine everything before publishing.</CardDescription>
+          <CardTitle className="text-base">Event details</CardTitle>
+          <CardDescription>Name, dates and the public-page basics. Tickets, pricing, map and lineup come next.</CardDescription>
         </CardHeader>
         <CardContent>
-          <EventWizardBasics />
+          <NewEventForm />
         </CardContent>
       </Card>
     </div>

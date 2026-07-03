@@ -49,6 +49,29 @@ export function saveStallType(session: Session, eventId: string, input: StallTyp
   });
 }
 
+/** Clone a stall type within the same event under a unique "(copy)" name. */
+export function duplicateStallType(session: Session, id: string) {
+  return withAudit(session, { action: "CREATE", entity: "StallTypeDef" }, async () => {
+    const src = await db.stallTypeDef.findUnique({ where: { id } });
+    if (!src) throw new Error("Stall type not found");
+    return {
+      before: null,
+      run: async () => {
+        const base = `${src.name} (copy)`;
+        let name = base;
+        let n = 2;
+        while (await db.stallTypeDef.findFirst({ where: { eventId: src.eventId, name }, select: { id: true } })) {
+          name = `${base} ${n++}`;
+        }
+        const row = await db.stallTypeDef.create({
+          data: { eventId: src.eventId, name, widthFt: src.widthFt, heightFt: src.heightFt, priceInPaise: src.priceInPaise, color: src.color, sellable: src.sellable },
+        });
+        return { result: row, after: row };
+      },
+    };
+  });
+}
+
 /** Delete a type; any stalls created from it keep their geometry but lose the link (stallTypeId → null). */
 export function deleteStallType(session: Session, id: string) {
   return withAudit(session, { action: "DELETE", entity: "StallTypeDef", entityId: id }, async () => {

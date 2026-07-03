@@ -20,7 +20,7 @@ interface DataTableProps<TData, TValue> {
   searchPlaceholder?: string;
   onRowClick?: (row: TData) => void;
   pageSize?: number;
-  emptyMessage?: string;
+  emptyMessage?: React.ReactNode;
 }
 
 export function DataTable<TData, TValue>({

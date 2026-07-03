@@ -1,8 +1,9 @@
 import "server-only";
 import type { z } from "zod";
-import { getSession, can, AuthError, type Permission, type Role, type Session } from "@/server/auth/guard";
+import { getSession, can, AuthError, SEED_ADMIN_ID, type Permission, type Role, type Session } from "@/server/auth/guard";
 import { withAudit } from "@/server/audit";
 import { logError } from "@/lib/logger";
+import { env } from "@/lib/env";
 import { err, ok, type Result } from "@/lib/result";
 
 /**
@@ -51,7 +52,12 @@ export function action<S extends z.ZodType, O>(opts: {
   handler: (session: Session, input: z.output<S>) => Promise<O>;
 }) {
   return async (raw: unknown): Promise<Result<O>> => {
-    const session = await getSession();
+    // TEMP dev gate, mirrors requireAdminRole() etc. (server/auth/guard.ts) — with DEV_ADMIN=true
+    // (dev only) falls back to the seeded SUPER_ADMIN so admin mutations work before real login.
+    let session = await getSession();
+    if (!session && env.DEV_ADMIN && process.env.NODE_ENV !== "production") {
+      session = { userId: SEED_ADMIN_ID, role: "SUPER_ADMIN", permissions: [] };
+    }
     if (!session) return err("UNAUTHENTICATED");
     if (!can(session, opts.auth)) return err("FORBIDDEN");
 

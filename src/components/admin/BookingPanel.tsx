@@ -65,7 +65,7 @@ export function BookingPanel({ booking, title }: { booking: BookingPanelData; ti
           <DateTimePicker name="setEndsAt" defaultValue={booking.setEndsAt ?? undefined} />
         </Field>
         <label className="flex items-center gap-2 text-sm sm:col-span-2">
-          <input type="checkbox" name="published" defaultChecked={booking.published} className="size-4 accent-primary" />
+          <input type="checkbox" name="published" defaultChecked={booking.published} className="size-4 rounded border-input accent-primary" />
           Show this set on the public lineup (when confirmed)
         </label>
         <Button type="submit" size="sm" className="w-fit sm:col-span-2">Save</Button>

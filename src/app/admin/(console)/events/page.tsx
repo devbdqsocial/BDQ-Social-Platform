@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAdminRole } from "@/server/auth/guard";
-import { listAllForAdmin } from "@/server/events/service";
+import { listForAdminTable } from "@/server/events/service";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { EventsTable } from "@/components/admin/tables/EventsTable";
@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "Events" };
 export default async function AdminEventsPage() {
   await requireAdminRole();
   const now = Date.now();
-  const events = (await listAllForAdmin()).filter((e) => e.endsAt.getTime() >= now);
+  const events = (await listForAdminTable()).filter((e) => e.endsAt.getTime() >= now);
 
   return (
     <div className="space-y-4">
