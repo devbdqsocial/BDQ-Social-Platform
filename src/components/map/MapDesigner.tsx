@@ -64,6 +64,9 @@ export default function MapDesigner(props: MapDesignerProps = {}) {
             score={d.selectedScore}
             suggestion={d.suggestion}
             salesView={d.salesView}
+            obj={d.selectedObjData}
+            onObjChange={(p) => d.selectedObj && d.patchObj(d.selectedObj.kind, d.selectedObj.id, p)}
+            onObjDelete={d.deleteSelectedObj}
             onChange={(p) => selected && commit(patchOne(selected.id, p))}
             onBulkPatch={(p) => { if (selectedIds.size) commit(bulkPatch(elements, selectedIds, p)); }}
             onApplySuggestions={d.applySuggestions}

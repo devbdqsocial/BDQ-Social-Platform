@@ -3,6 +3,8 @@
 import { useState } from "react";
 import type { EditorElement, PaletteStallType } from "@/lib/map/designer-ops";
 import { describeStall, TIER_HEX, type StallScore } from "@/server/map/scoring";
+import { catalogLabel } from "@/lib/map/catalog";
+import type { ObjPatch, SelectedObjData } from "@/components/map/designer/useDesignerState";
 import { Button } from "@/components/ui/button";
 
 interface Props {
@@ -12,6 +14,10 @@ interface Props {
   score: StallScore | null;
   suggestion: number | null;
   salesView: boolean;
+  /** unified click-to-edit: the selected non-element canvas object, when no element is selected */
+  obj: SelectedObjData | null;
+  onObjChange: (patch: ObjPatch) => void;
+  onObjDelete: () => void;
   onChange: (patch: Partial<EditorElement>) => void;
   onBulkPatch: (patch: Partial<EditorElement>) => void;
   onApplySuggestions: (scope: "selected" | "zone") => void;
@@ -139,7 +145,53 @@ function BulkEditForm({ count, stallTypes, onBulkPatch }: { count: number; stall
   );
 }
 
-export function DesignerInspector({ element, multiCount, stallTypes, score, suggestion, salesView, onChange, onBulkPatch, onApplySuggestions, onRelabel, onBringToFront, onSendToBack }: Props) {
+const OBJ_KIND_LABEL: Record<SelectedObjData["kind"], string> = {
+  ops: "Facility", entry: "Entry", obstacle: "Obstacle", annotation: "Signage",
+};
+
+/** Type-aware editor for the selected non-element object — the one editing surface for gates,
+ * facilities, obstacles and signage (the cramped side-panel inputs are gone). */
+function ObjInspector({ obj, onChange, onDelete }: { obj: SelectedObjData; onChange: (p: ObjPatch) => void; onDelete: () => void }) {
+  const dta = obj.data;
+  const isRect = obj.kind !== "annotation";
+  const lanes = obj.kind === "entry" && (dta.type === "QUEUE_LANE" || dta.type === "SCAN_POINT");
+  return (
+    <aside className="space-y-3 rounded-xl border border-border bg-card p-4">
+      <div>
+        <h2 className="font-display text-lg font-semibold">Inspector</h2>
+        <p className="text-xs text-muted-foreground">{OBJ_KIND_LABEL[obj.kind]} · {catalogLabel(dta.type)}</p>
+      </div>
+
+      <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+        Label
+        <input value={dta.label ?? ""} onChange={(e) => onChange({ label: e.target.value.slice(0, 40) })} className={fieldCls} />
+      </label>
+
+      <div className="grid grid-cols-2 gap-2">
+        <NumberField label="X (ft)" value={dta.xFt} onChange={(v) => onChange({ xFt: v })} />
+        <NumberField label="Y (ft)" value={dta.yFt} onChange={(v) => onChange({ yFt: v })} />
+        {isRect && "widthFt" in dta && (
+          <>
+            <NumberField label="Width (ft)" value={dta.widthFt} onChange={(v) => onChange({ widthFt: Math.max(1, v) })} />
+            <NumberField label="Height (ft)" value={dta.heightFt} onChange={(v) => onChange({ heightFt: Math.max(1, v) })} />
+          </>
+        )}
+        <NumberField label="Rotation (°)" value={dta.rotation} onChange={(v) => onChange({ rotation: v })} />
+        {lanes && <NumberField label="Lanes" value={("lanes" in dta ? dta.lanes : 1) ?? 1} onChange={(v) => onChange({ lanes: Math.max(1, Math.round(v)) })} />}
+        {obj.kind === "annotation" && dta.type === "ARROW" && (
+          <NumberField label="Length (ft)" value={dta.lengthFt} onChange={(v) => onChange({ lengthFt: Math.max(4, Math.min(100, v)) })} />
+        )}
+        {obj.kind === "annotation" && dta.type === "TEXT" && (
+          <NumberField label="Font size" value={dta.fontSize} onChange={(v) => onChange({ fontSize: Math.max(8, Math.min(48, v)) })} />
+        )}
+      </div>
+
+      <Button size="sm" variant="destructive" className="w-full" onClick={onDelete}>Delete</Button>
+    </aside>
+  );
+}
+
+export function DesignerInspector({ element, multiCount, stallTypes, score, suggestion, salesView, obj, onObjChange, onObjDelete, onChange, onBulkPatch, onApplySuggestions, onRelabel, onBringToFront, onSendToBack }: Props) {
   if (multiCount > 1) {
     return (
       <aside className="space-y-3 rounded-xl border border-border bg-card p-4">
@@ -165,9 +217,10 @@ export function DesignerInspector({ element, multiCount, stallTypes, score, sugg
   }
 
   if (!element) {
+    if (obj) return <ObjInspector obj={obj} onChange={onObjChange} onDelete={onObjDelete} />;
     return (
       <aside className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
-        Select an element to edit it. Drag to move, corner handles resize, shift-click or drag a box to multi-select.
+        Click anything on the map to edit it — stalls, gates, facilities, signage. Drag to move, handles resize/rotate, shift-drag to multi-select.
       </aside>
     );
   }

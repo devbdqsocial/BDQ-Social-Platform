@@ -536,6 +536,7 @@ export function useDesignerState({
     setView({ scale: z, x: width / 2 - z * cx, y: height / 2 - z * cy });
     if (target.id) {
       setSelectedIds(new Set([target.id]));
+      setSelectedObj(null);
       setPulseId(target.id);
       setTimeout(() => setPulseId((p) => (p === target.id ? null : p)), 600);
     }
