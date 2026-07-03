@@ -1,5 +1,5 @@
 import { INFRA_TYPES } from "@/lib/map/designer-ops";
-import { ENTRY_TYPES, OPS_TYPES, humanizeType } from "@/lib/map/entry-ops";
+import { ENTRY_SIZE, ENTRY_TYPES, OPS_SIZE, OPS_TYPES, humanizeType, type EntryType, type OpsType } from "@/lib/map/entry-ops";
 import type { Obstacle } from "@/lib/map/layout-v2";
 
 /**
@@ -9,6 +9,10 @@ import type { Obstacle } from "@/lib/map/layout-v2";
  */
 
 export const OBSTACLE_TYPES: Obstacle["type"][] = ["TREE", "POLE", "BUILDING", "WALL", "WATER_BODY"];
+
+export const OBSTACLE_SIZES: Record<Obstacle["type"], [number, number]> = {
+  TREE: [6, 6], POLE: [2, 2], BUILDING: [20, 15], WALL: [20, 2], WATER_BODY: [20, 15],
+};
 
 const FRIENDLY: Record<string, string> = {
   // venue infra
@@ -55,6 +59,18 @@ export interface CatalogCategory {
   category: string;
   kind: "infra" | "ops" | "entry" | "obstacle" | "annotation";
   items: { key: string; label: string }[];
+}
+
+export type PlaceKind = CatalogCategory["kind"] | "stall";
+
+/** Footprint (ft) of a to-be-placed object — drives the placement ghost that follows the cursor. */
+export function ghostSizeFor(kind: PlaceKind, key: string, stallType?: { widthFt: number; heightFt: number }): [number, number] {
+  if (kind === "stall") return stallType ? [stallType.widthFt, stallType.heightFt] : [10, 10];
+  if (kind === "infra") return [20, 15]; // matches createInfra defaults
+  if (kind === "entry") return ENTRY_SIZE[key as EntryType] ?? [10, 6];
+  if (kind === "ops") return OPS_SIZE[key as OpsType] ?? [8, 8];
+  if (kind === "obstacle") return OBSTACLE_SIZES[key as Obstacle["type"]] ?? [10, 10];
+  return key === "ARROW" ? [12, 3] : [10, 3]; // annotation
 }
 
 /** Static categories (stall types come from the event's DB rows and are merged by the palette). */

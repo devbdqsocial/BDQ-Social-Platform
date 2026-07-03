@@ -250,13 +250,15 @@ export function DesignerControls() {
 
 /** Live status: cursor position, zoom, current selection / measurement (map-system §3). */
 export function DesignerStatusBar() {
-  const { cursorFt, scale, tool, measureLine, measureDist, selected, selectedIds, displayUnit } = useDesigner();
+  const { cursorFt, scale, tool, measureLine, measureDist, selected, selectedIds, displayUnit, placing } = useDesigner();
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-xl border border-border bg-card px-3 py-2 text-xs text-muted-foreground">
       <span className="tabular-nums">{cursorFt ? `x ${fmtLen(cursorFt[0], displayUnit)} · y ${fmtLen(cursorFt[1], displayUnit)}` : "—"}</span>
       <span className="tabular-nums">zoom {Math.round(scale * 100)}%</span>
       <span className="tabular-nums">
-        {tool === "measure" && measureLine.length >= 2
+        {placing
+          ? `Placing ${placing.label} — click to stamp, Esc to stop`
+          : tool === "measure" && measureLine.length >= 2
           ? `distance ${fmtLen(measureDist, displayUnit)}`
           : selected
             ? `${selected.label}: ${fmtLen(selected.widthFt, displayUnit)} × ${fmtLen(selected.heightFt, displayUnit)} · ${fmtAreaU(selected.widthFt * selected.heightFt, displayUnit)}`

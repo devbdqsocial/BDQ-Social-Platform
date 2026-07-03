@@ -3,9 +3,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type Konva from "konva";
 import {
-  createAnnotation, duplicate, snapToGrid, DEFAULT_CANVAS,
+  createAnnotation, createInfra, createStall, duplicate, snapToGrid, DEFAULT_CANVAS,
   type CanvasMeta, type EditorElement, type PaletteStallType,
 } from "@/lib/map/designer-ops";
+import { ghostSizeFor, OBSTACLE_SIZES, type PlaceKind } from "@/lib/map/catalog";
+import type { SeedInfraType } from "@/server/map/seed-aarush-lawn";
 import { ZONE_COLORS, type Annotation, type LayoutV2, type Obstacle, type Pathway, type TerrainPatch, type Zone, type ZoneColor, type OpsObject, type EntryFlowObject } from "@/lib/map/layout-v2";
 import { createOps, createEntry, type OpsType, type EntryType } from "@/lib/map/entry-ops";
 import type { TerrainType } from "@/lib/map/terrain";
@@ -44,9 +46,15 @@ export const LAYER_LABELS: Record<LayerId, string> = {
 export interface LayerState { visible: boolean; locked: boolean }
 
 const STORAGE_KEY = "bdq:designer:layout:v1";
-const OBSTACLE_SIZES: Record<Obstacle["type"], [number, number]> = {
-  TREE: [6, 6], POLE: [2, 2], BUILDING: [20, 15], WALL: [20, 2], WATER_BODY: [20, 15],
-};
+
+/** Ghost-placement mode: a palette pick arms this; a snapped ghost follows the cursor and each
+ * click stamps one object. Stays armed for repeat stamping; Esc / tool switch disarms. */
+export interface Placing {
+  kind: PlaceKind;
+  key: string;
+  label: string;
+  stallType?: PaletteStallType;
+}
 const isDrawTool = (t: Tool) => t === "boundary" || t === "zone" || t === "pathway" || t === "terrain";
 const isClosed = (t: Tool) => t === "boundary" || t === "zone" || t === "terrain"; // pathway is an OPEN polyline
 
@@ -101,6 +109,7 @@ export function useDesignerState({
   const [shiftDown, setShiftDown] = useState(false);
   const [panning, setPanning] = useState(false);
   const marqueeDidSelect = useRef(false);
+  const [placing, setPlacing] = useState<Placing | null>(null);
   const [pathType, setPathType] = useState<Pathway["type"]>("MAIN");
   const [measurePts, setMeasurePts] = useState<Pt[]>([]);
   const [measureCursor, setMeasureCursor] = useState<Pt | null>(null);
@@ -370,9 +379,9 @@ export function useDesignerState({
 
   // ── actions ──────────────────────────────────────────────────────────────
   const patchOne = useCallback((id: string, p: Partial<EditorElement>) => elements.map((e) => (e.id === id ? { ...e, ...p } : e)), [elements]);
-  const addElements = useCallback((els: EditorElement[]) => {
+  const addElements = useCallback((els: EditorElement[], select = true) => {
     commit([...elements, ...els]);
-    setSelectedIds(new Set(els.map((e) => e.id)));
+    if (select) setSelectedIds(new Set(els.map((e) => e.id)));
   }, [elements, commit]);
   const deleteSelected = useCallback(() => {
     if (!selectedIds.size) return;
@@ -387,16 +396,16 @@ export function useDesignerState({
   const pasteClipboard = useCallback(() => { if (clipboard.current.length) addElements(clipboard.current.map((el) => duplicate(el, gridFt))); }, [addElements, gridFt]);
   const nudgeSelected = useCallback((dx: number, dy: number) => { if (selectedIds.size) commit(nudge(elements, selectedIds, dx, dy)); }, [elements, selectedIds, commit]);
 
-  const addObstacle = useCallback((type: Obstacle["type"]) => {
+  const addObstacle = useCallback((type: Obstacle["type"], xFt = 20, yFt = 20) => {
     const [w, h] = OBSTACLE_SIZES[type];
     const label = type.charAt(0) + type.slice(1).toLowerCase().replace(/_/g, " ");
-    setObstacles((o) => [...o, { id: `obs_${Date.now().toString(36)}`, type, xFt: 20, yFt: 20, widthFt: w, heightFt: h, rotation: 0, label }]);
+    setObstacles((o) => [...o, { id: `obs_${Date.now().toString(36)}`, type, xFt, yFt, widthFt: w, heightFt: h, rotation: 0, label }]);
   }, []);
 
-  const addOps = useCallback((type: OpsType) => setOps((o) => [...o, createOps(type)]), []);
-  const addEntry = useCallback((type: EntryType) => setEntryFlow((o) => [...o, createEntry(type)]), []);
+  const addOps = useCallback((type: OpsType, xFt?: number, yFt?: number) => setOps((o) => [...o, createOps(type, xFt, yFt)]), []);
+  const addEntry = useCallback((type: EntryType, xFt?: number, yFt?: number) => setEntryFlow((o) => [...o, createEntry(type, xFt, yFt)]), []);
   const patchEntry = useCallback((id: string, p: Partial<EntryFlowObject>) => setEntryFlow((arr) => arr.map((e) => (e.id === id ? { ...e, ...p } : e))), []);
-  const addAnnotation = useCallback((type: Annotation["type"]) => setAnnotations((a) => [...a, createAnnotation(type)]), []);
+  const addAnnotation = useCallback((type: Annotation["type"], xFt?: number, yFt?: number) => setAnnotations((a) => [...a, createAnnotation(type, xFt, yFt)]), []);
   const patchAnnotation = useCallback((id: string, p: Partial<Annotation>) => setAnnotations((arr) => arr.map((a) => (a.id === id ? { ...a, ...p } : a))), []);
   const removeAnnotation = useCallback((id: string) => setAnnotations((arr) => arr.filter((a) => a.id !== id)), []);
 
@@ -519,7 +528,33 @@ export function useDesignerState({
     setTool(t);
     if (t !== "measure") { setMeasurePts([]); setMeasureCursor(null); }
     setDrawing(isDrawTool(t) ? [] : null);
+    setPlacing(null); // switching tools disarms ghost placement
   }, []);
+
+  // ── ghost placement ──────────────────────────────────────────────────────
+  const armPlacement = useCallback((p: Placing) => {
+    setTool("select");
+    setDrawing(null);
+    setMeasurePts([]);
+    setMeasureCursor(null);
+    setSelectedIds(new Set());
+    setPlacing(p);
+  }, []);
+  const placingGhost = useMemo(() => (placing ? ghostSizeFor(placing.kind, placing.key, placing.stallType) : null), [placing]);
+  const ghostFt = useMemo((): Pt | null => {
+    if (!placing || !cursorFt) return null;
+    return snap ? [snapToGrid(cursorFt[0], gridFt), snapToGrid(cursorFt[1], gridFt)] : cursorFt;
+  }, [placing, cursorFt, snap, gridFt]);
+  const stampPlacement = useCallback(() => {
+    if (!placing || !ghostFt) return;
+    const [x, y] = ghostFt;
+    if (placing.kind === "stall" && placing.stallType) addElements([createStall(placing.stallType, x, y)], false);
+    else if (placing.kind === "infra") addElements([createInfra(placing.key as SeedInfraType, x, y)], false);
+    else if (placing.kind === "entry") addEntry(placing.key as EntryType, x, y);
+    else if (placing.kind === "ops") addOps(placing.key as OpsType, x, y);
+    else if (placing.kind === "obstacle") addObstacle(placing.key as Obstacle["type"], x, y);
+    else if (placing.kind === "annotation") addAnnotation(placing.key as Annotation["type"], x, y);
+  }, [placing, ghostFt, addElements, addEntry, addOps, addObstacle, addAnnotation]);
   const finishDrawing = useCallback((pts: Pt[]) => {
     const minPts = isClosed(tool) ? 3 : 2;
     if (pts.length >= minPts) {
@@ -578,10 +613,10 @@ export function useDesignerState({
       setDrawing((pts) => [...(pts ?? []), v]);
       return;
     }
-    if (tool !== "select") return;
+    if (tool !== "select" || placing) return;
     // drag-empty = pan (the stage is draggable); Shift+drag = marquee multi-select
     if (e.evt.shiftKey) setMarquee({ x: p.x, y: p.y, w: 0, h: 0 });
-  }, [tool, drawing, relPointer, ptToFt, finishDrawing, spaceDown]);
+  }, [tool, drawing, relPointer, ptToFt, finishDrawing, spaceDown, placing]);
 
   const onStageMouseMove = useCallback((e?: Konva.KonvaEventObject<MouseEvent>) => {
     const p = relPointer();
@@ -612,15 +647,16 @@ export function useDesignerState({
   /** Plain click on empty canvas deselects. Konva suppresses click after a real drag, so pans
    * never deselect; a marquee that just selected consumes its trailing click. */
   const onStageClick = useCallback((e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
+    if (placing) { stampPlacement(); return; } // armed: any canvas click stamps (stays armed)
     if (e.target !== e.target.getStage()) return;
     if (marqueeDidSelect.current) { marqueeDidSelect.current = false; return; }
     const evt = e.evt as { shiftKey?: boolean; metaKey?: boolean; ctrlKey?: boolean };
     if (tool === "select" && !(evt.shiftKey || evt.metaKey || evt.ctrlKey)) setSelectedIds(new Set());
-  }, [tool]);
+  }, [tool, placing, stampPlacement]);
 
   // Stage drags (pan). Elements are draggable nodes and win over the stage; draw/measure/vertex
-  // editing keep the stage pinned so clicks place points instead of panning.
-  const stageDraggable = spaceDown || tool === "pan" || (tool === "select" && !shiftDown && !vertexEdit);
+  // editing and ghost placement keep the stage pinned so clicks act instead of panning.
+  const stageDraggable = spaceDown || tool === "pan" || (tool === "select" && !shiftDown && !vertexEdit && !placing);
 
   // ── persistence ──────────────────────────────────────────────────────────
   const buildLayoutV2 = useCallback((): LayoutV2 => {
@@ -704,6 +740,8 @@ export function useDesignerState({
     mapName, captureFullCanvas,
     // pan model
     spaceDown, panning, setPanning, stageDraggable, onStageClick,
+    // ghost placement
+    placing, setPlacing, armPlacement, placingGhost, ghostFt,
     // guides + marquee + handlers
     guides, setGuides, marquee, patchOne, onTransformEnd, onElementClick, onStageMouseDown, onStageMouseMove, onStageMouseUp,
     // element actions

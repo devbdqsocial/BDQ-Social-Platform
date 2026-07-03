@@ -133,10 +133,10 @@ export function DesignerCanvas() {
       ? "grabbing"
       : tool === "pan" || spaceDown
         ? "grab"
-        : isDrawTool(tool) || tool === "measure"
+        : isDrawTool(tool) || tool === "measure" || d.placing
           ? "crosshair"
           : "default";
-  }, [panning, spaceDown, tool, isDrawTool, stageRef]);
+  }, [panning, spaceDown, tool, isDrawTool, stageRef, d.placing]);
 
   return (
     <div
@@ -366,6 +366,33 @@ export function DesignerCanvas() {
               )}
             </Group>
           ))}
+
+          {/* placement ghost — snapped preview of the armed palette object */}
+          {d.placing && d.ghostFt && d.placingGhost && (
+            <Group listening={false}>
+              <Rect
+                x={d.ghostFt[0] * pxPerFt}
+                y={d.ghostFt[1] * pxPerFt}
+                width={d.placingGhost[0] * pxPerFt}
+                height={d.placingGhost[1] * pxPerFt}
+                fill="#868EFF"
+                opacity={0.25}
+                stroke="#6C75F5"
+                strokeWidth={1.5}
+                strokeScaleEnabled={false}
+                dash={[6, 4]}
+                cornerRadius={3}
+              />
+              <Text
+                x={d.ghostFt[0] * pxPerFt}
+                y={(d.ghostFt[1] + d.placingGhost[1]) * pxPerFt + 4}
+                text={d.placing.label}
+                fontSize={10}
+                fontStyle="bold"
+                fill="#6C75F5"
+              />
+            </Group>
+          )}
 
           {guides.map((g, i) => <Line key={`g${i}`} points={g.points} stroke="#868EFF" strokeWidth={1} dash={[4, 4]} listening={false} />)}
           {marquee && <Rect x={marquee.x} y={marquee.y} width={marquee.w} height={marquee.h} fill="#868EFF22" stroke="#868EFF" strokeWidth={1} listening={false} />}

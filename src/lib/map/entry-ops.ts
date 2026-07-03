@@ -11,11 +11,11 @@ export type EntryType = EntryFlowObject["type"];
 export const OPS_TYPES: OpsType[] = ["SECURITY_POST", "MEDICAL", "GENERATOR", "POWER_POINT", "WATER_POINT", "RESTROOM", "STORAGE", "HELP_DESK", "STAFF_POINT"];
 export const ENTRY_TYPES: EntryType[] = ["GATE", "TICKET_COUNTER", "QUEUE_LANE", "SECURITY_CHECK", "SCAN_POINT", "BAG_CHECK", "WELCOME_ZONE"];
 
-const OPS_SIZE: Record<OpsType, [number, number]> = {
+export const OPS_SIZE: Record<OpsType, [number, number]> = {
   SECURITY_POST: [8, 8], MEDICAL: [12, 10], GENERATOR: [10, 8], POWER_POINT: [4, 4], WATER_POINT: [4, 4],
   RESTROOM: [10, 8], STORAGE: [10, 10], HELP_DESK: [8, 6], STAFF_POINT: [6, 6],
 };
-const ENTRY_SIZE: Record<EntryType, [number, number]> = {
+export const ENTRY_SIZE: Record<EntryType, [number, number]> = {
   GATE: [12, 6], TICKET_COUNTER: [10, 6], QUEUE_LANE: [4, 20], SECURITY_CHECK: [10, 10], SCAN_POINT: [4, 4], BAG_CHECK: [8, 8], WELCOME_ZONE: [20, 15],
 };
 
