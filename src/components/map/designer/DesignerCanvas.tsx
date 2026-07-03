@@ -13,6 +13,7 @@ import { OPS_HEX, ENTRY_HEX } from "@/lib/map/entry-ops";
 import { snapToNeighbours, nudge } from "@/lib/map/designer-actions";
 import { fmtLen, fmtSize } from "@/lib/map/geometry";
 import { useDesigner } from "./DesignerContext";
+import { ElementLabel } from "./ElementLabel";
 import { PolygonEditor } from "./PolygonEditor";
 import { RulerOverlay } from "./RulerOverlay";
 
@@ -320,12 +321,13 @@ export function DesignerCanvas() {
           {layers.labels.visible && elements.map((el) => {
             const lid = el.kind === "infra" ? "infra" : "stalls";
             if (!layers[lid].visible) return null;
-            const cy = el.yFt * pxPerFt + (el.heightFt * pxPerFt) / 2;
             return (
-              <Group key={`t_${el.id}`} listening={false}>
-                <Text x={el.xFt * pxPerFt} y={cy - (showSizes ? 8 : 4)} width={el.widthFt * pxPerFt} align="center" text={el.label} fontSize={8} fill="#15120E" />
-                {showSizes && <Text x={el.xFt * pxPerFt} y={cy + 1} width={el.widthFt * pxPerFt} align="center" text={fmtSize(el.widthFt, el.heightFt, displayUnit)} fontSize={6.5} fill="#6B6255" />}
-              </Group>
+              <ElementLabel
+                key={`t_${el.id}`}
+                xFt={el.xFt} yFt={el.yFt} widthFt={el.widthFt} heightFt={el.heightFt}
+                pxPerFt={pxPerFt} scale={view.scale} worldTopFt={worldRect.y0}
+                name={el.label} sizeText={showSizes ? fmtSize(el.widthFt, el.heightFt, displayUnit) : null} fill="#15120E"
+              />
             );
           })}
 
@@ -422,8 +424,12 @@ export function DesignerCanvas() {
                   onDragEnd={(e) => d.patchObstacle(o.id, { xFt: toFt(e.target.x()), yFt: toFt(e.target.y()) })}
                   onTransformEnd={(e) => d.onObjTransformEnd("obstacle", o.id, e.target)}
                 />
-                {showSizes && layers.labels.visible && o.rotation === 0 && (
-                  <Text x={o.xFt * pxPerFt} y={o.yFt * pxPerFt + o.heightFt * pxPerFt / 2 - 3} width={o.widthFt * pxPerFt} align="center" text={fmtSize(o.widthFt, o.heightFt, displayUnit)} fontSize={6} fill="#FFFFFF" opacity={0.8} listening={false} />
+                {layers.labels.visible && (
+                  <ElementLabel
+                    xFt={o.xFt} yFt={o.yFt} widthFt={o.widthFt} heightFt={o.heightFt}
+                    pxPerFt={pxPerFt} scale={view.scale} worldTopFt={worldRect.y0}
+                    name={o.label ?? o.type} sizeText={showSizes ? fmtSize(o.widthFt, o.heightFt, displayUnit) : null} fill="#FFFFFF"
+                  />
                 )}
               </Group>
             );
@@ -447,8 +453,13 @@ export function DesignerCanvas() {
                   onDragEnd={(e) => d.patchEntry(o.id, { xFt: toFt(e.target.x()), yFt: toFt(e.target.y()) })}
                   onTransformEnd={(e) => d.onObjTransformEnd("entry", o.id, e.target)}
                 />
-                {layers.labels.visible && <Text x={o.xFt * pxPerFt} y={o.yFt * pxPerFt + o.heightFt * pxPerFt / 2 - (showSizes ? 8 : 4)} width={o.widthFt * pxPerFt} align="center" text={o.lanes ? `${o.label} ×${o.lanes}` : o.label ?? ""} fontSize={7} fill="#01065B" listening={false} />}
-                {showSizes && layers.labels.visible && <Text x={o.xFt * pxPerFt} y={o.yFt * pxPerFt + o.heightFt * pxPerFt / 2 + 1} width={o.widthFt * pxPerFt} align="center" text={fmtSize(o.widthFt, o.heightFt, displayUnit)} fontSize={6} fill="#01065B" opacity={0.7} listening={false} />}
+                {layers.labels.visible && (
+                  <ElementLabel
+                    xFt={o.xFt} yFt={o.yFt} widthFt={o.widthFt} heightFt={o.heightFt}
+                    pxPerFt={pxPerFt} scale={view.scale} worldTopFt={worldRect.y0}
+                    name={o.lanes ? `${o.label} ×${o.lanes}` : o.label ?? ""} sizeText={showSizes ? fmtSize(o.widthFt, o.heightFt, displayUnit) : null} fill="#01065B"
+                  />
+                )}
               </Group>
             );
           })}
@@ -471,8 +482,13 @@ export function DesignerCanvas() {
                   onDragEnd={(e) => d.patchOps(o.id, { xFt: toFt(e.target.x()), yFt: toFt(e.target.y()) })}
                   onTransformEnd={(e) => d.onObjTransformEnd("ops", o.id, e.target)}
                 />
-                {layers.labels.visible && <Text x={o.xFt * pxPerFt} y={o.yFt * pxPerFt + o.heightFt * pxPerFt / 2 - (showSizes ? 8 : 4)} width={o.widthFt * pxPerFt} align="center" text={o.label ?? ""} fontSize={7} fill="#FFFFFF" listening={false} />}
-                {showSizes && layers.labels.visible && <Text x={o.xFt * pxPerFt} y={o.yFt * pxPerFt + o.heightFt * pxPerFt / 2 + 1} width={o.widthFt * pxPerFt} align="center" text={fmtSize(o.widthFt, o.heightFt, displayUnit)} fontSize={6} fill="#FFFFFF" opacity={0.75} listening={false} />}
+                {layers.labels.visible && (
+                  <ElementLabel
+                    xFt={o.xFt} yFt={o.yFt} widthFt={o.widthFt} heightFt={o.heightFt}
+                    pxPerFt={pxPerFt} scale={view.scale} worldTopFt={worldRect.y0}
+                    name={o.label ?? ""} sizeText={showSizes ? fmtSize(o.widthFt, o.heightFt, displayUnit) : null} fill="#FFFFFF"
+                  />
+                )}
               </Group>
             );
           })}
