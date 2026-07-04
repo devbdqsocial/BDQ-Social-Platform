@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireAdminRole, type Permission } from "@/server/auth/guard";
+import { requireAdminRole } from "@/server/auth/guard";
 import { listStaff } from "@/server/staff/service";
 import { STAFF_PRESETS, STAFF_PRESET_KEYS } from "@/lib/staff-presets";
+import { PERMISSIONS } from "@/lib/permissions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/page-header";
@@ -10,16 +11,8 @@ import { setPermissionsAction } from "./actions";
 
 export const metadata: Metadata = { title: "Roles & Permissions" };
 
-const PERMS: { key: Permission; label: string }[] = [
-  { key: "CHECKIN", label: "Check-in scanning" },
-  { key: "VENDOR_VIEW", label: "View vendors" },
-  { key: "VENDOR_MANAGE", label: "Manage vendors" },
-  { key: "EVENT_VIEW", label: "View events" },
-  { key: "CUSTOMER_VIEW", label: "View customers" },
-  { key: "PAYMENT_VIEW", label: "Payments & analytics" },
-  { key: "TICKETS_MANAGE", label: "Manage tickets (comps, cash sales)" },
-];
-const permLabel = (p: string) => PERMS.find((x) => x.key === p)?.label ?? p;
+const PERMS = PERMISSIONS;
+const permLabel = (p: string) => PERMISSIONS.find((x) => x.key === p)?.label ?? p;
 
 /**
  * Renders the Roles and Permissions configurations.

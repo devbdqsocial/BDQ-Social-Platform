@@ -3,16 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { requireAdminRole } from "@/server/auth/guard";
 import { setStaffPermissions } from "@/server/staff/service";
+import { PERMISSION_KEYS } from "@/lib/permissions";
 
-const ALL = [
-  "CHECKIN",
-  "VENDOR_MANAGE",
-  "VENDOR_VIEW",
-  "EVENT_VIEW",
-  "CUSTOMER_VIEW",
-  "PAYMENT_VIEW",
-  "TICKETS_MANAGE",
-] as const;
+const ALL = PERMISSION_KEYS;
 
 /**
  * Saves permission changes and optional role updates for a teammate.

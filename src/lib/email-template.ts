@@ -189,6 +189,19 @@ export function staffInviteEmailHtml(o: { url: string; role: string }): string {
   });
 }
 
+export function staffResetEmailHtml(o: { url: string }): string {
+  return emailLayout({
+    preheader: "Reset your BDQ Social admin password",
+    eyebrow: "Password reset",
+    title: "Set a new password",
+    intro: "A password reset was requested for your admin account.",
+    body: `${emailPanel(`<p style="margin:0;color:${brand.ink};font-weight:800">Choose a new password to keep using the admin portal.</p>
+      <p style="margin:8px 0 0;color:${brand.muted}">This link expires in 1 hour. If you did not expect this, ignore this email.</p>`, brand.lavender)}
+      ${emailButton("Reset password", o.url)}
+      <p style="margin:18px 0 0;color:${brand.muted};font-size:13px;word-break:break-all">${escapeHtml(o.url)}</p>`,
+  });
+}
+
 export function financeDigestEmailHtml(o: { eventName: string; rows: EmailKeyValueRow[] }): string {
   return emailLayout({
     preheader: `Finance digest for ${o.eventName}`,

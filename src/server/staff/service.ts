@@ -26,6 +26,49 @@ export async function listStaff() {
   }));
 }
 
+/** Minimal credential info for link actions (resend invite / send reset). */
+export function getStaffCredentialInfo(id: string) {
+  return db.user.findUnique({ where: { id }, select: { email: true, role: true, passwordHash: true } });
+}
+
+/** One teammate's full profile for the detail page: identity + security posture + recent activity.
+ *  Last login and activity are derived from AuditLog (no session table exists — auth is stateless JWT). */
+export async function getStaffDetail(id: string) {
+  const user = await db.user.findUnique({
+    where: { id },
+    select: { id: true, name: true, email: true, role: true, permissions: true, passwordHash: true, totpEnabled: true, createdAt: true },
+  });
+  if (!user || (user.role !== "STAFF" && user.role !== "ADMIN" && user.role !== "SUPER_ADMIN")) return null;
+
+  const [lastLogin, activity] = await Promise.all([
+    db.auditLog.findFirst({
+      where: { actorId: id, action: "admin.login" },
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true, ip: true },
+    }),
+    db.auditLog.findMany({
+      where: { OR: [{ actorId: id }, { entity: "User", entityId: id }] },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+      select: { id: true, action: true, entity: true, createdAt: true, actorId: true },
+    }),
+  ]);
+
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    permissions: user.permissions,
+    totpEnabled: user.totpEnabled,
+    active: !!user.passwordHash,
+    createdAt: user.createdAt,
+    lastLoginAt: lastLogin?.createdAt ?? null,
+    lastLoginIp: lastLogin?.ip ?? null,
+    activity,
+  };
+}
+
 export class StaffEmailTakenError extends Error {
   constructor() {
     super("EMAIL_TAKEN");

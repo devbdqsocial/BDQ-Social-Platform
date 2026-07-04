@@ -42,16 +42,20 @@ export async function POST(req: Request) {
   // vendors have a phone but no uid). Linking keeps the existing role — never downgrade a VENDOR.
   // A genuinely new account is ALWAYS created CUSTOMER: VENDOR/STAFF/admin roles are granted only by
   // admin provisioning + team call-back (CLAUDE.md locked rule), never self-served via the zone.
+  // Normalize email to lowercase on every write so case-variants can't create duplicate accounts
+  // (the admin paths already lowercase; this closes the customer/vendor gap).
+  const email = verified.email?.toLowerCase() ?? verified.email;
+
   let user = await db.user.findUnique({ where: { firebaseUid: verified.uid } });
   if (user) {
-    user = await db.user.update({ where: { id: user.id }, data: { phone: verified.phone, email: verified.email } });
+    user = await db.user.update({ where: { id: user.id }, data: { phone: verified.phone, email } });
   } else if (verified.phone && (user = await db.user.findUnique({ where: { phone: verified.phone } }))) {
     user = await db.user.update({
       where: { id: user.id },
-      data: { firebaseUid: verified.uid, email: user.email ?? verified.email },
+      data: { firebaseUid: verified.uid, email: user.email ?? email },
     });
   } else {
-    user = await db.user.create({ data: { firebaseUid: verified.uid, phone: verified.phone, email: verified.email, role: "CUSTOMER" } });
+    user = await db.user.create({ data: { firebaseUid: verified.uid, phone: verified.phone, email, role: "CUSTOMER" } });
   }
 
   // Deliberate vendor self-signup: create the applicant profile (SUBMITTED) and elevate to VENDOR.

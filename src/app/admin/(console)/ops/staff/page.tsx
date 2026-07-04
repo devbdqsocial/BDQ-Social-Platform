@@ -8,7 +8,8 @@ import { Field } from "@/components/ui/field";
 import { Input, Select } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { PageHeader } from "@/components/ui/page-header";
-import { saveStaffAction, inviteStaffAction } from "./actions";
+import { saveStaffAction } from "./actions";
+import { InviteForm } from "./InviteForm";
 import { StaffTable } from "@/components/admin/tables/StaffTable";
 
 export const metadata: Metadata = { title: "Staff" };
@@ -25,6 +26,8 @@ export default async function AdminStaffPage() {
   const staff = await listStaff();
 
   const isSuperAdmin = session.role === "SUPER_ADMIN";
+  const presets = STAFF_PRESET_KEYS.map((k) => ({ key: k, label: STAFF_PRESETS[k].label }));
+  const existingEmails = staff.map((s) => s.email).filter((e): e is string => !!e);
 
   return (
     <div className="space-y-8">
@@ -59,29 +62,7 @@ export default async function AdminStaffPage() {
         </div>
       </ActionForm>
 
-      <ActionForm action={inviteStaffAction} success="Invite sent" resetOnSuccess className="space-y-6 rounded-lg border p-4">
-        <div className="space-y-1">
-          <h2 className="text-lg font-semibold tracking-tight">Invite by email (recommended)</h2>
-          <p className="text-sm text-muted-foreground">They set their own password and enable 2FA from a secure link — you never handle a password.</p>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Name" className="sm:col-span-2">
-            <Input name="name" placeholder="Priya from the gate team" />
-          </Field>
-          <Field label="Email">
-            <Input name="email" type="email" required placeholder="priya@bdqsocial.com" />
-          </Field>
-          <Field label="Role">
-            <Select name="preset" required defaultValue="SCANNER_ONLY">
-              {isSuperAdmin && <option value="ADMIN">Administrator (Access all but logs)</option>}
-              {STAFF_PRESET_KEYS.map((k) => (
-                <option key={k} value={k}>{STAFF_PRESETS[k].label}</option>
-              ))}
-            </Select>
-          </Field>
-          <Button type="submit" variant="outline" className="w-fit sm:col-span-2">Send invite</Button>
-        </div>
-      </ActionForm>
+      <InviteForm presets={presets} isSuperAdmin={isSuperAdmin} existingEmails={existingEmails} />
 
       <div className="space-y-3">
         <h2 className="font-display text-lg font-semibold">Team ({staff.length})</h2>

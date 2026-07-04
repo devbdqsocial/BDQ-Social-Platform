@@ -1,29 +1,15 @@
 "use client";
 
 import { useMemo } from "react";
-import { ActionForm } from "@/components/admin/action-form";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { listStaff } from "@/server/staff/service";
 import { DataTable } from "@/components/data-table/data-table";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { removeStaffAction, signOutEverywhereAction } from "@/app/admin/(console)/ops/staff/actions";
+import { StaffRowActions } from "@/components/admin/tables/StaffRowActions";
+import { permissionShort } from "@/lib/permissions";
 import type { Role } from "@/server/auth/guard";
 
 type Row = Awaited<ReturnType<typeof listStaff>>[number];
-
-const perm = (p: string) => {
-  const map: Record<string, string> = {
-    CHECKIN: "Check-In",
-    VENDOR_MANAGE: "Vendor Manage",
-    VENDOR_VIEW: "Vendor View",
-    EVENT_VIEW: "Event View",
-    CUSTOMER_VIEW: "Customer View",
-    PAYMENT_VIEW: "Payment View",
-    TICKETS_MANAGE: "Tickets Manage",
-  };
-  return map[p] ?? p;
-};
 
 interface StaffTableProps {
   staff: Row[];
@@ -31,9 +17,9 @@ interface StaffTableProps {
 }
 
 /**
- * Renders a data table showing all staff members, their roles, and their direct custom permissions.
- * It dynamically resolves the action column: only a SUPER_ADMIN is permitted to disable other ADMIN accounts,
- * whereas standard ADMINs are restricted to only removing access for STAFF accounts.
+ * Team table: each teammate's role, permissions, setup status, and inline per-row actions.
+ * "Pending setup" = the account exists but no password is set yet (invited-but-not-accepted, or
+ * access removed) — those rows are still fully manageable (resend invite, edit, remove).
  */
 export function StaffTable({ staff, currentUserRole }: StaffTableProps) {
   const columns = useMemo<ColumnDef<Row>[]>(() => [
@@ -44,7 +30,11 @@ export function StaffTable({ staff, currentUserRole }: StaffTableProps) {
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           <span className="font-medium">{row.original.name ?? row.original.email}</span>
-          {!row.original.active && <Badge variant="neutral">No access</Badge>}
+          {row.original.active ? (
+            row.original.totpEnabled && <Badge variant="success">2FA on</Badge>
+          ) : (
+            <Badge variant="warning">Pending setup</Badge>
+          )}
         </div>
       ),
     },
@@ -76,9 +66,7 @@ export function StaffTable({ staff, currentUserRole }: StaffTableProps) {
         ) : (
           <div className="flex flex-wrap gap-1">
             {row.original.permissions.map((p) => (
-              <Badge key={p} variant="primary">
-                {perm(p)}
-              </Badge>
+              <Badge key={p} variant="primary">{permissionShort(p)}</Badge>
             ))}
           </div>
         );
@@ -88,31 +76,9 @@ export function StaffTable({ staff, currentUserRole }: StaffTableProps) {
       id: "actions",
       header: "",
       enableSorting: false,
-      cell: ({ row }) => {
-        const targetUserRole = row.original.role;
-        const isTargetAdminOrSuper = targetUserRole === "ADMIN" || targetUserRole === "SUPER_ADMIN";
-        
-        // Privilege boundary check: Standard ADMINs are forbidden from disabling other ADMINs or SUPER_ADMINs.
-        const canRemove = currentUserRole === "SUPER_ADMIN" || !isTargetAdminOrSuper;
-
-        if (!row.original.active || !canRemove) return null;
-
-        return (
-          <div className="flex items-center justify-end gap-1">
-            <ActionForm action={signOutEverywhereAction} success="Signed out everywhere">
-              <input type="hidden" name="id" value={row.original.id} />
-              <Button type="submit" variant="ghost" size="sm">Sign out everywhere</Button>
-            </ActionForm>
-            <ActionForm action={removeStaffAction} success="Access removed">
-              <input type="hidden" name="id" value={row.original.id} />
-              <Button type="submit" variant="ghost" size="sm">Remove access</Button>
-            </ActionForm>
-          </div>
-        );
-      },
+      cell: ({ row }) => <StaffRowActions user={row.original} currentUserRole={currentUserRole} />,
     },
   ], [currentUserRole]);
 
   return <DataTable columns={columns} data={staff} searchable={staff.length > 6} searchPlaceholder="Search teammates…" emptyMessage="No teammates yet." />;
 }
-
