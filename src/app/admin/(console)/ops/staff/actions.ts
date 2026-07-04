@@ -12,6 +12,7 @@ import {
   revokeStaffSessions,
   setStaffPermissions,
   getStaffCredentialInfo,
+  hardDeleteStaff,
   StaffEmailTakenError,
 } from "@/server/staff/service";
 import { isStaffPreset, type StaffPreset } from "@/lib/staff-presets";
@@ -170,6 +171,15 @@ export async function removeStaffAction(formData: FormData): Promise<Result<null
   return toResult(async () => {
     const session = await requireAdminRole();
     await removeStaffAccess(session, String(formData.get("id")));
+    revalidatePath("/admin/ops/staff");
+  });
+}
+
+/** Permanently delete a teammate (hard delete). Blocked for accounts with financial/gate records. */
+export async function deleteStaffAction(formData: FormData): Promise<Result<null>> {
+  return toResult(async () => {
+    const session = await requireAdminRole();
+    await hardDeleteStaff(session, String(formData.get("id")));
     revalidatePath("/admin/ops/staff");
   });
 }

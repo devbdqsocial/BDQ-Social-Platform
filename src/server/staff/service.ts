@@ -1,6 +1,6 @@
 import "server-only";
 import { db } from "@/server/db";
-import { withAudit } from "@/server/audit";
+import { withAudit, withAuditTx } from "@/server/audit";
 import { hashPassword } from "@/lib/password";
 import { permissionsForPreset, type StaffPreset } from "@/lib/staff-presets";
 import type { Permission, Session } from "@/server/auth/guard";
@@ -172,6 +172,49 @@ export function removeStaffAccess(session: Session, id: string) {
           data: { role: "STAFF", passwordHash: null, permissions: [], tokenVersion: { increment: 1 } }
         });
         return { result: u, after: { role: u.role, permissions: [] } };
+      },
+    };
+  });
+}
+
+/**
+ * Permanently delete a teammate row (hard delete). Blocked for accounts with financial/gate records
+ * (orders, check-ins, coupon redemptions, a vendor profile) to protect data integrity — those should
+ * use removeStaffAccess (soft) instead. Audit logs + waitlist entries are detached (actor nulled),
+ * then the row is deleted, all in one transaction.
+ */
+export function hardDeleteStaff(session: Session, id: string) {
+  return withAuditTx(session, { action: "DELETE", entity: "User", entityId: id }, async (tx) => {
+    const before = await tx.user.findUnique({
+      where: { id },
+      select: {
+        role: true, email: true, name: true,
+        _count: { select: { orders: true, checkIns: true, couponRedemptions: true } },
+        vendorProfile: { select: { id: true } },
+      },
+    });
+    if (!before) throw new Error("Teammate not found.");
+    if (before.role === "SUPER_ADMIN") throw new Error("Cannot delete a Super Admin account.");
+    if (before.role !== "STAFF" && before.role !== "ADMIN") throw new Error("Only teammates can be deleted here.");
+    if (before.role === "ADMIN" && session.role !== "SUPER_ADMIN") throw new Error("Only Super Admin can delete Admin accounts.");
+
+    const blockers: string[] = [];
+    if (before._count.orders) blockers.push(`${before._count.orders} order(s)`);
+    if (before._count.checkIns) blockers.push(`${before._count.checkIns} check-in(s)`);
+    if (before._count.couponRedemptions) blockers.push(`${before._count.couponRedemptions} coupon redemption(s)`);
+    if (before.vendorProfile) blockers.push("a vendor profile");
+    if (blockers.length) {
+      throw new Error(`Can't permanently delete — this teammate has ${blockers.join(", ")} on record. Use "Remove access" to keep those records.`);
+    }
+
+    return {
+      before: { role: before.role, email: before.email, name: before.name },
+      run: async (tx) => {
+        // Detach references that would block the delete (preserve the audit history, just null the actor).
+        await tx.auditLog.updateMany({ where: { actorId: id }, data: { actorId: null } });
+        await tx.waitlist.updateMany({ where: { userId: id }, data: { userId: null } });
+        await tx.user.delete({ where: { id } });
+        return { result: { id }, after: null };
       },
     };
   });

@@ -14,7 +14,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import type { Role } from "@/server/auth/guard";
 import type { Result } from "@/lib/result";
 import {
-  editStaffAccessAction, resendInviteAction, sendResetLinkAction, removeStaffAction, signOutEverywhereAction,
+  editStaffAccessAction, resendInviteAction, sendResetLinkAction, removeStaffAction, deleteStaffAction, signOutEverywhereAction,
 } from "@/app/admin/(console)/ops/staff/actions";
 
 export interface RowUser {
@@ -71,35 +71,51 @@ function SimpleActionButton({ id, action, icon: Icon, title, success }: { id: st
   );
 }
 
-/** Destructive action gated behind a confirm dialog. */
-function ConfirmButton({ id, action, icon: Icon, title, confirmTitle, confirmBody, confirmCta, success }: { id: string; action: VoidAction; icon: LucideIcon; title: string; confirmTitle: string; confirmBody: string; confirmCta: string; success: string }) {
+/** Delete a teammate: permanent hard-delete, with an optional revoke-only path for active accounts. */
+function DeleteTeammateDialog({ user }: { user: RowUser }) {
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
-  const run = () =>
+
+  const runDelete = () =>
     start(async () => {
       const fd = new FormData();
-      fd.set("id", id);
-      const res = await action(fd);
+      fd.set("id", user.id);
+      const res = await deleteStaffAction(fd);
       if (res.ok) {
-        toast.success(success);
+        toast.success("Teammate deleted");
         setOpen(false);
-      } else toast.error(res.error.message ?? "Could not complete.");
+      } else toast.error(res.error.message ?? "Could not delete.");
     });
+
+  const runRevoke = () =>
+    start(async () => {
+      const fd = new FormData();
+      fd.set("id", user.id);
+      const res = await removeStaffAction(fd);
+      if (res.ok) {
+        toast.success("Access removed");
+        setOpen(false);
+      } else toast.error(res.error.message ?? "Could not update.");
+    });
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button type="button" variant="ghost" size="icon-sm" title={title} aria-label={title} className="text-destructive hover:text-destructive">
-          <Icon />
+        <Button type="button" variant="ghost" size="icon-sm" title="Delete teammate" aria-label="Delete teammate" className="text-destructive hover:text-destructive">
+          <Trash2 />
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{confirmTitle}</DialogTitle>
-          <DialogDescription>{confirmBody}</DialogDescription>
+          <DialogTitle>Delete {user.name ?? user.email}?</DialogTitle>
+          <DialogDescription>
+            This permanently removes the teammate from the team and can&apos;t be undone. If they have gate check-ins or orders on record, deletion is blocked to protect those — revoke access instead.
+          </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
-          <Button variant="destructive" disabled={pending} onClick={run}>{confirmCta}</Button>
+          <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
+          {user.active && <Button type="button" variant="outline" disabled={pending} onClick={runRevoke}>Just revoke access</Button>}
+          <Button type="button" variant="destructive" disabled={pending} onClick={runDelete}>Delete permanently</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -188,18 +204,7 @@ export function StaffRowActions({ user, currentUserRole, showDetails = true }: {
       {canManage && user.active && (
         <SimpleActionButton id={user.id} action={signOutEverywhereAction} icon={LogOut} title="Sign out everywhere" success="Signed out everywhere" />
       )}
-      {canManage && (
-        <ConfirmButton
-          id={user.id}
-          action={removeStaffAction}
-          icon={Trash2}
-          title="Remove access"
-          confirmTitle="Remove access?"
-          confirmBody={`${user.name ?? user.email} will lose sign-in access immediately. Their record is kept for the audit trail.`}
-          confirmCta="Remove access"
-          success="Access removed"
-        />
-      )}
+      {canManage && <DeleteTeammateDialog user={user} />}
     </div>
   );
 }
