@@ -5,6 +5,7 @@ import { CalendarDays } from "lucide-react";
 import { requireVendor } from "@/server/auth/guard";
 import { listPublished } from "@/server/events/service";
 import { EmptyState } from "@/components/ui/empty-state";
+import { VendorPageHeader } from "@/components/vendor/VendorPageHeader";
 
 export const metadata: Metadata = { title: "Book a stall" };
 
@@ -13,12 +14,12 @@ export default async function VendorEventsPage() {
   const events = (await listPublished()).filter((e) => e.vendorStallsEnabled);
 
   return (
-    <div className="max-w-2xl space-y-[var(--space-xl)]">
-      <div>
-        <p className="kicker opacity-60">Book a stall</p>
-        <h1 className="f-exat f-h60 mt-1">Pick a market</h1>
-        <p className="f-paragraph-small mt-[var(--space-sm)] opacity-75">Choose an upcoming event to see the layout and grab your stall.</p>
-      </div>
+    <div className="max-w-[var(--w-prose)] space-y-[var(--space-xl)]">
+      <VendorPageHeader
+        kicker="Book a stall"
+        title="Pick a market"
+        description="Choose an upcoming event to see the layout and grab your stall."
+      />
       {events.length === 0 ? (
         <EmptyState icon={CalendarDays} title="No markets open yet" description="New dates are added regularly — check back soon to book your spot." />
       ) : (
@@ -33,7 +34,7 @@ export default async function VendorEventsPage() {
                   <p className="f-h32 f-exat">{e.name}</p>
                   <p className="f-paragraph-small opacity-60">{fmt(e.startsAt)} · {e.location}</p>
                 </div>
-                <span className="link--split f-paragraph-small shrink-0 font-bold opacity-0 transition-opacity group-hover:opacity-100" style={{ color: "var(--light-blue)" }}>
+                <span className="link--split f-paragraph-small shrink-0 font-bold" style={{ color: "var(--light-blue)" }}>
                   Book <span className="arrow">→</span>
                 </span>
               </Link>

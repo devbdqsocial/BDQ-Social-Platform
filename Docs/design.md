@@ -303,6 +303,12 @@ above, helper/error below. Error state = danger border + danger helper + inline 
 prefix/suffix (₹, phone code), character counts, and clear affordance. OTP input = 6 segmented
 boxes with auto-advance.
 
+> **Owner-approved override (2026-07, vendor-portal overhaul):** vendor-portal *functional*
+> forms (brand profile, KYC, contract/agreement signing, offers, auth) use bordered inputs
+> (`.bdq-input`) and solid navy buttons (`.bdq-btn`), replacing the BDQ underline-input +
+> clip-path `.btn` treatment there for legibility. The underline/clip-path style remains the
+> spec for public/customer *marketing* surfaces.
+
 **Select / combobox / date-time:** popover with `shadow-md`, rounded `md`, checkable items;
 searchable for long lists (vendor categories, events). Date/time picker for event + schedule.
 

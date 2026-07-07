@@ -2,6 +2,7 @@ import "server-only";
 import { db } from "@/server/db";
 import { createRazorpayOrder, type GatewayFees } from "@/lib/razorpay";
 import { getBookingAgreement } from "@/server/bookings/agreement";
+import { enqueueVendorNotification } from "@/server/notifications/vendor";
 
 /**
  * Vendor stall payment — approve-before-pay ONLY (booking collapse, build-plan R1.3 /
@@ -67,8 +68,8 @@ export async function fulfillStallBooking(
     return { ok: true }; // 2xx to the webhook; ops resolves via the audit trail
   }
 
-  await db.$transaction(async (tx) => {
-    if (await tx.payment.findUnique({ where: { gatewayRef: paymentId } })) return;
+  const booked = await db.$transaction(async (tx) => {
+    if (await tx.payment.findUnique({ where: { gatewayRef: paymentId } })) return false;
     const stall = await tx.stall.findUnique({
       where: { id: booking.stallId },
       include: { stallType: { select: { priceInPaise: true } } },
@@ -85,7 +86,7 @@ export async function fulfillStallBooking(
           after: { reason: "AMOUNT_MISMATCH", gatewayOrderId, bookingId: booking.id, expectedPaise: amount, paidPaise: paidAmountPaise },
         },
       });
-      return;
+      return false;
     }
 
     await tx.booking.update({ where: { id: booking.id }, data: { status: "BOOKED" } });
@@ -102,6 +103,13 @@ export async function fulfillStallBooking(
         status: "CAPTURED",
       },
     });
+    return true;
   });
+
+  // Post-commit only, never inside the tx (a notify failure must not roll back money);
+  // enqueueVendorNotification swallows errors and the dedupe key absorbs webhook retries.
+  if (booked && booking.vendorProfileId) {
+    await enqueueVendorNotification(booking.vendorProfileId, "vendor-booking-confirmed", { bookingId: booking.id }, `vendor-booked:${booking.id}`);
+  }
   return { ok: true };
 }

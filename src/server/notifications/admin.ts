@@ -36,14 +36,15 @@ export async function notify(input: NotifyInput): Promise<void> {
   }
 }
 
+// vendorProfileId: null — vendor-targeted rows belong to the vendor portal bell, not the admin feed.
 export function listNotifications(limit = 30) {
-  return db.notification.findMany({ orderBy: { createdAt: "desc" }, take: limit });
+  return db.notification.findMany({ where: { vendorProfileId: null }, orderBy: { createdAt: "desc" }, take: limit });
 }
 
 export function unreadCount() {
-  return db.notification.count({ where: { readAt: null } });
+  return db.notification.count({ where: { readAt: null, vendorProfileId: null } });
 }
 
 export async function markAllRead(): Promise<void> {
-  await db.notification.updateMany({ where: { readAt: null }, data: { readAt: new Date() } });
+  await db.notification.updateMany({ where: { readAt: null, vendorProfileId: null }, data: { readAt: new Date() } });
 }

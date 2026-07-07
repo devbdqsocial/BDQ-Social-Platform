@@ -102,6 +102,12 @@ enum VendorApproval {
   REJECTED
 }
 
+enum VendorDocStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
 enum BookingStatus {
   RESERVED // vendor picked a stall during onboarding; held while the application is open
   HELD // short live-payment hold (legacy ticket-style)
@@ -606,6 +612,7 @@ model VendorProfile {
   leads    Lead[]
   expenses Expense[]
   offers   Offer[]
+  docs     VendorDoc[]
 }
 
 model VendorKyc {
@@ -615,7 +622,25 @@ model VendorKyc {
   pan             String?
   fssai           String?
   gstin           String?
-  docUrls         Json?
+  docUrls         Json? // legacy — superseded by VendorDoc rows (backfilled); flagged for removal
+}
+
+/// Per-document KYC verification (vendor-portal §Documents): one row per docType with an
+/// admin-reviewed status. Replaces the VendorKyc.docUrls JSON (kept until cleanup).
+model VendorDoc {
+  id              String          @id @default(cuid())
+  vendorProfileId String
+  vendorProfile   VendorProfile   @relation(fields: [vendorProfileId], references: [id], onDelete: Cascade)
+  docType         String // pan | fssai | gst | id
+  url             String
+  publicId        String
+  status          VendorDocStatus @default(PENDING)
+  reviewedAt      DateTime?
+  reviewedById    String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@unique([vendorProfileId, docType])
 }
 
 model VendorAsset {
@@ -995,19 +1020,22 @@ model Settlement {
   @@index([settledAt])
 }
 
-// In-app admin notifications (alerts feed + header bell). Additive.
+// In-app notifications (alerts feed + header bell). Admin rows have vendorProfileId null;
+// vendor-targeted rows (portal bell) carry the recipient's vendorProfileId. Additive.
 model Notification {
-  id        String    @id @default(cuid())
-  type      String
-  title     String
-  body      String?
-  href      String?
-  eventId   String?
-  readAt    DateTime?
-  createdAt DateTime  @default(now())
+  id              String    @id @default(cuid())
+  type            String
+  title           String
+  body            String?
+  href            String?
+  eventId         String?
+  vendorProfileId String?
+  readAt          DateTime?
+  createdAt       DateTime  @default(now())
 
   @@index([readAt, createdAt])
   @@index([eventId])
+  @@index([vendorProfileId, createdAt])
 }
 
 enum CampaignStatus {

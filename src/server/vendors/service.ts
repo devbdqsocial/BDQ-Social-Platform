@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { db } from "@/server/db";
@@ -17,14 +18,15 @@ export function decryptKyc<T extends { pan: string | null; fssai: string | null;
   return { ...kyc, pan: decryptNullable(kyc.pan), fssai: decryptNullable(kyc.fssai), gstin: decryptNullable(kyc.gstin) };
 }
 
-export async function getProfile(userId: string) {
+/** Request-scoped memo (admin-perf-pass pattern): the vendor layout + page share one read. */
+export const getProfile = cache(async (userId: string) => {
   const profile = await db.vendorProfile.findUnique({
     where: { userId },
-    include: { kyc: true, assets: { orderBy: { createdAt: "desc" } } },
+    include: { kyc: true, assets: { orderBy: { createdAt: "desc" } }, docs: { orderBy: { docType: "asc" } } },
   });
   if (profile?.kyc) profile.kyc = decryptKyc(profile.kyc)!;
   return profile;
-}
+});
 
 // ── Public brand directory (read-only, no auth) ───────────────────────────────
 // Cached 60s for display; no Date fields are consumed downstream, so no revival needed.
@@ -101,26 +103,21 @@ export function upsertProfile(userId: string, input: VendorProfileInput) {
   });
 }
 
-/** Store/replace a single KYC document reference in VendorKyc.docUrls (keyed by docType). */
+/** Store/replace a single KYC document (VendorDoc row; a re-upload resets status to PENDING). */
 export async function setKycDoc(
   userId: string,
   docType: "pan" | "fssai" | "gst" | "id",
   doc: { url: string; publicId: string } | null,
 ) {
-  const profile = await db.vendorProfile.findUnique({
-    where: { userId },
-    select: { id: true, kyc: { select: { docUrls: true } } },
-  });
+  const profile = await db.vendorProfile.findUnique({ where: { userId }, select: { id: true } });
   if (!profile) throw new Error("Create your profile first");
-  const current = (profile.kyc?.docUrls as Record<string, unknown> | null) ?? {};
-  const next: Record<string, unknown> = { ...current };
-  if (doc) next[docType] = doc;
-  else delete next[docType];
-  const docUrls = next as Prisma.InputJsonValue;
-  return db.vendorKyc.upsert({
-    where: { vendorProfileId: profile.id },
-    update: { docUrls },
-    create: { vendorProfileId: profile.id, docUrls },
+  if (!doc) {
+    return db.vendorDoc.deleteMany({ where: { vendorProfileId: profile.id, docType } });
+  }
+  return db.vendorDoc.upsert({
+    where: { vendorProfileId_docType: { vendorProfileId: profile.id, docType } },
+    update: { url: doc.url, publicId: doc.publicId, status: "PENDING", reviewedAt: null, reviewedById: null },
+    create: { vendorProfileId: profile.id, docType, url: doc.url, publicId: doc.publicId },
   });
 }
 

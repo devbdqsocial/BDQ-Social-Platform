@@ -1,6 +1,7 @@
 import "server-only";
 import { db } from "@/server/db";
 import { withAudit } from "@/server/audit";
+import { enqueueVendorNotification } from "@/server/notifications/vendor";
 import type { Session } from "@/server/auth/guard";
 
 /** Vendor participation contract (e-sign). One per vendor; approval requires SIGNED. */
@@ -39,6 +40,10 @@ export function signContract(
           update: fields,
           create: { vendorProfileId, ...fields },
         });
+        // First signature = the application is submitted for review → ack the vendor.
+        if (before?.status !== "SIGNED") {
+          await enqueueVendorNotification(vendorProfileId, "vendor-application", {}, `vendor-app:${vendorProfileId}`);
+        }
         return { result: c, after: { status: c.status, signedAt: c.signedAt, signerName: c.signerName } };
       },
       before,

@@ -1,6 +1,7 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
 import { db } from "@/server/db";
+import { offerStallsToWaitlist } from "@/server/waitlist/service";
 
 /**
  * Stall reservations — the no-double-book core (project.md §7.7, BUSINESS-RULES §2.2).
@@ -18,14 +19,22 @@ export class StallUnavailableError extends Error {
 }
 
 /**
- * Free TTL'd stall holds (cron). Nothing creates TTL holds anymore (vendor reservations are
- * open-ended); this sweep keeps tolerating legacy rows until the M2 data migration clears them.
+ * Free TTL'd stall holds (cron): legacy rows + expired waitlist offer-holds (24h
+ * right-of-first-refusal). Freed stalls cascade to the next waitlisted vendor.
  */
 export async function releaseExpiredHolds(now: Date = new Date()): Promise<number> {
-  const res = await db.stall.updateMany({
+  const expired = await db.stall.findMany({
     where: { status: "HELD", holdUntil: { lt: now } },
+    select: { id: true, eventId: true },
+  });
+  if (expired.length === 0) return 0;
+  const res = await db.stall.updateMany({
+    where: { id: { in: expired.map((s) => s.id) }, status: "HELD", holdUntil: { lt: now } },
     data: { status: "AVAILABLE", holdUntil: null, holdUserId: null },
   });
+  const byEvent = new Map<string, string[]>();
+  for (const s of expired) byEvent.set(s.eventId, [...(byEvent.get(s.eventId) ?? []), s.id]);
+  for (const [eventId, stallIds] of byEvent) await offerStallsToWaitlist(eventId, stallIds);
   return res.count;
 }
 
@@ -40,8 +49,13 @@ export async function reserveStall(vendorProfileId: string, userId: string, even
   if (!event?.vendorStallsEnabled) throw new StallUnavailableError();
   try {
     return await db.$transaction(async (tx) => {
+      // AVAILABLE, or HELD *for this vendor* (a waitlist offer-hold they're claiming).
       const held = await tx.stall.updateMany({
-        where: { id: stallId, status: "AVAILABLE", kind: "STALL" },
+        where: {
+          id: stallId,
+          kind: "STALL",
+          OR: [{ status: "AVAILABLE" }, { status: "HELD", holdUserId: userId }],
+        },
         data: { status: "HELD", holdUserId: userId, holdUntil: null },
       });
       if (held.count === 0) throw new StallUnavailableError();
@@ -59,27 +73,29 @@ export async function reserveStall(vendorProfileId: string, userId: string, even
 export async function cancelReservation(vendorProfileId: string, bookingId: string): Promise<void> {
   const b = await db.booking.findUnique({
     where: { id: bookingId },
-    select: { id: true, stallId: true, vendorProfileId: true, status: true },
+    select: { id: true, stallId: true, eventId: true, vendorProfileId: true, status: true },
   });
   if (!b || b.vendorProfileId !== vendorProfileId) return;
   if (b.status !== "RESERVED" && b.status !== "PENDING_PAYMENT") return;
-  await db.$transaction([
+  const [, freed] = await db.$transaction([
     db.booking.update({ where: { id: b.id }, data: { status: "CANCELLED" } }),
     db.stall.updateMany({ where: { id: b.stallId, status: "HELD" }, data: { status: "AVAILABLE", holdUntil: null, holdUserId: null } }),
   ]);
+  if (freed.count > 0) await offerStallsToWaitlist(b.eventId, [b.stallId]);
 }
 
 /** Free PENDING_PAYMENT bookings whose 48h pay window lapsed (cron). Returns how many released. */
 export async function releaseExpiredPayWindows(now: Date = new Date()): Promise<number> {
   const expired = await db.booking.findMany({
     where: { status: "PENDING_PAYMENT", payBy: { lt: now } },
-    select: { id: true, stallId: true },
+    select: { id: true, stallId: true, eventId: true },
   });
   for (const b of expired) {
-    await db.$transaction([
+    const [, freed] = await db.$transaction([
       db.booking.update({ where: { id: b.id }, data: { status: "CANCELLED" } }),
       db.stall.updateMany({ where: { id: b.stallId, status: "HELD" }, data: { status: "AVAILABLE", holdUntil: null, holdUserId: null } }),
     ]);
+    if (freed.count > 0) await offerStallsToWaitlist(b.eventId, [b.stallId]);
   }
   return expired.length;
 }

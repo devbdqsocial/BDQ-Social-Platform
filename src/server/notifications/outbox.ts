@@ -3,10 +3,11 @@ import { db } from "@/server/db";
 import { emailConfigured, sendEmail } from "@/lib/sendgrid";
 import { assertWhatsAppSent, sendWhatsApp, sendWhatsAppText, whatsAppCampaignThrottleMs, whatsAppConfigured, whatsAppProvider } from "@/lib/whatsapp";
 import { channelsFor } from "@/lib/notify-channels";
-import { buildReminderEmail, buildTicketEmail, buildFinanceDigestEmail } from "@/server/notifications/email";
-import { sendTicketWhatsApp, sendWaitlistWhatsApp } from "@/server/notifications/whatsapp";
+import { buildReminderEmail, buildTicketEmail, buildFinanceDigestEmail, buildVendorEmail } from "@/server/notifications/email";
+import { sendTicketWhatsApp, sendVendorWhatsApp, sendWaitlistWhatsApp } from "@/server/notifications/whatsapp";
+import type { VendorNotifTemplate } from "@/lib/notify-channels";
 import { bumpCampaignStat } from "@/server/campaigns/stats";
-import { campaignEmailHtml } from "@/lib/email-template";
+import { campaignEmailHtml, waitlistEmailHtml } from "@/lib/email-template";
 import { unsubscribeUrl } from "@/lib/unsubscribe-token";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -69,6 +70,8 @@ export async function processOutbox(limit = 20): Promise<{ sent: number; failed:
       (row.payload as {
         orderId?: string;
         eventId?: string;
+        vendorProfileId?: string;
+        bookingId?: string;
         subject?: string;
         body?: string;
         whatsappTemplateName?: string;
@@ -113,6 +116,31 @@ export async function processOutbox(limit = 20): Promise<{ sent: number; failed:
         await sleep(whatsAppCampaignThrottleMs());
       } else if (row.template === "waitlist") {
         if (row.channel === "WHATSAPP") assertWhatsAppSent(await sendWaitlistWhatsApp(row.toAddress));
+      } else if (row.template === "stall-waitlist-offer") {
+        // A freed stall is being held for this vendor for 24h (waitlist right-of-first-refusal).
+        if (row.channel === "EMAIL" && payload.eventId) {
+          const ev = await db.event.findUnique({ where: { id: payload.eventId }, select: { name: true } });
+          if (ev) {
+            await sendEmail({
+              to: row.toAddress,
+              subject: `A stall opened up - ${ev.name}`,
+              html: waitlistEmailHtml({
+                eventName: ev.name,
+                url: `https://vendors.${process.env.APP_BASE_DOMAIN ?? "bdqsocial.com"}/events/${payload.eventId}`,
+              }),
+            });
+          }
+        } else if (row.channel === "WHATSAPP") {
+          assertWhatsAppSent(await sendWaitlistWhatsApp(row.toAddress));
+        }
+      } else if (row.template.startsWith("vendor-")) {
+        // Vendor lifecycle templates need an explicit branch — the final else assumes tickets.
+        if (row.channel === "EMAIL") {
+          const email = await buildVendorEmail(row.template as VendorNotifTemplate, payload);
+          if (email) await sendEmail({ to: row.toAddress, subject: email.subject, html: email.html });
+        } else if (row.channel === "WHATSAPP") {
+          assertWhatsAppSent(await sendVendorWhatsApp(row.template as VendorNotifTemplate, row.toAddress, payload));
+        }
       } else {
         if (!payload.orderId) throw new Error("missing orderId");
         if (row.channel === "EMAIL") {

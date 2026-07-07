@@ -45,12 +45,15 @@ Token-efficient: no fluff, no preamble, no restating the prompt. Answer or act.
   lavender `#868EFF` / green / yellow / pink / red colour-blocked `BDQ section/surface` sections,
   Exat-Bold display + Inter body, in the `.bdq` layer of `globals.css`. **The admin console stays
   neutral OKLCH and keeps the no-purple rule** — never apply BDQ colours or the `.bdq` zone there.
+  Owner-approved refinement (2026-07): vendor-portal *functional* forms use bordered inputs +
+  solid buttons (`.bdq-input`/`.bdq-btn`), not the underline/clip-path marketing style — that
+  stays on public/customer marketing surfaces.
 - Vendor approval requires a **team call-back**; admin (SUPER_ADMIN) requires **TOTP 2FA**.
 
 ## Stack
 Next.js 15 (App Router, server actions + route handlers) · TS · Tailwind v4 + shadcn · Prisma +
 Neon Postgres · Firebase phone OTP + app session · Razorpay · react-konva (map) · Interakt
-(WhatsApp) · Resend (email) · Cloudinary (assets) · Vercel + cron · PWA.
+(WhatsApp) · SendGrid (email) · Cloudinary (assets) · Vercel + cron · PWA.
 
 ## Conventions
 - Subdomain routing in `src/middleware.ts` (host → zone). Domain logic in `src/server/<module>/`.

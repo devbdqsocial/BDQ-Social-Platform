@@ -53,16 +53,18 @@ export async function uploadPdfBuffer(
   return { url: res.secure_url, publicId: res.public_id };
 }
 
-export function signUpload(folder: string): UploadSignature {
+export function signUpload(folder: string, opts?: { allowPdf?: boolean }): UploadSignature {
   if (!configured()) throw new Error("Cloudinary not configured");
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME!;
   const apiKey = process.env.CLOUDINARY_API_KEY!;
   const apiSecret = process.env.CLOUDINARY_API_SECRET!;
   const timestamp = Math.floor(Date.now() / 1000);
+  // KYC docs may be PDFs (Cloudinary serves PDF under the image resource type); brand assets stay raster-only.
+  const allowedFormats = opts?.allowPdf ? `${ALLOWED_FORMATS},pdf` : ALLOWED_FORMATS;
 
   // Sign the format restriction too, so a client cannot drop it (size cap → signed upload preset).
   const signature = cloudinary.utils.api_sign_request(
-    { allowed_formats: ALLOWED_FORMATS, folder, timestamp },
+    { allowed_formats: allowedFormats, folder, timestamp },
     apiSecret,
   );
 
@@ -72,7 +74,7 @@ export function signUpload(folder: string): UploadSignature {
     timestamp,
     signature,
     folder,
-    allowedFormats: ALLOWED_FORMATS,
+    allowedFormats,
     uploadUrl: `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
   };
 }

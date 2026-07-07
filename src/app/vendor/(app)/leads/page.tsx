@@ -5,6 +5,7 @@ import { requireVendor } from "@/server/auth/guard";
 import { getProfile } from "@/server/vendors/service";
 import { listLeads } from "@/server/leads/service";
 import { CopyLinkButton } from "@/components/vendor/CopyLinkButton";
+import { VendorPageHeader } from "@/components/vendor/VendorPageHeader";
 
 export const metadata: Metadata = { title: "Leads" };
 export const dynamic = "force-dynamic";
@@ -49,25 +50,24 @@ export default async function VendorLeadsPage() {
   const chips = dayChips(leads);
 
   return (
-    <div className="max-w-3xl space-y-[var(--space-2xl)]">
-      <header className="flex items-start justify-between gap-[var(--space-lg)] print:hidden">
-        <div>
-          <p className="kicker opacity-60">Leads</p>
-          <h1 className="f-exat f-h60 mt-1">Your leads</h1>
-          <p className="f-paragraph-small mt-[var(--space-sm)] opacity-75 text-pretty">
-            Put this QR on your stall — shoppers scan it to share their contact with you.
-          </p>
-        </div>
-        {leads.length > 0 && (
-          <a
-            href="/api/vendor/leads/export"
-            className="f-paragraph-small shrink-0 rounded-full border px-[var(--space-md)] py-[var(--space-xs)] font-bold"
-            style={{ borderColor: "color-mix(in srgb, currentColor 35%, transparent)" }}
-          >
-            Export CSV
-          </a>
-        )}
-      </header>
+    <div className="max-w-[var(--w-prose)] space-y-[var(--space-2xl)]">
+      <VendorPageHeader
+        className="print:hidden"
+        kicker="Leads"
+        title="Your leads"
+        description="Put this QR on your stall — shoppers scan it to share their contact with you."
+        action={
+          leads.length > 0 ? (
+            <a
+              href="/api/vendor/leads/export"
+              className="f-paragraph-small inline-flex min-h-9 items-center rounded-full border px-[var(--space-md)] py-[var(--space-xs)] font-bold"
+              style={{ borderColor: "color-mix(in srgb, currentColor 35%, transparent)" }}
+            >
+              Export CSV
+            </a>
+          ) : undefined
+        }
+      />
 
       {/* QR tile — the print target (print CSS shows QR + brand only). */}
       <section

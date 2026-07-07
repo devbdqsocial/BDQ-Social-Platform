@@ -4,6 +4,7 @@ import { requireVendor } from "@/server/auth/guard";
 import { getProfile } from "@/server/vendors/service";
 import { getOrCreateContract } from "@/server/vendors/contract";
 import { signContractAction } from "./actions";
+import { VendorPageHeader } from "@/components/vendor/VendorPageHeader";
 
 export const metadata: Metadata = { title: "Contract" };
 
@@ -25,11 +26,12 @@ export default async function VendorContractPage() {
   const signed = contract.status === "SIGNED";
 
   return (
-    <div className="max-w-2xl space-y-[var(--space-2xl)]">
-      <div className="flex items-center gap-[var(--space-md)]">
-        <h1 className="f-exat f-h60">Participation contract</h1>
-        <span className={signed ? "badge-bdq" : "badge-bdq badge-bdq--muted"}>{signed ? "Signed" : "Not signed"}</span>
-      </div>
+    <div className="max-w-[var(--w-prose)] space-y-[var(--space-2xl)]">
+      <VendorPageHeader
+        kicker="Contract"
+        title="Participation contract"
+        action={<span className={signed ? "badge-bdq" : "badge-bdq badge-bdq--muted"}>{signed ? "Signed" : "Not signed"}</span>}
+      />
 
       <div className="rounded-[var(--radius-lg)] p-[var(--space-xl)]" style={{ border: "1px solid color-mix(in srgb, currentColor 16%, transparent)" }}>
         <h2 className="f-h32 f-exat">{profile.brandName} · stall agreement</h2>
@@ -49,8 +51,8 @@ export default async function VendorContractPage() {
             <input type="checkbox" name="agree" className="mt-0.5 size-4 accent-[var(--light-blue)]" />
             I, on behalf of {profile.brandName}, have read and agree to the terms above.
           </label>
-          <button type="submit" data-cursor className="btn btn--lg btn--accent">
-            <span className="btn__text">Agree &amp; sign</span>
+          <button type="submit" className="bdq-btn px-[var(--space-2xl)]">
+            Agree &amp; sign
           </button>
         </form>
       )}

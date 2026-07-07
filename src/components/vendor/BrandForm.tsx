@@ -9,6 +9,7 @@ import { BdqField, BdqInput, BdqTextarea, BdqSelect, BdqSubmit } from "@/compone
 import { PRODUCT_CATEGORIES } from "@/server/schemas";
 import { phoneE164Optional, urlOptional, instagramHandle } from "@/lib/validators";
 import { useFieldValidation } from "@/lib/use-field-validation";
+import { useUnsavedGuard } from "@/lib/use-unsaved-guard";
 
 export type BrandProfile = {
   brandName: string;
@@ -27,6 +28,8 @@ export type BrandProfile = {
 export function BrandForm({ profile }: { profile: BrandProfile }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  useUnsavedGuard(dirty);
   const brandDefault = profile.brandName === "New vendor" ? "" : profile.brandName;
   const whatsappField = useFieldValidation(phoneE164Optional);
   const websiteField = useFieldValidation(urlOptional);
@@ -40,6 +43,7 @@ export function BrandForm({ profile }: { profile: BrandProfile }) {
     setBusy(true);
     try {
       await saveProfileAction(fd);
+      setDirty(false);
       toast.success("Brand details saved");
       router.refresh();
     } catch (err) {
@@ -50,7 +54,7 @@ export function BrandForm({ profile }: { profile: BrandProfile }) {
   };
 
   return (
-    <form onSubmit={submit} className="space-y-[var(--space-xl)]">
+    <form onSubmit={submit} onChange={() => setDirty(true)} className="space-y-[var(--space-xl)]">
       <div className="grid gap-[var(--space-lg)] sm:grid-cols-2">
         <BdqField label="Brand name *"><BdqInput name="brandName" required defaultValue={brandDefault} placeholder="Your public brand" /></BdqField>
         <BdqField label="Registered / legal name"><BdqInput name="registeredName" defaultValue={profile.registeredName ?? ""} placeholder="As on PAN / GST" /></BdqField>
@@ -90,13 +94,16 @@ export function BrandForm({ profile }: { profile: BrandProfile }) {
         <BdqTextarea name="description" rows={3} defaultValue={profile.description ?? ""} placeholder="A line or two about your brand" />
       </BdqField>
 
-      <div className="grid gap-[var(--space-xl)] pt-[var(--space-lg)] sm:grid-cols-3" style={{ borderTop: "1px solid color-mix(in srgb, currentColor 16%, transparent)" }}>
+      <div className="grid grid-cols-1 gap-[var(--space-xl)] pt-[var(--space-lg)] md:grid-cols-3" style={{ borderTop: "1px solid color-mix(in srgb, currentColor 16%, transparent)" }}>
         <AssetUploader kind="LOGO" label="Logo" assets={profile.assets} />
         <AssetUploader kind="BANNER" label="Banner" assets={profile.assets} />
         <AssetUploader kind="PRODUCT" label="Product photos" assets={profile.assets} />
       </div>
 
-      <BdqSubmit lg disabled={busy}>{busy ? "Saving…" : "Save & continue"}</BdqSubmit>
+      <div className="flex flex-wrap items-center gap-[var(--space-md)]">
+        <BdqSubmit lg disabled={busy}>{busy ? "Saving…" : "Save & continue"}</BdqSubmit>
+        {dirty && !busy && <span className="f-paragraph-small opacity-60">Unsaved changes</span>}
+      </div>
     </form>
   );
 }

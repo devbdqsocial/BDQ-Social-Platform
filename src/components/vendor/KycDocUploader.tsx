@@ -3,10 +3,26 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { isAllowedImage } from "@/lib/assets";
+import { isAllowedKycFile } from "@/lib/assets";
 import { getKycUploadSignatureAction, saveKycDocAction, deleteKycDocAction } from "@/app/vendor/(app)/profile/actions";
 
-export function KycDocUploader({ docType, label, current }: { docType: string; label: string; current: string | null }) {
+const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
+  PENDING: { label: "In review", cls: "badge-bdq badge-bdq--muted" },
+  VERIFIED: { label: "Verified", cls: "badge-bdq" },
+  REJECTED: { label: "Re-upload needed", cls: "badge-bdq" },
+};
+
+export function KycDocUploader({
+  docType,
+  label,
+  current,
+  status,
+}: {
+  docType: string;
+  label: string;
+  current: string | null;
+  status?: string | null;
+}) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -16,8 +32,8 @@ export function KycDocUploader({ docType, label, current }: { docType: string; l
     const file = e.target.files?.[0];
     if (!file) return;
     setErr(null);
-    if (!isAllowedImage(file.type, file.size)) {
-      setErr("Upload a clear photo/scan (image under 5 MB).");
+    if (!isAllowedKycFile(file.type, file.size)) {
+      setErr("Upload a clear photo, scan, or PDF under 5 MB.");
       return;
     }
     setBusy(true);
@@ -31,7 +47,11 @@ export function KycDocUploader({ docType, label, current }: { docType: string; l
       fd.append("folder", sig.folder);
       fd.append("allowed_formats", sig.allowedFormats);
       const res = await fetch(sig.uploadUrl, { method: "POST", body: fd });
-      if (!res.ok) throw new Error("Upload failed");
+      if (!res.ok) {
+        // Surface Cloudinary's reason (signature/format rejects) instead of a generic failure.
+        const detail = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
+        throw new Error(detail?.error?.message ?? "Upload failed");
+      }
       const json = (await res.json()) as { secure_url: string; public_id: string };
       await saveKycDocAction(docType, json.secure_url, json.public_id);
       toast.success(`${label} uploaded`);
@@ -51,7 +71,7 @@ export function KycDocUploader({ docType, label, current }: { docType: string; l
     router.refresh();
   };
 
-  const pill = "f-paragraph-small rounded-full border px-[var(--space-md)] py-[var(--space-xs)] font-bold transition-colors disabled:opacity-50";
+  const pill = "f-paragraph-small min-h-9 rounded-full border px-[var(--space-md)] py-[var(--space-xs)] font-bold transition-colors disabled:opacity-50";
   const pillStyle = { borderColor: "color-mix(in srgb, currentColor 35%, transparent)" } as const;
   return (
     <div
@@ -59,7 +79,17 @@ export function KycDocUploader({ docType, label, current }: { docType: string; l
       style={{ border: "1px solid color-mix(in srgb, currentColor 16%, transparent)" }}
     >
       <div className="min-w-0">
-        <p className="f-paragraph-small font-bold">{label}</p>
+        <p className="f-paragraph-small flex flex-wrap items-center gap-[var(--space-sm)] font-bold">
+          {label}
+          {current && status && STATUS_BADGE[status] && (
+            <span
+              className={STATUS_BADGE[status].cls}
+              style={status === "REJECTED" ? { background: "var(--red)", color: "var(--bgcolor)" } : undefined}
+            >
+              {STATUS_BADGE[status].label}
+            </span>
+          )}
+        </p>
         {current ? (
           <a href={current} target="_blank" rel="noreferrer" className="f-paragraph-small font-bold underline underline-offset-2" style={{ color: "var(--light-blue)" }}>View uploaded</a>
         ) : (
@@ -74,7 +104,7 @@ export function KycDocUploader({ docType, label, current }: { docType: string; l
         <button type="button" disabled={busy} onClick={() => fileRef.current?.click()} className={pill} style={pillStyle}>
           {busy ? "Uploading…" : current ? "Replace" : "Upload"}
         </button>
-        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPick} />
+        <input ref={fileRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={onPick} />
       </div>
     </div>
   );

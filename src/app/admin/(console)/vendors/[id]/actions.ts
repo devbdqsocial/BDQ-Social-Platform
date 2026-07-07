@@ -12,6 +12,7 @@ import {
   logCallback,
   assignStallByAdmin,
   rejectVendor,
+  setKycDocStatus,
   setUnderReview,
 } from "@/server/vendors/admin-service";
 
@@ -91,6 +92,19 @@ export async function recordOfflinePaymentAction(formData: FormData): Promise<Re
       throw e;
     }
     revalidate(id);
+  });
+}
+
+export async function setKycDocStatusAction(formData: FormData): Promise<Result<null>> {
+  return toResult(async () => {
+    const session = await requirePermission("VENDOR_MANAGE");
+    const id = String(formData.get("id"));
+    const docType = String(formData.get("docType"));
+    const status = String(formData.get("status"));
+    if (status !== "VERIFIED" && status !== "REJECTED" && status !== "PENDING") throw new Error("Invalid status");
+    await setKycDocStatus(session, id, docType, status);
+    revalidate(id);
+    revalidatePath("/vendor/documents");
   });
 }
 

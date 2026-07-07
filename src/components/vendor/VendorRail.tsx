@@ -12,7 +12,7 @@ export type RailItem = { href: string; label: string };
  * Separate from the shared admin `ZoneSidebar` so the admin console stays neutral OKLCH
  * (locked rule). Navy `.bg-ink` field, lavender ink, fixed sidebar >=sm + drawer on mobile.
  */
-export function VendorRail({ items, footer }: { items: RailItem[]; footer?: React.ReactNode }) {
+export function VendorRail({ items, footer, bell }: { items: RailItem[]; footer?: React.ReactNode; bell?: React.ReactNode }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -37,11 +37,11 @@ export function VendorRail({ items, footer }: { items: RailItem[]; footer?: Reac
           href={it.href}
           onClick={onClick}
           aria-current={active ? "page" : undefined}
-          className="f-paragraph flex min-h-11 items-center rounded-md px-3 py-2 font-bold transition-colors"
+          className="f-paragraph flex min-h-11 items-center rounded-md px-3 py-2 font-bold transition-colors hover:bg-white/10"
           style={
             active
-              ? { background: "color-mix(in srgb, var(--light-blue) 18%, transparent)", color: "var(--light-blue)" }
-              : { color: "color-mix(in srgb, var(--light-blue) 78%, white)" }
+              ? { background: "color-mix(in srgb, var(--light-blue) 22%, transparent)", color: "color-mix(in srgb, var(--light-blue) 65%, white)" }
+              : { color: "rgba(255,255,255,0.92)" }
           }
         >
           {it.label}
@@ -54,9 +54,12 @@ export function VendorRail({ items, footer }: { items: RailItem[]; footer?: Reac
       {/* Desktop rail */}
       <aside
         className="bdq bg-ink hidden w-60 shrink-0 flex-col p-[var(--space-lg)] sm:flex"
-        style={{ color: "var(--light-blue)" }}
+        style={{ color: "rgba(255,255,255,0.92)" }}
       >
-        <div className="mb-[var(--space-2xl)]">{brandMark}</div>
+        <div className="mb-[var(--space-2xl)] flex items-center justify-between gap-[var(--space-sm)]">
+          {brandMark}
+          {bell}
+        </div>
         <nav className="flex flex-col gap-1">{links()}</nav>
         {footer && <div className="mt-auto pt-[var(--space-2xl)]">{footer}</div>}
       </aside>
@@ -64,7 +67,7 @@ export function VendorRail({ items, footer }: { items: RailItem[]; footer?: Reac
       {/* Mobile top bar */}
       <div
         className="bdq bg-ink flex h-14 items-center justify-between px-[var(--space-lg)] sm:hidden"
-        style={{ color: "var(--light-blue)" }}
+        style={{ color: "rgba(255,255,255,0.92)" }}
       >
         <button
           type="button"
@@ -75,7 +78,7 @@ export function VendorRail({ items, footer }: { items: RailItem[]; footer?: Reac
           <Menu className="size-5" />
         </button>
         {brandMark}
-        <span className="size-11" aria-hidden />
+        {bell ?? <span className="size-11" aria-hidden />}
       </div>
 
       {/* Mobile drawer */}
@@ -84,7 +87,7 @@ export function VendorRail({ items, footer }: { items: RailItem[]; footer?: Reac
           <div className="absolute inset-0 bg-black/50" onClick={() => setOpen(false)} />
           <div
             className="bdq bg-ink absolute inset-y-0 left-0 flex w-[min(16rem,85vw)] flex-col p-[var(--space-lg)] shadow-lg"
-            style={{ color: "var(--light-blue)" }}
+            style={{ color: "rgba(255,255,255,0.92)" }}
           >
             <div className="mb-[var(--space-2xl)] flex items-center justify-between">
               {brandMark}

@@ -7,6 +7,8 @@ import { getProfile } from "@/server/vendors/service";
 import { getContract } from "@/server/vendors/contract";
 import { db } from "@/server/db";
 import { formatPaise } from "@/lib/utils";
+import { cld } from "@/lib/cloudinary-url";
+import { VendorPageHeader } from "@/components/vendor/VendorPageHeader";
 
 export const metadata: Metadata = { title: "Documents" };
 export const dynamic = "force-dynamic";
@@ -32,18 +34,17 @@ export default async function VendorDocuments() {
       payment: { select: { id: true, amount: true, createdAt: true } },
     },
   });
-  const docUrls = (profile.kyc?.docUrls as Record<string, { url: string } | undefined> | null) ?? {};
-  const kycDocs = Object.entries(KYC_LABELS).filter(([k]) => docUrls[k]?.url);
+  const kycDocs = profile.docs.filter((d) => KYC_LABELS[d.docType]);
   const products = profile.assets.filter((a) => a.kind === "PRODUCT" || a.kind === "LOGO" || a.kind === "BANNER");
   const signed = contract?.status === "SIGNED";
 
   return (
-    <div className="max-w-3xl space-y-[var(--space-2xl)]">
-      <div>
-        <p className="kicker opacity-60">Documents</p>
-        <h1 className="f-exat f-h60 mt-1">Documents</h1>
-        <p className="f-paragraph-small mt-[var(--space-sm)] opacity-75">Your agreement, receipts, event rules, and uploads — all in one place.</p>
-      </div>
+    <div className="max-w-[var(--w-prose)] space-y-[var(--space-2xl)]">
+      <VendorPageHeader
+        kicker="Documents"
+        title="Documents"
+        description="Your agreement, receipts, event rules, and uploads — all in one place."
+      />
 
       <div className="grid gap-[var(--space-lg)] sm:grid-cols-2">
         {/* Contract */}
@@ -88,13 +89,20 @@ export default async function VendorDocuments() {
           </div>
         </div>
 
-        {/* KYC docs */}
+        {/* KYC docs — per-document verification status (vendor-portal §Documents) */}
         <div className={TILE} style={tileStyle}>
           <h2 className="f-h32 f-exat">Verification documents</h2>
           <p className="f-paragraph-small opacity-70">{kycDocs.length ? "Documents you uploaded." : "No documents uploaded yet."}</p>
-          <div className="flex flex-wrap items-center gap-[var(--space-md)] pt-[var(--space-xs)]">
-            {kycDocs.map(([k, label]) => (
-              <a key={k} href={docUrls[k]!.url} target="_blank" rel="noreferrer" className={LINK} style={{ color: "var(--light-blue)" }}>{label}</a>
+          <div className="space-y-[var(--space-sm)] pt-[var(--space-xs)]">
+            {kycDocs.map((d) => (
+              <div key={d.docType} className="flex flex-wrap items-center gap-[var(--space-md)]">
+                <a href={d.url} target="_blank" rel="noreferrer" className={LINK} style={{ color: "var(--light-blue)" }}>{KYC_LABELS[d.docType]}</a>
+                {d.status === "VERIFIED" && <span className="badge-bdq">Verified</span>}
+                {d.status === "PENDING" && <span className="badge-bdq badge-bdq--muted">In review</span>}
+                {d.status === "REJECTED" && (
+                  <span className="badge-bdq" style={{ background: "var(--red)", color: "var(--bgcolor)" }}>Re-upload needed</span>
+                )}
+              </div>
             ))}
             <Link href="/vendor/home?step=docs" className="f-paragraph-small font-bold opacity-60 hover:opacity-100">Manage →</Link>
           </div>
@@ -108,7 +116,7 @@ export default async function VendorDocuments() {
           <div className="flex flex-wrap gap-[var(--space-md)] pt-[var(--space-xs)]">
             {products.map((a) => (
               // eslint-disable-next-line @next/next/no-img-element
-              <img key={a.id} src={a.url} alt={a.kind} className="size-16 rounded-[var(--radius-md)] object-cover" style={tileStyle} />
+              <img key={a.id} src={cld(a.url, 128)} alt={a.kind} className="size-16 rounded-[var(--radius-md)] object-cover" style={tileStyle} />
             ))}
           </div>
         </div>

@@ -12,7 +12,7 @@ import { Field } from "@/components/ui/field";
 import { Input, Select } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { formatPaise } from "@/lib/utils";
-import { approveForPaymentAction, assignStallAction, logCallbackAction, recordOfflinePaymentAction, rejectAction } from "./actions";
+import { approveForPaymentAction, assignStallAction, logCallbackAction, recordOfflinePaymentAction, rejectAction, setKycDocStatusAction } from "./actions";
 
 export const metadata: Metadata = { title: "Vendor" };
 
@@ -36,9 +36,13 @@ export default async function AdminVendorDetail({ params }: { params: Promise<{ 
   const socials = (v.socials as { instagram?: string } | null) ?? null;
   const decided = v.approvalStatus === "APPROVED" || v.approvalStatus === "REJECTED";
   const status = STATUS[v.approvalStatus];
-  const docUrls = (v.kyc?.docUrls as Record<string, { url: string } | undefined> | null) ?? {};
   const KYC_DOC_LABELS: Record<string, string> = { pan: "PAN card", fssai: "FSSAI", gst: "GST cert", id: "Photo ID" };
-  const kycDocs = Object.entries(KYC_DOC_LABELS).filter(([k]) => docUrls[k]?.url);
+  const DOC_STATUS: Record<string, { label: string; variant: "warning" | "success" | "danger" }> = {
+    PENDING: { label: "In review", variant: "warning" },
+    VERIFIED: { label: "Verified", variant: "success" },
+    REJECTED: { label: "Rejected", variant: "danger" },
+  };
+  const kycDocs = v.docs.filter((d) => KYC_DOC_LABELS[d.docType]);
   const reserved = v.bookings.find((b) => b.status === "RESERVED");
   const pendingPayments = v.bookings.filter((b) => b.status === "PENDING_PAYMENT");
   const signed = v.contract?.status === "SIGNED";
@@ -66,13 +70,37 @@ export default async function AdminVendorDetail({ params }: { params: Promise<{ 
           <p className="sm:col-span-2"><span className="text-muted-foreground">KYC numbers:</span>{" "}
             {v.kyc ? `PAN ${v.kyc.pan ?? "—"} · FSSAI ${v.kyc.fssai ?? "—"} · GSTIN ${v.kyc.gstin ?? "—"}` : "not submitted"}
           </p>
-          <p className="sm:col-span-2 flex flex-wrap items-center gap-2">
+          <div className="sm:col-span-2 space-y-1.5">
             <span className="text-muted-foreground">KYC documents:</span>
-            {kycDocs.length === 0 && <span className="text-muted-foreground">none uploaded</span>}
-            {kycDocs.map(([k, label]) => (
-              <a key={k} href={docUrls[k]!.url} target="_blank" rel="noreferrer" className="text-primary hover:underline">{label}</a>
-            ))}
-          </p>
+            {kycDocs.length === 0 && <span className="ml-2 text-muted-foreground">none uploaded</span>}
+            {kycDocs.map((d) => {
+              const st = DOC_STATUS[d.status] ?? DOC_STATUS.PENDING;
+              return (
+                <div key={d.docType} className="flex flex-wrap items-center gap-2">
+                  <a href={d.url} target="_blank" rel="noreferrer" className="text-primary hover:underline">
+                    {KYC_DOC_LABELS[d.docType]}
+                  </a>
+                  <Badge variant={st.variant}>{st.label}</Badge>
+                  {d.status !== "VERIFIED" && (
+                    <ActionForm action={setKycDocStatusAction} success="Document verified" className="inline">
+                      <input type="hidden" name="id" value={v.id} />
+                      <input type="hidden" name="docType" value={d.docType} />
+                      <input type="hidden" name="status" value="VERIFIED" />
+                      <Button type="submit" variant="outline" size="sm">Verify</Button>
+                    </ActionForm>
+                  )}
+                  {d.status !== "REJECTED" && (
+                    <ActionForm action={setKycDocStatusAction} success="Document rejected — vendor asked to re-upload" className="inline">
+                      <input type="hidden" name="id" value={v.id} />
+                      <input type="hidden" name="docType" value={d.docType} />
+                      <input type="hidden" name="status" value="REJECTED" />
+                      <Button type="submit" variant="ghost" size="sm">Reject</Button>
+                    </ActionForm>
+                  )}
+                </div>
+              );
+            })}
+          </div>
           <p className="sm:col-span-2 flex flex-wrap items-center gap-2">
             <span className="text-muted-foreground">Agreement:</span>
             <Badge variant={signed ? "success" : "warning"}>{signed ? "Signed" : "Not signed"}</Badge>
@@ -103,10 +131,23 @@ export default async function AdminVendorDetail({ params }: { params: Promise<{ 
           <CardHeader>
             <CardTitle className="text-base">Assigned stalls</CardTitle>
           </CardHeader>
-          <CardContent className="pt-0 text-sm">
-            {v.bookings.map((b) => (
-              <p key={b.id} className="text-muted-foreground">{b.event.name} · {b.stall.label} · {b.status}</p>
-            ))}
+          <CardContent className="space-y-1.5 pt-0 text-sm">
+            {v.bookings.map((b) => {
+              const agreementSigned = b.agreement?.status === "SIGNED";
+              return (
+                <p key={b.id} className="flex flex-wrap items-center gap-2 text-muted-foreground">
+                  {b.event.name} · {b.stall.label} · {b.status}
+                  <Badge variant={agreementSigned ? "success" : "warning"}>
+                    {agreementSigned ? "Event agreement signed" : "Event agreement pending"}
+                  </Badge>
+                  {agreementSigned && b.agreement?.signedAt && (
+                    <span className="text-xs">
+                      {b.agreement.signerName ? `by ${b.agreement.signerName} · ` : ""}{fmtDateTime(b.agreement.signedAt)}
+                    </span>
+                  )}
+                </p>
+              );
+            })}
           </CardContent>
         </Card>
       )}

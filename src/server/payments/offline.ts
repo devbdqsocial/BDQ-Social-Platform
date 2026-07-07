@@ -1,6 +1,8 @@
 import "server-only";
 import { Prisma, type PaymentMode } from "@prisma/client";
 import { withAuditTx } from "@/server/audit";
+import { db } from "@/server/db";
+import { enqueueVendorNotification } from "@/server/notifications/vendor";
 import type { Session } from "@/server/auth/guard";
 
 type OfflinePaymentCode =
@@ -82,9 +84,9 @@ export async function createOfflinePayment(tx: Prisma.TransactionClient, input: 
   }
 }
 
-export function recordOfflineStallPayment(session: Session, input: OfflinePaymentDetailsInput & { bookingId: string }) {
+export async function recordOfflineStallPayment(session: Session, input: OfflinePaymentDetailsInput & { bookingId: string }) {
   const details = normalizeOfflinePaymentDetails(input);
-  return withAuditTx(session, { action: "OFFLINE_PAYMENT", entity: "Booking", entityId: input.bookingId }, async (tx) => {
+  const result = await withAuditTx(session, { action: "OFFLINE_PAYMENT", entity: "Booking", entityId: input.bookingId }, async (tx) => {
     const before = await tx.booking.findUnique({
       where: { id: input.bookingId },
       select: {
@@ -109,4 +111,11 @@ export function recordOfflineStallPayment(session: Session, input: OfflinePaymen
       },
     };
   });
+
+  // Post-commit vendor confirmation — the offline path mirrors the webhook path (same dedupe key).
+  const b = await db.booking.findUnique({ where: { id: input.bookingId }, select: { vendorProfileId: true } });
+  if (b?.vendorProfileId) {
+    await enqueueVendorNotification(b.vendorProfileId, "vendor-booking-confirmed", { bookingId: input.bookingId }, `vendor-booked:${input.bookingId}`);
+  }
+  return result;
 }

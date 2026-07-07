@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { usePhoneOtp } from "./usePhoneOtp";
-import { Button } from "@/components/ui/button";
 import { phone10, otp6, digitsCapped } from "@/lib/validators";
 import { useFieldValidation } from "@/lib/use-field-validation";
 
@@ -39,8 +38,8 @@ export function PhoneLogin({
         <>
           <label className="block text-sm font-medium">
             Phone number
-            <div className="mt-1 flex h-11 items-center gap-2 rounded-md border border-border bg-background px-3 aria-invalid:border-destructive" aria-invalid={!!phoneField.error}>
-              <span className="text-sm text-muted-foreground">+91</span>
+            <div className="bdq-input mt-1 flex h-11 items-center gap-2" aria-invalid={!!phoneField.error}>
+              <span className="text-sm opacity-60">+91</span>
               <input
                 type="tel"
                 inputMode="numeric"
@@ -54,14 +53,14 @@ export function PhoneLogin({
                 onBlur={() => local && phoneField.validate(local)}
                 aria-invalid={!!phoneField.error}
                 placeholder="9876543210"
-                className="h-full w-full bg-transparent text-sm outline-none"
+                className="h-full w-full bg-transparent text-sm text-current outline-none placeholder:opacity-45"
               />
             </div>
           </label>
-          {phoneField.error && <p role="alert" className="text-sm text-destructive">{phoneField.error}</p>}
-          <Button className="w-full" disabled={loading} onClick={send}>
+          {phoneField.error && <p role="alert" className="text-sm font-bold" style={{ color: "var(--red)" }}>{phoneField.error}</p>}
+          <button type="button" className="bdq-btn w-full" disabled={loading} onClick={send}>
             {loading ? "Sending…" : "Send OTP"}
-          </Button>
+          </button>
         </>
       ) : (
         <>
@@ -79,17 +78,17 @@ export function PhoneLogin({
               onBlur={() => code && otpField.validate(code)}
               aria-invalid={!!otpField.error}
               placeholder="123456"
-              className="mt-1 h-11 w-full rounded-md border border-border bg-background px-3 text-center text-lg tracking-[0.4em] aria-invalid:border-destructive"
+              className="bdq-input mt-1 h-11 w-full text-center text-lg text-current tracking-[0.4em]"
             />
           </label>
-          {otpField.error && <p role="alert" className="text-sm text-destructive">{otpField.error}</p>}
-          <Button className="w-full" disabled={loading} onClick={verifyCode}>
+          {otpField.error && <p role="alert" className="text-sm font-bold" style={{ color: "var(--red)" }}>{otpField.error}</p>}
+          <button type="button" className="bdq-btn w-full" disabled={loading} onClick={verifyCode}>
             {loading ? "Verifying…" : "Verify & continue"}
-          </Button>
+          </button>
         </>
       )}
 
-      {status && <p role="status" aria-live="polite" className="text-sm text-muted-foreground">{status}</p>}
+      {status && <p role="status" aria-live="polite" className="text-sm opacity-70">{status}</p>}
       <div id="recaptcha" />
     </div>
   );

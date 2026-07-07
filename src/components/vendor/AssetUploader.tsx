@@ -73,13 +73,13 @@ export function AssetUploader({
 
   return (
     <div className="space-y-[var(--space-md)]">
-      <div className="flex items-center gap-[var(--space-md)]">
-        <h3 className="f-paragraph-small font-bold">{label}</h3>
+      <div className="flex flex-wrap items-center gap-[var(--space-md)]">
+        <h3 className="f-paragraph-small min-w-0 font-bold">{label}</h3>
         <button
           type="button"
           disabled={busy}
           onClick={() => fileRef.current?.click()}
-          className="f-paragraph-small rounded-full border px-[var(--space-md)] py-[var(--space-xs)] font-bold transition-colors disabled:opacity-50"
+          className="f-paragraph-small min-h-9 shrink-0 rounded-full border px-[var(--space-md)] py-[var(--space-xs)] font-bold transition-colors disabled:opacity-50"
           style={{ borderColor: "color-mix(in srgb, currentColor 35%, transparent)" }}
         >
           {busy ? "Uploading…" : "Upload"}

@@ -12,3 +12,8 @@ export function isAllowedAssetKind(k: string): k is UploadableAssetKind {
 export function isAllowedImage(type: string, size: number): boolean {
   return type.startsWith("image/") && size > 0 && size <= MAX_ASSET_BYTES;
 }
+
+/** KYC documents also accept PDFs (brand assets stay image-only). */
+export function isAllowedKycFile(type: string, size: number): boolean {
+  return isAllowedImage(type, size) || (type === "application/pdf" && size > 0 && size <= MAX_ASSET_BYTES);
+}

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { requireVendor } from "@/server/auth/guard";
@@ -15,8 +16,10 @@ import { ContractSign } from "@/components/vendor/ContractSign";
 import { PayStep } from "@/components/vendor/PayStep";
 import { VendorDayCard } from "@/components/vendor/VendorDayCard";
 import { BookingAgreementSign } from "@/components/vendor/BookingAgreementSign";
+import { StallWaitlistJoin } from "@/components/vendor/StallWaitlistJoin";
 import { getBookingAgreement } from "@/server/bookings/agreement";
 
+export const metadata: Metadata = { title: "Vendor home" };
 export const dynamic = "force-dynamic";
 
 const fmtDateTime = (d: Date) =>
@@ -37,15 +40,17 @@ export default async function VendorHome({ searchParams }: { searchParams: Promi
       <div className="max-w-xl space-y-[var(--space-lg)]">
         <h1 className="f-exat f-h60">Let&apos;s get started</h1>
         <p className="f-paragraph opacity-80">We couldn&apos;t find your vendor profile. Sign up to begin.</p>
-        <Link href="/vendor/signup?zone=vendor" className="btn btn--accent" data-cursor>
-          <span className="btn__text">Become a vendor</span>
+        <Link href="/vendor/signup?zone=vendor" className="bdq-btn">
+          Become a vendor
         </Link>
       </div>
     );
   }
 
   const contract = await getContract(profile.id);
-  const booking = await db.booking.findFirst({
+  // All active bookings (multi-event nav): the newest drives the application spine; every
+  // BOOKED one gets its own day card below.
+  const activeBookings = await db.booking.findMany({
     where: { vendorProfileId: profile.id, status: { in: ["RESERVED", "PENDING_PAYMENT", "BOOKED"] } },
     orderBy: { createdAt: "desc" },
     include: {
@@ -53,10 +58,14 @@ export default async function VendorHome({ searchParams }: { searchParams: Promi
       event: { select: { name: true, startsAt: true, endsAt: true, loadInStartsAt: true, loadInEndsAt: true } },
     },
   });
+  const booking = activeBookings[0] ?? null;
+  const now = new Date();
+  const bookedUpcoming = activeBookings.filter((b) => b.status === "BOOKED" && b.event.endsAt >= now);
+  const bookedEnded = activeBookings.filter((b) => b.status === "BOOKED" && b.event.endsAt < now);
 
-  const docUrls = (profile.kyc?.docUrls as Record<string, { url: string } | undefined> | null) ?? {};
+  const docs = Object.fromEntries(profile.docs.map((d) => [d.docType, { url: d.url, status: d.status }]));
   const brandDone = profile.brandName !== "New vendor" && !!profile.products && !!profile.productCategory;
-  const docsDone = !!docUrls.pan;
+  const docsDone = !!docs.pan;
   const stallDone = !!booking;
   const signed = contract?.status === "SIGNED";
   const approvedForPay = booking?.status === "PENDING_PAYMENT";
@@ -159,9 +168,18 @@ export default async function VendorHome({ searchParams }: { searchParams: Promi
   });
 
   const logo = primaryLogo(profile.assets);
+  // Post-event next step: is there a future market to book, or should they waitlist?
+  const nextEdition =
+    bookedEnded.length > 0 && bookedUpcoming.length === 0
+      ? await db.event.findFirst({
+          where: { status: "PUBLISHED", startsAt: { gt: now }, vendorStallsEnabled: true },
+          select: { id: true },
+          orderBy: { startsAt: "asc" },
+        })
+      : null;
 
   return (
-    <div className="mx-auto max-w-[52rem] space-y-[var(--space-3xl)]">
+    <div className="max-w-[var(--w-content)] space-y-[var(--space-3xl)]">
       {/* Header */}
       <header className="flex items-center gap-[var(--space-lg)]">
         {logo ? (
@@ -205,7 +223,7 @@ export default async function VendorHome({ searchParams }: { searchParams: Promi
 
           {current === "docs" && (
             <KycForm
-              kyc={{ pan: profile.kyc?.pan ?? null, fssai: profile.kyc?.fssai ?? null, gstin: profile.kyc?.gstin ?? null, docs: docUrls }}
+              kyc={{ pan: profile.kyc?.pan ?? null, fssai: profile.kyc?.fssai ?? null, gstin: profile.kyc?.gstin ?? null, docs }}
               isFood={isFood}
             />
           )}
@@ -223,8 +241,8 @@ export default async function VendorHome({ searchParams }: { searchParams: Promi
             ) : (
               <div className="space-y-[var(--space-lg)]">
                 <p className="f-paragraph opacity-80">Pick an event and reserve your stall on the live layout.</p>
-                <Link href="/vendor/events" className="btn btn--accent" data-cursor>
-                  <span className="btn__text">Browse markets</span>
+                <Link href="/vendor/events" className="bdq-btn">
+                  Browse markets
                 </Link>
               </div>
             ))}
@@ -304,15 +322,38 @@ export default async function VendorHome({ searchParams }: { searchParams: Promi
         </section>
       </div>
 
-      {paid && booking && (
+      {bookedUpcoming.map((b) => (
         <VendorDayCard
-          stallLabel={booking.stall.label}
-          eventName={booking.event.name}
-          loadInStartsAt={booking.event.loadInStartsAt}
-          loadInEndsAt={booking.event.loadInEndsAt}
-          startsAt={booking.event.startsAt}
-          endsAt={booking.event.endsAt}
+          key={b.id}
+          stallLabel={b.stall.label}
+          eventName={b.event.name}
+          loadInStartsAt={b.event.loadInStartsAt}
+          loadInEndsAt={b.event.loadInEndsAt}
+          startsAt={b.event.startsAt}
+          endsAt={b.event.endsAt}
         />
+      ))}
+
+      {/* Post-event mode (vendor-portal §post-event): leads nudge + next edition. */}
+      {bookedEnded.length > 0 && bookedUpcoming.length === 0 && (
+        <section
+          className="space-y-[var(--space-md)] rounded-[var(--radius-lg)] p-[var(--space-xl)]"
+          style={{ border: "1px solid color-mix(in srgb, currentColor 16%, transparent)", background: "color-mix(in srgb, currentColor 3%, transparent)" }}
+        >
+          <p className="kicker opacity-60">After the market</p>
+          <p className="f-h32 f-exat">How did it go?</p>
+          <p className="f-paragraph-small opacity-75 text-pretty">
+            {bookedEnded[0].event.name} has wrapped. Export your leads while they&apos;re warm and line up your next market.
+          </p>
+          <div className="flex flex-wrap items-center gap-[var(--space-md)]">
+            <Link href="/vendor/leads" className="bdq-btn">Export your leads</Link>
+            {nextEdition ? (
+              <Link href="/vendor/events" className="bdq-btn bdq-btn--ghost">Book the next edition</Link>
+            ) : (
+              <StallWaitlistJoin eventId={bookedEnded[0].eventId} ghost />
+            )}
+          </div>
+        </section>
       )}
     </div>
   );

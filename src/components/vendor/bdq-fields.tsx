@@ -1,15 +1,12 @@
 import * as React from "react";
 
 /**
- * BDQ form primitives for the vendor portal (design-system §3.2): underline inputs on the
- * `.bdq` cream surface, em-scaled type, lavender focus. Shared by the onboarding step forms.
+ * BDQ form primitives for the vendor portal — bordered inputs + solid buttons
+ * (owner-approved Refined-BDQ override of design.md §3.2's underline style;
+ * classes live in globals.css under `.bdq .bdq-input` / `.bdq .bdq-btn`).
  */
 
-const UNDERLINE = "f-paragraph w-full bg-transparent pb-[var(--space-sm)] outline-none placeholder:opacity-45 disabled:opacity-50";
-const UNDERLINE_STYLE: React.CSSProperties = {
-  borderBottom: "1px solid color-mix(in srgb, currentColor 35%, transparent)",
-  color: "var(--color)",
-};
+const FIELD = "f-paragraph bdq-input";
 
 export function BdqField({
   label,
@@ -33,19 +30,19 @@ export function BdqField({
   );
 }
 
-export function BdqInput({ className, style, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
-  return <input {...props} className={`${UNDERLINE} ${className ?? ""}`} style={{ ...UNDERLINE_STYLE, ...style }} />;
+export function BdqInput({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
+  return <input {...props} className={`${FIELD} ${className ?? ""}`} />;
 }
 
-export function BdqTextarea({ className, style, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea {...props} className={`${UNDERLINE} resize-none ${className ?? ""}`} style={{ ...UNDERLINE_STYLE, ...style }} />;
+export function BdqTextarea({ className, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return <textarea {...props} className={`${FIELD} resize-none ${className ?? ""}`} />;
 }
 
-export function BdqSelect({ className, style, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
-  return <select {...props} className={`${UNDERLINE} ${className ?? ""}`} style={{ ...UNDERLINE_STYLE, ...style }} />;
+export function BdqSelect({ className, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
+  return <select {...props} className={`${FIELD} ${className ?? ""}`} />;
 }
 
-/** Angled BDQ submit button (`.btn`). Renders the required `.btn__text` span; `lg` for long labels. */
+/** Solid submit button; `accent={false}` renders the ghost (outline) variant for secondary actions. */
 export function BdqSubmit({
   children,
   accent = true,
@@ -53,8 +50,8 @@ export function BdqSubmit({
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & { accent?: boolean; lg?: boolean }) {
   return (
-    <button type="submit" data-cursor {...props} className={`btn${lg ? " btn--lg" : ""}${accent ? " btn--accent" : ""}`}>
-      <span className="btn__text">{children}</span>
+    <button type="submit" {...props} className={`bdq-btn${accent ? "" : " bdq-btn--ghost"}${lg ? " px-[var(--space-2xl)]" : ""}`}>
+      {children}
     </button>
   );
 }

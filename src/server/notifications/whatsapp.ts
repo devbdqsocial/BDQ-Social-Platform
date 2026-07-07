@@ -1,7 +1,9 @@
 import "server-only";
 import { db } from "@/server/db";
-import { assertWhatsAppSent, whatsAppConfigured, whatsAppProvider, sendWhatsApp, sendWhatsAppImage, type WhatsAppSendResult } from "@/lib/whatsapp";
-import { buildTicketWhatsApp, buildWaitlistWhatsApp } from "@/lib/whatsapp-template";
+import { assertWhatsAppSent, whatsAppConfigured, whatsAppProvider, sendWhatsApp, sendWhatsAppImage, sendWhatsAppText, type WhatsAppSendResult } from "@/lib/whatsapp";
+import { buildTicketWhatsApp, buildVendorWhatsApp, buildWaitlistWhatsApp, type VendorWhatsAppData } from "@/lib/whatsapp-template";
+import type { VendorNotifTemplate } from "@/lib/notify-channels";
+import { fmtDateTime } from "@/lib/date-formats";
 import { openWaTicketQrEnabled } from "@/lib/openwa";
 import { toQrBuffer } from "@/lib/qr-token";
 
@@ -41,6 +43,70 @@ export async function sendTicketWhatsApp(orderId: string, toPhone: string): Prom
   }
 
   return sent;
+}
+
+const VENDOR_WA_TEMPLATE_ENV: Record<VendorNotifTemplate, string> = {
+  "vendor-application": "WHATSAPP_TEMPLATE_VENDOR_APPLICATION",
+  "vendor-approved": "WHATSAPP_TEMPLATE_VENDOR_APPROVED",
+  "vendor-rejected": "WHATSAPP_TEMPLATE_VENDOR_REJECTED",
+  "vendor-booking-confirmed": "WHATSAPP_TEMPLATE_VENDOR_BOOKED",
+  "vendor-event-reminder": "WHATSAPP_TEMPLATE_VENDOR_REMINDER",
+  "vendor-loadin-reminder": "WHATSAPP_TEMPLATE_VENDOR_LOADIN",
+};
+
+/**
+ * Cloud/interakt providers need a pre-approved template per message type; openwa sends free text.
+ * Used by the enqueue helper so WHATSAPP rows are only created when they can actually deliver
+ * (avoids dead retry loops until templates are approved).
+ */
+export function vendorWhatsAppReady(template: VendorNotifTemplate): boolean {
+  if (!whatsAppConfigured()) return false;
+  return whatsAppProvider() === "openwa" || !!process.env[VENDOR_WA_TEMPLATE_ENV[template]];
+}
+
+/** Send a vendor lifecycle message over WhatsApp. No-op until a provider is configured. */
+export async function sendVendorWhatsApp(
+  template: VendorNotifTemplate,
+  toPhone: string,
+  payload: { vendorProfileId?: string; bookingId?: string },
+): Promise<WhatsAppSendResult> {
+  if (!whatsAppConfigured()) return { skipped: true };
+  const portalUrl = `https://vendors.${process.env.APP_BASE_DOMAIN ?? "bdqsocial.com"}/home`;
+
+  let data: VendorWhatsAppData | null = null;
+  if (payload.bookingId) {
+    const booking = await db.booking.findUnique({
+      where: { id: payload.bookingId },
+      include: {
+        stall: { select: { label: true } },
+        event: { select: { name: true, loadInStartsAt: true, loadInEndsAt: true } },
+        vendorProfile: { select: { brandName: true } },
+      },
+    });
+    if (booking?.vendorProfile) {
+      data = {
+        brandName: booking.vendorProfile.brandName,
+        stallLabel: booking.stall.label,
+        eventName: booking.event.name,
+        payBy: booking.payBy ? fmtDateTime(booking.payBy) : undefined,
+        loadIn: booking.event.loadInStartsAt
+          ? `${fmtDateTime(booking.event.loadInStartsAt)}${booking.event.loadInEndsAt ? ` - ${fmtDateTime(booking.event.loadInEndsAt)}` : ""}`
+          : undefined,
+        portalUrl,
+      };
+    }
+  } else if (payload.vendorProfileId) {
+    const profile = await db.vendorProfile.findUnique({ where: { id: payload.vendorProfileId }, select: { brandName: true } });
+    if (profile) data = { brandName: profile.brandName, portalUrl };
+  }
+  if (!data) return { skipped: true };
+
+  const { params, text } = buildVendorWhatsApp(template, data);
+  if (whatsAppProvider() === "openwa") return sendWhatsAppText(toPhone, text);
+
+  const templateName = process.env[VENDOR_WA_TEMPLATE_ENV[template]];
+  if (!templateName) return { skipped: true };
+  return sendWhatsApp({ phone: toPhone, template: templateName, params });
 }
 
 /**

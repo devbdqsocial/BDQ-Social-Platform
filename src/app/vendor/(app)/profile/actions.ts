@@ -71,7 +71,7 @@ export async function saveKycAction(formData: FormData): Promise<void> {
 export async function getKycUploadSignatureAction(docType: string): Promise<UploadSignature> {
   await requireVendor();
   if (!isKycDocType(docType)) throw new Error("Invalid document type");
-  return signUpload(`bdq/vendors/kyc/${docType}`);
+  return signUpload(`bdq/vendors/kyc/${docType}`, { allowPdf: true });
 }
 
 export async function saveKycDocAction(docType: string, url: string, publicId: string): Promise<void> {

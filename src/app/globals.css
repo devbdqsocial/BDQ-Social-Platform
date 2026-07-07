@@ -440,6 +440,57 @@ html[data-menu-open="true"] #mouse .mouse__dot {
 .bdq .btn:hover .btn__text, .bdq .btn.hover .btn__text { bottom: 21%; left: 20%; width: 58%; height: 31%; }
 .bdq .btn:disabled { opacity: .45; cursor: default; }
 
+/* Solid button + bordered input for functional surfaces (vendor portal — owner-approved
+   Refined-BDQ override of the underline/clip-path form style; design.md §3.2 note).
+   Public/marketing pages keep the angled `.btn` above. */
+.bdq .bdq-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5em;
+  min-height: 2.75rem; padding: 0.5em 1.75em; border-radius: 0.5rem;
+  font-size: var(--paragraph-small); font-weight: 700; letter-spacing: -0.025em;
+  background: var(--dark-blue); color: #fff; cursor: pointer;
+  transition: background-color .2s ease, opacity .2s ease;
+}
+.bdq .bdq-btn:hover { background: color-mix(in srgb, var(--dark-blue) 82%, var(--light-blue)); }
+.bdq .bdq-btn:focus-visible { outline: 2px solid var(--light-blue); outline-offset: 2px; }
+.bdq .bdq-btn:disabled { opacity: .45; cursor: default; pointer-events: none; }
+.bdq .bdq-btn--ghost {
+  background: transparent; color: inherit;
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+}
+.bdq .bdq-btn--ghost:hover { background: color-mix(in srgb, currentColor 8%, transparent); }
+
+.bdq .bdq-input {
+  width: 100%; border-radius: 0.5rem; padding: 0.5em 0.75em;
+  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+  background: color-mix(in srgb, currentColor 4%, transparent);
+  color: var(--color);
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.bdq .bdq-input::placeholder { color: inherit; opacity: .45; }
+.bdq .bdq-input:focus-visible, .bdq .bdq-input:focus-within {
+  outline: none; border-color: var(--light-blue);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--light-blue) 25%, transparent);
+}
+.bdq .bdq-input[aria-invalid="true"] { border-color: var(--red); }
+.bdq .bdq-input:disabled { opacity: .5; }
+
+/* Loading skeleton blocks (BdqLoading + route loading.tsx files). Shimmer is reduced-motion safe. */
+.bdq .skeleton {
+  position: relative; overflow: hidden; border-radius: 0.5rem;
+  background: color-mix(in srgb, currentColor 8%, transparent);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .bdq .skeleton::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, currentColor 6%, transparent), transparent);
+    animation: bdq-skeleton-sweep 1.6s ease-in-out infinite;
+  }
+}
+@keyframes bdq-skeleton-sweep {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+
 /* Round quantity stepper (checkout). */
 .bdq .qty-btn {
   display: grid; place-items: center; width: 2em; height: 2em;

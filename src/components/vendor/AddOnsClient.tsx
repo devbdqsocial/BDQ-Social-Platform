@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Minus, Plus } from "lucide-react";
 import { formatPaise } from "@/lib/utils";
 import { openCheckout } from "@/lib/razorpay-checkout";
@@ -45,6 +46,7 @@ export function AddOnsClient({ items }: { items: AddOnItem[] }) {
         amountPaise: r.amountPaise,
         description: "Stall add-ons",
         onSuccess: () => {
+          toast.success("Add-ons ordered — see you at load-in");
           router.refresh();
           setQty({});
           setBusy(false);
@@ -96,8 +98,8 @@ export function AddOnsClient({ items }: { items: AddOnItem[] }) {
 
       <div className="flex flex-wrap items-center justify-between gap-[var(--space-lg)]">
         <p className="f-h32 f-exat">Total {formatPaise(total)}</p>
-        <button type="button" disabled={busy || total === 0} onClick={pay} data-cursor className="btn btn--lg btn--accent">
-          <span className="btn__text">{busy ? "Starting…" : "Pay & order"}</span>
+        <button type="button" disabled={busy || total === 0} onClick={pay} className="bdq-btn px-[var(--space-2xl)]">
+          {busy ? "Starting…" : "Pay & order"}
         </button>
       </div>
       {err && <p className="f-paragraph-small font-bold" style={{ color: "var(--red)" }}>{err}</p>}

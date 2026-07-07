@@ -4,6 +4,7 @@ import { db } from "@/server/db";
 import { withAudit } from "@/server/audit";
 import { ACTIVE_BOOKING_STATUSES } from "@/server/bookings/status";
 import { decryptKyc } from "@/server/vendors/service";
+import { enqueueVendorNotification, notifyVendor } from "@/server/notifications/vendor";
 import type { Session } from "@/server/auth/guard";
 
 /** Admin-side vendor review + approval → stall assignment (creates the Booking). */
@@ -30,12 +31,14 @@ export async function getVendor(id: string) {
     include: {
       user: { select: { phone: true, email: true } },
       kyc: true,
+      docs: { orderBy: { docType: "asc" } },
       contract: true,
       assets: { orderBy: { createdAt: "desc" } },
       bookings: {
         include: {
           stall: { select: { label: true, priceInPaise: true, stallType: { select: { priceInPaise: true } } } },
           event: { select: { name: true } },
+          agreement: { select: { status: true, signedAt: true, signerName: true } },
         },
       },
     },
@@ -134,6 +137,8 @@ export function assignStallByAdmin(session: Session, vendorProfileId: string, st
             });
             return b;
           });
+          // Admin assignment also opens a pay window — same "approved, now pay" message.
+          await enqueueVendorNotification(vendorProfileId, "vendor-approved", { bookingId: booking.id }, `vendor-approved:${booking.id}`);
           return { result: booking, after: { stallId, status: booking.status, payBy: booking.payBy } };
         } catch (e) {
           if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
@@ -202,7 +207,40 @@ export function approveForPayment(session: Session, vendorProfileId: string, pay
           });
           return b;
         });
+        // Post-commit: tell the vendor they're approved + the pay-by window (never inside the tx).
+        await enqueueVendorNotification(vendorProfileId, "vendor-approved", { bookingId: updated.id }, `vendor-approved:${updated.id}`);
         return { result: updated, after: { approvalStatus: "APPROVED", bookingId: updated.id, payBy } };
+      },
+    };
+  });
+}
+
+/** Per-document KYC verification (vendor sees the status on Documents; re-upload resets to PENDING). */
+export function setKycDocStatus(
+  session: Session,
+  vendorProfileId: string,
+  docType: string,
+  status: "PENDING" | "VERIFIED" | "REJECTED",
+) {
+  return withAudit(session, { action: "UPDATE", entity: "VendorDoc", entityId: `${vendorProfileId}:${docType}` }, async () => {
+    const before = await db.vendorDoc.findUnique({
+      where: { vendorProfileId_docType: { vendorProfileId, docType } },
+      select: { status: true },
+    });
+    return {
+      before,
+      run: async () => {
+        const d = await db.vendorDoc.update({
+          where: { vendorProfileId_docType: { vendorProfileId, docType } },
+          data: { status, reviewedAt: new Date(), reviewedById: session.userId },
+        });
+        await notifyVendor(vendorProfileId, {
+          type: "vendor-doc-status",
+          title: status === "VERIFIED" ? "Document verified" : status === "REJECTED" ? "A document needs a re-upload" : "Document back in review",
+          body: status === "REJECTED" ? "Open Documents to see which one and upload a clearer copy." : undefined,
+          href: "/vendor/documents",
+        });
+        return { result: d, after: { status: d.status } };
       },
     };
   });
@@ -232,6 +270,7 @@ export function rejectVendor(session: Session, id: string) {
       before,
       run: async () => {
         const v = await db.vendorProfile.update({ where: { id }, data: { approvalStatus: "REJECTED" } });
+        await enqueueVendorNotification(id, "vendor-rejected", {}, `vendor-rejected:${id}`);
         return { result: v, after: { approvalStatus: v.approvalStatus } };
       },
     };

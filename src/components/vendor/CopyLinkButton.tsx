@@ -19,7 +19,7 @@ export function CopyLinkButton({ value }: { value: string }) {
     <button
       type="button"
       onClick={copy}
-      className="f-paragraph-small inline-flex items-center gap-[var(--space-sm)] rounded-full border px-[var(--space-md)] py-[var(--space-xs)] font-bold transition-colors"
+      className="f-paragraph-small inline-flex min-h-9 items-center gap-[var(--space-sm)] rounded-full border px-[var(--space-md)] py-[var(--space-xs)] font-bold transition-colors"
       style={{ borderColor: "color-mix(in srgb, currentColor 35%, transparent)" }}
     >
       {done ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}

@@ -15,7 +15,7 @@ const MapCanvas = dynamic(() => import("@/components/map/MapCanvas"), {
   ssr: false,
   loading: () => (
     <div
-      className="f-paragraph-small grid h-96 place-items-center rounded-[var(--radius-lg)] opacity-70"
+      className="f-paragraph-small grid aspect-[4/3] max-h-96 w-full place-items-center rounded-[var(--radius-lg)] opacity-70"
       style={{ border: "1px solid color-mix(in srgb, currentColor 16%, transparent)" }}
     >
       Loading event layout…
@@ -85,7 +85,7 @@ export function VendorStallReserve({ eventId, stalls, details = {}, extras }: { 
   const chipStyle = { border: "1px solid color-mix(in srgb, currentColor 28%, transparent)" } as const;
 
   return (
-    <div className="grid gap-[var(--space-lg)] lg:grid-cols-[1fr_320px]">
+    <div className="grid gap-[var(--space-lg)] lg:grid-cols-[minmax(0,1fr)_320px]">
       <div className="space-y-[var(--space-lg)]">
         <StallLegend />
         <MapCanvas layout={layout} statuses={statuses} selected={selected} onSelect={toggle} focusLabel={sel ?? null} extras={extras} />
@@ -131,10 +131,9 @@ export function VendorStallReserve({ eventId, stalls, details = {}, extras }: { 
               type="button"
               disabled={busy || status !== "AVAILABLE"}
               onClick={reserve}
-              data-cursor
-              className="btn btn--lg btn--accent"
+              className="bdq-btn w-full"
             >
-              <span className="btn__text">{busy ? "Reserving…" : status === "AVAILABLE" ? `Reserve ${sel}` : "Taken"}</span>
+              {busy ? "Reserving…" : status === "AVAILABLE" ? `Reserve ${sel}` : "Taken"}
             </button>
             {err && <p className="f-paragraph-small font-bold" style={{ color: "var(--red)" }}>{err}</p>}
             <p className="f-paragraph-small opacity-60 text-pretty">
@@ -143,6 +142,29 @@ export function VendorStallReserve({ eventId, stalls, details = {}, extras }: { 
           </div>
         )}
       </aside>
+
+      {/* Mobile sticky action bar — the aside sits below the fold when stacked, so surface
+          the selected stall + Reserve at the bottom of the screen (<lg only). */}
+      {sel && (
+        <div
+          className="bg-ink sticky bottom-0 z-10 -mx-[var(--space-lg)] flex items-center justify-between gap-[var(--space-md)] px-[var(--space-lg)] py-[var(--space-md)] lg:hidden"
+          style={{ color: "rgba(255,255,255,0.95)" }}
+        >
+          <div className="min-w-0">
+            <p className="f-paragraph truncate font-bold">Stall {sel}</p>
+            {price != null && <p className="f-paragraph-small opacity-80">{formatPaise(price)}</p>}
+          </div>
+          <button
+            type="button"
+            disabled={busy || status !== "AVAILABLE"}
+            onClick={reserve}
+            className="f-paragraph-small min-h-11 shrink-0 rounded-lg px-[var(--space-xl)] font-bold disabled:opacity-45"
+            style={{ background: "var(--light-blue)", color: "var(--dark-blue)" }}
+          >
+            {busy ? "Reserving…" : status === "AVAILABLE" ? "Reserve" : "Taken"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

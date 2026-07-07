@@ -8,6 +8,8 @@ import { layoutExtras } from "@/lib/map/lens";
 import { scoreLayout, describeStall } from "@/server/map/scoring";
 import { zoneOf } from "@/lib/map/zones";
 import { VendorStallReserve, type StallDetail } from "@/components/vendor/VendorStallReserve";
+import { VendorPageHeader } from "@/components/vendor/VendorPageHeader";
+import { StallWaitlistJoin } from "@/components/vendor/StallWaitlistJoin";
 
 export const metadata: Metadata = { title: "Pick a stall" };
 
@@ -18,6 +20,9 @@ export default async function VendorEventStallsPage({ params }: { params: Promis
   const { id } = await params;
   const event = await getEventWithStalls(id);
   if (!event) notFound();
+
+  const realStalls = event.stalls.filter((s) => s.kind !== "INFRA");
+  const soldOut = realStalls.length > 0 && !realStalls.some((s) => s.status === "AVAILABLE");
 
   const mapStalls = event.stalls.map((s) => ({
     id: s.id,
@@ -53,25 +58,37 @@ export default async function VendorEventStallsPage({ params }: { params: Promis
 
   return (
     <div className="space-y-[var(--space-xl)]">
-      <header className="flex items-start justify-between gap-[var(--space-lg)]">
-        <div>
-          <p className="kicker opacity-60">Book a stall</p>
-          <h1 className="f-exat f-h60 mt-1">Pick your stall · {event.name}</h1>
-          <p className="f-paragraph-small mt-[var(--space-sm)] opacity-75 text-pretty">
-            Tap an open stall to reserve it. You&apos;ll sign the agreement next; we verify by call and approve you before payment.
-          </p>
-        </div>
-        <Link href="/vendor/events" className="link--split f-paragraph-small shrink-0 font-bold">
-          <span className="arrow">←</span> All markets
-        </Link>
-      </header>
+      <VendorPageHeader
+        kicker="Book a stall"
+        title={<>Pick your stall · {event.name}</>}
+        description="Tap an open stall to reserve it. You'll sign the agreement next; we verify by call and approve you before payment."
+        action={
+          <Link href="/vendor/events" className="link--split f-paragraph-small font-bold">
+            <span className="arrow">←</span> All markets
+          </Link>
+        }
+      />
 
       {!event.vendorStallsEnabled ? (
         <p className="f-paragraph-small opacity-70">This event doesn&apos;t take vendor stalls.</p>
       ) : mapStalls.length === 0 ? (
         <p className="f-paragraph-small opacity-70">The event layout for this market isn&apos;t ready yet — check back soon.</p>
       ) : (
-        <VendorStallReserve eventId={id} stalls={mapStalls} details={details} extras={v2 ? layoutExtras(v2, "vendor") : undefined} />
+        <>
+          {soldOut && (
+            <div
+              className="space-y-[var(--space-md)] rounded-[var(--radius-lg)] p-[var(--space-xl)]"
+              style={{ border: "1px solid color-mix(in srgb, currentColor 16%, transparent)", background: "color-mix(in srgb, currentColor 3%, transparent)" }}
+            >
+              <p className="f-h32 f-exat">All stalls are taken</p>
+              <p className="f-paragraph-small opacity-75 text-pretty">
+                Join the waitlist — if a stall frees up we hold it for the first vendor in line for 24 hours and message you right away.
+              </p>
+              <StallWaitlistJoin eventId={id} />
+            </div>
+          )}
+          <VendorStallReserve eventId={id} stalls={mapStalls} details={details} extras={v2 ? layoutExtras(v2, "vendor") : undefined} />
+        </>
       )}
     </div>
   );

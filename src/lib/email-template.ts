@@ -176,6 +176,33 @@ export function waitlistEmailHtml(o: { eventName: string; url: string }): string
   });
 }
 
+/** Generic vendor-lifecycle email: message panel + optional key/value rows + CTA. */
+export function vendorEmailHtml(o: {
+  preheader: string;
+  eyebrow: string;
+  title: string;
+  intro?: string;
+  message: string;
+  note?: string;
+  rows?: EmailKeyValueRow[];
+  ctaLabel: string;
+  ctaUrl: string;
+}): string {
+  return emailLayout({
+    preheader: o.preheader,
+    eyebrow: o.eyebrow,
+    title: o.title,
+    intro: o.intro,
+    body: `${emailPanel(
+      `<p style="margin:0;color:${brand.ink};font-weight:800">${escapeHtml(o.message)}</p>` +
+        (o.note ? `<p style="margin:8px 0 0;color:${brand.muted}">${escapeHtml(o.note)}</p>` : ""),
+      brand.lavender,
+    )}
+      ${o.rows?.length ? emailPanel(emailKeyValueTable(o.rows), brand.green) : ""}
+      ${emailButton(o.ctaLabel, o.ctaUrl)}`,
+  });
+}
+
 export function staffInviteEmailHtml(o: { url: string; role: string }): string {
   return emailLayout({
     preheader: "You have been invited to the BDQ Social admin portal",

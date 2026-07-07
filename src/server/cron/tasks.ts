@@ -6,6 +6,7 @@ import { releaseExpiredHolds, releaseExpiredPayWindows } from "@/server/bookings
 import { fulfillStallBooking } from "@/server/bookings/payment";
 import { fulfillAddOnOrder } from "@/server/addons/service";
 import { processOutbox } from "@/server/notifications/outbox";
+import { enqueueVendorNotification } from "@/server/notifications/vendor";
 import { materializeDueExpenseSchedules } from "@/server/finance/expenses";
 import { getEventPnl } from "@/server/finance/pnl";
 import { notify } from "@/server/notifications/admin";
@@ -126,8 +127,51 @@ export async function sendEventReminders() {
     }
   }
 
+  // Vendors with a BOOKED stall get the same 24h reminder (email + WhatsApp), BUSINESS-RULES §comms.
+  for (const ev of events) {
+    const bookings = await db.booking.findMany({
+      where: { eventId: ev.id, status: "BOOKED", vendorProfileId: { not: null } },
+      select: { id: true, vendorProfileId: true },
+    });
+    for (const b of bookings) {
+      await enqueueVendorNotification(
+        b.vendorProfileId!,
+        "vendor-event-reminder",
+        { bookingId: b.id, eventId: ev.id },
+        `vendor-reminder:${ev.id}:${b.vendorProfileId}`,
+        { drain: false }, // one drain at the end of this task
+      );
+      enqueued++;
+    }
+  }
+
+  // 2h load-in reminder for BOOKED vendors (dedupe key makes overlapping ticks harmless).
+  const loadInSoon = await db.event.findMany({
+    where: {
+      status: { in: ["PUBLISHED", "LIVE"] },
+      loadInStartsAt: { gte: now, lte: new Date(now.getTime() + 2 * 60 * 60 * 1000) },
+    },
+    select: { id: true },
+  });
+  for (const ev of loadInSoon) {
+    const bookings = await db.booking.findMany({
+      where: { eventId: ev.id, status: "BOOKED", vendorProfileId: { not: null } },
+      select: { id: true, vendorProfileId: true },
+    });
+    for (const b of bookings) {
+      await enqueueVendorNotification(
+        b.vendorProfileId!,
+        "vendor-loadin-reminder",
+        { bookingId: b.id, eventId: ev.id },
+        `vendor-loadin:${ev.id}:${b.vendorProfileId}`,
+        { drain: false },
+      );
+      enqueued++;
+    }
+  }
+
   const result = await processOutbox(100);
-  return { events: events.length, enqueued, ...result };
+  return { events: events.length, loadInEvents: loadInSoon.length, enqueued, ...result };
 }
 
 /**

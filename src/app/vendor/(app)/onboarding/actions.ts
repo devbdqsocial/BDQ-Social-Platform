@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { requireVendor } from "@/server/auth/guard";
 import { getProfile } from "@/server/vendors/service";
+import { db } from "@/server/db";
 import { reserveStall, cancelReservation, StallUnavailableError } from "@/server/bookings/service";
 import { createStallPaymentOrder } from "@/server/bookings/payment";
 import { signBookingAgreement } from "@/server/bookings/agreement";
@@ -82,6 +83,13 @@ export async function signBookingAgreementAction(
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Could not sign the agreement" };
   }
+}
+
+/** Post-payment poll target: fulfilment is webhook-driven, so the client waits for BOOKED. */
+export async function getBookingStatusAction(bookingId: string): Promise<{ status: string | null }> {
+  const { profile } = await vendorCtx();
+  const b = await db.booking.findFirst({ where: { id: bookingId, vendorProfileId: profile.id }, select: { status: true } });
+  return { status: b?.status ?? null };
 }
 
 export async function payStallAction(

@@ -313,7 +313,25 @@ model VendorKyc {
   pan             String?
   fssai           String?
   gstin           String?                           // optional, verify-only (no billing)
-  docUrls         Json?                             // Cloudinary urls
+  docUrls         Json?                             // legacy — superseded by VendorDoc (backfilled)
+}
+
+// Per-document KYC verification (one row per docType, admin-reviewed status).
+// Re-upload resets status to PENDING. Replaces VendorKyc.docUrls.
+model VendorDoc {
+  id              String          @id @default(cuid())
+  vendorProfileId String
+  vendorProfile   VendorProfile @relation(fields: [vendorProfileId], references: [id], onDelete: Cascade)
+  docType         String                            // pan | fssai | gst | id
+  url             String
+  publicId        String
+  status          VendorDocStatus @default(PENDING) // PENDING | VERIFIED | REJECTED
+  reviewedAt      DateTime?
+  reviewedById    String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@unique([vendorProfileId, docType])
 }
 
 model VendorAsset {
