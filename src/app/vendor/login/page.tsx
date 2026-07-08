@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Vendor sign in" };
 
 export default function VendorLoginPage() {
   return (
-    <div className="bdq">
+    <div className="bdq bdq-app">
       <section className="grid min-h-[100svh] lg:grid-cols-2">
         {/* left — big Exat headline on navy/yellow */}
         <div className="bdq-sun paint hidden items-end p-[var(--space-4xl)] lg:flex">

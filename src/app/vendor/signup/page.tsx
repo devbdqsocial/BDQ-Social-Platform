@@ -9,7 +9,7 @@ const STEPS = ["Brand details", "Verification documents", "Pick your stall", "Si
 
 export default function VendorSignupPage() {
   return (
-    <div className="bdq">
+    <div className="bdq bdq-app">
       <section className="grid min-h-[100svh] lg:grid-cols-2">
         {/* left — BDQ pitch */}
         <div className="bdq-rose paint hidden flex-col justify-between p-[var(--space-4xl)] lg:flex">

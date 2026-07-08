@@ -46,6 +46,10 @@ test.describe("vendor portal (signed in)", () => {
     // Regression: the rail must render NAVY — `.bg-ink` was silently losing the cascade to
     // `.bdq`'s background shorthand for as long as it lived inside @layer utilities.
     expect(await page.locator("aside.bg-ink").evaluate((el) => getComputedStyle(el).backgroundColor)).toBe("rgb(1, 6, 91)");
+    // Regression: the page title must stay on the calmer .bdq-app scale (~26px), not balloon
+    // back to the 50px marketing size the shared .bdq zone would otherwise apply.
+    const titlePx = await page.getByRole("heading", { level: 1 }).first().evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+    expect(titlePx).toBeLessThanOrEqual(30);
   });
 
   test("book a stall list", async ({ page }) => {

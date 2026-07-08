@@ -259,6 +259,22 @@
     radial-gradient(90% 60% at 85% 110%, rgba(134, 142, 255, 0.14), transparent 55%);
 }
 
+/* Vendor portal (functional app) — admin-inspired, calmer type scale. Scoped to a vendor-only
+   wrapper so the shared marketing type classes and fsize/heading tokens stay untouched on
+   public/customer surfaces. Must sit AFTER the :root display-size @media overrides (above): a
+   custom property set on this closer ancestor wins over :root for the whole vendor subtree. */
+.bdq-app {
+  --fsize: clamp(0.875rem, 0.8rem + 0.3vw, 1rem);  /* 14 → 16px (was up to 20px) */
+  --paragraph-small: 0.8125em;  /* ~13px — labels, helper, kicker, badges */
+  --h32: 1.25em;   /* ~20px — card / section titles */
+  --h42: 1.375em;  /* ~22px — prices, add-on names, day-card */
+  --h60: 1.625em;  /* ~26px — page titles, brand name */
+  --h76: 2.25em;   /* ~36px */
+  --h100: 2.75em;  /* ~44px */
+  --h133: 3.5em;   /* ~56px — signup hero (was ~111px) */
+  --h235: 4.5em;   /* ~72px — login hero (was ~196px) */
+}
+
 /* Color-section classes: set --bgcolor/--color; `.filter` tints imagery to the accent. */
 .bdq-night { --bgcolor: var(--dark-blue);  --color: var(--light-blue); }
 .bdq-grove { --bgcolor: var(--dark-green); --color: var(--green); }

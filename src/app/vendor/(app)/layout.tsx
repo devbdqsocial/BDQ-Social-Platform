@@ -60,7 +60,7 @@ export default async function VendorLayout({ children }: { children: React.React
 
   return (
     <div
-      className="bdq flex min-h-dvh flex-col sm:flex-row"
+      className="bdq bdq-app flex min-h-dvh flex-col sm:flex-row"
       style={{ background: "var(--bgcolor)", color: "var(--color)" }}
     >
       <MaskDefs />
