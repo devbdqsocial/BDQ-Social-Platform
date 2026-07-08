@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Html5Qrcode } from "html5-qrcode";
 import { Button } from "@/components/ui/button";
+import { STALL_STATUS_COLORS } from "@/lib/stall-colors";
 import { addToQueue, loadQueue, removeFromQueue, saveQueue, type QueuedScan } from "@/lib/scan-queue";
 
 type ResultKind = "VALID" | "ALREADY_USED" | "INVALID" | "QUEUED";
@@ -19,7 +20,7 @@ type Result = {
 
 const BANNER: Record<ResultKind, { bg: string; fg: string; label: string }> = {
   VALID: { bg: "var(--success)", fg: "#fff", label: "VALID — checked in" },
-  ALREADY_USED: { bg: "var(--color-stall-booked)", fg: "#fff", label: "ALREADY USED" },
+  ALREADY_USED: { bg: STALL_STATUS_COLORS.BOOKED.fill, fg: "#fff", label: "ALREADY USED" },
   INVALID: { bg: "var(--destructive)", fg: "#fff", label: "INVALID" },
   QUEUED: { bg: "var(--warning)", fg: "#15120E", label: "SAVED OFFLINE — will sync" },
 };

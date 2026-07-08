@@ -27,7 +27,7 @@ export function SectionColorSync() {
         const headerColor =
           found.dataset.headerColor ||
           (mode === "light"
-            ? "var(--color-cream-50)"
+            ? "#FBFAF6" // cream-50 literal — @theme inline tokens aren't emitted as CSS vars
             : mode === "dark"
               ? "var(--dark-blue)"
               : sectionColor);

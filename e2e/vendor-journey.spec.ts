@@ -14,6 +14,10 @@ test.describe("vendor auth pages", () => {
     await expect(phone).toHaveValue("9876543210");
     // Regression: the input row uses the surface-relative bordered style (invisible-text fix).
     await expect(page.locator(".bdq-input").first()).toBeVisible();
+    // Regression: CSS must actually APPLY, not just be class-named — unstyled elements are
+    // still "visible", which let a broken stylesheet ship (navy solid button, bordered input).
+    expect(await page.locator(".bdq-btn").first().evaluate((el) => getComputedStyle(el).backgroundColor)).toBe("rgb(1, 6, 91)");
+    expect(await page.locator(".bdq-input").first().evaluate((el) => getComputedStyle(el).borderTopWidth)).toBe("1px");
   });
 
   test("signup renders", async ({ page }) => {
@@ -39,6 +43,9 @@ test.describe("vendor portal (signed in)", () => {
     await expect(page.getByText("Your application")).toBeVisible();
     await expect(page.getByRole("link", { name: "View site" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: /notifications/i })).toBeVisible(); // bell
+    // Regression: the rail must render NAVY — `.bg-ink` was silently losing the cascade to
+    // `.bdq`'s background shorthand for as long as it lived inside @layer utilities.
+    expect(await page.locator("aside.bg-ink").evaluate((el) => getComputedStyle(el).backgroundColor)).toBe("rgb(1, 6, 91)");
   });
 
   test("book a stall list", async ({ page }) => {

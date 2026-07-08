@@ -246,6 +246,19 @@
 /* iOS zoom guard: form fields never render below 16px (design-system Â§1.2 input floor). */
 .bdq :is(input, select, textarea) { font-size: max(1rem, 1em); }
 
+/* BDQ full-bleed dark section: deep navy base + soft lavender glow pooling top-centre.
+   `.bg-hero` kept as an alias for not-yet-rebuilt screens. MUST live un-layered AFTER the
+   `.bdq` base: inside @layer utilities it loses to .bdq's un-layered `background` shorthand
+   (un-layered author CSS beats any layer), which is why the vendor rail rendered cream.
+   Literal fallback required too — @theme inline tokens are never emitted as CSS vars. */
+.bg-ink,
+.bg-hero {
+  background-color: var(--color-navy-500, #01065B);
+  background-image:
+    radial-gradient(120% 80% at 50% -10%, rgba(134, 142, 255, 0.28), transparent 60%),
+    radial-gradient(90% 60% at 85% 110%, rgba(134, 142, 255, 0.14), transparent 55%);
+}
+
 /* Color-section classes: set --bgcolor/--color; `.filter` tints imagery to the accent. */
 .bdq-night { --bgcolor: var(--dark-blue);  --color: var(--light-blue); }
 .bdq-grove { --bgcolor: var(--dark-green); --color: var(--green); }
@@ -595,16 +608,6 @@ html[data-menu-open="true"] #mouse .mouse__dot {
 @layer utilities {
   .text-balance { text-wrap: balance; }
   .text-pretty { text-wrap: pretty; }
-
-  /* BDQ full-bleed dark section: deep navy base + soft lavender glow pooling top-centre.
-     `.bg-hero` kept as an alias so not-yet-rebuilt screens still render (migrated to .bg-ink). */
-  .bg-ink,
-  .bg-hero {
-    background-color: var(--color-navy-500);
-    background-image:
-      radial-gradient(120% 80% at 50% -10%, rgba(134, 142, 255, 0.28), transparent 60%),
-      radial-gradient(90% 60% at 85% 110%, rgba(134, 142, 255, 0.14), transparent 55%);
-  }
 
   /* Seamless infinite marquee. Track holds the content twice; translate -50% loops cleanly. */
   .marquee {

@@ -4,6 +4,10 @@ import Link from "next/link";
 
 // Floating mini-pill consent (user-chosen style): one line, bottom-left, rounded ink pill.
 // Safe-area aware; shows once per device; sits clear of the mobile tab bar.
+// Literals (brand ink/cream): @theme inline tokens aren't emitted as CSS vars, and the
+// fixed pill may mount outside `.bdq`, so var(--color)/var(--bgcolor) can't be trusted here.
+const BANNER_COLORS = { background: "#14141A", color: "#F4F2EC" } as const;
+
 export function CookieBanner() {
   const [show, setShow] = useState(false);
 
@@ -33,8 +37,7 @@ export function CookieBanner() {
       aria-label="Cookie notice"
       className="fixed left-[var(--space-md)] right-[var(--space-md)] z-[80] flex max-w-[calc(100vw-2*var(--space-md))] items-center gap-[var(--space-md)] rounded-2xl py-[0.5em] pl-[1.1em] pr-[0.7em] shadow-[0_10px_30px_rgba(0,0,0,0.3)] bottom-[calc(var(--space-lg)+env(safe-area-inset-bottom,0px)+var(--cookie-bottom-gap,0px))] sm:left-[var(--space-lg)] sm:right-auto sm:rounded-full"
       style={{
-        background: "var(--color-ink)",
-        color: "var(--color-cream-100)",
+        ...BANNER_COLORS,
         fontSize: "var(--paragraph-small)",
       }}
     >
