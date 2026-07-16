@@ -16,9 +16,11 @@ export const metadata: Metadata = { title: "Stall add-ons" };
 
 export default async function AdminAddOnsPage({ params }: { params: Promise<{ id: string }> }) {
   await requireAdminRole();
-  const { id } = await params;
-  const event = await db.event.findUnique({ where: { id }, select: { id: true, name: true } });
+  const { id: idOrSlug } = await params;
+  // Accepts the event slug or the cuid (slug preferred in links; the export API stays id-keyed).
+  const event = await db.event.findFirst({ where: { OR: [{ slug: idOrSlug }, { id: idOrSlug }] }, select: { id: true, name: true, slug: true } });
   if (!event) notFound();
+  const id = event.id;
 
   const [addOns, orders] = await Promise.all([listAddOnsForAdmin(id), listAddOnOrders(id)]);
   const revenue = orders.reduce((s, o) => s + o.totalPaise, 0);
@@ -26,7 +28,7 @@ export default async function AdminAddOnsPage({ params }: { params: Promise<{ id
   return (
     <div className="max-w-3xl space-y-6">
       <div>
-        <Link href={`/admin/events/${id}?tab=stalls`} className="text-sm text-muted-foreground hover:text-foreground">← {event.name} · Stalls</Link>
+        <Link href={`/admin/events/${event.slug}?tab=stalls`} className="text-sm text-muted-foreground hover:text-foreground">← {event.name} · Stalls</Link>
         <h1 className="mt-1 font-display text-3xl font-bold tracking-tight">Stall add-ons</h1>
         <p className="mt-1 text-sm text-muted-foreground">Extras BOOKED vendors can order (table, chairs, power, signage). Prices in ₹; stock optional.</p>
       </div>

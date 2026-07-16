@@ -1,11 +1,22 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/legal/LegalPage";
+import { LegalDocView } from "@/components/legal/LegalDocView";
+import { getPublishedDoc } from "@/server/legal/docs";
 import { LEGAL } from "@/lib/legal";
 import { agreementSections, CONTRACT_VERSION } from "@/server/contracts/agreement";
 
+export const revalidate = 3600;
 export const metadata: Metadata = { title: "Vendor Agreement" };
 
-export default function VendorAgreementPage() {
+export default async function VendorAgreementPage() {
+  // Unsigned template view: tokens fall back to their generic phrases ("the Vendor", …).
+  const doc = await getPublishedDoc("vendor-agreement");
+  if (doc) return <LegalDocView doc={doc} />;
+  return <Fallback />;
+}
+
+/** Pre-seed / empty-DB fallback — the original code-generated agreement. */
+function Fallback() {
   const sections = agreementSections({ brandName: "the Vendor" });
   return (
     <LegalPage title="Vendor Participation Agreement" updated={`${LEGAL.lastUpdated} · ${CONTRACT_VERSION}`}>

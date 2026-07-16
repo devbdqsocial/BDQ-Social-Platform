@@ -2,11 +2,15 @@ import "server-only";
 import { db } from "@/server/db";
 import { withAudit } from "@/server/audit";
 import type { Session } from "@/server/auth/guard";
+import { resolveBookingContract, bookingTokenContext, makeSnapshot } from "@/server/legal/resolve";
+import { mergeSections } from "@/server/legal/tokens";
 
 /**
  * Per-booking (per-event) agreement — the vendor confirms this edition's terms + fee before paying,
  * separate from the one-time global onboarding VendorContract. Payment is gated on SIGNED
- * (server/bookings/payment.ts). One per booking.
+ * (server/bookings/payment.ts). One per booking. The agreement text resolves from the admin-managed
+ * contract templates (stall type → event default → global default) and the exact merged text is
+ * snapshotted at sign time.
  */
 
 const AGREEMENT_VERSION = "v1";
@@ -33,12 +37,20 @@ export function signBookingAgreement(
     const booking = await db.booking.findUnique({ where: { id: bookingId }, select: { vendorProfileId: true } });
     if (!booking || booking.vendorProfileId !== vendorProfileId) throw new Error("Booking not found");
     const before = await db.bookingAgreement.findUnique({ where: { bookingId }, select: { status: true } });
+    const signedAt = new Date();
+    const [template, ctx] = await Promise.all([resolveBookingContract(bookingId), bookingTokenContext(bookingId)]);
+    const { sections } = mergeSections(template.sections, {
+      ...ctx,
+      signature: { signerName: opts?.signerName ?? null, signedAt },
+      doc: { version: template.version },
+    });
     const fields = {
       status: "SIGNED" as const,
-      signedAt: new Date(),
+      signedAt,
       signerName: opts?.signerName ?? null,
       signerIp: opts?.signerIp ?? null,
-      version: AGREEMENT_VERSION,
+      version: `${template.slug}@${template.version}`,
+      termsSnapshot: makeSnapshot({ slug: template.slug, version: template.version, title: template.title, sections }),
     };
     return {
       before,

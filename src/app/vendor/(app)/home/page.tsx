@@ -16,6 +16,7 @@ import { ContractSign } from "@/components/vendor/ContractSign";
 import { PayStep } from "@/components/vendor/PayStep";
 import { VendorDayCard } from "@/components/vendor/VendorDayCard";
 import { BookingAgreementSign } from "@/components/vendor/BookingAgreementSign";
+import { BookingContractView } from "@/components/vendor/BookingContractView";
 import { StallWaitlistJoin } from "@/components/vendor/StallWaitlistJoin";
 import { getBookingAgreement } from "@/server/bookings/agreement";
 
@@ -301,6 +302,7 @@ export default async function VendorHome({ searchParams }: { searchParams: Promi
                 ) : (
                   <div className="space-y-[var(--space-md)]">
                     <p className="f-paragraph-small opacity-75">One last step before payment — confirm this event&apos;s terms.</p>
+                    <BookingContractView bookingId={booking.id} />
                     <BookingAgreementSign bookingId={booking.id} />
                   </div>
                 )}

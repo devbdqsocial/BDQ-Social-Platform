@@ -5,11 +5,16 @@ import { MotionProviders } from "@/components/motion/MotionProviders";
 import { Magnetic } from "@/components/motion/Magnetic";
 import { WordmarkWall } from "@/components/motion/WordmarkWall";
 import { getSession } from "@/server/auth/guard";
+import { getFooterLegalLinks } from "@/server/legal/docs";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { organizationLd, webSiteLd } from "@/lib/seo/jsonld";
 
+const FALLBACK_LEGAL: [string, string][] = [["Privacy", "/privacy"], ["Terms", "/terms"], ["Refunds", "/refunds"], ["Shipping", "/shipping"], ["Vendor terms", "/vendor-terms"]];
+
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
+  const legalLinks = await getFooterLegalLinks();
+  const legalItems: [string, string][] = legalLinks.length ? legalLinks.map((l) => [l.label, l.href]) : FALLBACK_LEGAL;
   return (
     <div className="bdq flex min-h-dvh flex-col">
       <JsonLd data={[organizationLd(), webSiteLd()]} />
@@ -37,7 +42,7 @@ export default async function PublicLayout({ children }: { children: React.React
               ["For guests", [["My tickets", "/tickets"], ["Gallery", "/gallery"], ["Things to do in Vadodara", "/things-to-do-in-vadodara"], ["Night markets in Vadodara", "/night-markets-vadodara"]]],
               ["For partners", [["Sell with us", "/vendor/login"], ["Sign in", "/login"]]],
               ["Company", [["About us", "/about"], ["Contact", "/contact"]]],
-              ["Legal", [["Privacy", "/privacy"], ["Terms", "/terms"], ["Refunds", "/refunds"], ["Shipping", "/shipping"], ["Vendor terms", "/vendor-terms"]]],
+              ["Legal", legalItems],
             ].map(([heading, items]) => (
               <nav key={heading as string} className="f-paragraph-small f-bold flex flex-col gap-[var(--space-sm)]">
                 <span className="kicker">{heading as string}</span>

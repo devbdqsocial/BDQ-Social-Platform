@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { requirePermission } from "@/server/auth/guard";
-import { getArtist } from "@/server/artists/admin-service";
+import { getArtist, resolveAdminArtistId } from "@/server/artists/admin-service";
 import { listAdminEvents } from "@/server/admin/event-context";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -19,7 +19,9 @@ const titleCase = (s: string) => s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.
 
 export default async function ArtistDetailPage({ params }: { params: Promise<{ id: string }> }) {
   await requirePermission("ARTIST_VIEW");
-  const { id } = await params;
+  const { id: idOrSlug } = await params;
+  const id = await resolveAdminArtistId(idOrSlug);
+  if (!id) notFound();
   const [artist, events] = await Promise.all([getArtist(id), listAdminEvents()]);
   if (!artist) notFound();
 

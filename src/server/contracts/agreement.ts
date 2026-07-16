@@ -18,8 +18,9 @@ export type AgreementContext = {
 const party = (ctx: AgreementContext) =>
   ctx.registeredName ? `${ctx.brandName} (operating as ${ctx.registeredName})` : ctx.brandName;
 
-/** The full vendor agreement, with the vendor/event/stall specifics merged in. Used by the PDF
- *  renderer and the public /vendor-agreement page. */
+/** FALLBACK ONLY: the canonical agreement text now lives in the admin-managed "vendor-agreement"
+ *  LegalDocument (Documents & Legal). This code copy is used only when that doc is missing or
+ *  unpublished (empty DB, pre-seed builds) — see resolveGlobalContract() in server/legal/resolve.ts. */
 export function agreementSections(ctx: AgreementContext): { heading: string; body: string[] }[] {
   const fee = ctx.feePaise != null ? formatPaise(ctx.feePaise) : "the stall fee shown for the event";
   return [

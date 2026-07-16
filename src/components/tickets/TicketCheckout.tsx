@@ -38,6 +38,7 @@ export function TicketCheckout({ eventId, ticketTypes }: { eventId: string; tick
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [authStep, setAuthStep] = useState(false); // inline OTP sheet (guest-first, cart preserved)
+  const [termsOk, setTermsOk] = useState(false);
   const [couponInput, setCouponInput] = useState("");
   const [coupon, setCoupon] = useState<{ code: string; discount: number; total: number } | null>(null);
   const [couponErr, setCouponErr] = useState<string | null>(null);
@@ -104,7 +105,7 @@ export function TicketCheckout({ eventId, ticketTypes }: { eventId: string; tick
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ eventId, items, couponCode: coupon?.code, utm, clientOrderKey: clientOrderKey.current }),
+        body: JSON.stringify({ eventId, items, couponCode: coupon?.code, utm, clientOrderKey: clientOrderKey.current, termsAccepted: true }),
       });
       if (res.status === 401) { setBusy(false); setAuthStep(true); return; }
       const json = await res.json();
@@ -206,6 +207,15 @@ export function TicketCheckout({ eventId, ticketTypes }: { eventId: string; tick
         {couponErr && <p role="alert" className="f-paragraph-small f-bold mt-[var(--space-sm)]" style={{ color: "var(--red)" }}>{couponErr}</p>}
       </div>
 
+      {/* T&C consent — required before payment; recorded on the order. */}
+      <label className="f-paragraph-small mt-[var(--space-lg)] flex items-start gap-[var(--space-sm)]">
+        <input type="checkbox" checked={termsOk} onChange={(e) => setTermsOk(e.target.checked)} className="mt-0.5 size-4 shrink-0" aria-label="Agree to the terms" />
+        <span className="opacity-80">
+          I agree to the <a href="/terms" target="_blank" className="link-underline">Terms</a> and{" "}
+          <a href="/refunds" target="_blank" className="link-underline">Refund Policy</a> — all sales are final.
+        </span>
+      </label>
+
       <div className="mt-[var(--space-lg)] flex flex-wrap items-end justify-between gap-[var(--space-lg)] pt-[var(--space-lg)]" style={{ borderTop: "1px solid var(--color)" }}>
         <div>
           <p className="f-exat f-h60">{formatPaise(total)}</p>
@@ -213,7 +223,7 @@ export function TicketCheckout({ eventId, ticketTypes }: { eventId: string; tick
         </div>
         {!authStep && (
           <Magnetic>
-            <button type="button" className="btn btn--lg" data-cursor disabled={!count || busy} onClick={() => void placeOrder()}>
+            <button type="button" className="btn btn--lg" data-cursor disabled={!count || busy || !termsOk} onClick={() => void placeOrder()}>
               <span className="btn__text">{busy ? "Starting…" : "Buy tickets"}</span>
             </button>
           </Magnetic>

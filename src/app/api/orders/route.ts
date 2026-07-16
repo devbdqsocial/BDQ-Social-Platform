@@ -1,7 +1,7 @@
 import { rejectCrossOrigin } from "@/lib/origin";
 import { NextResponse } from "next/server";
 import { getSession } from "@/server/auth/guard";
-import { createOrderSchema } from "@/server/schemas";
+import { placeOrderSchema } from "@/server/schemas";
 import { CheckoutError, createTicketOrder } from "@/server/tickets/service";
 import { enforceRateLimit } from "@/lib/ratelimit";
 
@@ -21,7 +21,7 @@ export async function POST(req: Request) {
 
   let body;
   try {
-    body = createOrderSchema.parse(await req.json());
+    body = placeOrderSchema.parse(await req.json());
   } catch {
     return NextResponse.json({ ok: false, error: { code: "VALIDATION" } }, { status: 422 });
   }

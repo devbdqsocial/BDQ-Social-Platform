@@ -1,0 +1,25 @@
+/** Client-safe list of {{merge tokens}} for the document editor's "Insert merge field" menu.
+ *  Resolution + fallbacks live server-side in src/server/legal/tokens.ts — keep the two in sync. */
+export const MERGE_TOKENS: { token: string; label: string }[] = [
+  { token: "{{legal.brand}}", label: "Brand name" },
+  { token: "{{legal.entity}}", label: "Legal entity" },
+  { token: "{{legal.email}}", label: "Support email" },
+  { token: "{{legal.phone}}", label: "Support phone" },
+  { token: "{{legal.address}}", label: "Registered address" },
+  { token: "{{legal.jurisdiction}}", label: "Jurisdiction" },
+  { token: "{{legal.grievanceOfficer}}", label: "Grievance officer" },
+  { token: "{{legal.grievanceEmail}}", label: "Grievance email" },
+  { token: "{{vendor.brandName}}", label: "Vendor brand" },
+  { token: "{{vendor.party}}", label: "Vendor legal party" },
+  { token: "{{vendor.category}}", label: "Vendor category" },
+  { token: "{{event.name}}", label: "Event name" },
+  { token: "{{event.date}}", label: "Event date" },
+  { token: "{{event.location}}", label: "Event location" },
+  { token: "{{stall.label}}", label: "Stall number" },
+  { token: "{{stall.type}}", label: "Stall type" },
+  { token: "{{fees.total}}", label: "Booking fee" },
+  { token: "{{signature.name}}", label: "Signer name" },
+  { token: "{{signature.date}}", label: "Signing date" },
+  { token: "{{doc.version}}", label: "Document version" },
+  { token: "{{today}}", label: "Today's date" },
+];

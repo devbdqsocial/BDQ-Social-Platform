@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdminRole } from "@/server/auth/guard";
-import { getByIdForAdmin, getEventReadiness } from "@/server/events/service";
+import { getByIdForAdmin, getEventReadiness, resolveAdminEventId } from "@/server/events/service";
 import { deriveSetupSteps } from "@/server/events/setup-steps";
 import { listMaps } from "@/server/map/maps";
 import { formatPaise } from "@/lib/utils";
@@ -46,7 +46,9 @@ export default async function AdminEventEditor({
   searchParams: Promise<{ tab?: string }>;
 }) {
   await requireAdminRole();
-  const { id } = await params;
+  const { id: idOrSlug } = await params;
+  const id = await resolveAdminEventId(idOrSlug);
+  if (!id) notFound();
   const { tab: requestedTab } = await searchParams;
   const [event, maps, lineup, roster, readiness] = await Promise.all([getByIdForAdmin(id), listMaps(), listEventLineup(id), listArtists(), getEventReadiness(id)]);
   if (!event) notFound();

@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { requireVendor } from "@/server/auth/guard";
 import { getProfile } from "@/server/vendors/service";
 import { getContract } from "@/server/vendors/contract";
+import { listEventRuleDocs, listPublishedDocs } from "@/server/legal/docs";
+import { pathForSlug } from "@/lib/legal-docs";
 import { db } from "@/server/db";
 import { formatPaise } from "@/lib/utils";
 import { cld } from "@/lib/cloudinary-url";
@@ -38,6 +40,22 @@ export default async function VendorDocuments() {
   const products = profile.assets.filter((a) => a.kind === "PRODUCT" || a.kind === "LOGO" || a.kind === "BANNER");
   const signed = contract?.status === "SIGNED";
 
+  // Rules & policies: docs assigned to the booked event + published vendor-audience docs +
+  // the baseline vendor policies. PUBLIC docs keep their public URLs; VENDOR-only docs render
+  // behind vendor auth at /vendor/documents/[slug]. Contract templates are excluded (they are
+  // surfaced by the signing flows, not as reading material).
+  const [assigned, vendorAudience, baseline] = await Promise.all([
+    booking ? listEventRuleDocs(booking.eventId) : Promise.resolve([]),
+    listPublishedDocs({ audience: ["VENDOR"] }),
+    db.legalDocument.findMany({
+      where: { slug: { in: ["vendor-rules", "vendor-booking-policy", "vendor-data-policy"] }, status: "PUBLISHED" },
+      orderBy: { slug: "desc" },
+    }),
+  ]);
+  const seen = new Set<string>();
+  const readingDocs = [...assigned.map((a) => a.doc), ...baseline, ...vendorAudience.filter((d) => d.category !== "CONTRACT")]
+    .filter((d) => !seen.has(d.id) && seen.add(d.id) !== undefined);
+
   return (
     <div className="max-w-[var(--w-prose)] space-y-[var(--space-2xl)]">
       <VendorPageHeader
@@ -57,7 +75,7 @@ export default async function VendorDocuments() {
             contract?.url ? (
               <a href={contract.url} target="_blank" rel="noreferrer" className={LINK} style={{ color: "var(--light-blue)" }}>Download signed PDF →</a>
             ) : (
-              <p className="f-paragraph-small opacity-70">Signed — PDF copy unavailable.</p>
+              <Link href="/vendor/contract" className={LINK} style={{ color: "var(--light-blue)" }}>View signed terms →</Link>
             )
           ) : (
             <Link href="/vendor/home?step=contract" className={LINK} style={{ color: "var(--light-blue)" }}>Read &amp; sign →</Link>
@@ -83,9 +101,17 @@ export default async function VendorDocuments() {
             {booking ? <>Stall {booking.stall.label} · {booking.event.name} · {fmt(booking.event.startsAt)}</> : "Reserve a stall to see your pass and timings."}
           </p>
           <div className="flex flex-wrap gap-[var(--space-md)] pt-[var(--space-xs)]">
-            <Link href="/vendor-rules" target="_blank" className={LINK} style={{ color: "var(--light-blue)" }}>Event Rules</Link>
-            <Link href="/vendor-booking-policy" target="_blank" className={LINK} style={{ color: "var(--light-blue)" }}>Booking Policy</Link>
-            <Link href="/vendor-data-policy" target="_blank" className={LINK} style={{ color: "var(--light-blue)" }}>Data Policy</Link>
+            {readingDocs.map((d) => (
+              <Link
+                key={d.id}
+                href={d.audience === "PUBLIC" ? pathForSlug(d.slug) : `/vendor/documents/${d.slug}`}
+                target="_blank"
+                className={LINK}
+                style={{ color: "var(--light-blue)" }}
+              >
+                {d.title}
+              </Link>
+            ))}
           </div>
         </div>
 

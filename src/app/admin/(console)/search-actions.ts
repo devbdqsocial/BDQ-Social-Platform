@@ -13,7 +13,7 @@ export async function adminSearch(q: string): Promise<SearchHit[]> {
 
   try {
     const [events, vendors, orders, staff, attendees] = await Promise.all([
-      db.event.findMany({ where: { name: { contains: query, mode: "insensitive" } }, take: 5, select: { id: true, name: true } }),
+      db.event.findMany({ where: { name: { contains: query, mode: "insensitive" } }, take: 5, select: { slug: true, name: true } }),
       db.vendorProfile.findMany({ where: { brandName: { contains: query, mode: "insensitive" } }, take: 5, select: { id: true, brandName: true } }),
       db.order.findMany({
         where: { OR: [{ id: { startsWith: query } }, { user: { phone: { contains: query } } }] },
@@ -33,7 +33,7 @@ export async function adminSearch(q: string): Promise<SearchHit[]> {
     ]);
 
     return [
-      ...events.map((e) => ({ label: e.name, sub: "Event", href: `/admin/events/${e.id}` })),
+      ...events.map((e) => ({ label: e.name, sub: "Event", href: `/admin/events/${e.slug}` })),
       ...vendors.map((v) => ({ label: v.brandName, sub: "Vendor", href: `/admin/vendors/${v.id}` })),
       ...orders.map((o) => ({ label: o.user.phone ?? o.id.slice(0, 8), sub: "Order", href: `/admin/tickets/orders/${o.id}` })),
       ...staff.map((s) => ({ label: s.name ?? "Unknown", sub: "Staff", href: `/admin/ops/staff` })),

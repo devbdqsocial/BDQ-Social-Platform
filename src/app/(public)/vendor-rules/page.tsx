@@ -1,10 +1,20 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/legal/LegalPage";
+import { LegalDocView } from "@/components/legal/LegalDocView";
+import { getPublishedDoc } from "@/server/legal/docs";
 import { LEGAL } from "@/lib/legal";
 
+export const revalidate = 3600;
 export const metadata: Metadata = { title: "Event Rules & Code of Conduct" };
 
-export default function VendorRulesPage() {
+export default async function VendorRulesPage() {
+  const doc = await getPublishedDoc("vendor-rules");
+  if (doc) return <LegalDocView doc={doc} />;
+  return <Fallback />;
+}
+
+/** Pre-seed / empty-DB fallback — the original hardcoded page. */
+function Fallback() {
   return (
     <LegalPage title="Event Rules & Code of Conduct" updated={LEGAL.lastUpdated}>
       <p>

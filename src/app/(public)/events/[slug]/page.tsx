@@ -5,6 +5,9 @@ import { getBySlug } from "@/server/events/service";
 import { getEventGuide } from "@/server/map/guide";
 import { sponsorsForEventPublic } from "@/server/sponsors/service";
 import { listApprovedVendors } from "@/server/vendors/service";
+import { listEventRuleDocs, parseSections } from "@/server/legal/docs";
+import { mergeSections } from "@/server/legal/tokens";
+import { DocSectionsView } from "@/components/legal/DocSections";
 import { primaryLogo } from "@/lib/vendor-assets";
 import { formatPaise } from "@/lib/utils";
 import { fmtDateFull, fmtTime, fmtDayLabel } from "@/lib/date-formats";
@@ -58,7 +61,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
   const event = await getBySlug(slug);
   if (!event || (event.status !== "PUBLISHED" && event.status !== "LIVE")) notFound();
 
-  const [sponsors, vendors] = await Promise.all([sponsorsForEventPublic(event.id), listApprovedVendors()]);
+  const [sponsors, vendors, ruleDocs] = await Promise.all([sponsorsForEventPublic(event.id), listApprovedVendors(), listEventRuleDocs(event.id)]);
   const brands = vendors.slice(0, 8);
   const hasStallLayout = event.vendorStallsEnabled && !!event.mapLayout && event._count.stalls > 0;
   const guide = hasStallLayout ? await getEventGuide({ includeLayout: true, slug }) : null;
@@ -234,6 +237,22 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
                 <p className="f-paragraph mt-[var(--space-md)] max-w-[52ch] opacity-80">{a}</p>
               </details>
             ))}
+            {ruleDocs.map((a) => {
+              const { sections } = mergeSections(parseSections(a.doc.sections), {
+                event: { name: event.name, startsAt: event.startsAt, location: event.location },
+              });
+              return (
+                <details key={a.id} className="group py-[var(--space-lg)]" style={{ borderTop: "1px solid var(--color)" }}>
+                  <summary className="f-exat flex cursor-pointer list-none items-center justify-between gap-[var(--space-lg)] f-h42">
+                    {a.doc.title}
+                    <span aria-hidden className="shrink-0 transition-transform duration-300 group-open:rotate-45 f-h42">+</span>
+                  </summary>
+                  <div className="f-paragraph-small mt-[var(--space-md)] max-w-[60ch] [&_a]:underline [&_h2]:mt-[var(--space-lg)] [&_h2]:font-bold [&_li]:mb-[var(--space-2xs)] [&_li]:opacity-80 [&_ol]:mt-[var(--space-sm)] [&_ol]:list-decimal [&_ol]:pl-[var(--space-lg)] [&_p]:mt-[var(--space-sm)] [&_p]:opacity-80 [&_strong]:font-bold [&_ul]:mt-[var(--space-sm)] [&_ul]:list-disc [&_ul]:pl-[var(--space-lg)]">
+                    <DocSectionsView sections={sections} />
+                  </div>
+                </details>
+              );
+            })}
           </div>
         </div>
       </section>

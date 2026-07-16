@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdminRole } from "@/server/auth/guard";
-import { getByIdForAdmin } from "@/server/events/service";
+import { getByIdForAdmin, resolveAdminEventId } from "@/server/events/service";
 import { ensureStallTypes } from "@/server/map/stall-types";
 import { getMap } from "@/server/map/maps";
 import { type PaletteStallType } from "@/lib/map/designer-ops";
@@ -16,8 +16,9 @@ export const metadata: Metadata = { title: "Event layout" };
 
 export default async function EventMapPage({ params }: { params: Promise<{ id: string }> }) {
   await requireAdminRole();
-  const { id } = await params;
-  const event = await getByIdForAdmin(id);
+  const { id: idOrSlug } = await params;
+  const id = await resolveAdminEventId(idOrSlug);
+  const event = id ? await getByIdForAdmin(id) : null;
   if (!event) notFound();
 
   const [types, linkedMap] = await Promise.all([

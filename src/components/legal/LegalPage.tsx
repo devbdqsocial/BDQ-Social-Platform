@@ -16,7 +16,7 @@ export function LegalPage({
         <h1 className="f-exat mt-[var(--space-sm)] f-h76">{title}</h1>
         <p className="f-paragraph-small mt-[var(--space-md)] opacity-75">Last updated: {updated}</p>
         <div
-          className="mx-auto mt-[var(--space-3xl)] max-w-[var(--w-prose)] [&_a]:underline [&_h2]:mb-[var(--space-md)] [&_h2]:mt-[var(--space-2xl)] [&_h2]:[font-family:var(--f-exat)] [&_h2]:[font-size:var(--h42)] [&_h2]:[line-height:1.1] [&_li]:mb-[var(--space-xs)] [&_li]:opacity-80 [&_p]:mb-[var(--space-lg)] [&_p]:opacity-80 [&_p]:[font-size:var(--paragraph)] [&_p]:[line-height:1.5] [&_strong]:font-bold [&_ul]:mb-[var(--space-lg)] [&_ul]:list-disc [&_ul]:pl-[var(--space-lg)]"
+          className="mx-auto mt-[var(--space-3xl)] max-w-[var(--w-prose)] [&_a]:underline [&_h2]:mb-[var(--space-md)] [&_h2]:mt-[var(--space-2xl)] [&_h2]:[font-family:var(--f-exat)] [&_h2]:[font-size:var(--h42)] [&_h2]:[line-height:1.1] [&_li]:mb-[var(--space-xs)] [&_li]:opacity-80 [&_ol]:mb-[var(--space-lg)] [&_ol]:list-decimal [&_ol]:pl-[var(--space-lg)] [&_p]:mb-[var(--space-lg)] [&_p]:opacity-80 [&_p]:[font-size:var(--paragraph)] [&_p]:[line-height:1.5] [&_strong]:font-bold [&_ul]:mb-[var(--space-lg)] [&_ul]:list-disc [&_ul]:pl-[var(--space-lg)]"
         >
           {children}
         </div>

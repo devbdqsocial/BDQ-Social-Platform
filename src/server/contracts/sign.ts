@@ -2,14 +2,19 @@ import "server-only";
 import { db } from "@/server/db";
 import type { Session } from "@/server/auth/guard";
 import { signContract } from "@/server/vendors/contract";
-import { renderVendorAgreementPdf } from "./pdf";
-import { CONTRACT_VERSION } from "./agreement";
+import { renderAgreementPdf } from "./pdf";
+import { agreementSections, CONTRACT_VERSION } from "./agreement";
+import { resolveGlobalContract, makeSnapshot } from "@/server/legal/resolve";
+import { mergeSections } from "@/server/legal/tokens";
 import { uploadPdfBuffer } from "@/lib/cloudinary";
+import type { DocSection } from "@/lib/legal-sections";
 
 /**
  * Generate the e-signed vendor-agreement PDF, store it in Cloudinary, and mark the contract SIGNED
- * (audited, with signer name + IP). If Cloudinary isn't configured (dev), the signature is still
- * recorded without a stored PDF url.
+ * (audited, with signer name + IP + a snapshot of the exact merged text). The agreement text comes
+ * from the admin-managed "vendor-agreement" document; the hardcoded agreementSections() remains as
+ * the empty-DB fallback. If Cloudinary isn't configured (dev), the signature is still recorded
+ * without a stored PDF url.
  */
 export async function generateAndSignContract(
   session: Session,
@@ -22,13 +27,14 @@ export async function generateAndSignContract(
     select: {
       brandName: true,
       registeredName: true,
+      productCategory: true,
       bookings: {
         where: { status: { in: ["RESERVED", "PENDING_PAYMENT", "BOOKED"] } },
         orderBy: { createdAt: "desc" },
         take: 1,
         select: {
-          stall: { select: { label: true, priceInPaise: true, stallType: { select: { priceInPaise: true } } } },
-          event: { select: { name: true } },
+          stall: { select: { label: true, priceInPaise: true, stallType: { select: { name: true, priceInPaise: true } } } },
+          event: { select: { name: true, startsAt: true, location: true } },
         },
       },
     },
@@ -39,12 +45,41 @@ export async function generateAndSignContract(
   const feePaise = b?.stall.priceInPaise ?? b?.stall.stallType?.priceInPaise ?? null;
   const signedAt = new Date();
 
-  const buffer = await renderVendorAgreementPdf({
+  const template = await resolveGlobalContract();
+  let title: string;
+  let version: string;
+  let sections: DocSection[];
+  if (template) {
+    title = template.title;
+    version = `${template.slug}@${template.version}`;
+    sections = mergeSections(template.sections, {
+      vendor: { brandName: vendor.brandName, registeredName: vendor.registeredName, productCategory: vendor.productCategory },
+      event: b?.event ?? undefined,
+      stall: b ? { label: b.stall.label, typeName: b.stall.stallType?.name ?? null } : undefined,
+      fees: { totalPaise: feePaise },
+      signature: { signerName, signedAt },
+      doc: { version: template.version },
+    }).sections;
+  } else {
+    // Empty-DB fallback: the legacy code-generated agreement (already merged).
+    title = "Vendor Participation Agreement";
+    version = CONTRACT_VERSION;
+    sections = agreementSections({
+      brandName: vendor.brandName,
+      registeredName: vendor.registeredName,
+      eventName: b?.event.name ?? null,
+      stallLabel: b?.stall.label ?? null,
+      feePaise,
+      signerName,
+      signedAt,
+    }).map((s) => ({ heading: s.heading, body: s.body.join("\n\n") }));
+  }
+
+  const buffer = await renderAgreementPdf({
+    title,
+    versionLabel: version,
+    sections,
     brandName: vendor.brandName,
-    registeredName: vendor.registeredName,
-    eventName: b?.event.name ?? null,
-    stallLabel: b?.stall.label ?? null,
-    feePaise,
     signerName,
     signedAt,
   });
@@ -57,6 +92,7 @@ export async function generateAndSignContract(
     url = null; // Cloudinary not configured — still record the signature below.
   }
 
-  await signContract(session, vendorProfileId, { signerName, signerIp, url, version: CONTRACT_VERSION });
+  const termsSnapshot = makeSnapshot({ slug: template?.slug ?? "vendor-agreement", version, title, sections });
+  await signContract(session, vendorProfileId, { signerName, signerIp, url, version, termsSnapshot });
   return { url };
 }

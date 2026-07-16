@@ -3,7 +3,9 @@ import {
   adminCreateVendorSchema,
   couponSchema,
   createOrderSchema,
+  docSectionsSchema,
   leadSchema,
+  placeOrderSchema,
   ticketTypeSchema,
   vendorKycSchema,
   vendorProfileSchema,
@@ -51,6 +53,24 @@ describe("createOrderSchema", () => {
       utm: { utm_source: "instagram" },
     });
     expect(r.success).toBe(false);
+  });
+});
+
+describe("placeOrderSchema", () => {
+  const order = { eventId: "evt_1", items: [{ ticketTypeId: "tt_1", qty: 1 }] };
+
+  it("requires explicit terms acceptance", () => {
+    expect(placeOrderSchema.safeParse(order).success).toBe(false);
+    expect(placeOrderSchema.safeParse({ ...order, termsAccepted: false }).success).toBe(false);
+    expect(placeOrderSchema.safeParse({ ...order, termsAccepted: true }).success).toBe(true);
+  });
+});
+
+describe("docSectionsSchema", () => {
+  it("accepts sections with an empty (intro) heading, rejects empty body", () => {
+    expect(docSectionsSchema.safeParse([{ heading: "", body: "Intro paragraph." }]).success).toBe(true);
+    expect(docSectionsSchema.safeParse([{ heading: "H", body: "" }]).success).toBe(false);
+    expect(docSectionsSchema.safeParse([]).success).toBe(false);
   });
 });
 

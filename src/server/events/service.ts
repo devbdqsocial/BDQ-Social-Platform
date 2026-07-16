@@ -175,6 +175,13 @@ export async function listForAdminTable() {
   });
 }
 
+/** Admin event URLs are slug-based but must keep accepting cuids (old links, action redirects).
+ *  Resolves either form to the event id. */
+export async function resolveAdminEventId(idOrSlug: string): Promise<string | null> {
+  const e = await db.event.findFirst({ where: { OR: [{ slug: idOrSlug }, { id: idOrSlug }] }, select: { id: true } });
+  return e?.id ?? null;
+}
+
 export function getByIdForAdmin(id: string) {
   return db.event.findUnique({
     where: { id },

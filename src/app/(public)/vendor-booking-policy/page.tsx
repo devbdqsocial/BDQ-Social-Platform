@@ -1,10 +1,20 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/legal/LegalPage";
+import { LegalDocView } from "@/components/legal/LegalDocView";
+import { getPublishedDoc } from "@/server/legal/docs";
 import { LEGAL } from "@/lib/legal";
 
+export const revalidate = 3600;
 export const metadata: Metadata = { title: "Stall Booking & Payment Policy" };
 
-export default function VendorBookingPolicyPage() {
+export default async function VendorBookingPolicyPage() {
+  const doc = await getPublishedDoc("vendor-booking-policy");
+  if (doc) return <LegalDocView doc={doc} />;
+  return <Fallback />;
+}
+
+/** Pre-seed / empty-DB fallback — the original hardcoded page. */
+function Fallback() {
   return (
     <LegalPage title="Stall Booking & Payment Policy" updated={LEGAL.lastUpdated}>
       <p>This policy governs how stalls are reserved, approved, paid for, and confirmed at a {LEGAL.brand} market.</p>

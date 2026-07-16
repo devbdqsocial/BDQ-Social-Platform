@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, Calendar, Map, Ticket, Store, Zap, IndianRupee, TrendingUp, BarChart3, Settings, Megaphone, Music,
+  LayoutDashboard, Calendar, Map, Ticket, Store, Zap, IndianRupee, TrendingUp, BarChart3, Settings, Megaphone, Music, FileText,
   type LucideIcon,
 } from "lucide-react";
 import type { ConsoleSection } from "@/lib/console-access";
@@ -47,13 +47,18 @@ export const NAV_GROUPS: NavGroup[] = [
     { label: "Guide", href: "/admin/content/guide", section: "content" },
     { label: "Happening", href: "/admin/content/happening", section: "content" },
   ]},
+  { label: "Documents & Legal", icon: FileText, items: [
+    { label: "Document Library", href: "/admin/legal", section: "legal" },
+    { label: "New Document", href: "/admin/legal/new", section: "legal" },
+    { label: "Event Assignments", href: "/admin/legal/assignments", section: "legal" },
+  ]},
   { label: "Operations", icon: Zap, items: [
     { label: "Check-in Scanner", href: "/admin/ops/checkin", section: "checkin" },
     { label: "Kiosk Mode", href: "/admin/kiosk", section: "checkin" },
     { label: "Live Monitor", href: "/admin/ops/monitor", section: "ops" },
     { label: "Task Center", href: "/admin/ops/tasks", section: "ops" },
     { label: "Staff Management", href: "/admin/ops/staff", section: "staff" },
-    { label: "System Health", href: "/admin/ops", section: "ops" },
+    { label: "System Health", href: "/admin/ops", section: "syshealth" },
   ]},
   { label: "Finance", icon: IndianRupee, items: [
     { label: "P&L / ROI", href: "/admin/finance/pnl", section: "finance" },

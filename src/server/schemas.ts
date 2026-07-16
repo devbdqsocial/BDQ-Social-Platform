@@ -93,6 +93,9 @@ export const createOrderSchema = z.object({
   clientOrderKey: z.string().uuid().optional(),
 });
 
+/** Order creation only (not quotes): checkout must send explicit T&C consent. */
+export const placeOrderSchema = createOrderSchema.extend({ termsAccepted: z.literal(true) });
+
 export const couponSchema = z
   .object({
     code: couponCode,
@@ -395,6 +398,62 @@ export const createHappeningSchema = z.object(happeningFields);
 export const updateHappeningSchema = z.object({ ...happeningFields, id });
 export type CreateHappeningInput = z.infer<typeof createHappeningSchema>;
 export type UpdateHappeningInput = z.infer<typeof updateHappeningSchema>;
+
+// ──────────────────────────── DOCUMENTS & LEGAL ─────────────────
+export const LEGAL_DOC_CATEGORIES = ["TERMS", "PRIVACY", "DATA_POLICY", "EVENT_RULES", "EVENT_POLICY", "CONTRACT", "GUIDELINES", "OTHER"] as const;
+export const LEGAL_DOC_AUDIENCES = ["PUBLIC", "CUSTOMER", "VENDOR"] as const;
+export const DOC_ASSIGNMENT_KINDS = ["BOOKING_CONTRACT", "EVENT_RULES", "EVENT_POLICY"] as const;
+
+// Empty heading = unheaded intro block (renders as plain paragraphs, no <h2>).
+export const docSectionSchema = z.object({
+  heading: z.string().trim().max(200),
+  body: z.string().trim().min(1).max(20000),
+});
+export const docSectionsSchema = z.array(docSectionSchema).min(1).max(60);
+
+const legalDocFields = {
+  title: z.string().trim().min(1).max(160),
+  category: z.enum(LEGAL_DOC_CATEGORIES),
+  audience: z.enum(LEGAL_DOC_AUDIENCES),
+};
+export const createLegalDocSchema = z.object({
+  ...legalDocFields,
+  slug: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .max(80)
+    .regex(/^[a-z0-9][a-z0-9-]*$/, "Lowercase letters, digits and dashes only"),
+});
+/** Sections travel as one JSON hidden input from the editor. */
+export const updateLegalDocSchema = z.object({
+  id,
+  ...legalDocFields,
+  sections: z
+    .string()
+    .transform((s, ctx) => {
+      try {
+        return JSON.parse(s) as unknown;
+      } catch {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Invalid sections payload" });
+        return z.NEVER;
+      }
+    })
+    .pipe(docSectionsSchema),
+});
+export const assignDocSchema = z
+  .object({
+    docId: id,
+    eventId: id,
+    stallTypeId: id.optional(),
+    vendorCategory: z.enum(PRODUCT_CATEGORIES).optional(),
+    kind: z.enum(DOC_ASSIGNMENT_KINDS),
+  })
+  .refine((v) => !(v.stallTypeId && v.vendorCategory), { message: "Scope to a stall type OR a vendor category, not both." });
+export type DocSectionInput = z.infer<typeof docSectionSchema>;
+export type CreateLegalDocInput = z.infer<typeof createLegalDocSchema>;
+export type UpdateLegalDocInput = z.infer<typeof updateLegalDocSchema>;
+export type AssignDocInput = z.infer<typeof assignDocSchema>;
 
 // ──────────────────────────── ARTISTS / TALENT ─────────────────
 export const ARTIST_TYPES = ["MUSICIAN", "BAND", "DJ", "PERFORMER", "DANCE", "COMEDIAN", "SPEAKER", "HOST_MC", "OTHER"] as const;

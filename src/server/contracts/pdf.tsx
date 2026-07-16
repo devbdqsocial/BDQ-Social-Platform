@@ -2,7 +2,7 @@ import { fmtDateFull } from "@/lib/date-formats";
 import "server-only";
 import { Document, Page, Text, View, StyleSheet, renderToBuffer } from "@react-pdf/renderer";
 import { LEGAL } from "@/lib/legal";
-import { agreementSections, CONTRACT_VERSION, type AgreementContext } from "./agreement";
+import { pdfParagraphs, type DocSection } from "@/lib/legal-sections";
 
 const styles = StyleSheet.create({
   page: { paddingVertical: 48, paddingHorizontal: 48, fontSize: 10, lineHeight: 1.5, fontFamily: "Helvetica", color: "#14141A" },
@@ -16,40 +16,47 @@ const styles = StyleSheet.create({
   footer: { position: "absolute", bottom: 24, left: 48, right: 48, fontSize: 7, color: "#9A9AA5", textAlign: "center" },
 });
 
-export async function renderVendorAgreementPdf(ctx: AgreementContext): Promise<Buffer> {
-  const sections = agreementSections(ctx);
+/** Renders an already token-merged contract (DB template or code fallback) to PDF. */
+export async function renderAgreementPdf(opts: {
+  title: string;
+  versionLabel: string;
+  sections: DocSection[];
+  brandName: string;
+  signerName?: string | null;
+  signedAt?: Date | null;
+}): Promise<Buffer> {
   const doc = (
-    <Document title="Vendor Participation Agreement" author={LEGAL.brand}>
+    <Document title={opts.title} author={LEGAL.brand}>
       <Page size="A4" style={styles.page}>
         <Text style={styles.brand}>{LEGAL.brand}</Text>
-        <Text style={styles.title}>Vendor Participation Agreement</Text>
+        <Text style={styles.title}>{opts.title}</Text>
         <Text style={styles.meta}>
-          {CONTRACT_VERSION} · {LEGAL.entity}
+          {opts.versionLabel} · {LEGAL.entity}
         </Text>
-        {sections.map((s, i) => (
+        {opts.sections.map((s, i) => (
           <View key={i} wrap={false}>
-            <Text style={styles.heading}>{s.heading}</Text>
-            {s.body.map((p, j) => (
+            {s.heading ? <Text style={styles.heading}>{s.heading}</Text> : null}
+            {pdfParagraphs(s.body).map((p, j) => (
               <Text key={j} style={styles.para}>
                 {p}
               </Text>
             ))}
           </View>
         ))}
-        {ctx.signerName ? (
+        {opts.signerName ? (
           <View style={styles.sign}>
-            <Text style={styles.signLine}>Signed (electronically): {ctx.signerName}</Text>
-            <Text style={styles.signLine}>Brand: {ctx.brandName}</Text>
-            {ctx.signedAt ? (
+            <Text style={styles.signLine}>Signed (electronically): {opts.signerName}</Text>
+            <Text style={styles.signLine}>Brand: {opts.brandName}</Text>
+            {opts.signedAt ? (
               <Text style={styles.signLine}>
                 Date:{" "}
-                {fmtDateFull(ctx.signedAt)}
+                {fmtDateFull(opts.signedAt)}
               </Text>
             ) : null}
           </View>
         ) : null}
         <Text style={styles.footer} fixed>
-          {LEGAL.brand} · Vendor Participation Agreement · {CONTRACT_VERSION}
+          {LEGAL.brand} · {opts.title} · {opts.versionLabel}
         </Text>
       </Page>
     </Document>

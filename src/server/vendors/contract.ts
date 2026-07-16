@@ -21,7 +21,7 @@ export async function getOrCreateContract(vendorProfileId: string) {
 export function signContract(
   session: Session,
   vendorProfileId: string,
-  opts?: { signerName?: string; signerIp?: string | null; url?: string | null; version?: string },
+  opts?: { signerName?: string; signerIp?: string | null; url?: string | null; version?: string; termsSnapshot?: string | null },
 ) {
   return withAudit(session, { action: "SIGN", entity: "VendorContract", entityId: vendorProfileId }, async () => {
     const before = await db.vendorContract.findUnique({ where: { vendorProfileId }, select: { status: true } });
@@ -31,6 +31,7 @@ export function signContract(
       signerName: opts?.signerName ?? null,
       signerIp: opts?.signerIp ?? null,
       version: opts?.version ?? null,
+      termsSnapshot: opts?.termsSnapshot ?? null,
       ...(opts?.url ? { url: opts.url } : {}),
     };
     return {

@@ -1,10 +1,20 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/legal/LegalPage";
+import { LegalDocView } from "@/components/legal/LegalDocView";
+import { getPublishedDoc } from "@/server/legal/docs";
 import { LEGAL } from "@/lib/legal";
 
+export const revalidate = 3600;
 export const metadata: Metadata = { title: "Terms & Conditions" };
 
-export default function TermsPage() {
+export default async function TermsPage() {
+  const doc = await getPublishedDoc("terms");
+  if (doc) return <LegalDocView doc={doc} />;
+  return <Fallback />;
+}
+
+/** Pre-seed / empty-DB fallback — the original hardcoded page. */
+function Fallback() {
   return (
     <LegalPage title="Terms & Conditions" updated={LEGAL.lastUpdated}>
       <p>

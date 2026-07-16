@@ -127,6 +127,10 @@ export async function createTicketOrder(
   // tickets are issued only via the admin comp flow, never here.
   if (pricing.total <= 0) throw new CheckoutError("INVALID_TOTAL");
 
+  // Consent was validated at the API boundary (placeOrderSchema); record when + which terms version.
+  const termsVersion =
+    (await db.legalDocument.findFirst({ where: { slug: "terms", status: "PUBLISHED" }, select: { version: true } }))?.version ?? null;
+
   let order: { id: string };
   try {
     order = await db.order.create({
@@ -143,6 +147,8 @@ export async function createTicketOrder(
         items: items as unknown as Prisma.InputJsonValue,
         utm: utm ? (utm as Prisma.InputJsonValue) : undefined,
         expiresAt: new Date(Date.now() + ORDER_TTL_MS),
+        termsAcceptedAt: new Date(),
+        termsVersion,
       },
     });
   } catch (e) {

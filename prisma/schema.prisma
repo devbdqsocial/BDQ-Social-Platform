@@ -275,6 +275,7 @@ model Event {
   happenings       HappeningItem[]
   artistBookings   ArtistBooking[]
   days             EventDay[]
+  docAssignments   DocAssignment[]
   mapId            String?
 
   @@index([status])
@@ -393,6 +394,7 @@ model StallTypeDef {
   color        String
   sellable     Boolean @default(true)
   stalls       Stall[]
+  docAssignments DocAssignment[]
 
   @@unique([eventId, name])
 }
@@ -480,6 +482,8 @@ model Order {
   items          Json?
   utm            Json?
   expiresAt      DateTime?
+  termsAcceptedAt DateTime? // checkout T&C consent timestamp
+  termsVersion   String? // version of the published `terms` doc at acceptance
   createdAt      DateTime       @default(now())
 
   tickets           Ticket[]
@@ -662,6 +666,7 @@ model VendorContract {
   status          ContractStatus @default(SENT)
   url             String? // Cloudinary URL of the generated, e-signed PDF
   version         String? // contract template version signed
+  termsSnapshot   String? // JSON snapshot of the merged sections signed (survives PDF upload failure)
   signerName      String? // typed legal name at signing
   signerIp        String? // captured at signing (audit trail)
   signedAt        DateTime?
@@ -1178,5 +1183,80 @@ model HappeningItem {
   updatedAt DateTime      @updatedAt
 
   @@index([eventId, published, archived])
+}
+
+// ── Documents & Legal ────────────────────────────────────────────────────────────────────────
+// Admin-editable legal/policy/contract documents (terms, privacy, event rules, contract
+// templates…). Rendered read-only on public/customer/vendor surfaces; contract templates are
+// resolved per booking (stall-type → event default → global default) and snapshotted at sign time.
+enum LegalDocCategory {
+  TERMS
+  PRIVACY
+  DATA_POLICY
+  EVENT_RULES
+  EVENT_POLICY
+  CONTRACT
+  GUIDELINES
+  OTHER
+}
+
+enum LegalDocAudience {
+  PUBLIC
+  CUSTOMER
+  VENDOR
+}
+
+enum LegalDocStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum DocAssignmentKind {
+  BOOKING_CONTRACT
+  EVENT_RULES
+  EVENT_POLICY
+}
+
+model LegalDocument {
+  id          String           @id @default(cuid())
+  slug        String           @unique
+  title       String
+  category    LegalDocCategory
+  audience    LegalDocAudience @default(PUBLIC)
+  status      LegalDocStatus   @default(DRAFT)
+  /// DocSection[] = { heading, body }[]; body: blank line = paragraph, "- " = list item,
+  /// [label](/path) = link, {{token}} = merge placeholder (src/server/legal/tokens.ts)
+  sections    Json
+  version     String           @default("v1") // bumped when a PUBLISHED doc's sections change
+  publishedAt DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  assignments DocAssignment[]
+
+  @@index([status, audience])
+  @@index([category, status])
+}
+
+/** Binds a doc to an event, optionally scoped to a stall type OR a vendor product category
+ *  (e.g. "Food & Beverage" — how food vendors are actually detected). BOOKING_CONTRACT picks which
+ *  contract a vendor signs for a booking (stall type beats category beats event default);
+ *  EVENT_RULES/EVENT_POLICY surface on the public event page. Ambiguity guards are partial unique
+ *  indexes in the raw migrations. `doc` FK is RESTRICT — deleteDoc cascades assignments itself. */
+model DocAssignment {
+  id             String            @id @default(cuid())
+  docId          String
+  doc            LegalDocument     @relation(fields: [docId], references: [id])
+  eventId        String
+  event          Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  stallTypeId    String?
+  stallType      StallTypeDef?     @relation(fields: [stallTypeId], references: [id], onDelete: Cascade)
+  vendorCategory String? // VendorProfile.productCategory value (PRODUCT_CATEGORIES)
+  kind           DocAssignmentKind
+  createdAt      DateTime          @default(now())
+
+  @@index([eventId, kind])
+  @@index([docId])
 }
 

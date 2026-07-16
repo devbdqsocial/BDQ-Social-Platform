@@ -75,7 +75,7 @@ function EventRowActions({ event }: { event: Row }) {
     <div className="flex items-center justify-end gap-0.5">
       <IconTip label="Edit">
         <Button asChild variant="ghost" size="icon-sm">
-          <Link href={`/admin/events/${event.id}`} aria-label="Edit event"><Pencil className="size-4" /></Link>
+          <Link href={`/admin/events/${event.slug}`} aria-label="Edit event"><Pencil className="size-4" /></Link>
         </Button>
       </IconTip>
 
@@ -120,7 +120,7 @@ function EventRowActions({ event }: { event: Row }) {
 
       <IconTip label="Delete">
         <Button asChild variant="ghost" size="icon-sm" className="text-destructive hover:bg-destructive/10 hover:text-destructive">
-          <Link href={`/admin/events/${event.id}?tab=danger`} aria-label="Delete event"><Trash2 className="size-4" /></Link>
+          <Link href={`/admin/events/${event.slug}?tab=danger`} aria-label="Delete event"><Trash2 className="size-4" /></Link>
         </Button>
       </IconTip>
     </div>
@@ -128,7 +128,7 @@ function EventRowActions({ event }: { event: Row }) {
 }
 
 const columns: ColumnDef<Row>[] = [
-  { accessorKey: "name", header: "Event", cell: ({ row }) => <Link href={`/admin/events/${row.original.id}`} className="font-medium hover:underline">{row.original.name}</Link> },
+  { accessorKey: "name", header: "Event", cell: ({ row }) => <Link href={`/admin/events/${row.original.slug}`} className="font-medium hover:underline">{row.original.name}</Link> },
   {
     id: "date", accessorFn: (r) => r.startsAt.getTime(), header: "Starts",
     cell: ({ row }) => (

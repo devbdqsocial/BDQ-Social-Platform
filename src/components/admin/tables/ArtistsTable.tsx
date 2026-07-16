@@ -48,7 +48,7 @@ export function ArtistsTable({ artists }: { artists: Row[] }) {
         columns={columns}
         data={data}
         searchPlaceholder="Search artist or genre…"
-        onRowClick={(r) => router.push(`/admin/artists/${r.id}`)}
+        onRowClick={(r) => router.push(`/admin/artists/${r.slug ?? r.id}`)}
         emptyMessage="No artists yet."
       />
     </div>

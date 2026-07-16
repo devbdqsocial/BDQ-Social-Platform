@@ -16,6 +16,7 @@ export function listArtists(opts?: { type?: string; includeArchived?: boolean })
     take: 1000,
     select: {
       id: true,
+      slug: true,
       stageName: true,
       type: true,
       genre: true,
@@ -26,6 +27,12 @@ export function listArtists(opts?: { type?: string; includeArchived?: boolean })
       _count: { select: { bookings: true } },
     },
   });
+}
+
+/** Admin artist URLs prefer the public slug where one is set, but keep accepting cuids. */
+export async function resolveAdminArtistId(idOrSlug: string): Promise<string | null> {
+  const a = await db.artistProfile.findFirst({ where: { OR: [{ slug: idOrSlug }, { id: idOrSlug }] }, select: { id: true } });
+  return a?.id ?? null;
 }
 
 export function getArtist(id: string) {
