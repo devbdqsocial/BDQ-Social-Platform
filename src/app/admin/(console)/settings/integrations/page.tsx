@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "Integrations" };
 /** Read-only board of external services and whether their keys are configured. */
 export default async function IntegrationsPage() {
   await requireAdminRole();
-  const items = integrationStatuses();
+  const items = await integrationStatuses();
 
   return (
     <div className="space-y-6">
